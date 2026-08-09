@@ -2,7 +2,7 @@
 
 Project context for Claude Code. Read this before starting any work in this repo.
 
-For business rules, pricing, membership logic, and domain-specific details, see **PROJECT_CONTEXT.md** (not yet created — pending client answers).
+For business rules, pricing, membership logic, and domain-specific details, see **PROJECT_CONTEXT.md**.
 
 ---
 
@@ -12,6 +12,7 @@ For business rules, pricing, membership logic, and domain-specific details, see 
 
 - **Current build scope**: Customer-facing booking flow, and an admin panel for staff to manage resources, bookings, and (once defined) memberships.
 - **Not in current scope**: A POS system is planned as a future extension of this same platform (see "Scope & Future Extension" below) — do not build POS features now.
+- **Single venue**: No multi-location support needed at this time.
 
 - **Repo**: `https://github.com/winstonsipandserve/Winston-Booking-Site.git`
 - **Local**: `C:\Projects\winston-booking-website`
@@ -41,7 +42,7 @@ For business rules, pricing, membership logic, and domain-specific details, see 
 
 These are locked in. Don't deviate without discussing first.
 
-- **Resource model**: `ResourceType` (tennis / pickleball / golf-sim) contains individual `Resource` records (specific court/bay). This is one unified system, not three separate ones per sport.
+- **Resource model**: `ResourceType` contains individual `Resource` records (specific court/bay) — one unified system, not per-sport tables. There are 5 resource types: `tennis-court`, `pickleball-court`, `tennis-sim`, `pickleball-sim`, `golf-sim`. Current inventory: 1 tennis court, 3 pickleball courts, 1 tennis simulator, 2 pickleball simulators, 2 golf simulators.
 - **Double-booking prevention**: Enforced at the database level via a PostgreSQL exclusion constraint on overlapping `tsrange` (using `btree_gist`), combined with a pending-hold-and-expire flow. This is **not** an application-level check — there is no admin bypass.
 - **Booking confirmation**: A booking only flips to `confirmed` on a verified PayMongo `payment.paid` webhook (HMAC-SHA256 signature verified). Never confirm on client-side redirect.
 - **Money**: Stored as `Int` in centavos everywhere, matching PayMongo's native format. Never use floats for currency.
@@ -148,6 +149,6 @@ Promotion between branches is manual — no automated CI/CD merge gates.
 ## Open / Not Yet Decided
 
 - Auth method: email/password vs. magic link
-- Real `Resource` / `Booking` / `MembershipTier` schema — waiting on client answers (see PROJECT_CONTEXT.md once created)
+- Admin login model: shared `winstonsipandserve@gmail.com` account vs. individual staff logins — affects Auth.js setup, not blocking schema
 - Domain + DNS not yet set up
 - PayMongo account not yet created by client (test keys pending)
