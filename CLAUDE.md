@@ -1,0 +1,135 @@
+# CLAUDE.md
+
+Project context for Claude Code. Read this before starting any work in this repo.
+
+For business rules, pricing, membership logic, and domain-specific details, see **PROJECT_CONTEXT.md** (not yet created — pending client answers).
+
+---
+
+## Project Identity
+
+**Winston Sip and Serve** — a booking platform + admin panel for a sports facility offering tennis, pickleball, and golf simulator bays.
+
+- **Current build scope**: Customer-facing booking flow, and an admin panel for staff to manage resources, bookings, and (once defined) memberships.
+- **Not in current scope**: A POS system is planned as a future extension of this same platform (see "Scope & Future Extension" below) — do not build POS features now.
+
+- **Repo**: `https://github.com/winstonsipandserve/Winston-Booking-Site.git`
+- **Local**: `C:\Projects\winston-booking-website`
+- **Branches**:
+  - `main` — production, auto-deploys to Vercel Production
+  - `staging` — pre-production testing
+  - `dev` — day-to-day development work
+
+---
+
+## Tech Stack
+
+| Layer | Choice |
+|---|---|
+| Framework | Next.js (App Router) + TypeScript |
+| Database | PostgreSQL via Supabase |
+| ORM | Prisma |
+| Auth | Auth.js — method TBD (email/password vs. magic link, decision pending) |
+| Payments | PayMongo (Payment Intents API) |
+| Email | Resend |
+| Hosting | Vercel |
+| Error tracking | Sentry |
+
+---
+
+## Architecture Decisions
+
+These are locked in. Don't deviate without discussing first.
+
+- **Resource model**: `ResourceType` (tennis / pickleball / golf-sim) contains individual `Resource` records (specific court/bay). This is one unified system, not three separate ones per sport.
+- **Double-booking prevention**: Enforced at the database level via a PostgreSQL exclusion constraint on overlapping `tsrange` (using `btree_gist`), combined with a pending-hold-and-expire flow. This is **not** an application-level check — there is no admin bypass.
+- **Booking confirmation**: A booking only flips to `confirmed` on a verified PayMongo `payment.paid` webhook (HMAC-SHA256 signature verified). Never confirm on client-side redirect.
+- **Money**: Stored as `Int` in centavos everywhere, matching PayMongo's native format. Never use floats for currency.
+- **Booking state machine**: `pending_payment` → `confirmed` (webhook) or `cancelled` (hold expiry / failed payment).
+
+---
+
+## Scope & Future Extension
+
+**Current build**: Booking system (tennis / pickleball / golf-sim) + Admin panel to manage it. This is the entire scope right now.
+
+**Planned, not yet happening**: The client wants to extend this same platform with a POS system later. POS is **not** being built now — but the schema should be designed so that extension doesn't force a rewrite. Concretely:
+
+- **Customer/User model**: Keep it generic enough that a future POS transaction and a booking can both reference the same customer record. Don't build booking-only customer fields that a shared customer model would later have to duplicate or migrate away from.
+- **Payment/Transaction model**: PayMongo is shared ground between booking and POS. Keep payment records general (amount, method, status, reference) rather than booking-specific fields baked directly into a `BookingPayment`-style table, since POS sales will also need PayMongo transactions.
+- **Admin panel / roles**: Since the admin panel is in scope now, design its permission/role model assuming more resource types will exist later (POS orders, inventory), even though only booking-related roles exist today.
+
+**What NOT to do**: Don't create `Product`, `Inventory`, `POSOrder`, or any POS-specific tables now. That's premature scope creep. The goal is only to avoid painting the booking schema into a corner — not to pre-build POS.
+
+---
+
+## Coding Conventions
+
+- **Prisma schema**: PascalCase model names, snake_case DB columns via `@map`, `cuid()` IDs, money fields as `Int` (centavos), required `createdAt`/`updatedAt` timestamps on all models.
+- **API routes**: [fill in once scaffolded — route structure, response shape conventions]
+- **Components**: [fill in once scaffolded — folder structure, naming]
+- **Error handling**: [fill in once a pattern is established]
+
+---
+
+## Claude Code Skills (`.claude/skills/`)
+
+Use these when the task matches — don't reinvent what they already encode.
+
+- **`paymongo-integration`** — full Payment Intent flow, webhook HMAC-SHA256 verification, raw body handling, centavos conversion, reconciliation fallback. Use for anything touching payments or webhooks.
+- **`booking-conflict-prevention`** — PostgreSQL exclusion constraint setup, hold-and-expire flow. Use for anything touching booking creation, availability, or scheduling logic.
+- **`prisma-schema-conventions`** — naming rules, centavos-as-Int, migration workflow. Use whenever editing `schema.prisma`.
+
+**Deliberately not built as skills**: git commit workflow and browser verification are handled manually (see Workflow section below) — an ambient skill here would conflict with that gate.
+
+---
+
+## MCP Servers
+
+- **Supabase** — official, OAuth-authenticated, **read-only**, scoped to `project_ref=vsmjybtidvmzvicdpkdo`. Docs/database/debugging/development features only. Safe to commit config (no secrets in it).
+- **Playwright** — official `@playwright/mcp`, project-scoped, for browser-based verification.
+- **Context7** — for current Next.js/Prisma/PayMongo/Auth.js documentation lookups.
+
+---
+
+## Environment Variables
+
+Names and purpose only — actual values live in `.env.local` (never committed) and Vercel's Environment Variables settings.
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Supabase Postgres, pooled connection (port 6543, pgbouncer) — used at runtime |
+| `DIRECT_URL` | Supabase Postgres, direct connection (port 5432) — used for Prisma migrations |
+| `AUTH_SECRET` | Auth.js session encryption secret |
+| `PAYMONGO_SECRET_KEY` | PayMongo server-side API key (test/live) |
+| `PAYMONGO_PUBLIC_KEY` | PayMongo client-side key |
+| `PAYMONGO_WEBHOOK_SECRET` | For verifying `payment.paid` webhook signatures |
+| `RESEND_API_KEY` | Transactional email sending |
+| `NEXT_PUBLIC_APP_URL` | Base app URL (differs local/staging/prod) |
+| `SENTRY_DSN` | Error tracking |
+
+---
+
+## Development Workflow
+
+This is Arjay's process — Claude Code should support it, not route around it:
+
+1. Planning and prompt drafting happens in a dedicated Claude Project (this repo's context is attached there).
+2. Finalized prompts are pasted into Claude Code, run against this local repo.
+3. Output is manually reviewed and validated (including browser verification where relevant) — not auto-approved.
+4. Git operations (`add`, `commit`, `push`) are done manually, not automated by Claude Code. Prompts that produce commits should end with an explicit git block for Arjay to review before running, not run automatically.
+
+**Commands** (fill in once scaffolded):
+- Dev server: `npm run dev`
+- Prisma migrate: `npx prisma migrate dev`
+- Prisma studio: `npx prisma studio`
+- Tests: TBD
+
+---
+
+## Open / Not Yet Decided
+
+- Auth method: email/password vs. magic link
+- Real `Resource` / `Booking` / `MembershipTier` schema — waiting on client answers (see PROJECT_CONTEXT.md once created)
+- Domain + DNS not yet set up
+- PayMongo account not yet created by client (test keys pending)
