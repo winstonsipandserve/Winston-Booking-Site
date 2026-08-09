@@ -119,6 +119,24 @@ This is Arjay's process — Claude Code should support it, not route around it:
 3. Output is manually reviewed and validated (including browser verification where relevant) — not auto-approved.
 4. Git operations (`add`, `commit`, `push`) are done manually, not automated by Claude Code. Prompts that produce commits should end with an explicit git block for Arjay to review before running, not run automatically.
 
+### Branch Promotion Policy
+
+Promotion between branches is manual — no automated CI/CD merge gates.
+
+- **`dev` → `staging`**: Merge once a change has passed local
+  verification (per the VERIFY steps in its originating prompt). Push
+  to `staging` manually.
+- **`staging` → `main`**: Only after verifying against the deployed
+  `staging` environment itself (not just local) — this is the last
+  checkpoint before production, since `main` auto-deploys to Vercel
+  Production.
+- Claude Code never merges or pushes branches automatically — commands
+  are prepared for Arjay to review and run manually, same as all other
+  git operations.
+- **Open question**: PayMongo key handling per environment (test keys
+  on `staging`, live keys on `main`) is not yet confirmed — flag this
+  before the first real promotion to `main` involving payments.
+
 **Commands** (fill in once scaffolded):
 - Dev server: `npm run dev`
 - Prisma migrate: `npx prisma migrate dev`
