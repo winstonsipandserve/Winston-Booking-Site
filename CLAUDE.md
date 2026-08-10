@@ -79,7 +79,7 @@ These are locked in. Don't deviate without discussing first.
 
 - **Prisma schema**: PascalCase model names, snake_case DB columns via `@map`, `cuid()` IDs, money fields as `Int` (centavos), required `createdAt`/`updatedAt` timestamps on all models — **except `BookingReschedule`**, which is `createdAt`-only by design (see "Architecture Decisions" for why).
 - **New tables**: every new table must enable RLS with explicit deny-all policies for `anon` and `authenticated` in the same migration that creates it — see Architecture Decisions → Row Level Security. Don't defer this to a follow-up migration.
-- **API routes**: [fill in once scaffolded — route structure, response shape conventions]
+- **API routes**: Route handlers live under `src/app/api/`, return `Response.json(...)` with explicit status codes (400 validation, 401 auth, 409 conflict, 500 unexpected). Member status for pricing is always derived server-side (`Customer` → active `Membership` check), never trusted from the request body or a client session — this holds even after Auth.js is decided. A shared Prisma client singleton lives at `src/lib/prisma.ts`; future routes should import it rather than instantiating `new PrismaClient()` per-route.
 - **Components**: [fill in once scaffolded — folder structure, naming]
 - **Error handling**: [fill in once a pattern is established]
 
@@ -121,6 +121,7 @@ Names and purpose only — actual values live in `.env.local` (never committed) 
 | `NEXT_PUBLIC_APP_URL` | Base app URL (differs local/staging/prod) |
 | `SENTRY_DSN` | Error tracking |
 | `BOOKING_HOLD_MINUTES` | Minutes a `pending_payment` booking is held before being treated as abandoned (default: `10`) |
+| `CRON_SECRET` | Authenticates Vercel Cron invocations of `/api/cron/expire-bookings` (Vercel auto-sends it as `Authorization: Bearer <value>`) |
 
 ---
 
