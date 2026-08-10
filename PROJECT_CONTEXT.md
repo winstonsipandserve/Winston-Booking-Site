@@ -52,6 +52,7 @@ Business rules, pricing, and membership logic for Winston Sip and Serve, as fina
 - ₱150/hr per additional guest, booker is exempt from their own guest fee
 - Single lump-sum charge to the booker covering court rate + (guest fee × non-exempt guest count) — one Payment record per Booking, not split per guest
 - Example: 6-person tennis court booking (1 booker + 5 guests), non-member: ₱750 court + (5 × ₱150) = ₱1,500 total, charged to booker
+- Rate is admin-editable via the panel, not hardcoded — stored in a dedicated `GuestFeeRule` table (see CLAUDE.md → Architecture Decisions), same DB-driven pricing pattern as `PricingRule`/`AddOnPricingRule`.
 
 ---
 

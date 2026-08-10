@@ -33,6 +33,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-08-10 — CLAUDE.md updated: Payment.bookingId confirmed as a direct nullable FK to Booking (not polymorphic) — documented as Architecture Decision, trades a small future migration for POS support in exchange for DB-enforced integrity now
 - 2026-08-10 — CLAUDE.md updated: added MembershipCreditTransaction ledger model — Membership.creditBalanceCentavos is now a cached total backed by an immutable transaction log, POS-ready without pre-building spend logic
 - 2026-08-10 — Next.js scaffold created (TypeScript, Tailwind, App Router, npm) — package.json now exists at repo root
+- 2026-08-10 — CLAUDE.md + PROJECT_CONTEXT.md updated: guest fee rate confirmed as its own admin-editable GuestFeeRule table (not a PricingRule column, not hardcoded); membership payment ↔ Payment linkage flagged as still-open, added to Open/Not Yet Decided
 
 ## Next Up
 
