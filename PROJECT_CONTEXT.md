@@ -15,16 +15,27 @@ Business rules, pricing, and membership logic for Winston Sip and Serve, as fina
 
 ## Pricing
 
-> **BLOCKED — client rate table not yet supplied.** The originating prompt referenced "the client's PDF" for full rate tables, but no such file exists in this repo and no figures were included in the prompt text. Rather than invent numbers, this section is left open pending the actual data. Needed:
->
-> - Court rates (hourly-flat), member vs. non-member: tennis court, pickleball courts
-> - Simulator rates (tiered by minutes), member vs. non-member:
->   - Tennis sim & pickleball sim: 15 / 30 / 60-minute tiers
->   - Golf sim: 30 / 60 / 90-minute tiers
-> - Coaching fee, member vs. non-member
-> - Ball boy rate, member vs. non-member
->
-> **Do not fill this section with placeholder or estimated numbers** — wait for the client's actual rate table (PDF upload or pasted figures), then update this section in a follow-up edit.
+### Member Rates
+
+**Court (hourly flat):**
+- Tennis court: ₱650/hr
+- Pickleball court: ₱550/hr
+
+**Simulator (tiered by minutes):**
+- Tennis sim: 15min ₱250 / 30min ₱400 / 60min ₱750
+- Pickleball sim: 15min ₱250 / 30min ₱400 / 60min ₱750
+- Golf sim: 30min ₱450 / 60min ₱950 / 90min ₱1400
+
+### Non-Member Rates
+
+**Court (hourly flat):**
+- Tennis court: ₱750/hr
+- Pickleball court: ₱650/hr
+
+**Simulator (tiered by minutes):**
+- Tennis sim: 15min ₱300 / 30min ₱450 / 60min ₱800
+- Pickleball sim: 15min ₱300 / 30min ₱450 / 60min ₱800
+- Golf sim: 60min ₱1150 / 90min ₱1450 — **no 30-min tier offered to non-members** (member-only tier)
 
 ---
 
@@ -39,9 +50,23 @@ Business rules, pricing, and membership logic for Winston Sip and Serve, as fina
 
 ## Add-On Services
 
-- Coaching fee and ball boy are add-ons attached to a booking, not separate booking types
-- Rates vary by resource type and member/non-member status — **blocked on the same client rate table as the Pricing section above**; document once received
-- Equipment rental (rackets/paddles) is out of scope for now but will follow the identical add-on pattern later — design the add-on model generically enough to absorb it without restructuring
+Coaching fee and ball boy are add-ons attached to a booking, not separate booking types. Equipment rental (rackets/paddles) is out of scope for now but will follow the identical add-on pattern later — design the add-on model generically enough to absorb it without restructuring.
+
+**Coaching Fee:**
+- Member court (tennis/pickleball): ₱750 (1 pax) / ₱1200 (2 pax)
+- Member tennis sim: ₱800/hr
+- Member pickleball sim: ₱800/hr
+- Member golf sim: ₱1000
+- Non-member court (tennis/pickleball): ₱800 (1pax) / ₱1200 (2pax)
+- Non-member tennis sim: **Not offered** — no rate listed on client rate sheet
+- Non-member pickleball sim: **Not offered** — no rate listed on client rate sheet
+- Non-member golf sim: ₱1000
+
+**Ball Boy:**
+- Member: ₱150
+- Non-member: ₱150
+
+Note: ball boy is a court-only add-on (courts have a ball boy; simulators do not, per resource type — matches existing rate sheet structure). Coaching fee applies to both courts and simulators.
 
 ---
 
