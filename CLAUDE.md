@@ -43,7 +43,7 @@ For business rules, pricing, membership logic, and domain-specific details, see 
 These are locked in. Don't deviate without discussing first.
 
 - **Resource model**: `ResourceType` contains individual `Resource` records (specific court/bay) — one unified system, not per-sport tables. There are 5 resource types: `tennis-court`, `pickleball-court`, `tennis-sim`, `pickleball-sim`, `golf-sim`. Current inventory: 1 tennis court, 3 pickleball courts, 1 tennis simulator, 2 pickleball simulators, 2 golf simulators.
-- **Double-booking prevention**: Enforced at the database level via a PostgreSQL exclusion constraint on overlapping `tsrange` (using `btree_gist`), combined with a pending-hold-and-expire flow. This is **not** an application-level check — there is no admin bypass.
+- **Double-booking prevention**: Enforced at the database level via a PostgreSQL exclusion constraint on overlapping `tsrange` (using `btree_gist`), combined with a pending-hold-and-expire flow. This is **not** an application-level check — there is no admin bypass. Prisma has no native syntax for `EXCLUDE USING gist`, so this constraint is written as raw SQL and its master copy will live at `prisma/manual-sql/booking-exclusion-constraint.sql` (created when the Prisma schema is first generated) — not buried inside a single migration file where it could be missed or lost on a reset. Any future prompt that touches `Booking` or runs a migration must include a VERIFY step confirming this constraint still exists in the database (e.g. a query against `pg_constraint`).
 - **Booking confirmation**: A booking only flips to `confirmed` on a verified PayMongo `payment.paid` webhook (HMAC-SHA256 signature verified). Never confirm on client-side redirect.
 - **Money**: Stored as `Int` in centavos everywhere, matching PayMongo's native format. Never use floats for currency.
 - **Booking state machine**: `pending_payment` → `confirmed` (webhook) or `cancelled` (hold expiry / failed payment).
@@ -81,7 +81,7 @@ These are locked in. Don't deviate without discussing first.
 Use these when the task matches — don't reinvent what they already encode.
 
 - **`paymongo-integration`** — full Payment Intent flow, webhook HMAC-SHA256 verification, raw body handling, centavos conversion, reconciliation fallback. Use for anything touching payments or webhooks.
-- **`booking-conflict-prevention`** — PostgreSQL exclusion constraint setup, hold-and-expire flow. Use for anything touching booking creation, availability, or scheduling logic.
+- **`booking-conflict-prevention`** — PostgreSQL exclusion constraint setup, hold-and-expire flow. Use for anything touching booking creation, availability, or scheduling logic. References the manual SQL file at `prisma/manual-sql/booking-exclusion-constraint.sql` as the source of truth for this constraint — any prompt using this skill must verify the constraint is present in the DB, not assume it survived a migration.
 - **`prisma-schema-conventions`** — naming rules, centavos-as-Int, migration workflow. Use whenever editing `schema.prisma`.
 
 **Deliberately not built as skills**: git commit workflow and browser verification are handled manually (see Workflow section below) — an ambient skill here would conflict with that gate.
