@@ -28,6 +28,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-08-10 — CLAUDE.md + PROJECT_CONTEXT.md updated: MembershipApplication.customerId confirmed required (not nullable) — applications resolve to Customer via look-up-or-create by email at submission, same pattern as bookings
 - 2026-08-10 — CLAUDE.md updated: admin login model resolved as individual staff logins (not shared account) — added AdminUser architecture note, removed resolved item from Open/Not Yet Decided; MembershipApplication.reviewedBy and BookingReschedule.performedBy will be real FKs, not strings
 - 2026-08-10 — CLAUDE.md updated: documented safeguard for the booking-overlap exclusion constraint (Prisma can't express EXCLUDE USING gist natively) — master SQL will live at prisma/manual-sql/booking-exclusion-constraint.sql, and all future Booking/migration prompts must VERIFY the constraint still exists in the DB
+- 2026-08-10 — CLAUDE.md updated: confirmed BookingReschedule is createdAt-only and immutable by design (audit trail integrity) — corrections are handled via a new row, not editing the original; added exception to Coding Conventions and new Architecture Decisions bullet
 
 ## Next Up
 
