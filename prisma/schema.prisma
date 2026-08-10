@@ -1,0 +1,338 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── Enums ──────────────────────────────────────────────
+
+enum ResourceTypeSlug {
+  tennis_court
+  pickleball_court
+  tennis_sim
+  pickleball_sim
+  golf_sim
+}
+
+enum ResourceCategory {
+  court
+  simulator
+}
+
+enum RateTier {
+  member
+  non_member
+}
+
+enum BookingStatus {
+  pending_payment
+  confirmed
+  cancelled
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum MembershipTier {
+  three_month
+  six_month
+  twelve_month
+}
+
+enum MembershipStatus {
+  active
+  expired
+}
+
+enum CreditTransactionReason {
+  activation
+}
+
+enum AdminRole {
+  admin
+}
+
+enum AddOnServiceSlug {
+  coaching_fee
+  ball_boy
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+}
+
+// ── Resource model (Decision: Resource model) ─────────
+
+model ResourceType {
+  id        String           @id @default(cuid())
+  slug      ResourceTypeSlug @unique
+  name      String
+  category  ResourceCategory
+  resources         Resource[]
+  pricingRules      PricingRule[]
+  addOnPricingRules AddOnPricingRule[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("resource_types")
+}
+
+model Resource {
+  id             String       @id @default(cuid())
+  resourceTypeId String       @map("resource_type_id")
+  resourceType   ResourceType @relation(fields: [resourceTypeId], references: [id])
+  label          String
+  isActive       Boolean      @default(true) @map("is_active")
+  bookings       Booking[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("resources")
+}
+
+// ── Pricing (Decision: Pricing model) ─────────────────
+
+model PricingRule {
+  id              String       @id @default(cuid())
+  resourceTypeId  String       @map("resource_type_id")
+  resourceType    ResourceType @relation(fields: [resourceTypeId], references: [id])
+  rateTier        RateTier     @map("rate_tier")
+  durationMinutes Int          @map("duration_minutes")
+  priceCentavos   Int          @map("price_centavos")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([resourceTypeId, rateTier, durationMinutes])
+  @@map("pricing_rules")
+}
+
+// ── Guest fee (Decision: Guest fee rate storage) ──────
+
+model GuestFeeRule {
+  id             String   @id @default(cuid())
+  amountCentavos Int      @map("amount_centavos")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("guest_fee_rules")
+}
+
+// ── Customer & auth (Decision: Customer & auth model) ─
+
+model Customer {
+  id    String @id @default(cuid())
+  name  String
+  email String @unique
+  phone String
+  bookings               Booking[]
+  membershipApplications MembershipApplication[]
+  memberships            Membership[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("customers")
+}
+
+// ── Admin/staff model (Decision: Admin/staff model) ───
+
+model AdminUser {
+  id    String    @id @default(cuid())
+  name  String
+  email String    @unique
+  role  AdminRole @default(admin)
+  reviewedApplications MembershipApplication[] @relation("ApplicationReviewedBy")
+  performedReschedules BookingReschedule[]     @relation("ReschedulePerformedBy")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}
+
+// ── Membership application & approval ─────────────────
+
+model MembershipApplication {
+  id              String            @id @default(cuid())
+  customerId      String            @map("customer_id")
+  customer        Customer          @relation(fields: [customerId], references: [id])
+  requestedTier   MembershipTier    @map("requested_tier")
+  status          ApplicationStatus @default(pending)
+  address         String
+  contactNumber   String            @map("contact_number")
+  govIdFrontUrl   String            @map("gov_id_front_url")
+  govIdBackUrl    String            @map("gov_id_back_url")
+  govIdSelfieUrl  String            @map("gov_id_selfie_url")
+  rejectionReason String?           @map("rejection_reason")
+  reviewedById    String?           @map("reviewed_by_id")
+  reviewedBy      AdminUser?        @relation("ApplicationReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?         @map("reviewed_at")
+  membership      Membership?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("membership_applications")
+}
+
+// ── Membership & credit ledger (Decision: Membership credit ledger) ─
+
+model Membership {
+  id                    String                @id @default(cuid())
+  customerId            String                @map("customer_id")
+  customer              Customer              @relation(fields: [customerId], references: [id])
+  applicationId         String                @unique @map("application_id")
+  application           MembershipApplication @relation(fields: [applicationId], references: [id])
+  tier                  MembershipTier
+  status                MembershipStatus      @default(active)
+  startDate             DateTime              @map("start_date")
+  endDate               DateTime              @map("end_date")
+  activationFeeCentavos Int                   @map("activation_fee_centavos")
+  /// Cached running total — MembershipCreditTransaction is the source of truth.
+  creditBalanceCentavos Int                   @map("credit_balance_centavos")
+  creditTransactions    MembershipCreditTransaction[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("memberships")
+}
+
+model MembershipCreditTransaction {
+  id             String                  @id @default(cuid())
+  membershipId   String                  @map("membership_id")
+  membership     Membership              @relation(fields: [membershipId], references: [id])
+  amountCentavos Int                     @map("amount_centavos")
+  reason         CreditTransactionReason
+  createdAt      DateTime @default(now()) @map("created_at")
+  // No updatedAt — immutable audit row, corrections are new rows, never edits.
+
+  @@map("membership_credit_transactions")
+}
+
+// ── Booking & exclusion constraint (raw SQL — see Part 5) ─
+
+model Booking {
+  id         String        @id @default(cuid())
+  customerId String        @map("customer_id")
+  customer   Customer      @relation(fields: [customerId], references: [id])
+  resourceId String        @map("resource_id")
+  resource   Resource      @relation(fields: [resourceId], references: [id])
+  startTime  DateTime      @map("start_time")
+  endTime    DateTime      @map("end_time")
+  status     BookingStatus @default(pending_payment)
+  guestCount Int           @default(0) @map("guest_count")
+  /// Court/sim rate + guest fee only — excludes add-ons, which are priced separately on BookingAddOn.
+  totalAmountCentavos Int  @map("total_amount_centavos")
+  reschedules BookingReschedule[]
+  addOns      BookingAddOn[]
+  payment     Payment?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("bookings")
+}
+
+// ── Reschedule audit trail (Decision: BookingReschedule immutability) ─
+
+model BookingReschedule {
+  id            String    @id @default(cuid())
+  bookingId     String    @map("booking_id")
+  booking       Booking   @relation(fields: [bookingId], references: [id])
+  originalStart DateTime  @map("original_start")
+  originalEnd   DateTime  @map("original_end")
+  newStart      DateTime  @map("new_start")
+  newEnd        DateTime  @map("new_end")
+  reason        String
+  performedById String    @map("performed_by_id")
+  performedBy   AdminUser @relation("ReschedulePerformedBy", fields: [performedById], references: [id])
+  createdAt     DateTime @default(now()) @map("created_at")
+  // No updatedAt — corrections are new rows, never edits to the original.
+
+  @@map("booking_reschedules")
+}
+
+// ── Add-on services ────────────────────────────────────
+
+model AddOnService {
+  id   String           @id @default(cuid())
+  slug AddOnServiceSlug @unique
+  name String
+  pricingRules  AddOnPricingRule[]
+  bookingAddOns BookingAddOn[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("add_on_services")
+}
+
+model AddOnPricingRule {
+  id             String       @id @default(cuid())
+  addOnServiceId String       @map("add_on_service_id")
+  addOnService   AddOnService @relation(fields: [addOnServiceId], references: [id])
+  resourceTypeId String       @map("resource_type_id")
+  resourceType   ResourceType @relation(fields: [resourceTypeId], references: [id])
+  rateTier       RateTier     @map("rate_tier")
+  /// Null for services without a pax tier (e.g. ball boy). 1 or 2 for coaching fee.
+  paxCount       Int?         @map("pax_count")
+  priceCentavos  Int          @map("price_centavos")
+  bookingAddOns  BookingAddOn[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([addOnServiceId, resourceTypeId, rateTier, paxCount])
+  @@map("add_on_pricing_rules")
+}
+
+model BookingAddOn {
+  id                 String           @id @default(cuid())
+  bookingId          String           @map("booking_id")
+  booking            Booking          @relation(fields: [bookingId], references: [id])
+  addOnServiceId     String           @map("add_on_service_id")
+  addOnService       AddOnService     @relation(fields: [addOnServiceId], references: [id])
+  addOnPricingRuleId String           @map("add_on_pricing_rule_id")
+  addOnPricingRule   AddOnPricingRule @relation(fields: [addOnPricingRuleId], references: [id])
+  quantity           Int              @default(1)
+  /// Snapshot of the price actually charged, independent of future AddOnPricingRule edits.
+  amountCentavos     Int              @map("amount_centavos")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("booking_add_ons")
+}
+
+// ── Payment (Decision: Payment ↔ Booking relationship) ─
+
+model Payment {
+  id        String        @id @default(cuid())
+  /// Nullable + unique: one Payment per Booking today; null bookingId reserved for future POS transactions.
+  bookingId String?       @unique @map("booking_id")
+  booking   Booking?      @relation(fields: [bookingId], references: [id])
+  amountCentavos          Int           @map("amount_centavos")
+  status                  PaymentStatus @default(pending)
+  paymongoPaymentIntentId String?       @unique @map("paymongo_payment_intent_id")
+  paidAt                  DateTime?     @map("paid_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
+
+// ── Bulletin ────────────────────────────────────────────
+
+model Bulletin {
+  id          String    @id @default(cuid())
+  title       String
+  body        String
+  isPublished Boolean   @default(false) @map("is_published")
+  publishedAt DateTime? @map("published_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("bulletins")
+}

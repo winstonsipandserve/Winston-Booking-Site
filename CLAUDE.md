@@ -147,9 +147,11 @@ Promotion between branches is manual — no automated CI/CD merge gates.
 
 **Commands** (fill in once scaffolded):
 - Dev server: `npm run dev`
-- Prisma migrate: `npx prisma migrate dev`
-- Prisma studio: `npx prisma studio`
+- Prisma migrate: `npm run db:migrate`
+- Prisma studio: `npm run db:studio`
 - Tests: TBD
+
+Note: Prisma CLI commands are wrapped with `dotenv-cli` (`dotenv -e .env.local --`) because Prisma's CLI only auto-reads a file literally named `.env` — it does not read `.env.local` the way Next.js does at runtime. `.env.local` remains the single source of truth; do not create a second `.env` file.
 
 ---
 

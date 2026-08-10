@@ -9,7 +9,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - Next.js scaffold: Done — TypeScript, Tailwind, App Router, npm
 - CLAUDE.md: Done — identity, tech stack, locked architecture decisions (5 resource types), scope/future-extension plan, skills, MCP servers, env var reference, dev workflow, branch promotion policy, open items
 - PROJECT_CONTEXT.md: Done — resource inventory, full pricing, guest fee rule, add-on services, membership tiers, membership application/approval flow, cancellation/reschedule policy, admin capabilities, bulletin
-- Prisma schema: Not started
+- Prisma schema: Done — 16 models, booking exclusion constraint (isolated migration), resource inventory seeded (pricing seeding deferred)
 - Customer-facing booking flow: Not started
 - Admin panel: Not started
 - PayMongo payment integration: Not started
@@ -34,10 +34,11 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-08-10 — CLAUDE.md updated: added MembershipCreditTransaction ledger model — Membership.creditBalanceCentavos is now a cached total backed by an immutable transaction log, POS-ready without pre-building spend logic
 - 2026-08-10 — Next.js scaffold created (TypeScript, Tailwind, App Router, npm) — package.json now exists at repo root
 - 2026-08-10 — CLAUDE.md + PROJECT_CONTEXT.md updated: guest fee rate confirmed as its own admin-editable GuestFeeRule table (not a PricingRule column, not hardcoded); membership payment ↔ Payment linkage flagged as still-open, added to Open/Not Yet Decided
+- 2026-08-10 — Prisma schema created (16 models: ResourceType, Resource, PricingRule, GuestFeeRule, Customer, AdminUser, MembershipApplication, Membership, MembershipCreditTransaction, Booking, BookingReschedule, AddOnService, AddOnPricingRule, BookingAddOn, Payment, Bulletin) and initial migration applied; booking-overlap exclusion constraint (`booking_no_overlap`) applied via an isolated migration kept separate from `init`, master copy at `prisma/manual-sql/booking-exclusion-constraint.sql`; resource inventory seeded (5 ResourceType rows, 9 Resource rows — pricing tables intentionally left empty, deferred to a future prompt); CLAUDE.md Commands section updated so `db:migrate`/`db:studio`/`db:seed` wrap the Prisma CLI with `dotenv-cli` (`.env.local` isn't auto-read by the CLI). Note: installed Prisma pinned to 6.19.3, not latest 7.x — Prisma 7 removed inline `datasource url`/`directUrl` support (moved to a separate `prisma.config.ts`), which would have broken the schema shape this prompt specifies and CLAUDE.md's `DATABASE_URL`/`DIRECT_URL` env var table; flagging in case a deliberate Prisma 7 migration is wanted later. Resource labels ("Court 1", "Bay 1", etc.) are a reasonable default, not specified in PROJECT_CONTEXT.md — editable later via the admin panel.
 
 ## Next Up
 
-- Prisma schema prompt is next now that the Next.js scaffold exists: core models — ResourceType/Resource, Customer, Payment/Transaction, Booking (state machine + exclusion constraint), AddOnService/BookingAddOn, Membership, MembershipApplication, Bulletin
+- Booking creation flow is next, now that the schema and seed data exist: availability check against the exclusion constraint, hold-and-expire logic (per the `booking-conflict-prevention` skill)
 
 ## Open Decisions
 
