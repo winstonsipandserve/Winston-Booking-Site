@@ -48,6 +48,7 @@ These are locked in. Don't deviate without discussing first.
 - **Money**: Stored as `Int` in centavos everywhere, matching PayMongo's native format. Never use floats for currency.
 - **Booking state machine**: `pending_payment` → `confirmed` (webhook) or `cancelled` (hold expiry / failed payment).
 - **Pricing model**: Prices are stored in the database (`PricingRule` for court/simulator rates, `AddOnPricingRule` for coaching fee / ball boy rates) rather than hardcoded in application code. This lets admin edit prices via the admin panel without a code deploy. Each row is an explicit combination of resource type, member/non-member rate, and duration tier — invalid combinations (e.g. non-member golf-sim 30-min) simply have no row, rather than existing with a null or zero price.
+- **Customer & auth model**: `Customer` records carry no auth fields (no password, no login) — they're created from name/email/phone at booking time for non-members, who never need an account. Only members log in; that account will link to `Customer` once Auth.js's method is decided (see "Open / Not Yet Decided") — this doesn't block current schema work. Since bookings can repeat with the same email and `Customer.email` is unique, booking creation must look up-or-create `Customer` by email, not blind-insert.
 
 ---
 

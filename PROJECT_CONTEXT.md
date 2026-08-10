@@ -13,6 +13,13 @@ Business rules, pricing, and membership logic for Winston Sip and Serve, as fina
 
 ---
 
+## Account Requirements
+
+- Non-members can book without creating an account. Before payment (redirect to PayMongo), they must provide: name, phone number, email address.
+- Only members have login accounts — account access is tied to an approved Membership.
+
+---
+
 ## Pricing
 
 ### Member Rates
