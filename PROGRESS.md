@@ -23,6 +23,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-08-10 — PROJECT_CONTEXT.md created: resource types, membership, and cancellation rules finalized; pricing left pending client rate table (`0a4d4cc`)
 - 2026-08-10 — PROJECT_CONTEXT.md updated with finalized pricing and add-on rate tables (`1e4daf4`)
 - 2026-08-10 — PROGRESS.md created
+- 2026-08-10 — CLAUDE.md + PROJECT_CONTEXT.md updated: pricing model confirmed as DB-driven (PricingRule/AddOnPricingRule), admin-editable via admin panel — added to Architecture Decisions and Admin Capabilities respectively
 
 ## Next Up
 

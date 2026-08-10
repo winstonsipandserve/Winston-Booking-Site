@@ -47,6 +47,7 @@ These are locked in. Don't deviate without discussing first.
 - **Booking confirmation**: A booking only flips to `confirmed` on a verified PayMongo `payment.paid` webhook (HMAC-SHA256 signature verified). Never confirm on client-side redirect.
 - **Money**: Stored as `Int` in centavos everywhere, matching PayMongo's native format. Never use floats for currency.
 - **Booking state machine**: `pending_payment` → `confirmed` (webhook) or `cancelled` (hold expiry / failed payment).
+- **Pricing model**: Prices are stored in the database (`PricingRule` for court/simulator rates, `AddOnPricingRule` for coaching fee / ball boy rates) rather than hardcoded in application code. This lets admin edit prices via the admin panel without a code deploy. Each row is an explicit combination of resource type, member/non-member rate, and duration tier — invalid combinations (e.g. non-member golf-sim 30-min) simply have no row, rather than existing with a null or zero price.
 
 ---
 
