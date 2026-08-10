@@ -6,6 +6,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 
 ## Build Status
 
+- Next.js scaffold: Done — TypeScript, Tailwind, App Router, npm
 - CLAUDE.md: Done — identity, tech stack, locked architecture decisions (5 resource types), scope/future-extension plan, skills, MCP servers, env var reference, dev workflow, branch promotion policy, open items
 - PROJECT_CONTEXT.md: Done — resource inventory, full pricing, guest fee rule, add-on services, membership tiers, membership application/approval flow, cancellation/reschedule policy, admin capabilities, bulletin
 - Prisma schema: Not started
@@ -31,10 +32,11 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-08-10 — CLAUDE.md updated: confirmed BookingReschedule is createdAt-only and immutable by design (audit trail integrity) — corrections are handled via a new row, not editing the original; added exception to Coding Conventions and new Architecture Decisions bullet
 - 2026-08-10 — CLAUDE.md updated: Payment.bookingId confirmed as a direct nullable FK to Booking (not polymorphic) — documented as Architecture Decision, trades a small future migration for POS support in exchange for DB-enforced integrity now
 - 2026-08-10 — CLAUDE.md updated: added MembershipCreditTransaction ledger model — Membership.creditBalanceCentavos is now a cached total backed by an immutable transaction log, POS-ready without pre-building spend logic
+- 2026-08-10 — Next.js scaffold created (TypeScript, Tailwind, App Router, npm) — package.json now exists at repo root
 
 ## Next Up
 
-- Core Prisma schema: ResourceType/Resource, Customer, Payment/Transaction, Booking (state machine + exclusion constraint), AddOnService/BookingAddOn, Membership, MembershipApplication, Bulletin
+- Prisma schema prompt is next now that the Next.js scaffold exists: core models — ResourceType/Resource, Customer, Payment/Transaction, Booking (state machine + exclusion constraint), AddOnService/BookingAddOn, Membership, MembershipApplication, Bulletin
 
 ## Open Decisions
 
