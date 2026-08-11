@@ -67,7 +67,7 @@ export default function TimeSlotGrid({
     const busyRanges = busy.map((b) => ({ start: new Date(b.start), end: new Date(b.end) }))
 
     const result: Slot[] = []
-    for (let m = openMinutes; m < closeMinutes; m += granularity) {
+    for (let m = openMinutes; m <= closeMinutes; m += granularity) {
       const hh = Math.floor(m / 60)
       const mm = m % 60
       const startIso = `${selectedDate}T${pad2(hh)}:${pad2(mm)}:00+08:00`
