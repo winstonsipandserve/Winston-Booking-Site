@@ -154,7 +154,9 @@ Promotion between branches is manual — no automated CI/CD merge gates.
   git operations.
 - **Open question**: PayMongo key handling per environment (test keys
   on `staging`, live keys on `main`) is not yet confirmed — flag this
-  before the first real promotion to `main` involving payments.
+  before the first real promotion to `main` involving payments. See
+  "Open / Not Yet Decided" for the current key-provenance detail
+  (whose test keys are in use today and the required swap points).
 
 **Commands** (fill in once scaffolded):
 - Dev server: `npm run dev`
@@ -170,5 +172,5 @@ Note: Prisma CLI commands are wrapped with `dotenv-cli` (`dotenv -e .env.local -
 
 - Auth method: email/password vs. magic link
 - Domain + DNS not yet set up
-- PayMongo account not yet created by client (test keys pending)
+- PayMongo account not yet created by the client. In the meantime, the `PAYMONGO_SECRET_KEY` / `PAYMONGO_PUBLIC_KEY` / `PAYMONGO_WEBHOOK_SECRET` values currently in `.env.local` belong to Arjay's personal PayMongo test-mode account, used temporarily so PayMongo integration work can proceed without waiting on the client — these are test-mode credentials only, never live keys. Before promoting to `staging`, swap in the client's own PayMongo test keys once their account exists; before promoting to `main`, swap in the client's live keys. This swap must be explicitly confirmed as done before any promotion to `main` that touches payments.
 - Membership payment ↔ Payment relationship: how (or whether) a PayMongo payment for membership activation/credit purchase links to the `Payment` model is undecided. The current schema draft omits this link entirely — `Payment.bookingId` remains the only relationship, scoped to bookings only. Revisit before building the membership payment flow.
