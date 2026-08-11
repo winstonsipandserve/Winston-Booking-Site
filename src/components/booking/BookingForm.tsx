@@ -1,8 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { formatCentavos } from '@/lib/format'
 import BookingConfirmation, { type BookingSuccess } from './BookingConfirmation'
+import StepIndicator from './steps/StepIndicator'
+import SportStep from './steps/SportStep'
+import CourtStep from './steps/CourtStep'
+import DateTimeStep from './steps/DateTimeStep'
+import DetailsStep from './steps/DetailsStep'
+import ReviewStep from './steps/ReviewStep'
 
 type RateTier = 'member' | 'non_member'
 type ResourceCategory = 'court' | 'simulator'
@@ -33,10 +38,13 @@ interface ResourcesResponse {
 }
 
 const COURT_DURATIONS_MINUTES = [60, 120, 180]
+const TOTAL_STEPS = 5
 
 export default function BookingForm() {
   const [data, setData] = useState<ResourcesResponse | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+
+  const [step, setStep] = useState(1)
 
   const [resourceTypeId, setResourceTypeId] = useState('')
   const [resourceId, setResourceId] = useState('')
@@ -46,6 +54,8 @@ export default function BookingForm() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [ballBoy, setBallBoy] = useState(false)
+  const [coaching, setCoaching] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -125,8 +135,22 @@ export default function BookingForm() {
     return tierRate ? tierRate.priceCentavos : null
   }, [selectedResourceType, durationMinutes, guestCount, isCourt, data])
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
+  const canContinue = useMemo(() => {
+    switch (step) {
+      case 1:
+        return !!resourceTypeId
+      case 2:
+        return !!resourceId
+      case 3:
+        return !!startTimeLocal && !!durationMinutes
+      case 4:
+        return name.trim().length > 0 && phone.trim().length > 0 && email.trim().length > 0
+      default:
+        return true
+    }
+  }, [step, resourceTypeId, resourceId, startTimeLocal, durationMinutes, name, phone, email])
+
+  async function handleConfirm() {
     if (!resourceId || !durationMinutes || !startTimeLocal) return
 
     setSubmitting(true)
@@ -194,157 +218,98 @@ export default function BookingForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-md flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="resourceType" className="text-sm font-medium">
-          Resource type
-        </label>
-        <select
-          id="resourceType"
-          value={resourceTypeId}
-          onChange={(e) => setResourceTypeId(e.target.value)}
-          className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
-        >
-          {data.resourceTypes.map((rt) => (
-            <option key={rt.id} value={rt.id}>
-              {rt.name}
-            </option>
-          ))}
-        </select>
-      </div>
+    <div className="flex w-full max-w-2xl flex-col items-center gap-8">
+      <StepIndicator currentStep={step} />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="resource" className="text-sm font-medium">
-          Court / bay
-        </label>
-        <select
-          id="resource"
-          value={resourceId}
-          onChange={(e) => setResourceId(e.target.value)}
-          className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
-        >
-          {selectedResourceType?.resources.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="startTime" className="text-sm font-medium">
-          Date &amp; time
-        </label>
-        <input
-          id="startTime"
-          type="datetime-local"
-          required
-          value={startTimeLocal}
-          onChange={(e) => setStartTimeLocal(e.target.value)}
-          className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
+      {step === 1 && (
+        <SportStep
+          resourceTypes={data.resourceTypes}
+          resourceTypeId={resourceTypeId}
+          onSelect={setResourceTypeId}
         />
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="duration" className="text-sm font-medium">
-          Duration
-        </label>
-        <select
-          id="duration"
-          value={durationMinutes}
-          onChange={(e) => setDurationMinutes(e.target.value)}
-          className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
-        >
-          {durationOptions.map((d) => (
-            <option key={d} value={d}>
-              {d} minutes
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {isCourt && (
-        <div className="flex flex-col gap-1">
-          <label htmlFor="guestCount" className="text-sm font-medium">
-            Number of guests
-          </label>
-          <input
-            id="guestCount"
-            type="number"
-            min={0}
-            value={guestCount}
-            onChange={(e) => setGuestCount(Math.max(0, Number(e.target.value)))}
-            className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
-          />
-        </div>
       )}
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="name" className="text-sm font-medium">
-          Name
-        </label>
-        <input
-          id="name"
-          type="text"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
+      {step === 2 && selectedResourceType && (
+        <CourtStep
+          resourceTypeName={selectedResourceType.name}
+          resources={selectedResourceType.resources}
+          resourceId={resourceId}
+          onSelect={setResourceId}
         />
-      </div>
+      )}
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="phone" className="text-sm font-medium">
-          Phone
-        </label>
-        <input
-          id="phone"
-          type="tel"
-          required
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
+      {step === 3 && (
+        <DateTimeStep
+          startTimeLocal={startTimeLocal}
+          onStartTimeChange={setStartTimeLocal}
+          durationMinutes={durationMinutes}
+          onDurationChange={setDurationMinutes}
+          durationOptions={durationOptions}
         />
-      </div>
+      )}
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
+      {step === 4 && (
+        <DetailsStep
+          isCourt={!!isCourt}
+          guestCount={guestCount}
+          onGuestCountChange={setGuestCount}
+          name={name}
+          onNameChange={setName}
+          phone={phone}
+          onPhoneChange={setPhone}
+          email={email}
+          onEmailChange={setEmail}
+          ballBoy={ballBoy}
+          onBallBoyChange={setBallBoy}
+          coaching={coaching}
+          onCoachingChange={setCoaching}
         />
-      </div>
+      )}
 
-      <div className="rounded border border-black/[.08] bg-black/[.03] px-3 py-2 text-sm dark:border-white/[.08] dark:bg-white/[.04]">
-        {estimateCentavos !== null ? (
-          <>
-            <p className="font-medium">Estimated price: {formatCentavos(estimateCentavos)}</p>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Estimated at non-member rate — your final price reflects any active membership.
-            </p>
-          </>
-        ) : (
-          <p className="text-zinc-600 dark:text-zinc-400">
-            No estimate available for this combination — your final price will be confirmed on submit.
-          </p>
-        )}
-      </div>
+      {step === 5 && (
+        <ReviewStep
+          resourceTypeName={selectedResourceType?.name ?? ''}
+          resourceLabel={
+            selectedResourceType?.resources.find((r) => r.id === resourceId)?.label ?? ''
+          }
+          startTimeLocal={startTimeLocal}
+          durationMinutes={durationMinutes}
+          isCourt={!!isCourt}
+          guestCount={guestCount}
+          name={name}
+          phone={phone}
+          email={email}
+          ballBoy={ballBoy}
+          coaching={coaching}
+          estimateCentavos={estimateCentavos}
+          submitting={submitting}
+          submitError={submitError}
+          onBack={() => setStep(4)}
+          onConfirm={handleConfirm}
+        />
+      )}
 
-      {submitError && <p className="text-sm text-red-600">{submitError}</p>}
-
-      <button
-        type="submit"
-        disabled={submitting}
-        className="rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
-      >
-        {submitting ? 'Booking…' : 'Book Now'}
-      </button>
-    </form>
+      {step < 5 && (
+        <div className="flex w-full max-w-md gap-3">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => setStep((s) => s - 1)}
+              className="flex-1 rounded-full border border-black/[.145] px-5 py-3 text-base font-medium transition-colors hover:bg-black/[.03] dark:border-white/[.145] dark:hover:bg-white/[.04]"
+            >
+              Back
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setStep((s) => Math.min(TOTAL_STEPS, s + 1))}
+            disabled={!canContinue}
+            className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+          >
+            Continue
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
