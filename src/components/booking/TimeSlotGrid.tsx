@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BUSINESS_CLOSE_HOUR, BUSINESS_OPEN_HOUR, toPhDateString } from '@/lib/business-hours'
 
 interface BusyRange {
@@ -24,6 +24,7 @@ interface Slot {
   startDate: Date
   label: string
   disabled: boolean
+  exceedsClosing: boolean
 }
 
 function pad2(n: number): string {
@@ -66,7 +67,7 @@ export default function TimeSlotGrid({
     const busyRanges = busy.map((b) => ({ start: new Date(b.start), end: new Date(b.end) }))
 
     const result: Slot[] = []
-    for (let m = openMinutes; m + durationMinutes <= closeMinutes; m += granularity) {
+    for (let m = openMinutes; m < closeMinutes; m += granularity) {
       const hh = Math.floor(m / 60)
       const mm = m % 60
       const startIso = `${selectedDate}T${pad2(hh)}:${pad2(mm)}:00+08:00`
@@ -75,16 +76,36 @@ export default function TimeSlotGrid({
 
       const overlapsBusy = busyRanges.some((b) => startDate < b.end && endDate > b.start)
       const isPast = isToday && startDate <= now
+      const exceedsClosing = m + durationMinutes > closeMinutes
 
       result.push({
         startIso,
         startDate,
         label: formatLabel(m),
         disabled: overlapsBusy || isPast,
+        exceedsClosing,
       })
     }
     return result
   }, [selectedDate, durationMinutes, resourceCategory, resourceSlug, busy])
+
+  const [closingWarning, setClosingWarning] = useState<string | null>(null)
+  const warningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleClosingViolation(slot: Slot) {
+    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current)
+    const closeLabel = formatLabel(BUSINESS_CLOSE_HOUR * 60)
+    setClosingWarning(
+      `A ${durationMinutes}-minute booking can't start at ${slot.label} — we close at ${closeLabel}. Try an earlier time or a shorter duration.`
+    )
+    warningTimeoutRef.current = setTimeout(() => setClosingWarning(null), 4000)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current)
+    }
+  }, [])
 
   if (loading) {
     return (
@@ -108,30 +129,45 @@ export default function TimeSlotGrid({
     : null
 
   return (
-    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-      {slots.map((slot) => {
-        const isInSelectedRange =
-          selectedRange !== null &&
-          slot.startDate >= selectedRange.start &&
-          slot.startDate <= selectedRange.end
-        return (
-          <button
-            key={slot.startIso}
-            type="button"
-            disabled={slot.disabled}
-            onClick={() => onSelectSlot(slot.startIso)}
-            className={`rounded border px-2 py-2 text-sm transition-colors ${
-              isInSelectedRange
-                ? 'border-foreground bg-foreground text-background hover:bg-foreground'
-                : slot.disabled
-                  ? 'cursor-not-allowed border-black/[.08] text-zinc-400 dark:border-white/[.08] dark:text-zinc-600'
-                  : 'border-black/[.145] hover:bg-black/[.05] dark:border-white/[.145] dark:hover:bg-white/[.08]'
-            } ${slot.disabled ? 'cursor-not-allowed' : ''}`}
-          >
-            {slot.label}
-          </button>
-        )
-      })}
+    <div className="flex flex-col gap-2">
+      {closingWarning && (
+        <div className="rounded border border-amber-400/60 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/40 dark:text-amber-300">
+          {closingWarning}
+        </div>
+      )}
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {slots.map((slot) => {
+          const isInSelectedRange =
+            selectedRange !== null &&
+            slot.startDate >= selectedRange.start &&
+            slot.startDate <= selectedRange.end
+          return (
+            <button
+              key={slot.startIso}
+              type="button"
+              disabled={slot.disabled}
+              onClick={() => {
+                if (slot.exceedsClosing) {
+                  handleClosingViolation(slot)
+                  return
+                }
+                onSelectSlot(slot.startIso)
+              }}
+              className={`rounded border px-2 py-2 text-sm transition-colors ${
+                isInSelectedRange
+                  ? 'border-foreground bg-foreground text-background hover:bg-foreground'
+                  : slot.disabled
+                    ? 'cursor-not-allowed border-black/[.08] text-zinc-400 dark:border-white/[.08] dark:text-zinc-600'
+                    : slot.exceedsClosing
+                      ? 'border-amber-500/50 text-amber-700 hover:bg-amber-500/10 dark:border-amber-400/40 dark:text-amber-400 dark:hover:bg-amber-400/10'
+                      : 'border-black/[.145] hover:bg-black/[.05] dark:border-white/[.145] dark:hover:bg-white/[.08]'
+              } ${slot.disabled ? 'cursor-not-allowed' : ''}`}
+            >
+              {slot.label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
