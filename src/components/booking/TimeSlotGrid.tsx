@@ -113,7 +113,7 @@ export default function TimeSlotGrid({
         const isInSelectedRange =
           selectedRange !== null &&
           slot.startDate >= selectedRange.start &&
-          slot.startDate < selectedRange.end
+          slot.startDate <= selectedRange.end
         return (
           <button
             key={slot.startIso}
