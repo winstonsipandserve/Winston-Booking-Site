@@ -21,6 +21,7 @@ interface TimeSlotGridProps {
 
 interface Slot {
   startIso: string
+  startDate: Date
   label: string
   disabled: boolean
 }
@@ -77,6 +78,7 @@ export default function TimeSlotGrid({
 
       result.push({
         startIso,
+        startDate,
         label: formatLabel(m),
         disabled: overlapsBusy || isPast,
       })
@@ -98,10 +100,20 @@ export default function TimeSlotGrid({
     )
   }
 
+  const selectedRange = selectedSlot
+    ? {
+        start: new Date(selectedSlot),
+        end: new Date(new Date(selectedSlot).getTime() + durationMinutes * 60000),
+      }
+    : null
+
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
       {slots.map((slot) => {
-        const isSelected = slot.startIso === selectedSlot
+        const isInSelectedRange =
+          selectedRange !== null &&
+          slot.startDate >= selectedRange.start &&
+          slot.startDate < selectedRange.end
         return (
           <button
             key={slot.startIso}
@@ -109,10 +121,12 @@ export default function TimeSlotGrid({
             disabled={slot.disabled}
             onClick={() => onSelectSlot(slot.startIso)}
             className={`rounded border px-2 py-2 text-sm transition-colors ${
-              slot.disabled
-                ? 'cursor-not-allowed border-black/[.08] text-zinc-400 dark:border-white/[.08] dark:text-zinc-600'
-                : 'border-black/[.145] hover:bg-black/[.05] dark:border-white/[.145] dark:hover:bg-white/[.08]'
-            } ${isSelected ? 'border-foreground bg-foreground text-background hover:bg-foreground' : ''}`}
+              isInSelectedRange
+                ? 'border-foreground bg-foreground text-background hover:bg-foreground'
+                : slot.disabled
+                  ? 'cursor-not-allowed border-black/[.08] text-zinc-400 dark:border-white/[.08] dark:text-zinc-600'
+                  : 'border-black/[.145] hover:bg-black/[.05] dark:border-white/[.145] dark:hover:bg-white/[.08]'
+            } ${slot.disabled ? 'cursor-not-allowed' : ''}`}
           >
             {slot.label}
           </button>
