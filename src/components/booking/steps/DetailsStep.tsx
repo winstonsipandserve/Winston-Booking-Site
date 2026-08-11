@@ -1,7 +1,4 @@
 interface DetailsStepProps {
-  isCourt: boolean
-  guestCount: number
-  onGuestCountChange: (value: number) => void
   name: string
   onNameChange: (value: string) => void
   phone: string
@@ -11,9 +8,6 @@ interface DetailsStepProps {
 }
 
 export default function DetailsStep({
-  isCourt,
-  guestCount,
-  onGuestCountChange,
   name,
   onNameChange,
   phone,
@@ -23,22 +17,6 @@ export default function DetailsStep({
 }: DetailsStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
-      {isCourt && (
-        <div className="flex flex-col gap-1">
-          <label htmlFor="guestCount" className="text-sm font-medium">
-            Number of guests
-          </label>
-          <input
-            id="guestCount"
-            type="number"
-            min={0}
-            value={guestCount}
-            onChange={(e) => onGuestCountChange(Math.max(0, Number(e.target.value)))}
-            className="rounded border border-black/[.145] bg-transparent px-3 py-2 dark:border-white/[.145]"
-          />
-        </div>
-      )}
-
       <div className="flex flex-col gap-1">
         <label htmlFor="name" className="text-sm font-medium">
           Name

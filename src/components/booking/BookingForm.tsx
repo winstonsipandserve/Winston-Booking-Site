@@ -322,9 +322,6 @@ export default function BookingForm() {
 
       {step === 4 && (
         <DetailsStep
-          isCourt={!!isCourt}
-          guestCount={guestCount}
-          onGuestCountChange={setGuestCount}
           name={name}
           onNameChange={setName}
           phone={phone}
@@ -337,6 +334,8 @@ export default function BookingForm() {
       {step === 5 && (
         <AddOnsStep
           isCourt={!!isCourt}
+          guestCount={guestCount}
+          onGuestCountChange={setGuestCount}
           ballBoy={ballBoy}
           onBallBoyChange={setBallBoy}
           coaching={coaching}
