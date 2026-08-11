@@ -46,6 +46,13 @@ Business rules, pricing, and membership logic for Winston Sip and Serve, as fina
 
 ---
 
+## Business Hours
+
+- 6:00 AM–10:00 PM daily, uniform across all resource types — no maximum advance-booking window.
+- The AM (6–11) / PM (12–10) rate-period split referenced elsewhere is a display label only, not a booking restriction — bookings may span freely across the 11am–12pm boundary.
+
+---
+
 ## Guest Fee Rule
 
 - Applies to non-member court bookings only (NOT simulators, NOT member bookings)

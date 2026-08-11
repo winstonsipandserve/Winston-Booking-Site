@@ -1,7 +1,7 @@
 import { Prisma, RateTier } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-
-const HOLD_MINUTES = Number(process.env.BOOKING_HOLD_MINUTES) || 10
+import { HOLD_MINUTES } from '@/lib/booking-hold'
+import { isWithinBusinessHours } from '@/lib/business-hours'
 
 interface BookingRequestBody {
   resourceId?: unknown
@@ -82,6 +82,15 @@ export async function POST(request: Request) {
     )
   }
 
+  const endTime = new Date(parsedStartTime.getTime() + durationMinutes * 60000)
+
+  if (!isWithinBusinessHours(parsedStartTime, endTime)) {
+    return Response.json(
+      { error: 'Bookings must start and end between 6:00 AM and 10:00 PM' },
+      { status: 400 },
+    )
+  }
+
   const name = customer.name as string
   const email = customer.email as string
   const phone = customer.phone as string
@@ -103,8 +112,6 @@ export async function POST(request: Request) {
     where: { customerId: customerRecord.id, status: 'active', endDate: { gte: now } },
   })
   const rateTier: RateTier = activeMembership ? 'member' : 'non_member'
-
-  const endTime = new Date(parsedStartTime.getTime() + durationMinutes * 60000)
 
   const pricingRule = await prisma.pricingRule.findUnique({
     where: {

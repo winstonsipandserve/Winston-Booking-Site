@@ -37,6 +37,11 @@ interface ResourcesResponse {
   guestFeeCentavos: number
 }
 
+interface BusyRange {
+  start: string
+  end: string
+}
+
 const COURT_DURATIONS_MINUTES = [60, 120, 180]
 const TOTAL_STEPS = 5
 
@@ -48,9 +53,13 @@ export default function BookingForm() {
 
   const [resourceTypeId, setResourceTypeId] = useState('')
   const [resourceId, setResourceId] = useState('')
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [startTimeLocal, setStartTimeLocal] = useState('')
   const [durationMinutes, setDurationMinutes] = useState('')
   const [guestCount, setGuestCount] = useState(0)
+  const [busy, setBusy] = useState<BusyRange[]>([])
+  const [availabilityLoading, setAvailabilityLoading] = useState(false)
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
@@ -117,6 +126,43 @@ export default function BookingForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceTypeId])
 
+  // Reset the chosen slot whenever any input that could invalidate it changes.
+  useEffect(() => {
+    setStartTimeLocal('')
+  }, [resourceId, selectedDate, durationMinutes])
+
+  useEffect(() => {
+    if (!resourceId || !selectedDate) {
+      setBusy([])
+      return
+    }
+    let cancelled = false
+    setAvailabilityLoading(true)
+    setAvailabilityError(null)
+    fetch(
+      `/api/availability?resourceId=${encodeURIComponent(resourceId)}&date=${encodeURIComponent(selectedDate)}`,
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load availability')
+        return res.json() as Promise<{ busy: BusyRange[] }>
+      })
+      .then((json) => {
+        if (cancelled) return
+        setBusy(json.busy)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setBusy([])
+        setAvailabilityError('Could not load available times. Please try again.')
+      })
+      .finally(() => {
+        if (!cancelled) setAvailabilityLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [resourceId, selectedDate])
+
   const estimateCentavos = useMemo(() => {
     if (!selectedResourceType || !durationMinutes || !data) return null
     const duration = Number(durationMinutes)
@@ -142,13 +188,23 @@ export default function BookingForm() {
       case 2:
         return !!resourceId
       case 3:
-        return !!startTimeLocal && !!durationMinutes
+        return !!selectedDate && !!startTimeLocal && !!durationMinutes
       case 4:
         return name.trim().length > 0 && phone.trim().length > 0 && email.trim().length > 0
       default:
         return true
     }
-  }, [step, resourceTypeId, resourceId, startTimeLocal, durationMinutes, name, phone, email])
+  }, [
+    step,
+    resourceTypeId,
+    resourceId,
+    selectedDate,
+    startTimeLocal,
+    durationMinutes,
+    name,
+    phone,
+    email,
+  ])
 
   async function handleConfirm() {
     if (!resourceId || !durationMinutes || !startTimeLocal) return
@@ -240,11 +296,18 @@ export default function BookingForm() {
 
       {step === 3 && (
         <DateTimeStep
-          startTimeLocal={startTimeLocal}
-          onStartTimeChange={setStartTimeLocal}
           durationMinutes={durationMinutes}
           onDurationChange={setDurationMinutes}
           durationOptions={durationOptions}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          resourceCategory={selectedResourceType?.category ?? ''}
+          resourceSlug={selectedResourceType?.slug ?? ''}
+          busy={busy}
+          availabilityLoading={availabilityLoading}
+          availabilityError={availabilityError}
+          selectedSlot={startTimeLocal}
+          onSelectSlot={setStartTimeLocal}
         />
       )}
 
