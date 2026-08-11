@@ -19,6 +19,13 @@ interface PricingTier {
   priceCentavos: number
 }
 
+interface AddOnPricingTier {
+  service: string
+  rateTier: RateTier
+  paxCount: number | null
+  priceCentavos: number
+}
+
 interface ResourceOption {
   id: string
   label: string
@@ -31,6 +38,62 @@ interface ResourceTypeOption {
   category: ResourceCategory
   resources: ResourceOption[]
   pricing: PricingTier[]
+  addOnPricing: AddOnPricingTier[]
+}
+
+interface BallBoyPricing {
+  available: boolean
+  priceCentavos: number | null
+}
+
+interface CoachingPricing {
+  available: boolean
+  mode: 'flat' | 'paxTiered' | null
+  flatPriceCentavos: number | null
+  pax1PriceCentavos: number | null
+  pax2PriceCentavos: number | null
+}
+
+const EMPTY_BALL_BOY_PRICING: BallBoyPricing = { available: false, priceCentavos: null }
+const EMPTY_COACHING_PRICING: CoachingPricing = {
+  available: false,
+  mode: null,
+  flatPriceCentavos: null,
+  pax1PriceCentavos: null,
+  pax2PriceCentavos: null,
+}
+
+function getBallBoyPricing(resourceType: ResourceTypeOption | null): BallBoyPricing {
+  if (!resourceType) return EMPTY_BALL_BOY_PRICING
+  const rule = resourceType.addOnPricing.find(
+    (a) => a.service === 'ball_boy' && a.rateTier === 'non_member',
+  )
+  return rule ? { available: true, priceCentavos: rule.priceCentavos } : EMPTY_BALL_BOY_PRICING
+}
+
+function getCoachingPricing(resourceType: ResourceTypeOption | null): CoachingPricing {
+  if (!resourceType) return EMPTY_COACHING_PRICING
+  const rules = resourceType.addOnPricing.filter(
+    (a) => a.service === 'coaching_fee' && a.rateTier === 'non_member',
+  )
+  if (rules.length === 0) return EMPTY_COACHING_PRICING
+  const flatRule = rules.find((r) => r.paxCount === null)
+  if (flatRule) {
+    return {
+      available: true,
+      mode: 'flat',
+      flatPriceCentavos: flatRule.priceCentavos,
+      pax1PriceCentavos: null,
+      pax2PriceCentavos: null,
+    }
+  }
+  return {
+    available: true,
+    mode: 'paxTiered',
+    flatPriceCentavos: null,
+    pax1PriceCentavos: rules.find((r) => r.paxCount === 1)?.priceCentavos ?? null,
+    pax2PriceCentavos: rules.find((r) => r.paxCount === 2)?.priceCentavos ?? null,
+  }
 }
 
 interface ResourcesResponse {
@@ -77,6 +140,7 @@ export default function BookingForm() {
   const [phone, setPhone] = useState('')
   const [ballBoy, setBallBoy] = useState(false)
   const [coaching, setCoaching] = useState(false)
+  const [coachingPaxCount, setCoachingPaxCount] = useState<number | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -120,6 +184,9 @@ export default function BookingForm() {
     return getDurationOptions(selectedResourceType)
   }, [selectedResourceType])
 
+  const ballBoyPricing = useMemo(() => getBallBoyPricing(selectedResourceType), [selectedResourceType])
+  const coachingPricing = useMemo(() => getCoachingPricing(selectedResourceType), [selectedResourceType])
+
   // Reset dependent fields whenever the chosen resource type changes.
   useEffect(() => {
     if (!selectedResourceType) return
@@ -130,8 +197,17 @@ export default function BookingForm() {
     if (selectedResourceType.category !== 'court') {
       setBallBoy(false)
     }
+    setCoachingPaxCount(null)
+    if (!getCoachingPricing(selectedResourceType).available) {
+      setCoaching(false)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceTypeId])
+
+  function handleCoachingChange(value: boolean) {
+    setCoaching(value)
+    if (!value) setCoachingPaxCount(null)
+  }
 
   // Reset the chosen slot whenever any input that could invalidate it changes.
   useEffect(() => {
@@ -188,6 +264,27 @@ export default function BookingForm() {
     return tierRate ? tierRate.priceCentavos : null
   }, [selectedResourceType, durationMinutes, guestCount, isCourt, data])
 
+  const addOnsEstimateCentavos = useMemo(() => {
+    let total = 0
+    if (ballBoy && ballBoyPricing.priceCentavos !== null) {
+      total += ballBoyPricing.priceCentavos
+    }
+    if (coaching) {
+      if (isCourt) {
+        const paxPrice =
+          coachingPaxCount === 1
+            ? coachingPricing.pax1PriceCentavos
+            : coachingPaxCount === 2
+              ? coachingPricing.pax2PriceCentavos
+              : null
+        if (paxPrice !== null) total += paxPrice
+      } else if (coachingPricing.flatPriceCentavos !== null) {
+        total += coachingPricing.flatPriceCentavos
+      }
+    }
+    return total
+  }, [ballBoy, coaching, coachingPaxCount, isCourt, ballBoyPricing, coachingPricing])
+
   const canContinue = useMemo(() => {
     switch (step) {
       case 1:
@@ -199,7 +296,7 @@ export default function BookingForm() {
       case 4:
         return name.trim().length > 0 && phone.trim().length > 0 && email.trim().length > 0
       case 5:
-        return true
+        return !(coaching && isCourt && coachingPaxCount === null)
       default:
         return true
     }
@@ -213,6 +310,9 @@ export default function BookingForm() {
     name,
     phone,
     email,
+    coaching,
+    isCourt,
+    coachingPaxCount,
   ])
 
   async function handleConfirm() {
@@ -230,6 +330,9 @@ export default function BookingForm() {
           startTime: new Date(startTimeLocal).toISOString(),
           durationMinutes: Number(durationMinutes),
           guestCount: isCourt ? guestCount : 0,
+          ballBoy,
+          coaching,
+          ...(coaching && isCourt && coachingPaxCount !== null ? { coachingPaxCount } : {}),
           customer: { name, email, phone },
         }),
       })
@@ -338,8 +441,12 @@ export default function BookingForm() {
           onGuestCountChange={setGuestCount}
           ballBoy={ballBoy}
           onBallBoyChange={setBallBoy}
+          ballBoyPricing={ballBoyPricing}
           coaching={coaching}
-          onCoachingChange={setCoaching}
+          onCoachingChange={handleCoachingChange}
+          coachingPricing={coachingPricing}
+          coachingPaxCount={coachingPaxCount}
+          onCoachingPaxCountChange={setCoachingPaxCount}
         />
       )}
 
@@ -357,8 +464,11 @@ export default function BookingForm() {
           phone={phone}
           email={email}
           ballBoy={ballBoy}
+          ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
           coaching={coaching}
+          coachingPaxCount={coachingPaxCount}
           estimateCentavos={estimateCentavos}
+          addOnsEstimateCentavos={addOnsEstimateCentavos}
           submitting={submitting}
           submitError={submitError}
           onBack={() => setStep(5)}

@@ -11,8 +11,11 @@ interface ReviewStepProps {
   phone: string
   email: string
   ballBoy: boolean
+  ballBoyPriceCentavos: number | null
   coaching: boolean
+  coachingPaxCount: number | null
   estimateCentavos: number | null
+  addOnsEstimateCentavos: number
   submitting: boolean
   submitError: string | null
   onBack: () => void
@@ -30,8 +33,11 @@ export default function ReviewStep({
   phone,
   email,
   ballBoy,
+  ballBoyPriceCentavos,
   coaching,
+  coachingPaxCount,
   estimateCentavos,
+  addOnsEstimateCentavos,
   submitting,
   submitError,
   onBack,
@@ -78,27 +84,37 @@ export default function ReviewStep({
         </div>
         <div className="flex justify-between gap-4">
           <dt className="font-medium">Ball Boy</dt>
-          <dd>{ballBoy ? 'Selected' : 'Not selected'}</dd>
+          <dd>
+            {ballBoy
+              ? ballBoyPriceCentavos !== null
+                ? formatCentavos(ballBoyPriceCentavos)
+                : 'Selected'
+              : 'Not selected'}
+          </dd>
         </div>
         <div className="flex justify-between gap-4">
           <dt className="font-medium">Coaching</dt>
-          <dd>{coaching ? 'Selected' : 'Not selected'}</dd>
+          <dd>
+            {coaching
+              ? isCourt && coachingPaxCount !== null
+                ? `${coachingPaxCount} Pax`
+                : 'Selected'
+              : 'Not selected'}
+          </dd>
         </div>
       </dl>
-
-      {(ballBoy || coaching) && (
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
-          Ball Boy / Coaching — coming soon, not yet included in your booking.
-        </p>
-      )}
 
       <div className="rounded border border-black/[.08] bg-black/[.03] px-3 py-2 text-sm dark:border-white/[.08] dark:bg-white/[.04]">
         {estimateCentavos !== null ? (
           <>
-            <p className="font-medium">Estimated price: {formatCentavos(estimateCentavos)}</p>
+            <p className="font-medium">
+              Estimated price: {formatCentavos(estimateCentavos + addOnsEstimateCentavos)}
+            </p>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Add-ons subtotal: {formatCentavos(addOnsEstimateCentavos)}
+            </p>
             <p className="text-zinc-600 dark:text-zinc-400">
               Estimated at non-member rate — your final price reflects any active membership.
-              Doesn&apos;t include Ball Boy or Coaching.
             </p>
           </>
         ) : (

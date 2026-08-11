@@ -1,5 +1,11 @@
 import { formatCentavos } from '@/lib/format'
 
+export interface BookingAddOn {
+  service: string
+  paxCount: number | null
+  amountCentavos: number
+}
+
 export interface BookingSuccess {
   id: string
   status: string
@@ -8,6 +14,13 @@ export interface BookingSuccess {
   endTime: string
   totalAmountCentavos: number
   holdExpiresAt: string
+  addOns: BookingAddOn[]
+  addOnsTotalCentavos: number
+}
+
+const ADD_ON_LABELS: Record<string, string> = {
+  ball_boy: 'Ball Boy',
+  coaching_fee: 'Coaching',
 }
 
 interface BookingConfirmationProps {
@@ -47,6 +60,29 @@ export default function BookingConfirmation({
           <dt className="font-medium">Price</dt>
           <dd>{formatCentavos(booking.totalAmountCentavos)}</dd>
         </div>
+        {booking.addOns.map((addOn, i) => (
+          <div key={i} className="flex justify-between gap-4">
+            <dt className="font-medium">
+              {ADD_ON_LABELS[addOn.service] ?? addOn.service}
+              {addOn.paxCount !== null && ` — ${addOn.paxCount} Pax`}
+            </dt>
+            <dd>{formatCentavos(addOn.amountCentavos)}</dd>
+          </div>
+        ))}
+        {booking.addOns.length > 0 && (
+          <>
+            <div className="flex justify-between gap-4">
+              <dt className="font-medium">Add-ons total</dt>
+              <dd>{formatCentavos(booking.addOnsTotalCentavos)}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="font-medium">Total</dt>
+              <dd>
+                {formatCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)}
+              </dd>
+            </div>
+          </>
+        )}
       </dl>
       <p className="rounded border border-black/[.08] bg-black/[.03] px-3 py-2 text-sm text-zinc-600 dark:border-white/[.08] dark:bg-white/[.04] dark:text-zinc-400">
         Payment isn&apos;t live yet — our team will follow up to confirm payment for this booking.

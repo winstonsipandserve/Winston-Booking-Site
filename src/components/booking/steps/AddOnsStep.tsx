@@ -1,11 +1,30 @@
+import { formatCentavos } from '@/lib/format'
+
+interface BallBoyPricing {
+  available: boolean
+  priceCentavos: number | null
+}
+
+interface CoachingPricing {
+  available: boolean
+  mode: 'flat' | 'paxTiered' | null
+  flatPriceCentavos: number | null
+  pax1PriceCentavos: number | null
+  pax2PriceCentavos: number | null
+}
+
 interface AddOnsStepProps {
   isCourt: boolean
   guestCount: number
   onGuestCountChange: (value: number) => void
   ballBoy: boolean
   onBallBoyChange: (value: boolean) => void
+  ballBoyPricing: BallBoyPricing
   coaching: boolean
   onCoachingChange: (value: boolean) => void
+  coachingPricing: CoachingPricing
+  coachingPaxCount: number | null
+  onCoachingPaxCountChange: (value: number) => void
 }
 
 export default function AddOnsStep({
@@ -14,8 +33,12 @@ export default function AddOnsStep({
   onGuestCountChange,
   ballBoy,
   onBallBoyChange,
+  ballBoyPricing,
   coaching,
   onCoachingChange,
+  coachingPricing,
+  coachingPaxCount,
+  onCoachingPaxCountChange,
 }: AddOnsStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -44,19 +67,53 @@ export default function AddOnsStep({
               onChange={(e) => onBallBoyChange(e.target.checked)}
             />
             Ball Boy
+            {ballBoyPricing.priceCentavos !== null &&
+              ` — ${formatCentavos(ballBoyPricing.priceCentavos)}`}
           </label>
         )}
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={coaching}
-            onChange={(e) => onCoachingChange(e.target.checked)}
-          />
-          Coaching
-        </label>
-        <p className="text-xs text-zinc-600 dark:text-zinc-400">
-          Coming soon — not yet included in your booking.
-        </p>
+
+        {coachingPricing.available && (
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={coaching}
+                onChange={(e) => onCoachingChange(e.target.checked)}
+              />
+              Coaching
+              {coachingPricing.mode === 'flat' &&
+                coachingPricing.flatPriceCentavos !== null &&
+                ` — ${formatCentavos(coachingPricing.flatPriceCentavos)}`}
+            </label>
+
+            {coaching && coachingPricing.mode === 'paxTiered' && (
+              <div className="ml-6 flex flex-col gap-1">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="coachingPaxCount"
+                    checked={coachingPaxCount === 1}
+                    onChange={() => onCoachingPaxCountChange(1)}
+                  />
+                  1 Pax
+                  {coachingPricing.pax1PriceCentavos !== null &&
+                    ` — ${formatCentavos(coachingPricing.pax1PriceCentavos)}`}
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="coachingPaxCount"
+                    checked={coachingPaxCount === 2}
+                    onChange={() => onCoachingPaxCountChange(2)}
+                  />
+                  2 Pax
+                  {coachingPricing.pax2PriceCentavos !== null &&
+                    ` — ${formatCentavos(coachingPricing.pax2PriceCentavos)}`}
+                </label>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
