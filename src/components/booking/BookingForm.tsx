@@ -127,6 +127,9 @@ export default function BookingForm() {
     setGuestCount(0)
     const durations = getDurationOptions(selectedResourceType)
     setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
+    if (selectedResourceType.category !== 'court') {
+      setBallBoy(false)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceTypeId])
 
