@@ -42,8 +42,19 @@ interface BusyRange {
   end: string
 }
 
-const COURT_DURATIONS_MINUTES = [60, 120, 180]
+const COURT_DURATIONS_MINUTES = [60, 120, 180, 240]
 const TOTAL_STEPS = 5
+
+function getDurationOptions(resourceType: ResourceTypeOption): number[] {
+  if (resourceType.category === 'court') return COURT_DURATIONS_MINUTES
+  return Array.from(
+    new Set(
+      resourceType.pricing
+        .filter((p) => p.rateTier === 'non_member')
+        .map((p) => p.durationMinutes),
+    ),
+  ).sort((a, b) => a - b)
+}
 
 export default function BookingForm() {
   const [data, setData] = useState<ResourcesResponse | null>(null)
@@ -105,10 +116,7 @@ export default function BookingForm() {
 
   const durationOptions = useMemo(() => {
     if (!selectedResourceType) return []
-    if (selectedResourceType.category === 'court') return COURT_DURATIONS_MINUTES
-    return Array.from(new Set(selectedResourceType.pricing.map((p) => p.durationMinutes))).sort(
-      (a, b) => a - b,
-    )
+    return getDurationOptions(selectedResourceType)
   }, [selectedResourceType])
 
   // Reset dependent fields whenever the chosen resource type changes.
@@ -116,12 +124,7 @@ export default function BookingForm() {
     if (!selectedResourceType) return
     setResourceId(selectedResourceType.resources[0]?.id ?? '')
     setGuestCount(0)
-    const durations =
-      selectedResourceType.category === 'court'
-        ? COURT_DURATIONS_MINUTES
-        : Array.from(new Set(selectedResourceType.pricing.map((p) => p.durationMinutes))).sort(
-            (a, b) => a - b,
-          )
+    const durations = getDurationOptions(selectedResourceType)
     setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resourceTypeId])
