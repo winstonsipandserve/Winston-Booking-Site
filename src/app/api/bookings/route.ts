@@ -8,6 +8,9 @@ interface BookingRequestBody {
   startTime?: unknown
   durationMinutes?: unknown
   guestCount?: unknown
+  ballBoy?: unknown
+  coaching?: unknown
+  coachingPaxCount?: unknown
   customer?: {
     name?: unknown
     email?: unknown
@@ -40,6 +43,8 @@ export async function POST(request: Request) {
 
   const { resourceId, startTime, durationMinutes, customer } = body
   const guestCountRaw = body.guestCount ?? 0
+  const ballBoyRaw = body.ballBoy ?? false
+  const coachingRaw = body.coaching ?? false
 
   if (
     !isNonEmptyString(resourceId) ||
@@ -50,6 +55,8 @@ export async function POST(request: Request) {
     typeof guestCountRaw !== 'number' ||
     !Number.isInteger(guestCountRaw) ||
     guestCountRaw < 0 ||
+    typeof ballBoyRaw !== 'boolean' ||
+    typeof coachingRaw !== 'boolean' ||
     !customer ||
     !isNonEmptyString(customer.name) ||
     !isNonEmptyString(customer.email) ||
@@ -57,6 +64,9 @@ export async function POST(request: Request) {
   ) {
     return Response.json({ error: 'Missing or malformed required fields' }, { status: 400 })
   }
+
+  const ballBoy = ballBoyRaw
+  const coaching = coachingRaw
 
   const parsedStartTime = new Date(startTime)
   if (Number.isNaN(parsedStartTime.getTime())) {
@@ -74,6 +84,22 @@ export async function POST(request: Request) {
   }
   const { resourceType } = resource
   const isCourt = resourceType.category === 'court'
+
+  if (ballBoy && !isCourt) {
+    return Response.json({ error: 'Ball boy is only available for court bookings' }, { status: 400 })
+  }
+
+  let coachingPaxCount: number | null = null
+  if (coaching && isCourt) {
+    const coachingPaxCountRaw = body.coachingPaxCount
+    if (coachingPaxCountRaw !== 1 && coachingPaxCountRaw !== 2) {
+      return Response.json(
+        { error: 'coachingPaxCount must be 1 or 2 for court coaching' },
+        { status: 400 },
+      )
+    }
+    coachingPaxCount = coachingPaxCountRaw
+  }
 
   if (isCourt && durationMinutes % 60 !== 0) {
     return Response.json(
@@ -152,6 +178,73 @@ export async function POST(request: Request) {
     : pricingRule.priceCentavos
   const totalAmountCentavos = baseAmountCentavos + guestFeeCentavos
 
+  type SelectedAddOn = {
+    service: 'ball_boy' | 'coaching_fee'
+    addOnServiceId: string
+    addOnPricingRuleId: string
+    paxCount: number | null
+    amountCentavos: number
+  }
+  const selectedAddOns: SelectedAddOn[] = []
+
+  if (ballBoy) {
+    const ballBoyService = await prisma.addOnService.findUnique({ where: { slug: 'ball_boy' } })
+    // Prisma's compound-unique input rejects null for a nullable field at runtime
+    // (known Prisma limitation), so this can't use findUnique on the compound key.
+    const ballBoyRule = ballBoyService
+      ? await prisma.addOnPricingRule.findFirst({
+          where: {
+            addOnServiceId: ballBoyService.id,
+            resourceTypeId: resourceType.id,
+            rateTier,
+            paxCount: null,
+          },
+        })
+      : null
+    if (!ballBoyService || !ballBoyRule) {
+      return Response.json(
+        { error: 'Ball boy not available for this resource and rate tier' },
+        { status: 400 },
+      )
+    }
+    selectedAddOns.push({
+      service: 'ball_boy',
+      addOnServiceId: ballBoyService.id,
+      addOnPricingRuleId: ballBoyRule.id,
+      paxCount: null,
+      amountCentavos: ballBoyRule.priceCentavos,
+    })
+  }
+
+  if (coaching) {
+    const coachingService = await prisma.addOnService.findUnique({ where: { slug: 'coaching_fee' } })
+    const coachingRule = coachingService
+      ? await prisma.addOnPricingRule.findFirst({
+          where: {
+            addOnServiceId: coachingService.id,
+            resourceTypeId: resourceType.id,
+            rateTier,
+            paxCount: coachingPaxCount,
+          },
+        })
+      : null
+    if (!coachingService || !coachingRule) {
+      return Response.json(
+        { error: 'Coaching not available for this resource and rate tier' },
+        { status: 400 },
+      )
+    }
+    selectedAddOns.push({
+      service: 'coaching_fee',
+      addOnServiceId: coachingService.id,
+      addOnPricingRuleId: coachingRule.id,
+      paxCount: coachingPaxCount,
+      amountCentavos: coachingRule.priceCentavos,
+    })
+  }
+
+  const addOnsTotalCentavos = selectedAddOns.reduce((sum, addOn) => sum + addOn.amountCentavos, 0)
+
   let booking
   try {
     booking = await prisma.$transaction(async (tx) => {
@@ -167,7 +260,7 @@ export async function POST(request: Request) {
         data: { status: 'cancelled' },
       })
 
-      return tx.booking.create({
+      const createdBooking = await tx.booking.create({
         data: {
           customerId: customerRecord.id,
           resourceId: resource.id,
@@ -178,6 +271,20 @@ export async function POST(request: Request) {
           totalAmountCentavos,
         },
       })
+
+      if (selectedAddOns.length > 0) {
+        await tx.bookingAddOn.createMany({
+          data: selectedAddOns.map((addOn) => ({
+            bookingId: createdBooking.id,
+            addOnServiceId: addOn.addOnServiceId,
+            addOnPricingRuleId: addOn.addOnPricingRuleId,
+            quantity: 1,
+            amountCentavos: addOn.amountCentavos,
+          })),
+        })
+      }
+
+      return createdBooking
     })
   } catch (err) {
     console.error('Booking creation failed', err)
@@ -198,6 +305,12 @@ export async function POST(request: Request) {
       endTime: booking.endTime,
       totalAmountCentavos: booking.totalAmountCentavos,
       holdExpiresAt,
+      addOns: selectedAddOns.map((addOn) => ({
+        service: addOn.service,
+        paxCount: addOn.paxCount,
+        amountCentavos: addOn.amountCentavos,
+      })),
+      addOnsTotalCentavos,
     },
     { status: 201 },
   )

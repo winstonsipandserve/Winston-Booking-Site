@@ -1,12 +1,13 @@
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
-  const [resourceTypes, pricingRules, guestFeeRule] = await Promise.all([
+  const [resourceTypes, pricingRules, addOnPricingRules, guestFeeRule] = await Promise.all([
     prisma.resourceType.findMany({
       include: { resources: { where: { isActive: true } } },
       orderBy: { name: 'asc' },
     }),
     prisma.pricingRule.findMany(),
+    prisma.addOnPricingRule.findMany({ include: { addOnService: true } }),
     prisma.guestFeeRule.findFirst(),
   ])
 
@@ -25,6 +26,14 @@ export async function GET() {
         rateTier: pricingRule.rateTier,
         durationMinutes: pricingRule.durationMinutes,
         priceCentavos: pricingRule.priceCentavos,
+      })),
+    addOnPricing: addOnPricingRules
+      .filter((addOnPricingRule) => addOnPricingRule.resourceTypeId === resourceType.id)
+      .map((addOnPricingRule) => ({
+        service: addOnPricingRule.addOnService.slug,
+        rateTier: addOnPricingRule.rateTier,
+        paxCount: addOnPricingRule.paxCount,
+        priceCentavos: addOnPricingRule.priceCentavos,
       })),
   }))
 
