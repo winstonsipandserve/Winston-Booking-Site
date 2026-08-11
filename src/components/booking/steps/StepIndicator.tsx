@@ -1,4 +1,4 @@
-const STEP_LABELS = ['SPORT', 'COURT', 'DATE & TIME', 'DETAILS', 'REVIEW']
+const STEP_LABELS = ['SPORT', 'COURT', 'DATE & TIME', 'DETAILS', 'ADD-ONS', 'SUMMARY']
 
 interface StepIndicatorProps {
   currentStep: number

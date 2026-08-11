@@ -7,6 +7,7 @@ import SportStep from './steps/SportStep'
 import CourtStep from './steps/CourtStep'
 import DateTimeStep from './steps/DateTimeStep'
 import DetailsStep from './steps/DetailsStep'
+import AddOnsStep from './steps/AddOnsStep'
 import ReviewStep from './steps/ReviewStep'
 
 type RateTier = 'member' | 'non_member'
@@ -43,7 +44,7 @@ interface BusyRange {
 }
 
 const COURT_DURATIONS_MINUTES = [60, 120, 180, 240]
-const TOTAL_STEPS = 5
+const TOTAL_STEPS = 6
 
 function getDurationOptions(resourceType: ResourceTypeOption): number[] {
   if (resourceType.category === 'court') return COURT_DURATIONS_MINUTES
@@ -194,6 +195,8 @@ export default function BookingForm() {
         return !!selectedDate && !!startTimeLocal && !!durationMinutes
       case 4:
         return name.trim().length > 0 && phone.trim().length > 0 && email.trim().length > 0
+      case 5:
+        return true
       default:
         return true
     }
@@ -325,6 +328,12 @@ export default function BookingForm() {
           onPhoneChange={setPhone}
           email={email}
           onEmailChange={setEmail}
+        />
+      )}
+
+      {step === 5 && (
+        <AddOnsStep
+          isCourt={!!isCourt}
           ballBoy={ballBoy}
           onBallBoyChange={setBallBoy}
           coaching={coaching}
@@ -332,7 +341,7 @@ export default function BookingForm() {
         />
       )}
 
-      {step === 5 && (
+      {step === 6 && (
         <ReviewStep
           resourceTypeName={selectedResourceType?.name ?? ''}
           resourceLabel={
@@ -350,12 +359,12 @@ export default function BookingForm() {
           estimateCentavos={estimateCentavos}
           submitting={submitting}
           submitError={submitError}
-          onBack={() => setStep(4)}
+          onBack={() => setStep(5)}
           onConfirm={handleConfirm}
         />
       )}
 
-      {step < 5 && (
+      {step < 6 && (
         <div className="flex w-full max-w-md gap-3">
           {step > 1 && (
             <button
