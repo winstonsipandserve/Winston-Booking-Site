@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import BookingConfirmation, { type BookingSuccess } from './BookingConfirmation'
 import StepIndicator from './steps/StepIndicator'
 import SportStep from './steps/SportStep'
 import CourtStep from './steps/CourtStep'
@@ -144,11 +143,9 @@ export default function BookingForm() {
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [confirmation, setConfirmation] = useState<{
-    booking: BookingSuccess
-    resourceLabel: string
-    resourceTypeName: string
-  } | null>(null)
+  const [bookingId, setBookingId] = useState<string | null>(null)
+  const [checkingOut, setCheckingOut] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -315,11 +312,40 @@ export default function BookingForm() {
     coachingPaxCount,
   ])
 
+  async function startCheckout(id: string) {
+    setCheckingOut(true)
+    setCheckoutError(null)
+
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: id }),
+      })
+
+      if (res.ok) {
+        const json: { checkoutUrl: string } = await res.json()
+        window.location.href = json.checkoutUrl
+        return
+      }
+
+      const json = await res.json().catch(() => null)
+      setCheckoutError(json?.error ?? 'Something went wrong starting checkout. Please try again.')
+    } catch {
+      setCheckoutError('Something went wrong starting checkout. Please try again.')
+    } finally {
+      setCheckingOut(false)
+    }
+  }
+
   async function handleConfirm() {
     if (!resourceId || !durationMinutes || !startTimeLocal) return
 
     setSubmitting(true)
     setSubmitError(null)
+    setCheckoutError(null)
+
+    let createdBookingId: string | null = null
 
     try {
       const res = await fetch('/api/bookings', {
@@ -338,43 +364,50 @@ export default function BookingForm() {
       })
 
       if (res.status === 201) {
-        const booking: BookingSuccess = await res.json()
-        const resource = selectedResourceType?.resources.find((r) => r.id === resourceId)
-        setConfirmation({
-          booking,
-          resourceLabel: resource?.label ?? '',
-          resourceTypeName: selectedResourceType?.name ?? '',
-        })
-        return
-      }
-
-      if (res.status === 409) {
+        const booking: { id: string } = await res.json()
+        createdBookingId = booking.id
+      } else if (res.status === 409) {
         setSubmitError('That slot was just booked by someone else — please pick a different time.')
-        return
-      }
-
-      if (res.status === 400) {
+      } else if (res.status === 400) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem with your booking details.')
-        return
+      } else {
+        setSubmitError('Something went wrong. Please try again.')
       }
-
-      setSubmitError('Something went wrong. Please try again.')
     } catch {
       setSubmitError('Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }
+
+    if (createdBookingId) {
+      setBookingId(createdBookingId)
+      await startCheckout(createdBookingId)
+    }
   }
 
-  if (confirmation) {
-    return (
-      <BookingConfirmation
-        booking={confirmation.booking}
-        resourceLabel={confirmation.resourceLabel}
-        resourceTypeName={confirmation.resourceTypeName}
-      />
-    )
+  async function handleRetryCheckout() {
+    if (!bookingId) return
+    await startCheckout(bookingId)
+  }
+
+  function handleStartOver() {
+    setStep(1)
+    setBookingId(null)
+    setSubmitError(null)
+    setCheckoutError(null)
+    setResourceTypeId(data?.resourceTypes[0]?.id ?? '')
+    setResourceId('')
+    setSelectedDate(null)
+    setStartTimeLocal('')
+    setDurationMinutes('')
+    setGuestCount(0)
+    setName('')
+    setEmail('')
+    setPhone('')
+    setBallBoy(false)
+    setCoaching(false)
+    setCoachingPaxCount(null)
   }
 
   if (loadError) {
@@ -471,8 +504,12 @@ export default function BookingForm() {
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           submitting={submitting}
           submitError={submitError}
+          checkingOut={checkingOut}
+          checkoutError={checkoutError}
           onBack={() => setStep(5)}
           onConfirm={handleConfirm}
+          onRetryCheckout={handleRetryCheckout}
+          onStartOver={handleStartOver}
         />
       )}
 

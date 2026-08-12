@@ -18,8 +18,12 @@ interface ReviewStepProps {
   addOnsEstimateCentavos: number
   submitting: boolean
   submitError: string | null
+  checkingOut: boolean
+  checkoutError: string | null
   onBack: () => void
   onConfirm: () => void
+  onRetryCheckout: () => void
+  onStartOver: () => void
 }
 
 export default function ReviewStep({
@@ -40,8 +44,12 @@ export default function ReviewStep({
   addOnsEstimateCentavos,
   submitting,
   submitError,
+  checkingOut,
+  checkoutError,
   onBack,
   onConfirm,
+  onRetryCheckout,
+  onStartOver,
 }: ReviewStepProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
 
@@ -125,26 +133,56 @@ export default function ReviewStep({
         )}
       </div>
 
-      {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+      {checkoutError ? (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-red-600">{checkoutError}</p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onStartOver}
+              disabled={checkingOut}
+              className="flex-1 rounded-full border border-black/[.145] px-5 py-3 text-base font-medium transition-colors hover:bg-black/[.03] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-white/[.04]"
+            >
+              Start Over
+            </button>
+            <button
+              type="button"
+              onClick={onRetryCheckout}
+              disabled={checkingOut}
+              className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+            >
+              {checkingOut ? 'Redirecting to payment…' : 'Try Again'}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {submitError && <p className="text-sm text-red-600">{submitError}</p>}
 
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          disabled={submitting}
-          className="flex-1 rounded-full border border-black/[.145] px-5 py-3 text-base font-medium transition-colors hover:bg-black/[.03] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-white/[.04]"
-        >
-          Back
-        </button>
-        <button
-          type="button"
-          onClick={onConfirm}
-          disabled={submitting}
-          className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
-        >
-          {submitting ? 'Booking…' : 'Confirm Booking'}
-        </button>
-      </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              disabled={submitting || checkingOut}
+              className="flex-1 rounded-full border border-black/[.145] px-5 py-3 text-base font-medium transition-colors hover:bg-black/[.03] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-white/[.04]"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={onConfirm}
+              disabled={submitting || checkingOut}
+              className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+            >
+              {submitting
+                ? 'Creating your booking…'
+                : checkingOut
+                  ? 'Redirecting to payment…'
+                  : 'Confirm Booking'}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }

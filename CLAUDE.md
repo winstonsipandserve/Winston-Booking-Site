@@ -31,7 +31,7 @@ For business rules, pricing, membership logic, and domain-specific details, see 
 | Database | PostgreSQL via Supabase |
 | ORM | Prisma |
 | Auth | Auth.js — method TBD (email/password vs. magic link, decision pending) |
-| Payments | PayMongo (Payment Intents API) |
+| Payments | PayMongo (Checkout Sessions API) |
 | Email | Resend |
 | Hosting | Vercel |
 | Error tracking | Sentry |
@@ -94,7 +94,7 @@ These are locked in. Don't deviate without discussing first.
 
 Use these when the task matches — don't reinvent what they already encode.
 
-- **`paymongo-integration`** — full Payment Intent flow, webhook HMAC-SHA256 verification, raw body handling, centavos conversion, reconciliation fallback. Use for anything touching payments or webhooks.
+- **`paymongo-integration`** — Checkout Session creation, webhook HMAC-SHA256 confirmation, checkout-session-expiry-on-hold-expiry, centavos conversion. Use for anything touching payments or webhooks.
 - **`booking-conflict-prevention`** — PostgreSQL exclusion constraint setup, hold-and-expire flow. Use for anything touching booking creation, availability, or scheduling logic. References the manual SQL file at `prisma/manual-sql/booking-exclusion-constraint.sql` as the source of truth for this constraint — any prompt using this skill must verify the constraint is present in the DB, not assume it survived a migration.
 - **`prisma-schema-conventions`** — naming rules, centavos-as-Int, migration workflow. Use whenever editing `schema.prisma`.
 
