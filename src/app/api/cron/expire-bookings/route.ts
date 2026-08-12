@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,13 +14,38 @@ export async function GET(request: Request) {
   }
 
   const holdCutoff = new Date(Date.now() - HOLD_MINUTES * 60000)
-  const result = await prisma.booking.updateMany({
-    where: {
-      status: 'pending_payment',
-      createdAt: { lt: holdCutoff },
-    },
-    data: { status: 'cancelled' },
+
+  let checkoutSessionIdsToExpire: string[] = []
+  const staleBookings = await prisma.$transaction(async (tx) => {
+    const stale = await tx.booking.findMany({
+      where: {
+        status: 'pending_payment',
+        createdAt: { lt: holdCutoff },
+      },
+      include: { payment: true },
+    })
+
+    if (stale.length > 0) {
+      const staleBookingIds = stale.map((b) => b.id)
+      await tx.booking.updateMany({
+        where: { id: { in: staleBookingIds } },
+        data: { status: 'cancelled' },
+      })
+      await tx.payment.updateMany({
+        where: { bookingId: { in: staleBookingIds } },
+        data: { status: 'failed' },
+      })
+      checkoutSessionIdsToExpire = stale
+        .filter((b) => b.payment?.status === 'pending' && b.payment.paymongoCheckoutSessionId != null)
+        .map((b) => b.payment!.paymongoCheckoutSessionId!)
+    }
+
+    return stale
   })
 
-  return Response.json({ cancelledCount: result.count }, { status: 200 })
+  for (const checkoutSessionId of checkoutSessionIdsToExpire) {
+    await expirePaymongoCheckoutSession(checkoutSessionId)
+  }
+
+  return Response.json({ cancelledCount: staleBookings.length }, { status: 200 })
 }

@@ -2,6 +2,7 @@ import { Prisma, RateTier } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
+import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 
 interface BookingRequestBody {
   resourceId?: unknown
@@ -246,10 +247,11 @@ export async function POST(request: Request) {
   const addOnsTotalCentavos = selectedAddOns.reduce((sum, addOn) => sum + addOn.amountCentavos, 0)
 
   let booking
+  let checkoutSessionIdsToExpire: string[] = []
   try {
     booking = await prisma.$transaction(async (tx) => {
       const holdCutoff = new Date(Date.now() - HOLD_MINUTES * 60000)
-      await tx.booking.updateMany({
+      const staleBookings = await tx.booking.findMany({
         where: {
           resourceId: resource.id,
           status: 'pending_payment',
@@ -257,8 +259,23 @@ export async function POST(request: Request) {
           startTime: { lt: endTime },
           endTime: { gt: parsedStartTime },
         },
-        data: { status: 'cancelled' },
+        include: { payment: true },
       })
+
+      if (staleBookings.length > 0) {
+        const staleBookingIds = staleBookings.map((b) => b.id)
+        await tx.booking.updateMany({
+          where: { id: { in: staleBookingIds } },
+          data: { status: 'cancelled' },
+        })
+        await tx.payment.updateMany({
+          where: { bookingId: { in: staleBookingIds } },
+          data: { status: 'failed' },
+        })
+        checkoutSessionIdsToExpire = staleBookings
+          .filter((b) => b.payment?.status === 'pending' && b.payment.paymongoCheckoutSessionId != null)
+          .map((b) => b.payment!.paymongoCheckoutSessionId!)
+      }
 
       const createdBooking = await tx.booking.create({
         data: {
@@ -292,6 +309,10 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Slot unavailable' }, { status: 409 })
     }
     return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
+
+  for (const checkoutSessionId of checkoutSessionIdsToExpire) {
+    await expirePaymongoCheckoutSession(checkoutSessionId)
   }
 
   const holdExpiresAt = new Date(booking.createdAt.getTime() + HOLD_MINUTES * 60000)

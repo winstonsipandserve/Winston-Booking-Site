@@ -27,7 +27,7 @@ For business rules, pricing, membership logic, and domain-specific details, see 
 
 | Layer | Choice |
 |---|---|
-| Framework | Next.js (App Router) + TypeScript |
+| Framework | Next.js 16 (App Router) + TypeScript |
 | Database | PostgreSQL via Supabase |
 | ORM | Prisma |
 | Auth | Auth.js — method TBD (email/password vs. magic link, decision pending) |
@@ -61,6 +61,7 @@ These are locked in. Don't deviate without discussing first.
 - **Business hours**: Bookings are restricted to **6:00 AM–10:00 PM Asia/Manila**, uniformly across all resource types (no per-sport variation). This is a hardcoded constant in `src/lib/business-hours.ts` (`BUSINESS_OPEN_HOUR`/`BUSINESS_CLOSE_HOUR`), not admin-editable yet — unlike `PricingRule`/`GuestFeeRule`, it isn't stored in the DB. Enforced server-side in `POST /api/bookings` (400 on any out-of-hours request, even bypassing the UI) and reflected client-side by `GET /api/availability` and the booking wizard's time-slot grid, which never generate out-of-hours candidates. Could move to a DB table following the `PricingRule` pattern later if admin editability is wanted.
 - **`GET /api/availability`**: Public, no-auth endpoint (same trust level as `GET /api/resources`) that returns which time ranges are already occupied for a given `resourceId` + PH calendar `date`, so the booking wizard's time-slot grid can gray out unavailable slots before submit. Returns `{ busy: [{ start, end }] }` only — no pricing, no customer data. Uses the same "counts as occupying the slot" definition as booking creation (see `src/lib/booking-hold.ts` below), evaluated at request time, so a stale `pending_payment` hold correctly shows as available.
 - **`src/lib/booking-hold.ts` extraction**: `HOLD_MINUTES` and the "is this booking currently holding/occupying its slot" condition (`confirmed`, or a `pending_payment` row younger than the hold window) were extracted out of `POST /api/bookings` into this shared file so `GET /api/availability` could reuse the exact same definition without duplicating it. Both routes import `HOLD_MINUTES` from here — this is what guarantees the hold window can never drift between "what counts as available" (availability endpoint) and "what actually gets held" (booking creation) if the env var or the logic ever changes.
+- **PayMongo integration shape**: PayMongo Checkout Sessions (hosted, redirect-based) is the chosen integration — not raw Payment Intents + client-side Elements. `Payment` carries two PayMongo ids: `paymongoCheckoutSessionId` (set at checkout-session creation) and `paymongoPaymentIntentId` (resolved once payment completes, from the webhook payload). Bookings confirm only via a verified `checkout_session.payment.paid` webhook (HMAC-SHA256, `Paymongo-Signature` header) — this refines, not replaces, the existing "never confirm on client-side redirect" decision above. Because a PayMongo checkout session's own lifetime isn't guaranteed to match `BOOKING_HOLD_MINUTES`, whenever a stale `pending_payment` hold is cancelled (expire-on-write or the daily cron), its linked PayMongo checkout session is also actively expired via PayMongo's Expire Checkout Session endpoint (best-effort) — this closes the gap where a customer could pay into a slot that's already been released to someone else.
 
 ---
 
