@@ -219,8 +219,8 @@ model MembershipCreditTransaction {
 
 model Booking {
   id         String        @id @default(cuid())
-  customerId String        @map("customer_id")
-  customer   Customer      @relation(fields: [customerId], references: [id])
+  customerId String?       @map("customer_id")
+  customer   Customer?     @relation(fields: [customerId], references: [id])
   resourceId String        @map("resource_id")
   resource   Resource      @relation(fields: [resourceId], references: [id])
   startTime  DateTime      @map("start_time")

@@ -63,6 +63,11 @@ export async function POST(request: Request) {
     )
   }
 
+  if (!booking.customer) {
+    console.error('Booking has no customer attached', booking.id)
+    return Response.json({ error: 'Booking is not ready for checkout' }, { status: 409 })
+  }
+
   const totalCentavos =
     booking.totalAmountCentavos + booking.addOns.reduce((sum, a) => sum + a.amountCentavos, 0)
 

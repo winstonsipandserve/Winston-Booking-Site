@@ -1,8 +1,9 @@
-import { Prisma, RateTier } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
+import { priceBooking } from '@/lib/booking-pricing'
 
 interface BookingRequestBody {
   resourceId?: unknown
@@ -12,11 +13,6 @@ interface BookingRequestBody {
   ballBoy?: unknown
   coaching?: unknown
   coachingPaxCount?: unknown
-  customer?: {
-    name?: unknown
-    email?: unknown
-    phone?: unknown
-  }
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -42,7 +38,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Malformed JSON body' }, { status: 400 })
   }
 
-  const { resourceId, startTime, durationMinutes, customer } = body
+  const { resourceId, startTime, durationMinutes } = body
   const guestCountRaw = body.guestCount ?? 0
   const ballBoyRaw = body.ballBoy ?? false
   const coachingRaw = body.coaching ?? false
@@ -57,11 +53,7 @@ export async function POST(request: Request) {
     !Number.isInteger(guestCountRaw) ||
     guestCountRaw < 0 ||
     typeof ballBoyRaw !== 'boolean' ||
-    typeof coachingRaw !== 'boolean' ||
-    !customer ||
-    !isNonEmptyString(customer.name) ||
-    !isNonEmptyString(customer.email) ||
-    !isNonEmptyString(customer.phone)
+    typeof coachingRaw !== 'boolean'
   ) {
     return Response.json({ error: 'Missing or malformed required fields' }, { status: 400 })
   }
@@ -118,133 +110,20 @@ export async function POST(request: Request) {
     )
   }
 
-  const name = customer.name as string
-  const email = customer.email as string
-  const phone = customer.phone as string
-
-  let customerRecord = await prisma.customer.findUnique({ where: { email } })
-  if (customerRecord) {
-    if (customerRecord.name !== name || customerRecord.phone !== phone) {
-      customerRecord = await prisma.customer.update({
-        where: { id: customerRecord.id },
-        data: { name, phone },
-      })
-    }
-  } else {
-    customerRecord = await prisma.customer.create({ data: { name, email, phone } })
-  }
-
-  const now = new Date()
-  const activeMembership = await prisma.membership.findFirst({
-    where: { customerId: customerRecord.id, status: 'active', endDate: { gte: now } },
+  const priceResult = await priceBooking({
+    resourceTypeId: resourceType.id,
+    category: resourceType.category,
+    durationMinutes,
+    guestCount,
+    ballBoy,
+    coaching,
+    coachingPaxCount,
+    isMember: false,
   })
-  const rateTier: RateTier = activeMembership ? 'member' : 'non_member'
-
-  const pricingRule = await prisma.pricingRule.findUnique({
-    where: {
-      resourceTypeId_rateTier_durationMinutes: {
-        resourceTypeId: resourceType.id,
-        rateTier,
-        durationMinutes: isCourt ? 60 : durationMinutes,
-      },
-    },
-  })
-  if (!pricingRule) {
-    return Response.json(
-      { error: 'No pricing available for this resource, rate tier, and duration' },
-      { status: 400 },
-    )
+  if ('error' in priceResult) {
+    return Response.json({ error: priceResult.error }, { status: priceResult.status })
   }
-
-  const isNonMemberCourt = isCourt && rateTier === 'non_member'
-  if (guestCount > 0 && !isNonMemberCourt) {
-    return Response.json(
-      { error: 'guestCount only applies to non-member court bookings' },
-      { status: 400 },
-    )
-  }
-
-  let guestFeeCentavos = 0
-  if (guestCount > 0) {
-    const guestFeeRule = await prisma.guestFeeRule.findFirst()
-    if (!guestFeeRule) {
-      console.error('GuestFeeRule table is empty — cannot price guest fee')
-      return Response.json({ error: 'Internal server error' }, { status: 500 })
-    }
-    guestFeeCentavos = guestCount * guestFeeRule.amountCentavos
-  }
-
-  const baseAmountCentavos = isCourt
-    ? pricingRule.priceCentavos * (durationMinutes / 60)
-    : pricingRule.priceCentavos
-  const totalAmountCentavos = baseAmountCentavos + guestFeeCentavos
-
-  type SelectedAddOn = {
-    service: 'ball_boy' | 'coaching_fee'
-    addOnServiceId: string
-    addOnPricingRuleId: string
-    paxCount: number | null
-    amountCentavos: number
-  }
-  const selectedAddOns: SelectedAddOn[] = []
-
-  if (ballBoy) {
-    const ballBoyService = await prisma.addOnService.findUnique({ where: { slug: 'ball_boy' } })
-    // Prisma's compound-unique input rejects null for a nullable field at runtime
-    // (known Prisma limitation), so this can't use findUnique on the compound key.
-    const ballBoyRule = ballBoyService
-      ? await prisma.addOnPricingRule.findFirst({
-          where: {
-            addOnServiceId: ballBoyService.id,
-            resourceTypeId: resourceType.id,
-            rateTier,
-            paxCount: null,
-          },
-        })
-      : null
-    if (!ballBoyService || !ballBoyRule) {
-      return Response.json(
-        { error: 'Ball boy not available for this resource and rate tier' },
-        { status: 400 },
-      )
-    }
-    selectedAddOns.push({
-      service: 'ball_boy',
-      addOnServiceId: ballBoyService.id,
-      addOnPricingRuleId: ballBoyRule.id,
-      paxCount: null,
-      amountCentavos: ballBoyRule.priceCentavos,
-    })
-  }
-
-  if (coaching) {
-    const coachingService = await prisma.addOnService.findUnique({ where: { slug: 'coaching_fee' } })
-    const coachingRule = coachingService
-      ? await prisma.addOnPricingRule.findFirst({
-          where: {
-            addOnServiceId: coachingService.id,
-            resourceTypeId: resourceType.id,
-            rateTier,
-            paxCount: coachingPaxCount,
-          },
-        })
-      : null
-    if (!coachingService || !coachingRule) {
-      return Response.json(
-        { error: 'Coaching not available for this resource and rate tier' },
-        { status: 400 },
-      )
-    }
-    selectedAddOns.push({
-      service: 'coaching_fee',
-      addOnServiceId: coachingService.id,
-      addOnPricingRuleId: coachingRule.id,
-      paxCount: coachingPaxCount,
-      amountCentavos: coachingRule.priceCentavos,
-    })
-  }
-
-  const addOnsTotalCentavos = selectedAddOns.reduce((sum, addOn) => sum + addOn.amountCentavos, 0)
+  const { totalAmountCentavos, addOns: selectedAddOns, addOnsTotalCentavos } = priceResult
 
   let booking
   let checkoutSessionIdsToExpire: string[] = []
@@ -279,7 +158,7 @@ export async function POST(request: Request) {
 
       const createdBooking = await tx.booking.create({
         data: {
-          customerId: customerRecord.id,
+          customerId: null,
           resourceId: resource.id,
           startTime: parsedStartTime,
           endTime,

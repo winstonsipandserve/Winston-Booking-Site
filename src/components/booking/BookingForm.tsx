@@ -145,8 +145,16 @@ export default function BookingForm() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [bookingId, setBookingId] = useState<string | null>(null)
+  const [createdTotalCentavos, setCreatedTotalCentavos] = useState<number | null>(null)
   const [checkingOut, setCheckingOut] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [attachingCustomer, setAttachingCustomer] = useState(false)
+  const [attachError, setAttachError] = useState<string | null>(null)
+  const [customerAttached, setCustomerAttached] = useState(false)
+  const [priceUpdate, setPriceUpdate] = useState<{
+    originalCentavos: number
+    finalCentavos: number
+  } | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -334,18 +342,11 @@ export default function BookingForm() {
     }
   }
 
-  async function handlePayNow() {
-    if (bookingId) {
-      await startCheckout(bookingId)
-      return
-    }
-
+  async function handleConfirmBooking() {
     if (!resourceId || !durationMinutes || !startTimeLocal) return
 
     setSubmitting(true)
     setSubmitError(null)
-
-    let createdBookingId: string | null = null
 
     try {
       const res = await fetch('/api/bookings', {
@@ -359,13 +360,15 @@ export default function BookingForm() {
           ballBoy,
           coaching,
           ...(coaching && isCourt && coachingPaxCount !== null ? { coachingPaxCount } : {}),
-          customer: { name, email, phone },
         }),
       })
 
       if (res.status === 201) {
-        const booking: { id: string } = await res.json()
-        createdBookingId = booking.id
+        const booking: { id: string; totalAmountCentavos: number; addOnsTotalCentavos: number } =
+          await res.json()
+        setBookingId(booking.id)
+        setCreatedTotalCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)
+        setShowPayment(true)
       } else if (res.status === 409) {
         setSubmitError('That slot was just booked by someone else — please pick a different time.')
       } else if (res.status === 400) {
@@ -379,10 +382,46 @@ export default function BookingForm() {
     } finally {
       setSubmitting(false)
     }
+  }
 
-    if (createdBookingId) {
-      setBookingId(createdBookingId)
-      await startCheckout(createdBookingId)
+  async function handlePayNow() {
+    if (!bookingId) return
+
+    if (customerAttached) {
+      await startCheckout(bookingId)
+      return
+    }
+
+    if (!name.trim() || !phone.trim() || !email.trim()) return
+
+    setAttachingCustomer(true)
+    setAttachError(null)
+
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, email }),
+      })
+
+      if (res.status === 200) {
+        const json: { totalAmountCentavos: number; addOnsTotalCentavos: number; isMember: boolean } =
+          await res.json()
+        setCustomerAttached(true)
+        const finalTotal = json.totalAmountCentavos + json.addOnsTotalCentavos
+        if (createdTotalCentavos !== null && finalTotal !== createdTotalCentavos) {
+          setPriceUpdate({ originalCentavos: createdTotalCentavos, finalCentavos: finalTotal })
+        } else {
+          await startCheckout(bookingId)
+        }
+      } else {
+        const json = await res.json().catch(() => null)
+        setAttachError(json?.error ?? 'Something went wrong confirming your details. Please try again.')
+      }
+    } catch {
+      setAttachError('Something went wrong confirming your details. Please try again.')
+    } finally {
+      setAttachingCustomer(false)
     }
   }
 
@@ -390,7 +429,13 @@ export default function BookingForm() {
     setStep(1)
     setShowPayment(false)
     setBookingId(null)
+    setCreatedTotalCentavos(null)
     setSubmitError(null)
+    setAttachingCustomer(false)
+    setAttachError(null)
+    setCustomerAttached(false)
+    setPriceUpdate(null)
+    setCheckingOut(false)
     setCheckoutError(null)
     setResourceTypeId(data?.resourceTypes[0]?.id ?? '')
     setResourceId('')
@@ -484,12 +529,14 @@ export default function BookingForm() {
           coachingPaxCount={coachingPaxCount}
           estimateCentavos={estimateCentavos}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
+          submitting={submitting}
+          submitError={submitError}
           onBack={() => setStep(4)}
-          onProceedToPayment={() => setShowPayment(true)}
+          onConfirmBooking={handleConfirmBooking}
         />
       )}
 
-      {step === 5 && showPayment && (
+      {step === 5 && showPayment && bookingId && (
         <PaymentStep
           name={name}
           onNameChange={setName}
@@ -498,12 +545,13 @@ export default function BookingForm() {
           email={email}
           onEmailChange={setEmail}
           bookingId={bookingId}
-          submitting={submitting}
-          submitError={submitError}
+          attachingCustomer={attachingCustomer}
+          attachError={attachError}
+          customerAttached={customerAttached}
+          priceUpdate={priceUpdate}
           checkingOut={checkingOut}
           checkoutError={checkoutError}
           onPayNow={handlePayNow}
-          onBack={() => setShowPayment(false)}
           onStartOver={handleStartOver}
         />
       )}

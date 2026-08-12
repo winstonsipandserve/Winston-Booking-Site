@@ -13,8 +13,10 @@ interface ReviewStepProps {
   coachingPaxCount: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
+  submitting: boolean
+  submitError: string | null
   onBack: () => void
-  onProceedToPayment: () => void
+  onConfirmBooking: () => void
 }
 
 export default function ReviewStep({
@@ -30,8 +32,10 @@ export default function ReviewStep({
   coachingPaxCount,
   estimateCentavos,
   addOnsEstimateCentavos,
+  submitting,
+  submitError,
   onBack,
-  onProceedToPayment,
+  onConfirmBooking,
 }: ReviewStepProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
 
@@ -103,20 +107,24 @@ export default function ReviewStep({
         )}
       </div>
 
+      {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+
       <div className="flex gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 rounded-full border border-black/[.145] px-5 py-3 text-base font-medium transition-colors hover:bg-black/[.03] dark:border-white/[.145] dark:hover:bg-white/[.04]"
+          disabled={submitting}
+          className="flex-1 rounded-full border border-black/[.145] px-5 py-3 text-base font-medium transition-colors hover:bg-black/[.03] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-white/[.04]"
         >
           Back
         </button>
         <button
           type="button"
-          onClick={onProceedToPayment}
-          className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+          onClick={onConfirmBooking}
+          disabled={submitting}
+          className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
         >
-          Confirm Booking
+          {submitting ? 'Creating your booking…' : 'Confirm Booking'}
         </button>
       </div>
     </div>
