@@ -55,7 +55,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-cream">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3">
-        <Link href="/" className="shrink-0">
+        <Link href="/" className="shrink-0 transition-transform hover:scale-105">
           <Image
             src="/images/brand/logo.png"
             alt="Winston Sip & Serve"
@@ -72,13 +72,19 @@ export default function Navbar() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className={`relative pb-1 text-sm font-medium transition-colors ${
+                  className={`group relative pb-1 text-sm font-medium transition-colors duration-200 ${
                     isActive
                       ? 'text-brand-dark after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent'
                       : 'text-gray-700 hover:text-brand-dark'
                   }`}
                 >
                   {link.label}
+                  {!isActive && (
+                    <span
+                      className="absolute left-0 right-0 -bottom-0.5 h-0.5 origin-center scale-x-0 rounded-full bg-accent transition-transform duration-200 group-hover:scale-x-100"
+                      aria-hidden="true"
+                    />
+                  )}
                 </Link>
               </li>
             )
@@ -89,7 +95,7 @@ export default function Navbar() {
           <SocialIcons />
           <button
             type="button"
-            className="rounded-full border border-brand-mid px-5 py-2 text-sm font-medium text-brand-dark transition-colors hover:bg-accent-light"
+            className="rounded-full border border-brand-mid px-5 py-2 text-sm font-medium text-brand-dark transition-all duration-200 hover:bg-accent-light"
           >
             My Account
           </button>
@@ -136,7 +142,7 @@ export default function Navbar() {
             <SocialIcons />
             <button
               type="button"
-              className="rounded-full border border-brand-mid px-5 py-2 text-sm font-medium text-brand-dark"
+              className="rounded-full border border-brand-mid px-5 py-2 text-sm font-medium text-brand-dark transition-all duration-200 hover:bg-accent-light"
             >
               My Account
             </button>

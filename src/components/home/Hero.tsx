@@ -43,13 +43,13 @@ export default function Hero({ totalResources, sportCount }: HeroProps) {
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
               href="/book"
-              className="rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-card transition-colors hover:opacity-90"
+              className="rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-mid"
             >
               Book a Court →
             </Link>
             <Link
               href="/cafe-bar"
-              className="rounded-xl border border-brand-mid px-6 py-3 text-base font-medium text-brand-dark transition-colors hover:bg-accent-light"
+              className="rounded-xl border border-brand-mid px-6 py-3 text-base font-medium text-brand-dark transition-all duration-200 hover:bg-accent-light"
             >
               Explore the Cafe
             </Link>

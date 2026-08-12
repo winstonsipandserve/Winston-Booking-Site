@@ -1,3 +1,5 @@
+import Reveal from '@/components/ui/Reveal'
+
 const STEPS = [
   {
     number: 1,
@@ -23,15 +25,17 @@ export default function HowItWorks() {
   return (
     <section className="bg-cream">
       <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="text-center">
-          <span className="text-xs font-semibold tracking-wide text-brand-mid">
-            SIMPLE & FAST
-          </span>
-          <h2 className="mt-3 text-4xl font-semibold text-brand-dark">How It Works</h2>
-          <p className="mx-auto mt-3 max-w-xl text-xl text-gray-600">
-            Reserve your court in under two minutes — no account required for this demo.
-          </p>
-        </div>
+        <Reveal>
+          <div className="text-center">
+            <span className="text-xs font-semibold tracking-wide text-brand-mid">
+              SIMPLE & FAST
+            </span>
+            <h2 className="mt-3 text-4xl font-semibold text-brand-dark">How It Works</h2>
+            <p className="mx-auto mt-3 max-w-xl text-xl text-gray-600">
+              Reserve your court in under two minutes — no account required for this demo.
+            </p>
+          </div>
+        </Reveal>
 
         <div className="relative mt-16 grid grid-cols-1 gap-12 sm:grid-cols-3">
           <div
