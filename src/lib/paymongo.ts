@@ -7,6 +7,7 @@ interface PaymongoLineItem {
   amount: number
   currency: 'PHP'
   quantity: number
+  description?: string
 }
 
 interface PaymongoBilling {
@@ -54,6 +55,7 @@ export async function createPaymongoCheckoutSession(
             amount: item.amount,
             currency: item.currency,
             quantity: item.quantity,
+            ...(item.description ? { description: item.description } : {}),
           })),
           success_url: input.successUrl,
           cancel_url: input.cancelUrl,
@@ -68,11 +70,11 @@ export async function createPaymongoCheckoutSession(
           send_email_receipt: input.sendEmailReceipt,
           // PayMongo's Checkout Sessions API rejects requests with this field omitted
           // (confirmed live, contrary to docs implying it defaults to the account's
-          // enabled methods) — 'card' is the one method guaranteed enabled on any
-          // account, so it's used as a safe minimum rather than guessing at e-wallets
-          // that may not be enabled here. Revisit once the client's own PayMongo
-          // account/dashboard payment method configuration is known.
-          payment_method_types: ['card'],
+          // enabled methods). All four of card/gcash/grab_pay/paymaya are confirmed
+          // live-working for Arjay's personal test account (see CLAUDE.md's Open /
+          // Not Yet Decided) — not necessarily final once the client's own PayMongo
+          // account exists.
+          payment_method_types: ['card', 'gcash', 'grab_pay', 'paymaya'],
         },
       },
     }),

@@ -71,23 +71,20 @@ export async function POST(request: Request) {
   const totalCentavos =
     booking.totalAmountCentavos + booking.addOns.reduce((sum, a) => sum + a.amountCentavos, 0)
 
-  const durationMinutes = Math.round(
-    (booking.endTime.getTime() - booking.startTime.getTime()) / 60000,
-  )
+  const bookingDate = booking.startTime.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila' })
+
+  const addOnsSummary = booking.addOns
+    .map((addOn) => formatAddOnName(addOn.addOnService.name, addOn.addOnPricingRule.paxCount))
+    .join(', ')
 
   const lineItems = [
     {
-      name: `${booking.resource.resourceType.name} — ${booking.resource.label} (${durationMinutes} min)`,
-      amount: booking.totalAmountCentavos,
+      name: `${booking.resource.resourceType.name} — ${booking.resource.label} (${bookingDate})`,
+      amount: totalCentavos,
       currency: 'PHP' as const,
       quantity: 1,
+      ...(addOnsSummary ? { description: `Includes: ${addOnsSummary}` } : {}),
     },
-    ...booking.addOns.map((addOn) => ({
-      name: formatAddOnName(addOn.addOnService.name, addOn.addOnPricingRule.paxCount),
-      amount: addOn.amountCentavos,
-      currency: 'PHP' as const,
-      quantity: 1,
-    })),
   ]
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
