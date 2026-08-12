@@ -5,9 +5,9 @@ import StepIndicator from './steps/StepIndicator'
 import SportStep from './steps/SportStep'
 import CourtStep from './steps/CourtStep'
 import DateTimeStep from './steps/DateTimeStep'
-import DetailsStep from './steps/DetailsStep'
 import AddOnsStep from './steps/AddOnsStep'
 import ReviewStep from './steps/ReviewStep'
+import PaymentStep from './steps/PaymentStep'
 
 type RateTier = 'member' | 'non_member'
 type ResourceCategory = 'court' | 'simulator'
@@ -106,7 +106,7 @@ interface BusyRange {
 }
 
 const COURT_DURATIONS_MINUTES = [60, 120, 180, 240]
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 5
 
 function getDurationOptions(resourceType: ResourceTypeOption): number[] {
   if (resourceType.category === 'court') return COURT_DURATIONS_MINUTES
@@ -141,12 +141,12 @@ export default function BookingForm() {
   const [coaching, setCoaching] = useState(false)
   const [coachingPaxCount, setCoachingPaxCount] = useState<number | null>(null)
 
+  const [showPayment, setShowPayment] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [bookingId, setBookingId] = useState<string | null>(null)
   const [checkingOut, setCheckingOut] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -292,8 +292,6 @@ export default function BookingForm() {
       case 3:
         return !!selectedDate && !!startTimeLocal && !!durationMinutes
       case 4:
-        return name.trim().length > 0 && phone.trim().length > 0 && email.trim().length > 0
-      case 5:
         return !(coaching && isCourt && coachingPaxCount === null)
       default:
         return true
@@ -305,9 +303,6 @@ export default function BookingForm() {
     selectedDate,
     startTimeLocal,
     durationMinutes,
-    name,
-    phone,
-    email,
     coaching,
     isCourt,
     coachingPaxCount,
@@ -326,7 +321,7 @@ export default function BookingForm() {
 
       if (res.ok) {
         const json: { checkoutUrl: string } = await res.json()
-        setCheckoutUrl(json.checkoutUrl)
+        window.location.href = json.checkoutUrl
         return
       }
 
@@ -339,12 +334,16 @@ export default function BookingForm() {
     }
   }
 
-  async function handleConfirm() {
+  async function handlePayNow() {
+    if (bookingId) {
+      await startCheckout(bookingId)
+      return
+    }
+
     if (!resourceId || !durationMinutes || !startTimeLocal) return
 
     setSubmitting(true)
     setSubmitError(null)
-    setCheckoutError(null)
 
     let createdBookingId: string | null = null
 
@@ -387,22 +386,12 @@ export default function BookingForm() {
     }
   }
 
-  async function handleRetryCheckout() {
-    if (!bookingId) return
-    await startCheckout(bookingId)
-  }
-
-  function handleGoToPayment() {
-    if (!checkoutUrl) return
-    window.location.href = checkoutUrl
-  }
-
   function handleStartOver() {
     setStep(1)
+    setShowPayment(false)
     setBookingId(null)
     setSubmitError(null)
     setCheckoutError(null)
-    setCheckoutUrl(null)
     setResourceTypeId(data?.resourceTypes[0]?.id ?? '')
     setResourceId('')
     setSelectedDate(null)
@@ -427,7 +416,7 @@ export default function BookingForm() {
 
   return (
     <div className="flex w-full max-w-2xl flex-col items-center gap-8">
-      <StepIndicator currentStep={step} />
+      {!showPayment && <StepIndicator currentStep={step} />}
 
       {step === 1 && (
         <SportStep
@@ -464,17 +453,6 @@ export default function BookingForm() {
       )}
 
       {step === 4 && (
-        <DetailsStep
-          name={name}
-          onNameChange={setName}
-          phone={phone}
-          onPhoneChange={setPhone}
-          email={email}
-          onEmailChange={setEmail}
-        />
-      )}
-
-      {step === 5 && (
         <AddOnsStep
           isCourt={!!isCourt}
           guestCount={guestCount}
@@ -490,7 +468,7 @@ export default function BookingForm() {
         />
       )}
 
-      {step === 6 && (
+      {step === 5 && !showPayment && (
         <ReviewStep
           resourceTypeName={selectedResourceType?.name ?? ''}
           resourceLabel={
@@ -500,30 +478,37 @@ export default function BookingForm() {
           durationMinutes={durationMinutes}
           isCourt={!!isCourt}
           guestCount={guestCount}
-          name={name}
-          phone={phone}
-          email={email}
           ballBoy={ballBoy}
           ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}
           estimateCentavos={estimateCentavos}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
+          onBack={() => setStep(4)}
+          onProceedToPayment={() => setShowPayment(true)}
+        />
+      )}
+
+      {step === 5 && showPayment && (
+        <PaymentStep
+          name={name}
+          onNameChange={setName}
+          phone={phone}
+          onPhoneChange={setPhone}
+          email={email}
+          onEmailChange={setEmail}
+          bookingId={bookingId}
           submitting={submitting}
           submitError={submitError}
           checkingOut={checkingOut}
           checkoutError={checkoutError}
-          bookingId={bookingId}
-          checkoutUrl={checkoutUrl}
-          onBack={() => setStep(5)}
-          onConfirm={handleConfirm}
-          onRetryCheckout={handleRetryCheckout}
+          onPayNow={handlePayNow}
+          onBack={() => setShowPayment(false)}
           onStartOver={handleStartOver}
-          onGoToPayment={handleGoToPayment}
         />
       )}
 
-      {step < 6 && (
+      {step < TOTAL_STEPS && (
         <div className="flex w-full max-w-md gap-3">
           {step > 1 && (
             <button
