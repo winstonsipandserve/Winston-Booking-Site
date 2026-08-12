@@ -6,8 +6,12 @@ interface PaymongoWebhookEvent {
     attributes?: {
       type?: string
       data?: {
-        metadata?: { bookingId?: unknown }
-        payment_intent?: { id?: unknown }
+        attributes?: {
+          status?: unknown
+          payment_intent_id?: unknown
+          paid_at?: unknown
+          metadata?: { bookingId?: unknown }
+        }
       }
     }
   }
@@ -30,14 +34,22 @@ export async function POST(request: Request) {
   }
 
   const eventType = event?.data?.attributes?.type
-  if (eventType !== 'checkout_session.payment.paid') {
+  if (eventType !== 'payment.paid') {
     return Response.json({ received: true }, { status: 200 })
   }
 
-  const checkoutSessionData = event?.data?.attributes?.data
-  const bookingId = checkoutSessionData?.metadata?.bookingId
-  const paymentIntentIdRaw = checkoutSessionData?.payment_intent?.id
+  const paymentAttributes = event?.data?.attributes?.data?.attributes
+  const bookingId = paymentAttributes?.metadata?.bookingId
+  const paymentStatus = paymentAttributes?.status
+  const paymentIntentIdRaw = paymentAttributes?.payment_intent_id
   const paymentIntentId = isNonEmptyString(paymentIntentIdRaw) ? paymentIntentIdRaw : null
+  const paidAtRaw = paymentAttributes?.paid_at
+  const paidAt = typeof paidAtRaw === 'number' ? new Date(paidAtRaw * 1000) : new Date()
+
+  if (paymentStatus !== 'paid') {
+    console.error('Webhook type payment.paid but nested payment status is not paid', bookingId, paymentStatus)
+    return Response.json({ received: true }, { status: 200 })
+  }
 
   if (!isNonEmptyString(bookingId)) {
     return Response.json({ error: 'Missing bookingId in webhook payload metadata' }, { status: 400 })
@@ -63,7 +75,7 @@ export async function POST(request: Request) {
         where: { bookingId: booking.id },
         data: {
           status: 'paid',
-          paidAt: new Date(),
+          paidAt,
           paymongoPaymentIntentId: paymentIntentId,
         },
       })
