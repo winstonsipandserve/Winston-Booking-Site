@@ -37,6 +37,7 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
       <h2 className="text-2xl font-semibold">Booking confirmed</h2>
+      <p className="text-sm font-medium">Booking Reference: {booking.id}</p>
       <dl className="flex flex-col gap-2 text-sm">
         <div className="flex justify-between gap-4">
           <dt className="font-medium">Resource</dt>

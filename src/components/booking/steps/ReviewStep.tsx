@@ -20,10 +20,13 @@ interface ReviewStepProps {
   submitError: string | null
   checkingOut: boolean
   checkoutError: string | null
+  bookingId: string | null
+  checkoutUrl: string | null
   onBack: () => void
   onConfirm: () => void
   onRetryCheckout: () => void
   onStartOver: () => void
+  onGoToPayment: () => void
 }
 
 export default function ReviewStep({
@@ -46,10 +49,13 @@ export default function ReviewStep({
   submitError,
   checkingOut,
   checkoutError,
+  bookingId,
+  checkoutUrl,
   onBack,
   onConfirm,
   onRetryCheckout,
   onStartOver,
+  onGoToPayment,
 }: ReviewStepProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
 
@@ -136,6 +142,11 @@ export default function ReviewStep({
       {checkoutError ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-red-600">{checkoutError}</p>
+          {bookingId && (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Booking Reference: {bookingId}
+            </p>
+          )}
           <div className="flex gap-3">
             <button
               type="button"
@@ -152,6 +163,31 @@ export default function ReviewStep({
               className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
             >
               {checkingOut ? 'Redirecting to payment…' : 'Try Again'}
+            </button>
+          </div>
+        </div>
+      ) : checkoutUrl ? (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Booking Reference: {bookingId}
+          </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Your slot is held — continue to payment to confirm it.
+          </p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onStartOver}
+              className="flex-1 rounded-full border border-black/[.145] px-5 py-3 text-base font-medium transition-colors hover:bg-black/[.03] dark:border-white/[.145] dark:hover:bg-white/[.04]"
+            >
+              Start Over
+            </button>
+            <button
+              type="button"
+              onClick={onGoToPayment}
+              className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+            >
+              Continue to Payment
             </button>
           </div>
         </div>
@@ -177,7 +213,7 @@ export default function ReviewStep({
               {submitting
                 ? 'Creating your booking…'
                 : checkingOut
-                  ? 'Redirecting to payment…'
+                  ? 'Preparing your payment…'
                   : 'Confirm Booking'}
             </button>
           </div>

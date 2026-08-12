@@ -146,6 +146,7 @@ export default function BookingForm() {
   const [bookingId, setBookingId] = useState<string | null>(null)
   const [checkingOut, setCheckingOut] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -325,7 +326,7 @@ export default function BookingForm() {
 
       if (res.ok) {
         const json: { checkoutUrl: string } = await res.json()
-        window.location.href = json.checkoutUrl
+        setCheckoutUrl(json.checkoutUrl)
         return
       }
 
@@ -391,11 +392,17 @@ export default function BookingForm() {
     await startCheckout(bookingId)
   }
 
+  function handleGoToPayment() {
+    if (!checkoutUrl) return
+    window.location.href = checkoutUrl
+  }
+
   function handleStartOver() {
     setStep(1)
     setBookingId(null)
     setSubmitError(null)
     setCheckoutError(null)
+    setCheckoutUrl(null)
     setResourceTypeId(data?.resourceTypes[0]?.id ?? '')
     setResourceId('')
     setSelectedDate(null)
@@ -506,10 +513,13 @@ export default function BookingForm() {
           submitError={submitError}
           checkingOut={checkingOut}
           checkoutError={checkoutError}
+          bookingId={bookingId}
+          checkoutUrl={checkoutUrl}
           onBack={() => setStep(5)}
           onConfirm={handleConfirm}
           onRetryCheckout={handleRetryCheckout}
           onStartOver={handleStartOver}
+          onGoToPayment={handleGoToPayment}
         />
       )}
 
