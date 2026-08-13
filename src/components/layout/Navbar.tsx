@@ -22,14 +22,18 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-brand-light">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3">
-        <Link href="/" className="shrink-0 transition-transform hover:scale-105">
+        <Link
+          href="/"
+          className="flex shrink-0 items-center gap-3 transition-transform hover:scale-105"
+        >
           <Image
             src="/images/brand/logo.png"
             alt="Winston Sip & Serve"
-            width={80}
-            height={80}
+            width={44}
+            height={44}
             priority
           />
+          <span className="text-lg font-semibold text-brand-dark">Winston Sip & Serve</span>
         </Link>
 
         <ul className="hidden items-center gap-6 md:flex">

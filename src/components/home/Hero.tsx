@@ -17,12 +17,12 @@ export default function Hero() {
       </div>
 
       <div className="mx-auto max-w-7xl px-6">
-        <div className="max-w-2xl">
+        <div className="max-w-xl">
           <span className="text-xs font-semibold uppercase tracking-[0.25em] text-accent-light">
             Winston Sip &amp; Serve
           </span>
 
-          <h1 className="mt-6 text-5xl italic leading-[1.1] text-white sm:text-6xl lg:text-7xl">
+          <h1 className="mt-6 text-4xl italic leading-[1.1] text-white sm:text-5xl lg:text-6xl">
             Sip. Serve. Play.
             <br />
             Repeat.
@@ -36,15 +36,15 @@ export default function Hero() {
           <div className="mt-8">
             <Link
               href="/book"
-              className="inline-block rounded-full bg-accent-primary px-8 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-mid"
+              className="inline-block rounded-full bg-accent-primary px-6 py-2.5 text-sm font-semibold uppercase tracking-wide text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-mid"
             >
               Book Now
             </Link>
           </div>
-        </div>
 
-        <div className="mt-16">
-          <SocialIcons variant="light" />
+          <div className="mt-20 sm:mt-28">
+            <SocialIcons variant="light" />
+          </div>
         </div>
       </div>
     </section>
