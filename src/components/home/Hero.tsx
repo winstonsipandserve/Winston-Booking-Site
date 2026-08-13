@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import SocialIcons from '@/components/ui/SocialIcons'
 
 export default function Hero() {
   return (
@@ -22,7 +21,7 @@ export default function Hero() {
             Winston Sip &amp; Serve
           </span>
 
-          <h1 className="mt-6 text-4xl italic leading-[1.1] text-white sm:text-5xl lg:text-6xl">
+          <h1 className="mt-6 text-5xl italic leading-[1.1] text-white sm:text-6xl lg:text-7xl">
             Sip. Serve. Play.
             <br />
             Repeat.
@@ -40,10 +39,6 @@ export default function Hero() {
             >
               Book Now
             </Link>
-          </div>
-
-          <div className="mt-20 sm:mt-28">
-            <SocialIcons variant="light" />
           </div>
         </div>
       </div>

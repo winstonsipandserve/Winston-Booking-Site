@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import SocialIcons from '@/components/ui/SocialIcons'
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -62,14 +61,19 @@ export default function Navbar() {
           })}
         </ul>
 
-        <div className="hidden items-center gap-4 md:flex">
-          <SocialIcons />
+        <div className="hidden items-center gap-3 md:flex">
           <button
             type="button"
-            className="rounded-full border border-brand-mid px-5 py-2 text-sm font-medium text-brand-dark transition-all duration-200 hover:bg-accent-light"
+            className="rounded-full border border-brand-mid px-5 py-2 text-sm font-semibold text-brand-dark transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent-light"
           >
-            My Account
+            Sign In
           </button>
+          <Link
+            href="/book"
+            className="rounded-full bg-accent-primary px-5 py-2 text-sm font-semibold text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-mid"
+          >
+            Book Now
+          </Link>
         </div>
 
         <button
@@ -109,13 +113,19 @@ export default function Navbar() {
               )
             })}
           </ul>
-          <div className="mt-6 flex items-center justify-between">
-            <SocialIcons variant="dark" />
+          <div className="mt-6 flex flex-col gap-3">
+            <Link
+              href="/book"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-full bg-accent-primary px-5 py-2.5 text-center text-sm font-semibold text-white shadow-card transition-all duration-200 hover:bg-brand-mid"
+            >
+              Book Now
+            </Link>
             <button
               type="button"
-              className="rounded-full border border-brand-mid px-5 py-2 text-sm font-medium text-brand-dark transition-all duration-200 hover:bg-accent-light"
+              className="rounded-full border border-brand-mid px-5 py-2.5 text-sm font-semibold text-brand-dark transition-all duration-200 hover:bg-accent-light"
             >
-              My Account
+              Sign In
             </button>
           </div>
         </div>

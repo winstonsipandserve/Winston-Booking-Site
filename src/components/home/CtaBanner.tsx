@@ -7,11 +7,11 @@ export default function CtaBanner() {
       style={{ background: 'linear-gradient(135deg, #4B2E2B 0%, #8C5A3C 100%)' }}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-40"
+        className="pointer-events-none absolute inset-0 opacity-30"
         style={{
           backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='18' fill='none' stroke='%23ffffff' stroke-opacity='0.08' stroke-width='1'/%3E%3C/svg%3E\")",
-          backgroundSize: '48px 48px',
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ccircle cx='34' cy='42' r='12' fill='none' stroke='%23ffffff' stroke-opacity='0.07' stroke-width='1'/%3E%3Ccircle cx='150' cy='28' r='30' fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-width='1'/%3E%3Ccircle cx='170' cy='150' r='16' fill='none' stroke='%23ffffff' stroke-opacity='0.06' stroke-width='1'/%3E%3Ccircle cx='55' cy='160' r='42' fill='none' stroke='%23ffffff' stroke-opacity='0.04' stroke-width='1'/%3E%3C/svg%3E\")",
+          backgroundSize: '200px 200px',
           backgroundRepeat: 'repeat',
         }}
         aria-hidden="true"
