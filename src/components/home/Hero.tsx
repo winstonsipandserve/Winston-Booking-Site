@@ -1,78 +1,50 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { BUSINESS_OPEN_HOUR, BUSINESS_CLOSE_HOUR } from '@/lib/business-hours'
+import SocialIcons from '@/components/ui/SocialIcons'
 
-interface HeroProps {
-  totalResources: number
-  sportCount: number
-}
-
-function formatHour12(hour: number): string {
-  if (hour === 0) return '12AM'
-  if (hour === 12) return '12PM'
-  if (hour < 12) return `${hour}AM`
-  return `${hour - 12}PM`
-}
-
-export default function Hero({ totalResources, sportCount }: HeroProps) {
-  const stats = [
-    { label: 'Sports', value: `${sportCount}` },
-    { label: 'Courts & Simulators', value: `${totalResources}` },
-    { label: 'Opens', value: formatHour12(BUSINESS_OPEN_HOUR) },
-    { label: 'Last Booking', value: formatHour12(BUSINESS_CLOSE_HOUR) },
-  ]
-
+export default function Hero() {
   return (
-    <section className="bg-cream">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-16 lg:grid-cols-2 lg:py-24">
-        <div>
-          <span className="inline-block rounded-full bg-accent-light px-4 py-1.5 text-xs font-semibold tracking-wide text-brand-mid">
-            EST. 2026 · EAST FAIRVIEW PARK SUBDIVISION
+    <section className="relative isolate overflow-hidden pb-28 pt-20 sm:pb-36 sm:pt-28">
+      <div className="absolute inset-0 -z-10">
+        <Image
+          src="/images/placeholder.jpg"
+          alt="Winston Sip & Serve facility"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/95 via-brand-dark/70 to-brand-dark/40" />
+      </div>
+
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="max-w-2xl">
+          <span className="text-xs font-semibold uppercase tracking-[0.25em] text-accent-light">
+            Winston Sip &amp; Serve
           </span>
 
-          <h1 className="mt-6 text-5xl font-semibold leading-tight sm:text-7xl">
-            <span className="block text-brand-dark">Sip. Serve.</span>
-            <span className="block text-accent">Play. Repeat.</span>
+          <h1 className="mt-6 text-5xl italic leading-[1.1] text-white sm:text-6xl lg:text-7xl">
+            Sip. Serve. Play.
+            <br />
+            Repeat.
           </h1>
 
-          <p className="mt-6 max-w-lg text-xl text-gray-600">
+          <p className="mt-6 max-w-md text-lg text-white/80">
             Tennis, pickleball, and golf simulation — paired with craft coffee and a
             members-only speakeasy bar.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+          <div className="mt-8">
             <Link
               href="/book"
-              className="rounded-xl bg-accent px-6 py-3 text-base font-medium text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-mid"
+              className="inline-block rounded-full bg-accent-primary px-8 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-mid"
             >
-              Book a Court →
+              Book Now
             </Link>
-            <Link
-              href="/cafe-bar"
-              className="rounded-xl border border-brand-mid px-6 py-3 text-base font-medium text-brand-dark transition-all duration-200 hover:bg-accent-light"
-            >
-              Explore the Cafe
-            </Link>
-          </div>
-
-          <div className="mt-12 grid grid-cols-2 gap-6 sm:grid-cols-4">
-            {stats.map((stat) => (
-              <div key={stat.label}>
-                <p className="text-2xl font-semibold text-brand-dark">{stat.value}</p>
-                <p className="text-xs text-gray-600">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </div>
 
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl shadow-hero">
-          <Image
-            src="/images/placeholder.jpg"
-            alt="Winston Sip & Serve facility"
-            fill
-            className="object-cover"
-            priority
-          />
+        <div className="mt-16">
+          <SocialIcons variant="light" />
         </div>
       </div>
     </section>

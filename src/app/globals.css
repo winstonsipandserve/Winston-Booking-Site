@@ -11,8 +11,9 @@
   --font-sans: var(--font-lora);
   --color-brand-dark: #4B2E2B;
   --color-brand-mid: #8C5A3C;
-  --color-cream: #FFF8F0;
-  --color-accent: #C08552;
+  --color-brand-light: #FDF3E7;
+  --color-accent-primary: #C08552;
+  --color-accent-dark: var(--color-brand-mid);
   --color-accent-light: #F5E6D3;
   --shadow-card: 0 4px 12px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
   --shadow-hero: 0 20px 48px rgba(0,0,0,0.16), 0 8px 24px rgba(0,0,0,0.1);
