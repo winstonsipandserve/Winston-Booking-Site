@@ -21,7 +21,7 @@ export default function StatsBar({ totalResources, sportCount }: StatsBarProps) 
   ]
 
   return (
-    <div className="relative z-10 mx-auto -mt-16 max-w-5xl px-6 sm:-mt-24">
+    <div id="stats-bar" className="relative z-10 mx-auto -mt-16 max-w-5xl px-6 sm:-mt-24">
       <div className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-3xl bg-brand-light px-6 py-8 shadow-card sm:grid-cols-4 sm:gap-0 sm:px-4 sm:py-10">
         {stats.map((stat, index) => (
           <div

@@ -8,7 +8,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-lora);
+  --font-sans: var(--font-manrope);
+  --font-script: var(--font-parisienne);
+  --font-serif: var(--font-fraunces);
   --color-brand-dark: #4B2E2B;
   --color-brand-mid: #8C5A3C;
   --color-brand-light: #FDF3E7;
