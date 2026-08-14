@@ -21,17 +21,15 @@ export default function StatsBar({ totalResources, sportCount }: StatsBarProps) 
   ]
 
   return (
-    <div id="stats-bar" className="relative z-10 mx-auto -mt-16 max-w-5xl px-6 sm:-mt-24">
-      <div className="grid grid-cols-2 gap-x-4 gap-y-6 rounded-3xl bg-brand-light px-6 py-8 shadow-card sm:grid-cols-4 sm:gap-0 sm:px-4 sm:py-10">
-        {stats.map((stat, index) => (
-          <div
-            key={stat.label}
-            className={`text-center sm:px-6 ${
-              index > 0 ? 'sm:border-l sm:border-brand-mid/20' : ''
-            }`}
-          >
-            <p className="text-3xl font-semibold text-brand-dark sm:text-4xl">{stat.value}</p>
-            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-gray-600">
+    <div
+      id="stats-bar"
+      className="relative z-20 mx-auto -mt-16 -mb-16 w-full max-w-5xl px-6 md:-mt-20 md:-mb-20"
+    >
+      <div className="grid grid-cols-2 gap-y-8 rounded-2xl bg-brand-light px-8 py-10 shadow-xl shadow-brand-dark/10 sm:grid-cols-4 sm:gap-y-0">
+        {stats.map((stat) => (
+          <div key={stat.label} className="relative text-center sm:px-4">
+            <p className="font-serif text-3xl text-brand-dark md:text-4xl">{stat.value}</p>
+            <p className="mt-1 text-xs uppercase tracking-wide text-neutral-700/80 md:text-sm">
               {stat.label}
             </p>
           </div>
