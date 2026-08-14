@@ -102,6 +102,7 @@ Use these when the task matches — don't reinvent what they already encode.
 - **`paymongo-integration`** — Checkout Session creation, webhook HMAC-SHA256 confirmation, checkout-session-expiry-on-hold-expiry, centavos conversion. Use for anything touching payments or webhooks.
 - **`booking-conflict-prevention`** — PostgreSQL exclusion constraint setup, hold-and-expire flow. Use for anything touching booking creation, availability, or scheduling logic. References the manual SQL file at `prisma/manual-sql/booking-exclusion-constraint.sql` as the source of truth for this constraint — any prompt using this skill must verify the constraint is present in the DB, not assume it survived a migration.
 - **`prisma-schema-conventions`** — naming rules, centavos-as-Int, migration workflow. Use whenever editing `schema.prisma`.
+- **UI/animation skills** (`emil-design-eng`, `apple-design`, `animate`, `review-animations`, `find-animation-opportunities`, `impeccable`, etc.) — general design/motion reference and audit tools installed via `npx skills`, not project-specific. Reach for these on visual polish passes (Home page, Book Now reskin); `impeccable`'s hook/image-gen features are off by default — see its own SKILL.md before enabling.
 
 **Deliberately not built as skills**: git commit workflow and browser verification are handled manually (see Workflow section below) — an ambient skill here would conflict with that gate.
 
