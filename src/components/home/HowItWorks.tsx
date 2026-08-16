@@ -37,8 +37,8 @@ export default function HowItWorks() {
 
         <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-6">
           {STEPS.map((step, index) => (
-            <Reveal key={step.number} delayMs={index * 100}>
-              <div className="relative rounded-2xl border border-neutral-100/10 bg-brand-mid/10 p-8">
+            <Reveal key={step.number} delayMs={index * 100} className="h-full">
+              <div className="relative flex h-full flex-col rounded-2xl border border-neutral-100/10 bg-brand-mid/10 p-8">
                 <span className="font-serif text-6xl text-accent-primary/25 md:text-7xl">
                   {String(step.number).padStart(2, '0')}
                 </span>
