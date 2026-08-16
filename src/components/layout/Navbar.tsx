@@ -42,7 +42,7 @@ export default function Navbar() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className={`group relative pb-1 text-sm font-medium transition-colors duration-200 ${
+                  className={`group relative pb-1 text-sm font-normal uppercase tracking-[0.35px] transition-colors duration-200 ${
                     isActive
                       ? 'text-brand-dark after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent-primary'
                       : 'text-gray-700 hover:text-brand-dark'
@@ -88,7 +88,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     onClick={() => setMenuOpen(false)}
-                    className={`text-base font-medium ${
+                    className={`text-base font-normal uppercase tracking-[0.35px] ${
                       isActive ? 'text-brand-dark' : 'text-gray-700'
                     }`}
                   >
