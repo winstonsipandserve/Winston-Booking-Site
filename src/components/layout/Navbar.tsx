@@ -20,7 +20,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-brand-light">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-3">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6">
         <Link
           href="/"
           className="flex shrink-0 items-center gap-3 transition-transform hover:scale-105"
