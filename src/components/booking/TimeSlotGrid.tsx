@@ -157,7 +157,7 @@ export default function TimeSlotGrid({
                 isInSelectedRange
                   ? 'border-foreground bg-foreground text-background hover:bg-foreground'
                   : slot.disabled
-                    ? 'cursor-not-allowed border-black/[.08] text-zinc-400 dark:border-white/[.08] dark:text-zinc-600'
+                    ? 'cursor-not-allowed border-black/[.145] text-zinc-400 dark:border-white/[.145] dark:text-zinc-600'
                     : slot.exceedsClosing
                       ? 'border-amber-500/50 text-amber-700 hover:bg-amber-500/10 dark:border-amber-400/40 dark:text-amber-400 dark:hover:bg-amber-400/10'
                       : 'border-black/[.145] hover:bg-black/[.05] dark:border-white/[.145] dark:hover:bg-white/[.08]'

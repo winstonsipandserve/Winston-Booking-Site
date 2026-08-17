@@ -123,6 +123,7 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
               key={dateStr}
               type="button"
               disabled={isPast}
+              aria-disabled={isPast}
               onClick={() => onSelectDate(dateStr)}
               className={`rounded py-2 text-sm transition-colors ${
                 isPast
