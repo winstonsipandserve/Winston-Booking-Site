@@ -535,6 +535,20 @@ export default function BookingForm() {
 
       {step === 5 && showPayment && bookingId && (
         <PaymentStep
+          resourceTypeName={selectedResourceType?.name ?? ''}
+          resourceLabel={
+            selectedResourceType?.resources.find((r) => r.id === resourceId)?.label ?? ''
+          }
+          startTimeLocal={startTimeLocal}
+          durationMinutes={durationMinutes}
+          isCourt={!!isCourt}
+          guestCount={guestCount}
+          ballBoy={ballBoy}
+          ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
+          coaching={coaching}
+          coachingPaxCount={coachingPaxCount}
+          estimateCentavos={estimateCentavos}
+          addOnsEstimateCentavos={addOnsEstimateCentavos}
           name={name}
           onNameChange={setName}
           phone={phone}
