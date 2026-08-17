@@ -16,15 +16,15 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
             <span
               className={`flex h-8 w-8 items-center justify-center rounded-full border text-sm font-medium ${
                 isActive || isComplete
-                  ? 'border-foreground bg-foreground text-background'
-                  : 'border-black/[.145] text-zinc-600 dark:border-white/[.145] dark:text-zinc-400'
+                  ? 'border-brand-dark bg-brand-dark text-brand-light'
+                  : 'border-brand-dark/20 text-brand-dark/40'
               }`}
             >
               {stepNumber}
             </span>
             <span
               className={`text-center text-[10px] font-medium tracking-wide ${
-                isActive ? 'text-foreground' : 'text-zinc-500'
+                isActive ? 'text-brand-dark' : 'text-brand-dark/50'
               }`}
             >
               {label}
