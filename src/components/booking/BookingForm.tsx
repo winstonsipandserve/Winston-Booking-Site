@@ -166,9 +166,6 @@ export default function BookingForm() {
       .then((json) => {
         if (cancelled) return
         setData(json)
-        if (json.resourceTypes.length > 0) {
-          setResourceTypeId(json.resourceTypes[0].id)
-        }
       })
       .catch(() => {
         if (!cancelled) setLoadError('Could not load resources. Please refresh the page.')
@@ -196,7 +193,7 @@ export default function BookingForm() {
   // Reset dependent fields whenever the chosen resource type changes.
   useEffect(() => {
     if (!selectedResourceType) return
-    setResourceId(selectedResourceType.resources[0]?.id ?? '')
+    setResourceId('')
     setGuestCount(0)
     const durations = getDurationOptions(selectedResourceType)
     setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
@@ -437,7 +434,7 @@ export default function BookingForm() {
     setPriceUpdate(null)
     setCheckingOut(false)
     setCheckoutError(null)
-    setResourceTypeId(data?.resourceTypes[0]?.id ?? '')
+    setResourceTypeId('')
     setResourceId('')
     setSelectedDate(null)
     setStartTimeLocal('')
@@ -456,7 +453,7 @@ export default function BookingForm() {
   }
 
   if (!data) {
-    return <p className="text-zinc-600 dark:text-zinc-400">Loading booking form…</p>
+    return <p className="text-brand-dark/60">Loading booking form…</p>
   }
 
   return (
@@ -562,7 +559,7 @@ export default function BookingForm() {
             <button
               type="button"
               onClick={() => setStep((s) => s - 1)}
-              className="flex-1 rounded-full border border-black/[.145] px-5 py-3 text-base font-medium transition-colors hover:bg-black/[.03] dark:border-white/[.145] dark:hover:bg-white/[.04]"
+              className="flex-1 rounded-full border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark"
             >
               Back
             </button>
@@ -571,7 +568,7 @@ export default function BookingForm() {
             type="button"
             onClick={() => setStep((s) => Math.min(TOTAL_STEPS, s + 1))}
             disabled={!canContinue}
-            className="flex-1 rounded-full bg-foreground px-5 py-3 text-base font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+            className="flex-1 rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
           >
             Continue
           </button>

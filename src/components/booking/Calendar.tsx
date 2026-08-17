@@ -79,29 +79,29 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
   ]
 
   return (
-    <div className="flex w-full flex-col gap-2 rounded border border-black/[.145] p-3 dark:border-white/[.145]">
+    <div className="flex w-full flex-col gap-2 rounded border border-brand-dark/20 bg-brand-light p-3">
       <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={goPrevMonth}
           disabled={isAtCurrentMonth}
-          className="rounded px-2 py-1 text-sm font-medium hover:bg-black/[.03] disabled:opacity-30 dark:hover:bg-white/[.04]"
+          className="rounded px-2 py-1 text-sm font-medium text-brand-dark hover:bg-brand-dark/5 disabled:opacity-30"
         >
           ← Prev
         </button>
-        <span className="text-sm font-medium">
+        <span className="text-sm font-medium text-brand-dark">
           {MONTH_LABELS[viewMonth]} {viewYear}
         </span>
         <button
           type="button"
           onClick={goNextMonth}
-          className="rounded px-2 py-1 text-sm font-medium hover:bg-black/[.03] dark:hover:bg-white/[.04]"
+          className="rounded px-2 py-1 text-sm font-medium text-brand-dark hover:bg-brand-dark/5"
         >
           Next →
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs text-zinc-600 dark:text-zinc-400">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs text-brand-dark/60">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="py-1">
             {label}
@@ -126,13 +126,11 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
               aria-disabled={isPast}
               onClick={() => onSelectDate(dateStr)}
               className={`rounded py-2 text-sm transition-colors ${
-                isPast
-                  ? 'cursor-not-allowed text-zinc-400 dark:text-zinc-600'
-                  : 'hover:bg-black/[.05] dark:hover:bg-white/[.08]'
-              } ${
                 isSelected
-                  ? 'bg-foreground text-background hover:bg-foreground'
-                  : ''
+                  ? 'bg-brand-dark text-brand-light hover:bg-brand-dark'
+                  : isPast
+                    ? 'cursor-not-allowed text-brand-dark/30'
+                    : 'text-brand-dark hover:bg-brand-dark/5'
               }`}
             >
               {day}

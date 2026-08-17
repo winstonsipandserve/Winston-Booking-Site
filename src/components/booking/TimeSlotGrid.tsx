@@ -109,13 +109,13 @@ export default function TimeSlotGrid({
 
   if (loading) {
     return (
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading available times…</p>
+      <p className="text-sm text-brand-dark/60">Loading available times…</p>
     )
   }
 
   if (slots.length === 0) {
     return (
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-brand-dark/60">
         No times available this day.
       </p>
     )
@@ -131,7 +131,7 @@ export default function TimeSlotGrid({
   return (
     <div className="flex flex-col gap-2">
       {closingWarning && (
-        <div className="rounded border border-amber-400/60 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/40 dark:text-amber-300">
+        <div className="rounded border border-amber-400/60 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {closingWarning}
         </div>
       )}
@@ -155,12 +155,12 @@ export default function TimeSlotGrid({
               }}
               className={`rounded border px-2 py-2 text-sm transition-colors ${
                 isInSelectedRange
-                  ? 'border-foreground bg-foreground text-background hover:bg-foreground'
+                  ? 'border-accent-primary bg-accent-primary/5 text-brand-dark'
                   : slot.disabled
-                    ? 'cursor-not-allowed border-black/[.145] text-zinc-400 dark:border-white/[.145] dark:text-zinc-600'
+                    ? 'cursor-not-allowed border-brand-dark/20 text-brand-dark/30'
                     : slot.exceedsClosing
-                      ? 'border-amber-500/50 text-amber-700 hover:bg-amber-500/10 dark:border-amber-400/40 dark:text-amber-400 dark:hover:bg-amber-400/10'
-                      : 'border-black/[.145] hover:bg-black/[.05] dark:border-white/[.145] dark:hover:bg-white/[.08]'
+                      ? 'border-amber-500/50 text-amber-700 hover:bg-amber-500/10'
+                      : 'border-brand-dark/20 text-brand-dark hover:bg-brand-dark/5'
               } ${slot.disabled ? 'cursor-not-allowed' : ''}`}
             >
               {slot.label}

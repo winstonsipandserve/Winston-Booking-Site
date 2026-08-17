@@ -38,7 +38,7 @@ export default function DateTimeStep({
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Duration</span>
+        <span className="text-sm font-medium text-brand-dark">Duration</span>
         <div role="group" aria-label="Duration" className="flex flex-wrap gap-2">
           {durationOptions.map((d) => {
             const isSelected = String(d) === durationMinutes
@@ -48,10 +48,10 @@ export default function DateTimeStep({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => onDurationChange(String(d))}
-                className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-full border px-4 py-2 text-sm font-medium text-brand-dark transition-colors ${
                   isSelected
-                    ? 'border-foreground bg-black/[.04] dark:bg-white/[.08]'
-                    : 'border-black/[.145] hover:bg-black/[.03] dark:border-white/[.145] dark:hover:bg-white/[.04]'
+                    ? 'border-accent-primary bg-accent-primary/5'
+                    : 'border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
                 }`}
               >
                 {d} minutes
@@ -62,13 +62,13 @@ export default function DateTimeStep({
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Date</span>
+        <span className="text-sm font-medium text-brand-dark">Date</span>
         <Calendar selectedDate={selectedDate} onSelectDate={onSelectDate} />
       </div>
 
       {selectedDate && (
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Time</span>
+          <span className="text-sm font-medium text-brand-dark">Time</span>
           {availabilityError && <p className="text-sm text-red-600">{availabilityError}</p>}
           <TimeSlotGrid
             selectedDate={selectedDate}

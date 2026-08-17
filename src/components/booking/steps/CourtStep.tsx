@@ -18,7 +18,7 @@ export default function CourtStep({
 }: CourtStepProps) {
   return (
     <div className="flex w-full flex-col gap-3">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-brand-dark/60">
         Choose a {resourceTypeName.toLowerCase()} to book.
       </p>
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3">
@@ -29,10 +29,10 @@ export default function CourtStep({
               key={r.id}
               type="button"
               onClick={() => onSelect(r.id)}
-              className={`rounded border px-4 py-3 text-center font-medium transition-colors ${
+              className={`rounded border px-4 py-3 text-center font-medium text-brand-dark transition-colors ${
                 isSelected
-                  ? 'border-foreground bg-black/[.04] dark:bg-white/[.08]'
-                  : 'border-black/[.145] hover:bg-black/[.03] dark:border-white/[.145] dark:hover:bg-white/[.04]'
+                  ? 'border-accent-primary bg-accent-primary/5'
+                  : 'border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
               }`}
             >
               {r.label}

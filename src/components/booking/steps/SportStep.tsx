@@ -39,16 +39,16 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: S
             onClick={() => onSelect(rt.id)}
             className={`flex flex-col items-start gap-1 rounded border px-4 py-3 text-left transition-colors ${
               isSelected
-                ? 'border-foreground bg-black/[.04] dark:bg-white/[.08]'
-                : 'border-black/[.145] hover:bg-black/[.03] dark:border-white/[.145] dark:hover:bg-white/[.04]'
+                ? 'border-accent-primary bg-accent-primary/5'
+                : 'border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
             }`}
           >
-            <span className="font-medium">{rt.name}</span>
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">
+            <span className="font-medium text-brand-dark">{rt.name}</span>
+            <span className="text-sm text-brand-dark/60">
               {countLabel(rt.resources.length, rt.category)}
             </span>
             {NON_MEMBER_PRICE_LABEL[rt.slug] && (
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+              <span className="text-sm text-brand-dark/60">
                 {NON_MEMBER_PRICE_LABEL[rt.slug]}
               </span>
             )}
