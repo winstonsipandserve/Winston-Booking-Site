@@ -24,9 +24,7 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
             </span>
             <span
               className={`text-center text-[10px] font-medium tracking-wide ${
-                isActive
-                  ? 'text-black dark:text-zinc-50'
-                  : 'text-zinc-500 dark:text-zinc-500'
+                isActive ? 'text-foreground' : 'text-zinc-500'
               }`}
             >
               {label}
