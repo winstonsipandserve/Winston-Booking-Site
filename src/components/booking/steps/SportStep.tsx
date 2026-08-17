@@ -19,6 +19,14 @@ function countLabel(count: number, category: ResourceCategory): string {
   return `${count} ${unit}${count === 1 ? '' : 's'}`
 }
 
+const NON_MEMBER_PRICE_LABEL: Record<string, string> = {
+  tennis_court: '₱750/hr',
+  pickleball_court: '₱650/hr',
+  tennis_sim: 'From ₱300',
+  pickleball_sim: 'From ₱300',
+  golf_sim: 'From ₱1,150',
+}
+
 export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: SportStepProps) {
   return (
     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
@@ -39,6 +47,11 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: S
             <span className="text-sm text-zinc-600 dark:text-zinc-400">
               {countLabel(rt.resources.length, rt.category)}
             </span>
+            {NON_MEMBER_PRICE_LABEL[rt.slug] && (
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                {NON_MEMBER_PRICE_LABEL[rt.slug]}
+              </span>
+            )}
           </button>
         )
       })}
