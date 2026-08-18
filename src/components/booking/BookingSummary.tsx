@@ -1,4 +1,5 @@
 import { formatCentavos } from '@/lib/format'
+import { LocationIcon, CalendarIcon, ClockIcon, GuestsIcon, BallBoyIcon, CoachingIcon } from '@/components/ui/Icons'
 
 interface BookingSummaryProps {
   resourceTypeName: string
@@ -13,6 +14,16 @@ interface BookingSummaryProps {
   coachingPaxCount: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
+  showIcons?: boolean
+}
+
+function RowIcon({ icon: Icon, show }: { icon: (props: { className?: string }) => React.JSX.Element; show?: boolean }) {
+  if (!show) return null
+  return (
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-primary/10 text-accent-primary">
+      <Icon className="h-4 w-4" />
+    </span>
+  )
 }
 
 export default function BookingSummary({
@@ -28,6 +39,7 @@ export default function BookingSummary({
   coachingPaxCount,
   estimateCentavos,
   addOnsEstimateCentavos,
+  showIcons = false,
 }: BookingSummaryProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
 
@@ -35,29 +47,47 @@ export default function BookingSummary({
     <div className="flex flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
       <dl className="flex flex-col">
         <div className="flex items-center justify-between gap-4 py-3">
-          <dt className="text-brand-dark/70">Sport</dt>
+          <dt className="flex items-center gap-2 text-brand-dark/70">
+            <RowIcon icon={LocationIcon} show={showIcons} />
+            Sport
+          </dt>
           <dd className="text-right font-medium text-brand-dark">{resourceTypeName}</dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
-          <dt className="text-brand-dark/70">Court / bay</dt>
+          <dt className="flex items-center gap-2 text-brand-dark/70">
+            <RowIcon icon={LocationIcon} show={showIcons} />
+            Court / bay
+          </dt>
           <dd className="text-right font-medium text-brand-dark">{resourceLabel}</dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
-          <dt className="text-brand-dark/70">Date &amp; time</dt>
+          <dt className="flex items-center gap-2 text-brand-dark/70">
+            <RowIcon icon={CalendarIcon} show={showIcons} />
+            Date &amp; time
+          </dt>
           <dd className="text-right font-medium text-brand-dark">{startDisplay}</dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
-          <dt className="text-brand-dark/70">Duration</dt>
+          <dt className="flex items-center gap-2 text-brand-dark/70">
+            <RowIcon icon={ClockIcon} show={showIcons} />
+            Duration
+          </dt>
           <dd className="text-right font-medium text-brand-dark">{durationMinutes} minutes</dd>
         </div>
         {isCourt && (
           <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
-            <dt className="text-brand-dark/70">Guests</dt>
+            <dt className="flex items-center gap-2 text-brand-dark/70">
+              <RowIcon icon={GuestsIcon} show={showIcons} />
+              Guests
+            </dt>
             <dd className="text-right font-medium text-brand-dark">{guestCount}</dd>
           </div>
         )}
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
-          <dt className="text-brand-dark/70">Ball Boy</dt>
+          <dt className="flex items-center gap-2 text-brand-dark/70">
+            <RowIcon icon={BallBoyIcon} show={showIcons} />
+            Ball Boy
+          </dt>
           <dd className="text-right font-medium text-brand-dark">
             {ballBoy
               ? ballBoyPriceCentavos !== null
@@ -67,7 +97,10 @@ export default function BookingSummary({
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
-          <dt className="text-brand-dark/70">Coaching</dt>
+          <dt className="flex items-center gap-2 text-brand-dark/70">
+            <RowIcon icon={CoachingIcon} show={showIcons} />
+            Coaching
+          </dt>
           <dd className="text-right font-medium text-brand-dark">
             {coaching
               ? isCourt && coachingPaxCount !== null

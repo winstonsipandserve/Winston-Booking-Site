@@ -52,6 +52,7 @@ export default function ReviewStep({
         coachingPaxCount={coachingPaxCount}
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
+        showIcons
       />
 
       {submitError && <p className="text-sm text-red-600">{submitError}</p>}

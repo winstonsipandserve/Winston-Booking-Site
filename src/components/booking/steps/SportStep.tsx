@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
+import { TennisIcon, PickleballIcon, GolfIcon } from '@/components/ui/Icons'
 
 type ResourceCategory = 'court' | 'simulator'
 
@@ -22,6 +23,14 @@ interface SportStepProps {
 function countLabel(count: number, category: ResourceCategory): string {
   const unit = category === 'court' ? 'Court' : 'Simulator'
   return `${count} ${unit}${count === 1 ? '' : 's'}`
+}
+
+const SPORT_ICONS: Record<string, (props: { className?: string }) => React.JSX.Element> = {
+  tennis_court: TennisIcon,
+  tennis_sim: TennisIcon,
+  pickleball_court: PickleballIcon,
+  pickleball_sim: PickleballIcon,
+  golf_sim: GolfIcon,
 }
 
 interface PriceTier {
@@ -66,6 +75,7 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: S
       <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
         {resourceTypes.map((rt) => {
           const isSelected = rt.id === resourceTypeId
+          const SportIcon = SPORT_ICONS[rt.slug]
           return (
             <div
               key={rt.id}
@@ -84,6 +94,11 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: S
                   : 'border border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
               }`}
             >
+              {SportIcon && (
+                <SportIcon
+                  className={`h-6 w-6 ${isSelected ? 'text-accent-primary' : 'text-accent-primary/40'}`}
+                />
+              )}
               <span className={`text-brand-dark ${isSelected ? 'font-semibold' : 'font-medium'}`}>{rt.name}</span>
               <span className="text-sm text-brand-dark/60">
                 {countLabel(rt.resources.length, rt.category)}
