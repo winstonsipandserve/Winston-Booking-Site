@@ -153,14 +153,14 @@ export default function TimeSlotGrid({
                 }
                 onSelectSlot(slot.startIso)
               }}
-              className={`rounded border px-2 py-2 text-sm transition-colors ${
+              className={`rounded px-2 py-2 text-sm transition-colors ${
                 isInSelectedRange
-                  ? 'border-accent-primary bg-accent-primary/5 text-brand-dark'
+                  ? 'border-2 border-accent-primary bg-accent-primary/10 font-semibold text-brand-dark'
                   : slot.disabled
-                    ? 'cursor-not-allowed border-brand-dark/20 text-brand-dark/30'
+                    ? 'cursor-not-allowed border border-brand-dark/20 text-brand-dark/30'
                     : slot.exceedsClosing
-                      ? 'border-amber-500/50 text-amber-700 hover:bg-amber-500/10'
-                      : 'border-brand-dark/20 text-brand-dark hover:bg-brand-dark/5'
+                      ? 'border border-amber-500/50 text-amber-700 hover:bg-amber-500/10'
+                      : 'border border-brand-dark/20 text-brand-dark hover:bg-brand-dark/5'
               } ${slot.disabled ? 'cursor-not-allowed' : ''}`}
             >
               {slot.label}

@@ -72,6 +72,15 @@ export default function AnnouncementGate({ onContinue }: AnnouncementGateProps) 
           ))}
         </div>
 
+        <p className="self-center text-center text-xs text-brand-dark/60">
+          Already a member?{' '}
+          {/* Placeholder — link to https://winstonsportsclub.web.app/auth once member auth is live */}
+          <span className="font-medium text-accent-primary underline underline-offset-2">
+            Sign in
+          </span>{' '}
+          for member rates and priority booking.
+        </p>
+
         <button
           type="button"
           onClick={onContinue}

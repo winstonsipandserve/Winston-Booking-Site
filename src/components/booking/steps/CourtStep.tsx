@@ -29,10 +29,10 @@ export default function CourtStep({
               key={r.id}
               type="button"
               onClick={() => onSelect(r.id)}
-              className={`rounded border px-4 py-3 text-center font-medium text-brand-dark transition-colors ${
+              className={`rounded px-4 py-3 text-center text-brand-dark transition-colors ${
                 isSelected
-                  ? 'border-accent-primary bg-accent-primary/5'
-                  : 'border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
+                  ? 'border-2 border-accent-primary bg-accent-primary/10 font-semibold'
+                  : 'border border-brand-dark/20 bg-brand-light font-medium hover:bg-brand-dark/5'
               }`}
             >
               {r.label}

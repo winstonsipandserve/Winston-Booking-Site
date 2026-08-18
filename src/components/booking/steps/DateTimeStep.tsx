@@ -48,10 +48,10 @@ export default function DateTimeStep({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => onDurationChange(String(d))}
-                className={`rounded-full border px-4 py-2 text-sm font-medium text-brand-dark transition-colors ${
+                className={`rounded-full px-4 py-2 text-sm text-brand-dark transition-colors ${
                   isSelected
-                    ? 'border-accent-primary bg-accent-primary/5'
-                    : 'border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
+                    ? 'border-2 border-accent-primary bg-accent-primary/10 font-semibold'
+                    : 'border border-brand-dark/20 bg-brand-light font-medium hover:bg-brand-dark/5'
                 }`}
               >
                 {d} minutes

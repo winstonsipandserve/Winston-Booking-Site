@@ -22,9 +22,9 @@ function countLabel(count: number, category: ResourceCategory): string {
 const NON_MEMBER_PRICE_LABEL: Record<string, string> = {
   tennis_court: '₱750/hr',
   pickleball_court: '₱650/hr',
-  tennis_sim: 'From ₱300',
-  pickleball_sim: 'From ₱300',
-  golf_sim: 'From ₱1,150',
+  tennis_sim: '15 min ₱300 · 30 min ₱450 · 60 min ₱800',
+  pickleball_sim: '15 min ₱300 · 30 min ₱450 · 60 min ₱800',
+  golf_sim: '60 min ₱1,150 · 90 min ₱1,450',
 }
 
 export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: SportStepProps) {
@@ -37,13 +37,13 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: S
             key={rt.id}
             type="button"
             onClick={() => onSelect(rt.id)}
-            className={`flex flex-col items-start gap-1 rounded border px-4 py-3 text-left transition-colors ${
+            className={`flex flex-col items-start gap-1 rounded px-4 py-3 text-left transition-colors ${
               isSelected
-                ? 'border-accent-primary bg-accent-primary/5'
-                : 'border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
+                ? 'border-2 border-accent-primary bg-accent-primary/10'
+                : 'border border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
             }`}
           >
-            <span className="font-medium text-brand-dark">{rt.name}</span>
+            <span className={`text-brand-dark ${isSelected ? 'font-semibold' : 'font-medium'}`}>{rt.name}</span>
             <span className="text-sm text-brand-dark/60">
               {countLabel(rt.resources.length, rt.category)}
             </span>
