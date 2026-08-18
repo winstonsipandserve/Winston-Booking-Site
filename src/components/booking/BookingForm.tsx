@@ -95,7 +95,7 @@ function getCoachingPricing(resourceType: ResourceTypeOption | null): CoachingPr
   }
 }
 
-interface ResourcesResponse {
+export interface ResourcesResponse {
   resourceTypes: ResourceTypeOption[]
   guestFeeCentavos: number
 }
@@ -119,10 +119,13 @@ function getDurationOptions(resourceType: ResourceTypeOption): number[] {
   ).sort((a, b) => a - b)
 }
 
-export default function BookingForm() {
-  const [data, setData] = useState<ResourcesResponse | null>(null)
-  const [loadError, setLoadError] = useState<string | null>(null)
+interface BookingFormProps {
+  data: ResourcesResponse | null
+  loading: boolean
+  loadError: string | null
+}
 
+export default function BookingForm({ data, loading, loadError }: BookingFormProps) {
   const [step, setStep] = useState(1)
 
   const [resourceTypeId, setResourceTypeId] = useState('')
@@ -155,25 +158,6 @@ export default function BookingForm() {
     originalCentavos: number
     finalCentavos: number
   } | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    fetch('/api/resources')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load resources')
-        return res.json() as Promise<ResourcesResponse>
-      })
-      .then((json) => {
-        if (cancelled) return
-        setData(json)
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError('Could not load resources. Please refresh the page.')
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   const selectedResourceType = useMemo(
     () => data?.resourceTypes.find((rt) => rt.id === resourceTypeId) ?? null,
@@ -452,7 +436,7 @@ export default function BookingForm() {
     return <p className="text-red-600">{loadError}</p>
   }
 
-  if (!data) {
+  if (loading || !data) {
     return <p className="text-brand-dark/60">Loading booking form…</p>
   }
 
