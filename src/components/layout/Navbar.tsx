@@ -61,6 +61,21 @@ export default function Navbar() {
           })}
         </ul>
 
+        <div className="hidden items-center gap-3 md:flex">
+          <Link
+            href="/book"
+            className="rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+          >
+            Book a Court
+          </Link>
+          <Link
+            href="/membership"
+            className="rounded-full border border-brand-mid px-5 py-2 text-sm font-semibold text-brand-dark transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent-light"
+          >
+            Become a Member
+          </Link>
+        </div>
+
         <button
           type="button"
           aria-label="Toggle menu"
@@ -98,6 +113,22 @@ export default function Navbar() {
               )
             })}
           </ul>
+          <div className="mt-6 flex flex-col gap-3">
+            <Link
+              href="/book"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full rounded-full bg-accent-primary px-5 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+            >
+              Book a Court
+            </Link>
+            <Link
+              href="/membership"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full rounded-full border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-all duration-200 hover:bg-accent-light"
+            >
+              Become a Member
+            </Link>
+          </div>
         </div>
       )}
     </header>
