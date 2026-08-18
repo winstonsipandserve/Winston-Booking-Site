@@ -1,0 +1,50 @@
+- generic [ref=f4e1]:
+  - generic [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - heading "Become a Member" [level=1] [ref=f4e4]
+      - paragraph [ref=f4e5]: Apply for membership below. We'll review your application and email you once a decision is made.
+    - generic [ref=f4e6]:
+      - generic [ref=f4e7]:
+        - generic [ref=f4e8]: Name
+        - textbox "Name" [ref=f4e9]: Maria Santos
+      - generic [ref=f4e10]:
+        - generic [ref=f4e11]: Email
+        - textbox "Email" [ref=f4e12]: maria.santos.verify@example.com
+      - generic [ref=f4e13]:
+        - generic [ref=f4e14]: Phone
+        - textbox "Phone" [ref=f4e15]: "09171234567"
+      - generic [ref=f4e16]:
+        - generic [ref=f4e17]: Address
+        - textbox "Address" [ref=f4e18]: 123 Rizal Street, Makati City
+      - generic [ref=f4e19]:
+        - generic [ref=f4e20]: Membership Tier
+        - generic [ref=f4e21]:
+          - generic [ref=f4e22] [cursor=pointer]:
+            - generic [ref=f4e23]:
+              - radio "3-Month ₱5,500" [checked] [ref=f4e24]
+              - generic [ref=f4e25]: 3-Month
+            - generic [ref=f4e26]: ₱5,500
+          - generic [ref=f4e27] [cursor=pointer]:
+            - generic [ref=f4e28]:
+              - radio "6-Month ₱12,500" [ref=f4e29]
+              - generic [ref=f4e30]: 6-Month
+            - generic [ref=f4e31]: ₱12,500
+          - generic [ref=f4e32] [cursor=pointer]:
+            - generic [ref=f4e33]:
+              - radio "12-Month ₱22,500" [ref=f4e34]
+              - generic [ref=f4e35]: 12-Month
+            - generic [ref=f4e36]: ₱22,500
+      - generic [ref=f4e37]:
+        - generic [ref=f4e38]: Government ID
+        - generic [ref=f4e39]:
+          - generic [ref=f4e40]: Front
+          - button "Front" [ref=f4e41]
+        - generic [ref=f4e42]:
+          - generic [ref=f4e43]: Back
+          - button "Back" [active] [ref=f4e44]
+        - generic [ref=f4e45]:
+          - generic [ref=f4e46]: Selfie with ID
+          - button "Selfie with ID" [ref=f4e47]
+      - button "Submit Application" [disabled] [ref=f4e48]
+  - button "Open Next.js Dev Tools" [ref=f4e54] [cursor=pointer]
+  - alert [ref=f4e58]

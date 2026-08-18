@@ -1,0 +1,147 @@
+- generic [active] [ref=f10e1]:
+  - banner [ref=f10e2]:
+    - navigation [ref=f10e3]:
+      - link [ref=f10e4] [cursor=pointer]:
+        - /url: /
+        - img "Winston Sip & Serve" [ref=f10e5]
+      - list [ref=f10e6]:
+        - listitem [ref=f10e7]:
+          - link "Home" [ref=f10e8] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=f10e9]:
+          - link "Book Now" [ref=f10e10] [cursor=pointer]:
+            - /url: /book
+        - listitem [ref=f10e11]:
+          - link "News" [ref=f10e12] [cursor=pointer]:
+            - /url: /news
+        - listitem [ref=f10e13]:
+          - link "Cafe & Bar" [ref=f10e14] [cursor=pointer]:
+            - /url: /cafe-bar
+        - listitem [ref=f10e15]:
+          - link "Membership" [ref=f10e16] [cursor=pointer]:
+            - /url: /membership
+        - listitem [ref=f10e17]:
+          - link "About" [ref=f10e18] [cursor=pointer]:
+            - /url: /about
+      - generic [ref=f10e19]:
+        - link "Book a Court" [ref=f10e20] [cursor=pointer]:
+          - /url: /book
+        - link "Become a Member" [ref=f10e21] [cursor=pointer]:
+          - /url: /membership
+  - generic [ref=f10e22]:
+    - img "Tennis court with diagonal white lines, blue court and green surround" [ref=f10e23]
+    - generic [ref=f10e25]:
+      - heading "Winston" [level=1] [ref=f10e26]
+      - paragraph [ref=f10e27]: Sip & Serve
+      - paragraph [ref=f10e28]: Tennis · Pickleball · Golf Simulator · Café & Bar
+      - link "Book Now" [ref=f10e29] [cursor=pointer]:
+        - /url: /book
+    - button "Scroll to stats" [ref=f10e30]
+  - generic [ref=f10e34]:
+    - generic [ref=f10e35]:
+      - paragraph [ref=f10e36]: "3"
+      - paragraph [ref=f10e37]: Sports
+    - generic [ref=f10e38]:
+      - paragraph [ref=f10e39]: "9"
+      - paragraph [ref=f10e40]: Courts & Simulators
+    - generic [ref=f10e41]:
+      - paragraph [ref=f10e42]: 6AM
+      - paragraph [ref=f10e43]: Opens Daily
+    - generic [ref=f10e44]:
+      - paragraph [ref=f10e45]: 10PM
+      - paragraph [ref=f10e46]: Last Booking
+  - generic [ref=f10e48]:
+    - generic [ref=f10e50]:
+      - text: Simple & Fast
+      - heading "How It Works" [level=2] [ref=f10e51]
+      - paragraph [ref=f10e52]: Reserve your court in under two minutes
+    - generic [ref=f10e53]:
+      - generic [ref=f10e55]:
+        - generic [ref=f10e56]: "01"
+        - heading "Choose Your Sport" [level=3] [ref=f10e57]
+        - paragraph [ref=f10e58]: Pick from Tennis, Pickleball, Golf Simulator, or Pickleball Simulator — then select your court or simulator slot.
+      - generic [ref=f10e60]:
+        - generic [ref=f10e61]: "02"
+        - heading "Pick a Schedule" [level=3] [ref=f10e62]
+        - paragraph [ref=f10e63]: Select your date and time range. All hours in between are reserved automatically.
+      - generic [ref=f10e65]:
+        - generic [ref=f10e66]: "03"
+        - heading "Play!" [level=3] [ref=f10e67]
+        - paragraph [ref=f10e68]: Confirm your booking and get your reference number. Show up, play, then grab a coffee.
+  - generic [ref=f10e70]:
+    - generic [ref=f10e72]:
+      - text: OUR FACILITIES
+      - heading "A Space Worth Playing In" [level=2] [ref=f10e73]
+      - paragraph [ref=f10e74]: Modern, clean, and purpose-built for players and cafe guests alike.
+    - generic [ref=f10e75]:
+      - generic [ref=f10e77]:
+        - img "Tennis Courts" [ref=f10e78]
+        - paragraph [ref=f10e79]: Tennis Courts
+      - generic [ref=f10e81]:
+        - img "Pickleball Courts" [ref=f10e82]
+        - paragraph [ref=f10e83]: Pickleball Courts
+      - generic [ref=f10e85]:
+        - img "Golf Simulator" [ref=f10e86]
+        - paragraph [ref=f10e87]: Golf Simulator
+      - generic [ref=f10e89]:
+        - img "Café & Bar" [ref=f10e90]
+        - paragraph [ref=f10e91]: Café & Bar
+      - generic [ref=f10e93]:
+        - img "Speakeasy Lounge" [ref=f10e94]
+        - paragraph [ref=f10e95]: Speakeasy Lounge
+  - generic [ref=f10e97]:
+    - heading "Ready to Play?" [level=2] [ref=f10e98]
+    - paragraph [ref=f10e99]: Reserve a court, grab a seat at the bar, or see what membership unlocks — your next game is a couple of taps away.
+    - generic [ref=f10e100]:
+      - link "Book Now" [ref=f10e101] [cursor=pointer]:
+        - /url: /book
+      - link "Explore Membership" [ref=f10e102] [cursor=pointer]:
+        - /url: /membership
+  - contentinfo [ref=f10e103]:
+    - generic [ref=f10e105]:
+      - generic [ref=f10e106]:
+        - paragraph [ref=f10e107]: Winston Sip & Serve
+        - paragraph [ref=f10e108]: Tennis, pickleball, and golf simulation — paired with craft coffee and a members-only bar. Open daily 6AM – 10PM.
+        - generic [ref=f10e110]:
+          - link "Facebook" [ref=f10e111] [cursor=pointer]:
+            - /url: "#"
+          - link "Instagram" [ref=f10e114] [cursor=pointer]:
+            - /url: "#"
+          - link "TikTok" [ref=f10e117] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=f10e120]:
+        - paragraph [ref=f10e121]: Contact
+        - list [ref=f10e122]:
+          - listitem [ref=f10e123]:
+            - generic [ref=f10e126]: East Fairview Park Subdivision
+          - listitem [ref=f10e127]:
+            - generic [ref=f10e130]: (02) 8123-4567
+          - listitem [ref=f10e131]:
+            - generic [ref=f10e134]: hello@winstonsipandserve.com
+          - listitem [ref=f10e135]:
+            - generic [ref=f10e138]: "Open Daily: 6:00 AM – 10:00 PM"
+      - generic [ref=f10e139]:
+        - paragraph [ref=f10e140]: Quick Links
+        - list [ref=f10e141]:
+          - listitem [ref=f10e142]:
+            - link "Home" [ref=f10e143] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=f10e144]:
+            - link "Book Now" [ref=f10e145] [cursor=pointer]:
+              - /url: /book
+          - listitem [ref=f10e146]:
+            - link "News" [ref=f10e147] [cursor=pointer]:
+              - /url: /news
+          - listitem [ref=f10e148]:
+            - link "Cafe & Bar" [ref=f10e149] [cursor=pointer]:
+              - /url: /cafe-bar
+          - listitem [ref=f10e150]:
+            - link "Membership" [ref=f10e151] [cursor=pointer]:
+              - /url: /membership
+          - listitem [ref=f10e152]:
+            - link "About" [ref=f10e153] [cursor=pointer]:
+              - /url: /about
+    - generic [ref=f10e155]:
+      - paragraph [ref=f10e156]: © 2026 Winston Sip & Serve. All rights reserved.
+      - paragraph [ref=f10e157]: Tennis & Pickleball Recreation Center
+  - button "Open Next.js Dev Tools" [ref=f10e163] [cursor=pointer]

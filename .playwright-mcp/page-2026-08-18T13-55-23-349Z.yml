@@ -1,0 +1,51 @@
+- generic [ref=f3e1]:
+  - generic [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - heading "Become a Member" [level=1] [ref=f3e4]
+      - paragraph [ref=f3e5]: Apply for membership below. We'll review your application and email you once a decision is made.
+    - generic [ref=f3e6]:
+      - generic [ref=f3e7]:
+        - generic [ref=f3e8]: Name
+        - textbox "Name" [ref=f3e9]
+      - generic [ref=f3e10]:
+        - generic [ref=f3e11]: Email
+        - textbox "Email" [ref=f3e12]
+      - generic [ref=f3e13]:
+        - generic [ref=f3e14]: Phone
+        - textbox "Phone" [ref=f3e15]
+      - generic [ref=f3e16]:
+        - generic [ref=f3e17]: Address
+        - textbox "Address" [ref=f3e18]
+      - generic [ref=f3e19]:
+        - generic [ref=f3e20]: Membership Tier
+        - generic [ref=f3e21]:
+          - generic [ref=f3e22] [cursor=pointer]:
+            - generic [ref=f3e23]:
+              - radio "3-Month ₱5,500" [checked] [ref=f3e24]
+              - generic [ref=f3e25]: 3-Month
+            - generic [ref=f3e26]: ₱5,500
+          - generic [ref=f3e27] [cursor=pointer]:
+            - generic [ref=f3e28]:
+              - radio "6-Month ₱12,500" [ref=f3e29]
+              - generic [ref=f3e30]: 6-Month
+            - generic [ref=f3e31]: ₱12,500
+          - generic [ref=f3e32] [cursor=pointer]:
+            - generic [ref=f3e33]:
+              - radio "12-Month ₱22,500" [ref=f3e34]
+              - generic [ref=f3e35]: 12-Month
+            - generic [ref=f3e36]: ₱22,500
+      - generic [ref=f3e37]:
+        - generic [ref=f3e38]: Government ID
+        - generic [ref=f3e39]:
+          - generic [ref=f3e40]: Front
+          - button "Front" [active] [ref=f3e41]
+        - generic [ref=f3e42]:
+          - generic [ref=f3e43]: Back
+          - button "Back" [ref=f3e44]
+        - generic [ref=f3e45]:
+          - generic [ref=f3e46]: Selfie with ID
+          - button "Selfie with ID" [ref=f3e47]
+      - paragraph [ref=f3e59]: Government ID (front) must be 5MB or smaller
+      - button "Submit Application" [disabled] [ref=f3e48]
+  - button "Open Next.js Dev Tools" [ref=f3e54] [cursor=pointer]
+  - alert [ref=f3e58]

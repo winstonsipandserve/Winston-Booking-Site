@@ -133,6 +133,8 @@ Names and purpose only — actual values live in `.env.local` (never committed) 
 | `SENTRY_DSN` | Error tracking |
 | `BOOKING_HOLD_MINUTES` | Minutes a `pending_payment` booking is held before being treated as abandoned (default: `10`) |
 | `CRON_SECRET` | Authenticates Vercel Cron invocations of `/api/cron/expire-bookings` (Vercel auto-sends it as `Authorization: Bearer <value>`) |
+| `SUPABASE_URL` | Supabase project API URL — used server-side for Storage REST calls (membership application ID images) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key — bypasses RLS/Storage policies; server-only, never exposed to the client |
 
 ---
 

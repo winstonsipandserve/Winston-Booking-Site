@@ -1,0 +1,46 @@
+- generic [active] [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - generic [ref=f7e3]:
+      - heading "Book a Court or Simulator" [level=1] [ref=f7e4]
+      - paragraph [ref=f7e5]: Pick your sport, date, and time to get an instant booking reference — payment details come after.
+    - generic [ref=f7e39]:
+      - list [ref=f7e40]:
+        - listitem [ref=f7e41]:
+          - generic [ref=f7e42]: "1"
+          - generic [ref=f7e43]: SPORT
+        - listitem [ref=f7e44]:
+          - generic [ref=f7e45]: "2"
+          - generic [ref=f7e46]: COURT
+        - listitem [ref=f7e47]:
+          - generic [ref=f7e48]: "3"
+          - generic [ref=f7e49]: DATE & TIME
+        - listitem [ref=f7e50]:
+          - generic [ref=f7e51]: "4"
+          - generic [ref=f7e52]: ADD-ONS
+        - listitem [ref=f7e53]:
+          - generic [ref=f7e54]: "5"
+          - generic [ref=f7e55]: SUMMARY
+      - generic [ref=f7e56]:
+        - button "Golf Simulator 2 Simulators View Pricing" [ref=f7e57] [cursor=pointer]:
+          - generic [ref=f7e61]: Golf Simulator
+          - generic [ref=f7e62]: 2 Simulators
+          - button "View Pricing" [ref=f7e63]
+        - button "Pickleball Court 3 Courts View Pricing" [ref=f7e64] [cursor=pointer]:
+          - generic [ref=f7e71]: Pickleball Court
+          - generic [ref=f7e72]: 3 Courts
+          - button "View Pricing" [ref=f7e73]
+        - button "Pickleball Simulator 2 Simulators View Pricing" [ref=f7e74] [cursor=pointer]:
+          - generic [ref=f7e81]: Pickleball Simulator
+          - generic [ref=f7e82]: 2 Simulators
+          - button "View Pricing" [ref=f7e83]
+        - button "Tennis Court 1 Court View Pricing" [ref=f7e84] [cursor=pointer]:
+          - generic [ref=f7e89]: Tennis Court
+          - generic [ref=f7e90]: 1 Court
+          - button "View Pricing" [ref=f7e91]
+        - button "Tennis Simulator 1 Simulator View Pricing" [ref=f7e92] [cursor=pointer]:
+          - generic [ref=f7e97]: Tennis Simulator
+          - generic [ref=f7e98]: 1 Simulator
+          - button "View Pricing" [ref=f7e99]
+      - button "Continue" [disabled] [ref=f7e101]
+  - button "Open Next.js Dev Tools" [ref=f7e34] [cursor=pointer]
+  - alert [ref=f7e38]

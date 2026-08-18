@@ -1,0 +1,50 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "Become a Member" [level=1] [ref=e4]
+      - paragraph [ref=e5]: Apply for membership below. We'll review your application and email you once a decision is made.
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]: Name
+        - textbox "Name" [ref=e9]: Maria Santos
+      - generic [ref=e10]:
+        - generic [ref=e11]: Email
+        - textbox "Email" [ref=e12]: maria.santos.verify@example.com
+      - generic [ref=e13]:
+        - generic [ref=e14]: Phone
+        - textbox "Phone" [ref=e15]: "09171234567"
+      - generic [ref=e16]:
+        - generic [ref=e17]: Address
+        - textbox "Address" [ref=e18]: 123 Rizal Street, Makati City
+      - generic [ref=e19]:
+        - generic [ref=e20]: Membership Tier
+        - generic [ref=e21]:
+          - generic [ref=e22] [cursor=pointer]:
+            - generic [ref=e23]:
+              - radio "3-Month ₱5,500" [checked] [ref=e24]
+              - generic [ref=e25]: 3-Month
+            - generic [ref=e26]: ₱5,500
+          - generic [ref=e27] [cursor=pointer]:
+            - generic [ref=e28]:
+              - radio "6-Month ₱12,500" [ref=e29]
+              - generic [ref=e30]: 6-Month
+            - generic [ref=e31]: ₱12,500
+          - generic [ref=e32] [cursor=pointer]:
+            - generic [ref=e33]:
+              - radio "12-Month ₱22,500" [ref=e34]
+              - generic [ref=e35]: 12-Month
+            - generic [ref=e36]: ₱22,500
+      - generic [ref=e37]:
+        - generic [ref=e38]: Government ID
+        - generic [ref=e39]:
+          - generic [ref=e40]: Front
+          - button "Front" [active] [ref=e41]
+        - generic [ref=e42]:
+          - generic [ref=e43]: Back
+          - button "Back" [ref=e44]
+        - generic [ref=e45]:
+          - generic [ref=e46]: Selfie with ID
+          - button "Selfie with ID" [ref=e47]
+      - button "Submit Application" [disabled] [ref=e48]
+  - button "Open Next.js Dev Tools" [ref=e54] [cursor=pointer]
+  - alert [ref=e58]

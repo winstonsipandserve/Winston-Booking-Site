@@ -1,0 +1,40 @@
+- generic [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - generic [ref=f7e3]:
+      - heading "Book a Court or Simulator" [level=1] [ref=f7e4]
+      - paragraph [ref=f7e5]: Pick your sport, date, and time to get an instant booking reference — payment details come after.
+    - generic [ref=f7e39]:
+      - list [ref=f7e40]:
+        - listitem [ref=f7e41]:
+          - generic [ref=f7e42]: "1"
+          - generic [ref=f7e43]: SPORT
+        - listitem [ref=f7e44]:
+          - generic [ref=f7e45]: "2"
+          - generic [ref=f7e46]: COURT
+        - listitem [ref=f7e47]:
+          - generic [ref=f7e48]: "3"
+          - generic [ref=f7e49]: DATE & TIME
+        - listitem [ref=f7e50]:
+          - generic [ref=f7e51]: "4"
+          - generic [ref=f7e52]: ADD-ONS
+        - listitem [ref=f7e53]:
+          - generic [ref=f7e54]: "5"
+          - generic [ref=f7e55]: SUMMARY
+      - generic [ref=f7e210]:
+        - heading "Add-Ons" [level=2] [ref=f7e211]
+        - generic [ref=f7e212]:
+          - generic [ref=f7e213]: Number of guests
+          - generic [ref=f7e214]:
+            - button "Decrease guest count" [disabled] [ref=f7e215]: −
+            - generic [ref=f7e216]: "0"
+            - button "Increase guest count" [ref=f7e217]: +
+        - generic [ref=f7e218]:
+          - button "Ball Boy ₱150.00" [ref=f7e219]:
+            - generic [ref=f7e221]: Ball Boy
+            - generic [ref=f7e222]: ₱150.00
+          - button "Coaching" [ref=f7e224]
+      - generic [ref=f7e100]:
+        - button "Back" [ref=f7e108]
+        - button "Continue" [active] [ref=f7e101]
+  - button "Open Next.js Dev Tools" [ref=f7e34] [cursor=pointer]
+  - alert [ref=f7e38]

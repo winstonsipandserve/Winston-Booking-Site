@@ -1,0 +1,49 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - heading "Become a Member" [level=1] [ref=f1e4]
+      - paragraph [ref=f1e5]: Apply for membership below. We'll review your application and email you once a decision is made.
+    - generic [ref=f1e6]:
+      - generic [ref=f1e7]:
+        - generic [ref=f1e8]: Name
+        - textbox "Name" [ref=f1e9]
+      - generic [ref=f1e10]:
+        - generic [ref=f1e11]: Email
+        - textbox "Email" [ref=f1e12]
+      - generic [ref=f1e13]:
+        - generic [ref=f1e14]: Phone
+        - textbox "Phone" [ref=f1e15]
+      - generic [ref=f1e16]:
+        - generic [ref=f1e17]: Address
+        - textbox "Address" [ref=f1e18]
+      - generic [ref=f1e19]:
+        - generic [ref=f1e20]: Membership Tier
+        - generic [ref=f1e21]:
+          - generic [ref=f1e22] [cursor=pointer]:
+            - generic [ref=f1e23]:
+              - radio "3-Month ₱5,500" [checked] [ref=f1e24]
+              - generic [ref=f1e25]: 3-Month
+            - generic [ref=f1e26]: ₱5,500
+          - generic [ref=f1e27] [cursor=pointer]:
+            - generic [ref=f1e28]:
+              - radio "6-Month ₱12,500" [ref=f1e29]
+              - generic [ref=f1e30]: 6-Month
+            - generic [ref=f1e31]: ₱12,500
+          - generic [ref=f1e32] [cursor=pointer]:
+            - generic [ref=f1e33]:
+              - radio "12-Month ₱22,500" [ref=f1e34]
+              - generic [ref=f1e35]: 12-Month
+            - generic [ref=f1e36]: ₱22,500
+      - generic [ref=f1e37]:
+        - generic [ref=f1e38]: Government ID
+        - generic [ref=f1e39]:
+          - generic [ref=f1e40]: Front
+          - button "Front" [ref=f1e41]
+        - generic [ref=f1e42]:
+          - generic [ref=f1e43]: Back
+          - button "Back" [ref=f1e44]
+        - generic [ref=f1e45]:
+          - generic [ref=f1e46]: Selfie with ID
+          - button "Selfie with ID" [ref=f1e47]
+      - button "Submit Application" [disabled] [ref=f1e48]
+  - button "Open Next.js Dev Tools" [ref=f1e54] [cursor=pointer]

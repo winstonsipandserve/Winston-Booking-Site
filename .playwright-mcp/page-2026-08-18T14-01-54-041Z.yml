@@ -1,0 +1,50 @@
+- generic [active] [ref=f10e1]:
+  - button "Open Next.js Dev Tools" [ref=f10e163] [cursor=pointer]
+  - alert [ref=f10e167]: Become a Member
+  - generic [ref=f10e168]:
+    - generic [ref=f10e169]:
+      - heading "Become a Member" [level=1] [ref=f10e170]
+      - paragraph [ref=f10e171]: Apply for membership below. We'll review your application and email you once a decision is made.
+    - generic [ref=f10e172]:
+      - generic [ref=f10e173]:
+        - generic [ref=f10e174]: Name
+        - textbox "Name" [ref=f10e175]
+      - generic [ref=f10e176]:
+        - generic [ref=f10e177]: Email
+        - textbox "Email" [ref=f10e178]
+      - generic [ref=f10e179]:
+        - generic [ref=f10e180]: Phone
+        - textbox "Phone" [ref=f10e181]
+      - generic [ref=f10e182]:
+        - generic [ref=f10e183]: Address
+        - textbox "Address" [ref=f10e184]
+      - generic [ref=f10e185]:
+        - generic [ref=f10e186]: Membership Tier
+        - generic [ref=f10e187]:
+          - generic [ref=f10e188] [cursor=pointer]:
+            - generic [ref=f10e189]:
+              - radio "3-Month ₱5,500" [checked] [ref=f10e190]
+              - generic [ref=f10e191]: 3-Month
+            - generic [ref=f10e192]: ₱5,500
+          - generic [ref=f10e193] [cursor=pointer]:
+            - generic [ref=f10e194]:
+              - radio "6-Month ₱12,500" [ref=f10e195]
+              - generic [ref=f10e196]: 6-Month
+            - generic [ref=f10e197]: ₱12,500
+          - generic [ref=f10e198] [cursor=pointer]:
+            - generic [ref=f10e199]:
+              - radio "12-Month ₱22,500" [ref=f10e200]
+              - generic [ref=f10e201]: 12-Month
+            - generic [ref=f10e202]: ₱22,500
+      - generic [ref=f10e203]:
+        - generic [ref=f10e204]: Government ID
+        - generic [ref=f10e205]:
+          - generic [ref=f10e206]: Front
+          - button "Front" [ref=f10e207]
+        - generic [ref=f10e208]:
+          - generic [ref=f10e209]: Back
+          - button "Back" [ref=f10e210]
+        - generic [ref=f10e211]:
+          - generic [ref=f10e212]: Selfie with ID
+          - button "Selfie with ID" [ref=f10e213]
+      - button "Submit Application" [disabled] [ref=f10e214]

@@ -1,0 +1,50 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - heading "Become a Member" [level=1] [ref=f2e4]
+      - paragraph [ref=f2e5]: Apply for membership below. We'll review your application and email you once a decision is made.
+    - generic [ref=f2e6]:
+      - generic [ref=f2e7]:
+        - generic [ref=f2e8]: Name
+        - textbox "Name" [ref=f2e9]: Wrong Type Test
+      - generic [ref=f2e10]:
+        - generic [ref=f2e11]: Email
+        - textbox "Email" [ref=f2e12]: wrongtype.verify@example.com
+      - generic [ref=f2e13]:
+        - generic [ref=f2e14]: Phone
+        - textbox "Phone" [ref=f2e15]: "09173334444"
+      - generic [ref=f2e16]:
+        - generic [ref=f2e17]: Address
+        - textbox "Address" [ref=f2e18]: 456 Bonifacio Ave, Taguig
+      - generic [ref=f2e19]:
+        - generic [ref=f2e20]: Membership Tier
+        - generic [ref=f2e21]:
+          - generic [ref=f2e22] [cursor=pointer]:
+            - generic [ref=f2e23]:
+              - radio "3-Month ₱5,500" [checked] [ref=f2e24]
+              - generic [ref=f2e25]: 3-Month
+            - generic [ref=f2e26]: ₱5,500
+          - generic [ref=f2e27] [cursor=pointer]:
+            - generic [ref=f2e28]:
+              - radio "6-Month ₱12,500" [ref=f2e29]
+              - generic [ref=f2e30]: 6-Month
+            - generic [ref=f2e31]: ₱12,500
+          - generic [ref=f2e32] [cursor=pointer]:
+            - generic [ref=f2e33]:
+              - radio "12-Month ₱22,500" [ref=f2e34]
+              - generic [ref=f2e35]: 12-Month
+            - generic [ref=f2e36]: ₱22,500
+      - generic [ref=f2e37]:
+        - generic [ref=f2e38]: Government ID
+        - generic [ref=f2e39]:
+          - generic [ref=f2e40]: Front
+          - button "Front" [ref=f2e41]
+        - generic [ref=f2e42]:
+          - generic [ref=f2e43]: Back
+          - button "Back" [active] [ref=f2e44]
+        - generic [ref=f2e45]:
+          - generic [ref=f2e46]: Selfie with ID
+          - button "Selfie with ID" [ref=f2e47]
+      - button "Submit Application" [disabled] [ref=f2e48]
+  - button "Open Next.js Dev Tools" [ref=f2e54] [cursor=pointer]
+  - alert [ref=f2e58]
