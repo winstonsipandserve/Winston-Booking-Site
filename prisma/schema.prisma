@@ -145,10 +145,11 @@ model Customer {
 // ── Admin/staff model (Decision: Admin/staff model) ───
 
 model AdminUser {
-  id    String    @id @default(cuid())
-  name  String
-  email String    @unique
-  role  AdminRole @default(admin)
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         AdminRole @default(admin)
   reviewedApplications MembershipApplication[] @relation("ApplicationReviewedBy")
   performedReschedules BookingReschedule[]     @relation("ReschedulePerformedBy")
   createdAt DateTime @default(now()) @map("created_at")
