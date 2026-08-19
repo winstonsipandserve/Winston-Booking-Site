@@ -5,7 +5,11 @@ import { signIn } from '../../../../auth'
 async function authenticate(formData: FormData) {
   'use server'
   try {
-    await signIn('credentials', formData)
+    await signIn('credentials', {
+      email: formData.get('email'),
+      password: formData.get('password'),
+      redirectTo: '/admin',
+    })
   } catch (error) {
     if (error instanceof AuthError) {
       redirect('/admin/login?error=1')

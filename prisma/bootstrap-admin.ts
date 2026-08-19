@@ -8,9 +8,9 @@ import { hashPassword } from '../src/lib/admin-auth'
 const prisma = new PrismaClient()
 
 async function main() {
-  const name = 'Arjay' // CHANGE_ME
-  const email = 'CHANGE_ME@example.com' // CHANGE_ME
-  const password = 'CHANGE_ME' // CHANGE_ME
+  const name = 'User Admin' // CHANGE_ME
+  const email = 'winstonsipandserve@gmail.com' // CHANGE_ME
+  const password = 'password123' // CHANGE_ME
 
   const passwordHash = await hashPassword(password)
 
