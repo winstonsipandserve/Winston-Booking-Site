@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth, signOut } from '../../../../auth'
+import AdminNav from '@/components/admin/AdminNav'
 
 export default async function AdminProtectedLayout({
   children,
@@ -20,15 +20,14 @@ export default async function AdminProtectedLayout({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          rowGap: '0.75rem',
           padding: '1rem 2rem',
           borderBottom: '1px solid #ccc',
         }}
       >
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <Link href="/admin">Admin</Link>
-          <Link href="/admin/bookings">Bookings</Link>
-        </nav>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <AdminNav />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <span>Signed in as {session.user?.email}.</span>
           <form
             action={async () => {
