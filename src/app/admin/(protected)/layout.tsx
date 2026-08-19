@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
-import { auth, signOut } from '../../../../auth'
-import AdminNav from '@/components/admin/AdminNav'
+import { auth } from '../../../../auth'
+import AdminSidebar from '@/components/admin/AdminSidebar'
+import AdminTopbar from '@/components/admin/AdminTopbar'
 
 export default async function AdminProtectedLayout({
   children,
@@ -14,32 +15,14 @@ export default async function AdminProtectedLayout({
   }
 
   return (
-    <div style={{ fontFamily: 'sans-serif' }}>
-      <header
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          rowGap: '0.75rem',
-          padding: '1rem 2rem',
-          borderBottom: '1px solid #ccc',
-        }}
-      >
-        <AdminNav />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <span>Signed in as {session.user?.email}.</span>
-          <form
-            action={async () => {
-              'use server'
-              await signOut({ redirectTo: '/admin/login' })
-            }}
-          >
-            <button type="submit">Sign Out</button>
-          </form>
-        </div>
-      </header>
-      <main style={{ padding: '2rem' }}>{children}</main>
+    <div className="flex min-h-screen flex-col gap-4 bg-gray-50 p-4 font-sans text-gray-900">
+      <AdminTopbar email={session.user?.email ?? ''} />
+      <div className="flex flex-1 gap-4">
+        <AdminSidebar />
+        <main className="min-w-0 flex-1 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
