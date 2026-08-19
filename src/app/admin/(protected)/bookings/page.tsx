@@ -11,17 +11,13 @@ function isBookingStatus(value: string): value is BookingStatus {
   return value === 'pending_payment' || value === 'confirmed' || value === 'cancelled'
 }
 
-function formatDateTime(start: Date, end: Date) {
-  const date = start.toLocaleDateString('en-PH', {
+function formatSubmittedAt(createdAt: Date) {
+  const date = createdAt.toLocaleDateString('en-PH', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
-  const timeOptions: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' }
-  const time = `${start.toLocaleTimeString('en-PH', timeOptions)} – ${end.toLocaleTimeString(
-    'en-PH',
-    timeOptions
-  )}`
+  const time = createdAt.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
   return { date, time }
 }
 
@@ -121,7 +117,7 @@ export default async function AdminBookingsPage({
                 Customer
               </th>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700">
-                Date &amp; Time
+                Submitted
               </th>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700">
                 Status
@@ -136,7 +132,7 @@ export default async function AdminBookingsPage({
           </thead>
           <tbody>
             {bookings.map((booking) => {
-              const { date, time } = formatDateTime(booking.startTime, booking.endTime)
+              const { date, time } = formatSubmittedAt(booking.createdAt)
               return (
                 <tr key={booking.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
                   <td className="px-4 py-2.5 font-mono text-xs text-gray-500">{booking.id}</td>
