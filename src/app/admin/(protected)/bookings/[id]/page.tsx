@@ -20,6 +20,7 @@ export default async function AdminBookingDetailPage({
       payment: true,
       reschedules: { include: { performedBy: true }, orderBy: { createdAt: 'asc' } },
     },
+    relationLoadStrategy: 'query',
   })
 
   if (!booking) {

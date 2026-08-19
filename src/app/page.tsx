@@ -10,6 +10,7 @@ import CtaBanner from '@/components/home/CtaBanner'
 export default async function Home() {
   const resourceTypes = await prisma.resourceType.findMany({
     include: { resources: { where: { isActive: true } } },
+    relationLoadStrategy: 'query',
   })
 
   const totalResources = resourceTypes.reduce((sum, rt) => sum + rt.resources.length, 0)

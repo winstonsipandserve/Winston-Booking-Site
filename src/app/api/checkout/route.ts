@@ -35,6 +35,7 @@ export async function POST(request: Request) {
       addOns: { include: { addOnService: true, addOnPricingRule: true } },
       payment: true,
     },
+    relationLoadStrategy: 'query',
   })
 
   if (!booking) {

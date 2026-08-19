@@ -1,6 +1,8 @@
 # dependencies
 node_modules/
 
+.next-start.log
+
 # testing
 /coverage
 

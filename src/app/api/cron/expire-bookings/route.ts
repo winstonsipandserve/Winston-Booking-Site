@@ -23,6 +23,7 @@ export async function GET(request: Request) {
         createdAt: { lt: holdCutoff },
       },
       include: { payment: true },
+      relationLoadStrategy: 'query',
     })
 
     if (stale.length > 0) {

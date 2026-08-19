@@ -18,6 +18,7 @@ export default async function AdminResourcesPage() {
         pricingRules: true,
         addOnPricingRules: { include: { addOnService: true } },
       },
+      relationLoadStrategy: 'query',
     }),
     prisma.guestFeeRule.findFirst(),
   ])

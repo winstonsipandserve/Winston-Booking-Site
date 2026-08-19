@@ -31,6 +31,7 @@ export default async function AdminMembershipApplicationDetailPage({
   const application = await prisma.membershipApplication.findUnique({
     where: { id },
     include: { customer: true, reviewedBy: true },
+    relationLoadStrategy: 'query',
   })
 
   if (!application) {

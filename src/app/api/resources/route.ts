@@ -5,9 +5,13 @@ export async function GET() {
     prisma.resourceType.findMany({
       include: { resources: { where: { isActive: true } } },
       orderBy: { name: 'asc' },
+      relationLoadStrategy: 'query',
     }),
     prisma.pricingRule.findMany(),
-    prisma.addOnPricingRule.findMany({ include: { addOnService: true } }),
+    prisma.addOnPricingRule.findMany({
+      include: { addOnService: true },
+      relationLoadStrategy: 'query',
+    }),
     prisma.guestFeeRule.findFirst(),
   ])
 

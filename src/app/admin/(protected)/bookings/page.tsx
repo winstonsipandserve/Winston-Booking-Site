@@ -49,6 +49,7 @@ export default async function AdminBookingsPage({
         resource: { include: { resourceType: true } },
         customer: true,
       },
+      relationLoadStrategy: 'query',
       orderBy: { startTime: 'asc' },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,

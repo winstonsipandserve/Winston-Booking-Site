@@ -58,6 +58,7 @@ export async function POST(request: Request) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { payment: true },
+    relationLoadStrategy: 'query',
   })
 
   if (!booking) {

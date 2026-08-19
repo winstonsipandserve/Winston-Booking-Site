@@ -21,6 +21,7 @@ export async function GET(
       addOns: { include: { addOnService: true, addOnPricingRule: true } },
       payment: true,
     },
+    relationLoadStrategy: 'query',
   })
 
   if (!booking) {
@@ -90,6 +91,7 @@ export async function PATCH(
       resource: { include: { resourceType: true } },
       addOns: { include: { addOnService: true, addOnPricingRule: true } },
     },
+    relationLoadStrategy: 'query',
   })
 
   if (!booking) {

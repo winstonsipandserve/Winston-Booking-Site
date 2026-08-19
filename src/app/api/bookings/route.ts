@@ -71,6 +71,7 @@ export async function POST(request: Request) {
   const resource = await prisma.resource.findUnique({
     where: { id: resourceId },
     include: { resourceType: true },
+    relationLoadStrategy: 'query',
   })
   if (!resource) {
     return Response.json({ error: 'Resource not found' }, { status: 400 })
@@ -139,6 +140,7 @@ export async function POST(request: Request) {
           endTime: { gt: parsedStartTime },
         },
         include: { payment: true },
+        relationLoadStrategy: 'query',
       })
 
       if (staleBookings.length > 0) {

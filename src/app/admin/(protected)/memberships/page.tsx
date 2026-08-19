@@ -39,6 +39,7 @@ export default async function AdminMembershipsPage({
 }: {
   searchParams: Promise<{ status?: string; page?: string }>
 }) {
+  console.time('memberships:pageTotal')
   const { status: statusParam, page: pageParam } = await searchParams
 
   const status = statusParam && isApplicationStatus(statusParam) ? statusParam : undefined
@@ -49,6 +50,7 @@ export default async function AdminMembershipsPage({
     where.status = status
   }
 
+  console.time('memberships:promiseAll')
   const [applications, totalCount] = await Promise.all([
     prisma.membershipApplication.findMany({
       where,
@@ -56,9 +58,11 @@ export default async function AdminMembershipsPage({
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
+      relationLoadStrategy: 'join',
     }),
     prisma.membershipApplication.count({ where }),
   ])
+  console.timeEnd('memberships:promiseAll')
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
@@ -74,6 +78,8 @@ export default async function AdminMembershipsPage({
     if (value !== 'all') params.set('status', value)
     return `/admin/memberships?${params.toString()}`
   }
+
+  console.timeEnd('memberships:pageTotal')
 
   return (
     <div className="flex h-full flex-col gap-4">
