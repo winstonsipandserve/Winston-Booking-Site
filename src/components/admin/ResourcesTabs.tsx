@@ -51,6 +51,14 @@ function TrashIcon({ className = '' }: { className?: string }) {
   )
 }
 
+function ChevronIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function EditIconButton({ label }: { label: string }) {
   return (
     <button
@@ -81,6 +89,7 @@ function PriceCell({ price, addLabel }: { price: number | undefined; addLabel: s
 }
 
 function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
+  const [isOpen, setIsOpen] = useState(false)
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
   const durations = isCourt
     ? [60]
@@ -105,10 +114,18 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          aria-expanded={isOpen}
+          className="flex items-center gap-2 text-left"
+        >
+          <ChevronIcon
+            className={`h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          />
           <h2 className="text-base font-semibold text-gray-900">{rt.name}</h2>
           <span className="text-xs text-gray-500">{pluralize(rt.resources.length, 'resource')}</span>
-        </div>
+        </button>
         <button
           type="button"
           disabled
@@ -118,158 +135,174 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
         </button>
       </div>
 
-      <div className="mb-5 divide-y divide-gray-100 rounded-lg border border-gray-200">
-        {rt.resources.map((resource) => (
-          <div key={resource.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-            <span className="text-gray-900">{resource.label}</span>
-            <div className="flex items-center gap-3">
-              <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                  resource.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'
-                }`}
-              >
-                {resource.isActive ? 'Active' : 'Inactive'}
-              </span>
-              <div className="flex items-center gap-2">
-                <EditIconButton label={`Edit ${resource.label}`} />
-                <button
-                  type="button"
-                  disabled
-                  aria-label={`Delete ${resource.label}`}
-                  className="text-gray-400 hover:text-red-600 disabled:cursor-not-allowed"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
+      {isOpen && (
+        <>
+          <div className="mb-5 divide-y divide-gray-100 rounded-lg border border-gray-200">
+            {rt.resources.map((resource) => (
+              <div key={resource.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                <span className="text-gray-900">{resource.label}</span>
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                      resource.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
+                    {resource.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <EditIconButton label={`Edit ${resource.label}`} />
+                    <button
+                      type="button"
+                      disabled
+                      aria-label={`Delete ${resource.label}`}
+                      className="text-gray-400 hover:text-red-600 disabled:cursor-not-allowed"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="mb-5 overflow-x-auto rounded-lg border border-gray-200">
-        <table className="w-full min-w-[500px] border-collapse text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
-                {isCourt ? 'Rate' : 'Duration'}
-              </th>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
-                Member
-              </th>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
-                Non-Member
-              </th>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {durations.map((duration) => {
-              const rowLabel = isCourt ? 'Hourly rate' : durationLabel(duration)
-              return (
-                <tr key={duration} className="border-b border-gray-100 last:border-b-0">
-                  <td className="px-3 py-2 text-gray-900">{rowLabel}</td>
-                  <td className="px-3 py-2 text-gray-900">
-                    <PriceCell price={findRate('member', duration)} addLabel={`Add ${rowLabel} member rate`} />
-                  </td>
-                  <td className="px-3 py-2 text-gray-900">
-                    <PriceCell
-                      price={findRate('non_member', duration)}
-                      addLabel={`Add ${rowLabel} non-member rate`}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <EditIconButton label={`Edit ${rowLabel}`} />
-                  </td>
+          <div className="mb-5 overflow-x-auto rounded-lg border border-gray-200">
+            <table className="w-full min-w-[500px] border-collapse text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                    {isCourt ? 'Rate' : 'Duration'}
+                  </th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                    Member
+                  </th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                    Non-Member
+                  </th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                    Actions
+                  </th>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {durations.map((duration) => {
+                  const rowLabel = isCourt ? 'Hourly rate' : durationLabel(duration)
+                  return (
+                    <tr key={duration} className="border-b border-gray-100 last:border-b-0">
+                      <td className="px-3 py-2 text-gray-900">{rowLabel}</td>
+                      <td className="px-3 py-2 text-gray-900">
+                        <PriceCell
+                          price={findRate('member', duration)}
+                          addLabel={`Add ${rowLabel} member rate`}
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-gray-900">
+                        <PriceCell
+                          price={findRate('non_member', duration)}
+                          addLabel={`Add ${rowLabel} non-member rate`}
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <EditIconButton label={`Edit ${rowLabel}`} />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="w-full min-w-[500px] border-collapse text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
-                Add-on
-              </th>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
-                Member
-              </th>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
-                Non-Member
-              </th>
-              <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {isCourt ? (
-              <>
-                <tr className="border-b border-gray-100">
-                  <td className="px-3 py-2 text-gray-900">Coaching (1 pax)</td>
-                  <td className="px-3 py-2 text-gray-900">
-                    <PriceCell price={findCoaching('member', 1)} addLabel="Add Coaching (1 pax) member rate" />
-                  </td>
-                  <td className="px-3 py-2 text-gray-900">
-                    <PriceCell
-                      price={findCoaching('non_member', 1)}
-                      addLabel="Add Coaching (1 pax) non-member rate"
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <EditIconButton label="Edit Coaching (1 pax)" />
-                  </td>
+          <div className="overflow-x-auto rounded-lg border border-gray-200">
+            <table className="w-full min-w-[500px] border-collapse text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                    Add-on
+                  </th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                    Member
+                  </th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                    Non-Member
+                  </th>
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                    Actions
+                  </th>
                 </tr>
-                <tr className="border-b border-gray-100">
-                  <td className="px-3 py-2 text-gray-900">Coaching (2 pax)</td>
-                  <td className="px-3 py-2 text-gray-900">
-                    <PriceCell price={findCoaching('member', 2)} addLabel="Add Coaching (2 pax) member rate" />
-                  </td>
-                  <td className="px-3 py-2 text-gray-900">
-                    <PriceCell
-                      price={findCoaching('non_member', 2)}
-                      addLabel="Add Coaching (2 pax) non-member rate"
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <EditIconButton label="Edit Coaching (2 pax)" />
-                  </td>
-                </tr>
-                <tr className="last:border-b-0">
-                  <td className="px-3 py-2 text-gray-900">Ball Boy</td>
-                  <td className="px-3 py-2 text-gray-900">
-                    <PriceCell price={findBallBoy('member')} addLabel="Add Ball Boy member rate" />
-                  </td>
-                  <td className="px-3 py-2 text-gray-900">
-                    <PriceCell price={findBallBoy('non_member')} addLabel="Add Ball Boy non-member rate" />
-                  </td>
-                  <td className="px-3 py-2">
-                    <EditIconButton label="Edit Ball Boy" />
-                  </td>
-                </tr>
-              </>
-            ) : (
-              <tr className="last:border-b-0">
-                <td className="px-3 py-2 text-gray-900">Coaching</td>
-                <td className="px-3 py-2 text-gray-900">
-                  <PriceCell price={findCoaching('member', null)} addLabel="Add Coaching member rate" />
-                </td>
-                <td className="px-3 py-2 text-gray-900">
-                  <PriceCell price={findCoaching('non_member', null)} addLabel="Add Coaching non-member rate" />
-                </td>
-                <td className="px-3 py-2">
-                  <EditIconButton label="Edit Coaching" />
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {isCourt ? (
+                  <>
+                    <tr className="border-b border-gray-100">
+                      <td className="px-3 py-2 text-gray-900">Coaching (1 pax)</td>
+                      <td className="px-3 py-2 text-gray-900">
+                        <PriceCell
+                          price={findCoaching('member', 1)}
+                          addLabel="Add Coaching (1 pax) member rate"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-gray-900">
+                        <PriceCell
+                          price={findCoaching('non_member', 1)}
+                          addLabel="Add Coaching (1 pax) non-member rate"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <EditIconButton label="Edit Coaching (1 pax)" />
+                      </td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="px-3 py-2 text-gray-900">Coaching (2 pax)</td>
+                      <td className="px-3 py-2 text-gray-900">
+                        <PriceCell
+                          price={findCoaching('member', 2)}
+                          addLabel="Add Coaching (2 pax) member rate"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-gray-900">
+                        <PriceCell
+                          price={findCoaching('non_member', 2)}
+                          addLabel="Add Coaching (2 pax) non-member rate"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <EditIconButton label="Edit Coaching (2 pax)" />
+                      </td>
+                    </tr>
+                    <tr className="last:border-b-0">
+                      <td className="px-3 py-2 text-gray-900">Ball Boy</td>
+                      <td className="px-3 py-2 text-gray-900">
+                        <PriceCell price={findBallBoy('member')} addLabel="Add Ball Boy member rate" />
+                      </td>
+                      <td className="px-3 py-2 text-gray-900">
+                        <PriceCell price={findBallBoy('non_member')} addLabel="Add Ball Boy non-member rate" />
+                      </td>
+                      <td className="px-3 py-2">
+                        <EditIconButton label="Edit Ball Boy" />
+                      </td>
+                    </tr>
+                  </>
+                ) : (
+                  <tr className="last:border-b-0">
+                    <td className="px-3 py-2 text-gray-900">Coaching</td>
+                    <td className="px-3 py-2 text-gray-900">
+                      <PriceCell price={findCoaching('member', null)} addLabel="Add Coaching member rate" />
+                    </td>
+                    <td className="px-3 py-2 text-gray-900">
+                      <PriceCell
+                        price={findCoaching('non_member', null)}
+                        addLabel="Add Coaching non-member rate"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <EditIconButton label="Edit Coaching" />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   )
 }
