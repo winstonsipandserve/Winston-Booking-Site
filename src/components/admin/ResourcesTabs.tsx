@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { formatCentavos } from '@/lib/format'
+import ResourceFormModal from '@/components/admin/ResourceFormModal'
 import type { Prisma, GuestFeeRule, ResourceCategory, RateTier } from '@prisma/client'
 
 type ResourceTypeWithRelations = Prisma.ResourceTypeGetPayload<{
@@ -11,6 +13,8 @@ type ResourceTypeWithRelations = Prisma.ResourceTypeGetPayload<{
     addOnPricingRules: { include: { addOnService: true } }
   }
 }>
+
+type ResourceRow = ResourceTypeWithRelations['resources'][number]
 
 type Tab = 'courts' | 'simulators' | 'guestFee'
 
@@ -72,6 +76,27 @@ function EditIconButton({ label }: { label: string }) {
   )
 }
 
+function ActionIconButton({
+  label,
+  onClick,
+  variant,
+}: {
+  label: string
+  onClick: () => void
+  variant: 'edit' | 'delete'
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={variant === 'edit' ? 'text-gray-400 hover:text-gray-700' : 'text-gray-400 hover:text-red-600'}
+    >
+      {variant === 'edit' ? <PencilIcon className="h-4 w-4" /> : <TrashIcon className="h-4 w-4" />}
+    </button>
+  )
+}
+
 function PriceCell({ price, addLabel }: { price: number | undefined; addLabel: string }) {
   if (price === undefined) {
     return (
@@ -89,8 +114,28 @@ function PriceCell({ price, addLabel }: { price: number | undefined; addLabel: s
 }
 
 function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [editingResource, setEditingResource] = useState<ResourceRow | null>(null)
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
+
+  async function handleDelete(resource: ResourceRow) {
+    if (!window.confirm(`Delete ${resource.label}? This will also delete any bookings for this resource.`)) {
+      return
+    }
+    try {
+      const res = await fetch(`/api/admin/resources/${resource.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const json = await res.json().catch(() => null)
+        alert(json?.error ?? 'Failed to delete resource.')
+        return
+      }
+      router.refresh()
+    } catch {
+      alert('Failed to delete resource.')
+    }
+  }
   const durations = isCourt
     ? [60]
     : Array.from(new Set(rt.pricingRules.map((r) => r.durationMinutes))).sort((a, b) => a - b)
@@ -128,8 +173,8 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
         </button>
         <button
           type="button"
-          disabled
-          className="inline-flex items-center gap-1 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-500 disabled:cursor-not-allowed"
+          onClick={() => setAddModalOpen(true)}
+          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
         >
           + Add Resource
         </button>
@@ -150,15 +195,16 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                     {resource.isActive ? 'Active' : 'Inactive'}
                   </span>
                   <div className="flex items-center gap-2">
-                    <EditIconButton label={`Edit ${resource.label}`} />
-                    <button
-                      type="button"
-                      disabled
-                      aria-label={`Delete ${resource.label}`}
-                      className="text-gray-400 hover:text-red-600 disabled:cursor-not-allowed"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
+                    <ActionIconButton
+                      label={`Edit ${resource.label}`}
+                      variant="edit"
+                      onClick={() => setEditingResource(resource)}
+                    />
+                    <ActionIconButton
+                      label={`Delete ${resource.label}`}
+                      variant="delete"
+                      onClick={() => handleDelete(resource)}
+                    />
                   </div>
                 </div>
               </div>
@@ -303,6 +349,19 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
           </div>
         </>
       )}
+
+      <ResourceFormModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        mode="add"
+        resourceTypeId={rt.id}
+      />
+      <ResourceFormModal
+        isOpen={editingResource !== null}
+        onClose={() => setEditingResource(null)}
+        mode="edit"
+        resource={editingResource ?? undefined}
+      />
     </div>
   )
 }
