@@ -30,6 +30,31 @@ export async function uploadToStorage(
   return { path }
 }
 
+export async function getSignedUrl(
+  bucket: string,
+  path: string,
+  expiresInSeconds = 300,
+): Promise<string> {
+  const { url, serviceRoleKey } = getStorageEnv()
+
+  const res = await fetch(`${url}/storage/v1/object/sign/${bucket}/${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${serviceRoleKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ expiresIn: expiresInSeconds }),
+  })
+
+  if (!res.ok) {
+    const bodyText = await res.text().catch(() => '')
+    throw new Error(`Failed to sign URL for "${bucket}/${path}": ${res.status} ${bodyText}`)
+  }
+
+  const { signedURL } = (await res.json()) as { signedURL: string }
+  return `${url}/storage/v1${signedURL}`
+}
+
 export async function deleteFromStorage(bucket: string, paths: string[]): Promise<void> {
   const { url, serviceRoleKey } = getStorageEnv()
 
