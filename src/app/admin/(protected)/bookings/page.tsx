@@ -2,14 +2,10 @@ import Link from 'next/link'
 import type { BookingStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { formatCentavos } from '@/lib/format'
+import { phDateToUtcWindow } from '@/lib/business-hours'
+import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
 
 const PAGE_SIZE = 25
-const STATUS_FILTERS: { value: BookingStatus | 'all'; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'pending_payment', label: 'Pending' },
-  { value: 'confirmed', label: 'Confirmed' },
-  { value: 'cancelled', label: 'Cancelled' },
-]
 
 function isBookingStatus(value: string): value is BookingStatus {
   return value === 'pending_payment' || value === 'confirmed' || value === 'cancelled'
@@ -32,14 +28,23 @@ function formatDateTime(start: Date, end: Date) {
 export default async function AdminBookingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>
+  searchParams: Promise<{ status?: string; page?: string; startDate?: string; endDate?: string }>
 }) {
-  const { status: statusParam, page: pageParam } = await searchParams
+  const { status: statusParam, page: pageParam, startDate, endDate } = await searchParams
 
   const status = statusParam && isBookingStatus(statusParam) ? statusParam : undefined
   const page = Math.max(1, Number(pageParam) || 1)
 
-  const where: Prisma.BookingWhereInput = status ? { status } : {}
+  const where: Prisma.BookingWhereInput = {}
+  if (status) {
+    where.status = status
+  }
+  if (startDate || endDate) {
+    where.startTime = {
+      ...(startDate ? { gte: phDateToUtcWindow(startDate).start } : {}),
+      ...(endDate ? { lt: phDateToUtcWindow(endDate).end } : {}),
+    }
+  }
 
   const [bookings, totalCount] = await Promise.all([
     prisma.booking.findMany({
@@ -56,33 +61,36 @@ export default async function AdminBookingsPage({
   ])
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-  const statusQuery = statusParam ? `status=${statusParam}` : ''
+
+  const filterParams = new URLSearchParams()
+  if (statusParam) filterParams.set('status', statusParam)
+  if (startDate) filterParams.set('startDate', startDate)
+  if (endDate) filterParams.set('endDate', endDate)
+
+  function pageHref(targetPage: number) {
+    const params = new URLSearchParams(filterParams)
+    params.set('page', String(targetPage))
+    return `/admin/bookings?${params.toString()}`
+  }
 
   return (
     <div className="flex h-full flex-col gap-4">
       <h1 className="text-2xl font-semibold text-gray-900">Bookings</h1>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav className="flex flex-wrap items-center gap-1">
-          {STATUS_FILTERS.map((filter) => {
-            const isActive = filter.value === 'all' ? !statusParam : statusParam === filter.value
-            const href =
-              filter.value === 'all' ? '/admin/bookings' : `/admin/bookings?status=${filter.value}`
-            return (
-              <Link
-                key={filter.value}
-                href={href}
-                className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
-                  isActive
-                    ? 'bg-gray-900 font-semibold text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {filter.label}
-              </Link>
-            )
-          })}
-        </nav>
+        <div className="flex items-center gap-2">
+          <BookingsFilterModal
+            status={status ?? 'all'}
+            startDate={startDate ?? ''}
+            endDate={endDate ?? ''}
+          />
+          <button
+            type="button"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          >
+            Export
+          </button>
+        </div>
 
         <div className="flex items-center gap-2">
           <input
@@ -100,9 +108,12 @@ export default async function AdminBookingsPage({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200">
-        <table className="w-full min-w-[720px] border-collapse text-sm">
+        <table className="w-full min-w-[840px] border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-gray-50">
             <tr>
+              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700">
+                Reference
+              </th>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700">
                 Resource
               </th>
@@ -128,6 +139,7 @@ export default async function AdminBookingsPage({
               const { date, time } = formatDateTime(booking.startTime, booking.endTime)
               return (
                 <tr key={booking.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                  <td className="px-4 py-2.5 font-mono text-xs text-gray-500">{booking.id}</td>
                   <td className="px-4 py-2.5 text-gray-900">
                     {booking.resource.resourceType.name} — {booking.resource.label}
                   </td>
@@ -155,7 +167,7 @@ export default async function AdminBookingsPage({
             })}
             {bookings.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-gray-500">
+                <td colSpan={7} className="px-4 py-6 text-center text-gray-500">
                   No bookings found.
                 </td>
               </tr>
@@ -166,10 +178,7 @@ export default async function AdminBookingsPage({
 
       <div className="flex items-center gap-4 text-sm text-gray-600">
         {page > 1 && (
-          <Link
-            href={`/admin/bookings?${statusQuery}${statusQuery ? '&' : ''}page=${page - 1}`}
-            className="font-medium text-gray-900 hover:underline"
-          >
+          <Link href={pageHref(page - 1)} className="font-medium text-gray-900 hover:underline">
             Prev
           </Link>
         )}
@@ -177,10 +186,7 @@ export default async function AdminBookingsPage({
           Page {page} of {totalPages}
         </span>
         {page < totalPages && (
-          <Link
-            href={`/admin/bookings?${statusQuery}${statusQuery ? '&' : ''}page=${page + 1}`}
-            className="font-medium text-gray-900 hover:underline"
-          >
+          <Link href={pageHref(page + 1)} className="font-medium text-gray-900 hover:underline">
             Next
           </Link>
         )}
