@@ -5,7 +5,7 @@ import { BullseyeIcon, CoffeeCupIcon } from '@/components/ui/Icons'
 
 export default function TwoSides() {
   return (
-    <section className="bg-brand-light py-28 md:py-32">
+    <section className="bg-gradient-to-b from-brand-light to-brand-dark py-28 md:bg-gradient-to-r md:py-32">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
         <Reveal>
           <p className="text-sm uppercase tracking-[0.3em] text-accent-primary">Two Sides, One Winston</p>
@@ -29,22 +29,22 @@ export default function TwoSides() {
 
           <div className="relative flex items-center justify-center py-10 md:py-0">
             <span aria-hidden="true" className="h-px w-full bg-brand-dark/10 md:h-full md:w-px" />
-            <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-brand-light">
-              <Sunburst lines={20} className="absolute inset-0 h-full w-full text-accent-primary/25" />
+            <div className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-accent-primary">
+              <Sunburst lines={20} className="absolute inset-0 h-full w-full text-brand-light/25" />
               <span className="relative font-serif text-lg italic text-brand-dark">&</span>
             </div>
           </div>
 
           <Reveal delayMs={100} className="flex flex-col items-start md:items-end md:text-right">
-            <CoffeeCupIcon className="h-8 w-8 text-brand-dark" />
-            <h3 className="mt-5 font-serif text-3xl text-brand-dark md:text-4xl">At the Bar</h3>
-            <p className="mt-4 max-w-sm text-neutral-700">
+            <CoffeeCupIcon className="h-8 w-8 text-brand-light" />
+            <h3 className="mt-5 font-serif text-3xl text-brand-light md:text-4xl">At the Bar</h3>
+            <p className="mt-4 max-w-sm text-brand-light/85">
               Craft coffee by day, a members-only speakeasy by night — somewhere to land after the
               last point.
             </p>
             <Link
               href="/cafe-bar"
-              className="mt-6 text-sm font-medium uppercase tracking-wide text-accent-primary transition-colors hover:text-brand-dark"
+              className="mt-6 text-sm font-medium uppercase tracking-wide text-accent-light/90 transition-colors hover:text-accent-light"
             >
               Visit the Café →
             </Link>

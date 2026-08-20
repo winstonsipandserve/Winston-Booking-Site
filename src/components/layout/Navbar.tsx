@@ -33,7 +33,7 @@ export default function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${
-        scrolled ? 'bg-brand-light' : 'bg-transparent'
+        scrolled ? 'bg-brand-light' : 'bg-brand-light/[0.01]'
       }`}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6">
@@ -47,7 +47,7 @@ export default function Navbar() {
             width={500}
             height={500}
             className={`h-11 w-auto transition-all duration-200 md:h-14 ${
-              scrolled ? '' : 'brightness-0 invert'
+              scrolled ? 'brightness-100 invert-0' : 'brightness-0 invert'
             }`}
             priority
           />
@@ -84,14 +84,21 @@ export default function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           <Link
             href="/book"
-            className="rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent-primary to-brand-mid px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light shadow-lg shadow-accent-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent-primary/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
           >
             Book a Court
+            <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </span>
           </Link>
           <Link
             href="/membership"
-            className="rounded-full border border-brand-mid px-5 py-2 text-sm font-semibold text-brand-dark transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent-light"
+            className="group relative isolate overflow-hidden rounded-full border border-brand-mid px-5 py-2 text-sm font-semibold text-brand-dark transition-all duration-300 hover:-translate-y-0.5 hover:border-transparent hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
           >
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-accent-primary to-brand-mid opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            />
             Become a Member
           </Link>
         </div>
@@ -137,15 +144,22 @@ export default function Navbar() {
             <Link
               href="/book"
               onClick={() => setMenuOpen(false)}
-              className="block w-full rounded-full bg-accent-primary px-5 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+              className="group flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-accent-primary to-brand-mid px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light shadow-lg shadow-accent-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent-primary/40"
             >
               Book a Court
+              <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
             </Link>
             <Link
               href="/membership"
               onClick={() => setMenuOpen(false)}
-              className="block w-full rounded-full border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-all duration-200 hover:bg-accent-light"
+              className="group relative isolate block w-full overflow-hidden rounded-full border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-all duration-300 hover:border-transparent hover:text-brand-light"
             >
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-accent-primary to-brand-mid opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              />
               Become a Member
             </Link>
           </div>

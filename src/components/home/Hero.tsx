@@ -30,9 +30,12 @@ export default function Hero() {
 
         <Link
           href="/book"
-          className="mt-10 inline-block rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+          className="group mt-10 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent-primary to-brand-mid px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light shadow-lg shadow-accent-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent-primary/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
         >
           Book Now
+          <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
+            →
+          </span>
         </Link>
       </div>
     </section>
