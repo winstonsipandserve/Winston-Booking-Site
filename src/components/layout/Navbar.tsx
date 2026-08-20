@@ -84,14 +84,16 @@ export default function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           <Link
             href="/book"
-            className="inline-flex items-center gap-2 rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
           >
             Book a Court
             <span aria-hidden="true">→</span>
           </Link>
           <Link
             href="/membership"
-            className="rounded-full border border-brand-mid px-5 py-3.5 text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
+              scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
+            }`}
           >
             Become a Member
           </Link>
@@ -138,7 +140,7 @@ export default function Navbar() {
             <Link
               href="/book"
               onClick={() => setMenuOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-accent-primary px-5 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               Book a Court
               <span aria-hidden="true">→</span>
@@ -146,7 +148,7 @@ export default function Navbar() {
             <Link
               href="/membership"
               onClick={() => setMenuOpen(false)}
-              className="block w-full rounded-full border border-brand-mid px-5 py-3.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="block w-full rounded-lg border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               Become a Member
             </Link>
