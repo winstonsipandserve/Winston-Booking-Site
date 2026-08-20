@@ -55,7 +55,10 @@ export default function Navbar() {
 
         <ul className="hidden items-center gap-6 md:flex">
           {NAV_LINKS.map((link) => {
-            const isActive = pathname === link.href
+            const isActive =
+              link.href === '/membership'
+                ? pathname === link.href || pathname.startsWith(link.href + '/')
+                : pathname === link.href
             return (
               <li key={link.href}>
                 <Link
@@ -120,7 +123,10 @@ export default function Navbar() {
         <div className="border-t border-accent-light bg-brand-light px-6 pb-6 md:hidden">
           <ul className="flex flex-col gap-4 pt-4">
             {NAV_LINKS.map((link) => {
-              const isActive = pathname === link.href
+              const isActive =
+                link.href === '/membership'
+                  ? pathname === link.href || pathname.startsWith(link.href + '/')
+                  : pathname === link.href
               return (
                 <li key={link.href}>
                   <Link
