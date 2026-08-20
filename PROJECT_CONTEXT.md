@@ -105,7 +105,7 @@ Note: ball boy is a court-only add-on (courts have a ball boy; simulators do not
 - Admin manually reviews and approves or rejects
 - Membership record (with tier, credit balance, expiry) is created only on approval
 - Government ID images: private storage, admin-only access — do not expose to the customer-facing membership account UI
-- Note for a later prompt: rejection should support an optional reason, and application needs status/reviewedBy/reviewedAt fields for the audit trail
+- Rejection requires a reason (non-empty string, enforced server-side, trimmed before storage) — not optional. Application carries status/reviewedById/reviewedAt for the audit trail (built 2026-08-20, see PROGRESS.md).
 
 ---
 
