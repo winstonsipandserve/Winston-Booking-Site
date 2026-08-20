@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getSignedUrl } from '@/lib/supabase-storage'
+import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
 import type { ApplicationStatus, MembershipTier } from '@prisma/client'
 
 function formatTier(tier: MembershipTier) {
@@ -180,28 +181,12 @@ export default async function AdminMembershipApplicationDetailPage({
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-4 text-sm font-semibold text-gray-900">Review Actions</h2>
-        <div className="mt-2 flex gap-3">
-          <button
-            type="button"
-            disabled
-            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Approve
-          </button>
-          <button
-            type="button"
-            disabled
-            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Reject
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-gray-400">
-          Approve/reject actions are not wired yet — coming in a future update.
-        </p>
-      </section>
+      {application.status === 'pending' && (
+        <section>
+          <h2 className="mb-4 text-sm font-semibold text-gray-900">Review Actions</h2>
+          <MembershipReviewActions applicationId={application.id} />
+        </section>
+      )}
     </div>
   )
 }
