@@ -18,7 +18,7 @@ export default function Hero() {
           East Fairview&rsquo;s Private Sports Club
         </span>
 
-        <h1 className="mt-4 font-script text-6xl leading-none text-neutral-100 md:text-8xl">Winston</h1>
+        <h1 className="mt-4 font-script text-7xl leading-none text-neutral-100 md:text-9xl">Winston</h1>
 
         <p className="mt-3 text-sm uppercase tracking-[0.3em] text-neutral-100 md:mt-4 md:text-base">
           Sip & Serve
@@ -30,12 +30,10 @@ export default function Hero() {
 
         <Link
           href="/book"
-          className="group mt-10 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-accent-primary to-brand-mid px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light shadow-lg shadow-accent-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-accent-primary/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+          className="mt-10 inline-flex items-center gap-2 rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
         >
           Book Now
-          <span aria-hidden="true" className="transition-transform duration-300 group-hover:translate-x-1">
-            →
-          </span>
+          <span aria-hidden="true">→</span>
         </Link>
       </div>
     </section>
