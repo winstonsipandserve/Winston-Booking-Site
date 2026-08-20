@@ -128,3 +128,20 @@ export function CoffeeCupIcon({ className = '' }: IconProps) {
     </svg>
   )
 }
+
+export function CocktailIcon({ className = '' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M4 4h16l-7 8v6"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M9 20h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M6 6.5h12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="15.5" cy="5.2" r="0.9" fill="currentColor" />
+    </svg>
+  )
+}
