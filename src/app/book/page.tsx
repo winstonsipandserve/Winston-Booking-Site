@@ -11,24 +11,24 @@ export default function BookPage() {
   const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
-    let cancelled = false
-    fetch('/api/resources')
+    const controller = new AbortController()
+    fetch('/api/resources', { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error('Failed to load resources')
         return res.json() as Promise<ResourcesResponse>
       })
       .then((json) => {
-        if (cancelled) return
         setData(json)
       })
-      .catch(() => {
-        if (!cancelled) setLoadError('Could not load resources. Please refresh the page.')
+      .catch((err) => {
+        if ((err as Error).name === 'AbortError') return
+        setLoadError('Could not load resources. Please refresh the page.')
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!controller.signal.aborted) setLoading(false)
       })
     return () => {
-      cancelled = true
+      controller.abort()
     }
   }, [])
 
