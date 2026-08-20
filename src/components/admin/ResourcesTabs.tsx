@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatCentavos } from '@/lib/format'
 import ResourceFormModal from '@/components/admin/ResourceFormModal'
+import PriceEditModal, { type PriceEditField } from '@/components/admin/PriceEditModal'
 import type { Prisma, GuestFeeRule, ResourceCategory, RateTier } from '@prisma/client'
 
 type ResourceTypeWithRelations = Prisma.ResourceTypeGetPayload<{
@@ -118,6 +119,7 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
   const [isOpen, setIsOpen] = useState(false)
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [editingResource, setEditingResource] = useState<ResourceRow | null>(null)
+  const [editingRow, setEditingRow] = useState<{ title: string; fields: PriceEditField[] } | null>(null)
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
 
   async function handleDelete(resource: ResourceRow) {
@@ -140,20 +142,106 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
     ? [60]
     : Array.from(new Set(rt.pricingRules.map((r) => r.durationMinutes))).sort((a, b) => a - b)
 
-  function findRate(tier: RateTier, durationMinutes: number) {
+  function findRateRule(tier: RateTier, durationMinutes: number) {
     return rt.pricingRules.find((r) => r.rateTier === tier && r.durationMinutes === durationMinutes)
-      ?.priceCentavos
+  }
+
+  function findRate(tier: RateTier, durationMinutes: number) {
+    return findRateRule(tier, durationMinutes)?.priceCentavos
   }
 
   const coachingRules = rt.addOnPricingRules.filter((r) => r.addOnService.slug === 'coaching_fee')
   const ballBoyRules = rt.addOnPricingRules.filter((r) => r.addOnService.slug === 'ball_boy')
 
+  function findCoachingRule(tier: RateTier, paxCount: number | null) {
+    return coachingRules.find((r) => r.rateTier === tier && r.paxCount === paxCount)
+  }
+
   function findCoaching(tier: RateTier, paxCount: number | null) {
-    return coachingRules.find((r) => r.rateTier === tier && r.paxCount === paxCount)?.priceCentavos
+    return findCoachingRule(tier, paxCount)?.priceCentavos
+  }
+
+  function findBallBoyRule(tier: RateTier) {
+    return ballBoyRules.find((r) => r.rateTier === tier)
   }
 
   function findBallBoy(tier: RateTier) {
-    return ballBoyRules.find((r) => r.rateTier === tier)?.priceCentavos
+    return findBallBoyRule(tier)?.priceCentavos
+  }
+
+  function buildRateFields(rowLabel: string, durationMinutes: number): PriceEditField[] {
+    const memberRule = findRateRule('member', durationMinutes)
+    const nonMemberRule = findRateRule('non_member', durationMinutes)
+    const fields: PriceEditField[] = []
+    if (memberRule) {
+      fields.push({
+        key: 'member',
+        label: 'Member rate',
+        endpoint: `/api/admin/pricing-rules/${memberRule.id}`,
+        bodyKey: 'priceCentavos',
+        currentCentavos: memberRule.priceCentavos,
+      })
+    }
+    if (nonMemberRule) {
+      fields.push({
+        key: 'nonMember',
+        label: 'Non-Member rate',
+        endpoint: `/api/admin/pricing-rules/${nonMemberRule.id}`,
+        bodyKey: 'priceCentavos',
+        currentCentavos: nonMemberRule.priceCentavos,
+      })
+    }
+    return fields
+  }
+
+  function buildCoachingFields(paxCount: number | null): PriceEditField[] {
+    const memberRule = findCoachingRule('member', paxCount)
+    const nonMemberRule = findCoachingRule('non_member', paxCount)
+    const fields: PriceEditField[] = []
+    if (memberRule) {
+      fields.push({
+        key: 'member',
+        label: 'Member rate',
+        endpoint: `/api/admin/add-on-pricing-rules/${memberRule.id}`,
+        bodyKey: 'priceCentavos',
+        currentCentavos: memberRule.priceCentavos,
+      })
+    }
+    if (nonMemberRule) {
+      fields.push({
+        key: 'nonMember',
+        label: 'Non-Member rate',
+        endpoint: `/api/admin/add-on-pricing-rules/${nonMemberRule.id}`,
+        bodyKey: 'priceCentavos',
+        currentCentavos: nonMemberRule.priceCentavos,
+      })
+    }
+    return fields
+  }
+
+  function buildBallBoyFields(): PriceEditField[] {
+    const memberRule = findBallBoyRule('member')
+    const nonMemberRule = findBallBoyRule('non_member')
+    const fields: PriceEditField[] = []
+    if (memberRule) {
+      fields.push({
+        key: 'member',
+        label: 'Member rate',
+        endpoint: `/api/admin/add-on-pricing-rules/${memberRule.id}`,
+        bodyKey: 'priceCentavos',
+        currentCentavos: memberRule.priceCentavos,
+      })
+    }
+    if (nonMemberRule) {
+      fields.push({
+        key: 'nonMember',
+        label: 'Non-Member rate',
+        endpoint: `/api/admin/add-on-pricing-rules/${nonMemberRule.id}`,
+        bodyKey: 'priceCentavos',
+        currentCentavos: nonMemberRule.priceCentavos,
+      })
+    }
+    return fields
   }
 
   return (
@@ -248,7 +336,18 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                         />
                       </td>
                       <td className="px-3 py-2">
-                        <EditIconButton label={`Edit ${rowLabel}`} />
+                        {(() => {
+                          const fields = buildRateFields(rowLabel, duration)
+                          return fields.length > 0 ? (
+                            <ActionIconButton
+                              label={`Edit ${rowLabel}`}
+                              variant="edit"
+                              onClick={() => setEditingRow({ title: `Edit ${rowLabel}`, fields })}
+                            />
+                          ) : (
+                            <EditIconButton label={`Edit ${rowLabel}`} />
+                          )
+                        })()}
                       </td>
                     </tr>
                   )
@@ -293,7 +392,18 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                         />
                       </td>
                       <td className="px-3 py-2">
-                        <EditIconButton label="Edit Coaching (1 pax)" />
+                        {(() => {
+                          const fields = buildCoachingFields(1)
+                          return fields.length > 0 ? (
+                            <ActionIconButton
+                              label="Edit Coaching (1 pax)"
+                              variant="edit"
+                              onClick={() => setEditingRow({ title: 'Edit Coaching (1 pax)', fields })}
+                            />
+                          ) : (
+                            <EditIconButton label="Edit Coaching (1 pax)" />
+                          )
+                        })()}
                       </td>
                     </tr>
                     <tr className="border-b border-gray-100">
@@ -311,7 +421,18 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                         />
                       </td>
                       <td className="px-3 py-2">
-                        <EditIconButton label="Edit Coaching (2 pax)" />
+                        {(() => {
+                          const fields = buildCoachingFields(2)
+                          return fields.length > 0 ? (
+                            <ActionIconButton
+                              label="Edit Coaching (2 pax)"
+                              variant="edit"
+                              onClick={() => setEditingRow({ title: 'Edit Coaching (2 pax)', fields })}
+                            />
+                          ) : (
+                            <EditIconButton label="Edit Coaching (2 pax)" />
+                          )
+                        })()}
                       </td>
                     </tr>
                     <tr className="last:border-b-0">
@@ -323,7 +444,18 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                         <PriceCell price={findBallBoy('non_member')} addLabel="Add Ball Boy non-member rate" />
                       </td>
                       <td className="px-3 py-2">
-                        <EditIconButton label="Edit Ball Boy" />
+                        {(() => {
+                          const fields = buildBallBoyFields()
+                          return fields.length > 0 ? (
+                            <ActionIconButton
+                              label="Edit Ball Boy"
+                              variant="edit"
+                              onClick={() => setEditingRow({ title: 'Edit Ball Boy', fields })}
+                            />
+                          ) : (
+                            <EditIconButton label="Edit Ball Boy" />
+                          )
+                        })()}
                       </td>
                     </tr>
                   </>
@@ -340,7 +472,18 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                       />
                     </td>
                     <td className="px-3 py-2">
-                      <EditIconButton label="Edit Coaching" />
+                      {(() => {
+                        const fields = buildCoachingFields(null)
+                        return fields.length > 0 ? (
+                          <ActionIconButton
+                            label="Edit Coaching"
+                            variant="edit"
+                            onClick={() => setEditingRow({ title: 'Edit Coaching', fields })}
+                          />
+                        ) : (
+                          <EditIconButton label="Edit Coaching" />
+                        )
+                      })()}
                     </td>
                   </tr>
                 )}
@@ -362,6 +505,12 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
         mode="edit"
         resource={editingResource ?? undefined}
       />
+      <PriceEditModal
+        isOpen={editingRow !== null}
+        onClose={() => setEditingRow(null)}
+        title={editingRow?.title ?? ''}
+        fields={editingRow?.fields ?? []}
+      />
     </div>
   )
 }
@@ -374,6 +523,7 @@ interface ResourcesTabsProps {
 
 export default function ResourcesTabs({ courts, simulators, guestFeeRule }: ResourcesTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('courts')
+  const [editingGuestFee, setEditingGuestFee] = useState(false)
 
   const TAB_ITEMS: { key: Tab; label: string }[] = [
     { key: 'courts', label: 'Courts' },
@@ -420,7 +570,11 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule }: Reso
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-gray-900">Guest Fee</h2>
-            <EditIconButton label="Edit Guest Fee" />
+            <ActionIconButton
+              label="Edit Guest Fee"
+              variant="edit"
+              onClick={() => setEditingGuestFee(true)}
+            />
           </div>
           <div className="flex items-center justify-between gap-4 py-2 text-sm">
             <span className="text-gray-500">Non-member court guest surcharge</span>
@@ -431,6 +585,20 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule }: Reso
           <p className="mt-2 text-xs text-gray-500">
             Applies to non-member court bookings only; the booker is exempt from their own guest fee.
           </p>
+          <PriceEditModal
+            isOpen={editingGuestFee}
+            onClose={() => setEditingGuestFee(false)}
+            title="Edit Guest Fee"
+            fields={[
+              {
+                key: 'amount',
+                label: 'Guest fee (per guest/hr)',
+                endpoint: `/api/admin/guest-fee-rule/${guestFeeRule.id}`,
+                bodyKey: 'amountCentavos',
+                currentCentavos: guestFeeRule.amountCentavos,
+              },
+            ]}
+          />
         </div>
       )}
     </div>
