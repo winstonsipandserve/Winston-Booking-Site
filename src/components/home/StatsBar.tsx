@@ -21,15 +21,15 @@ export default function StatsBar({ totalResources, sportCount }: StatsBarProps) 
   ]
 
   return (
-    <div
-      id="stats-bar"
-      className="relative z-20 mx-auto -mt-16 -mb-16 w-full max-w-5xl px-6 md:-mt-20 md:-mb-20"
-    >
-      <div className="grid grid-cols-2 gap-y-8 rounded-2xl bg-brand-light px-8 py-10 shadow-xl shadow-brand-dark/10 sm:grid-cols-4 sm:gap-y-0">
+    <div className="bg-brand-mid">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-y divide-brand-light/15 sm:grid-cols-4 sm:divide-y-0 md:px-10">
         {stats.map((stat) => (
-          <div key={stat.label} className="relative text-center sm:px-4">
-            <p className="font-serif text-3xl text-brand-dark md:text-4xl">{stat.value}</p>
-            <p className="mt-1 text-xs uppercase tracking-wide text-neutral-700/80 md:text-sm">
+          <div
+            key={stat.label}
+            className="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center md:py-10"
+          >
+            <p className="font-serif text-3xl text-brand-light md:text-4xl">{stat.value}</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-brand-light/60 md:text-sm">
               {stat.label}
             </p>
           </div>
