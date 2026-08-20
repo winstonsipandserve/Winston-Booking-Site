@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
@@ -14,12 +14,28 @@ const NAV_LINKS = [
   { label: 'About', href: '/about' },
 ]
 
+const SCROLL_THRESHOLD = 50
+
 export default function Navbar() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > SCROLL_THRESHOLD)
+    }
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   return (
-    <header className="sticky top-0 z-50 bg-brand-light">
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${
+        scrolled ? 'bg-brand-light' : 'bg-transparent'
+      }`}
+    >
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6">
         <Link
           href="/"
@@ -30,7 +46,9 @@ export default function Navbar() {
             alt="Winston Sip & Serve"
             width={500}
             height={500}
-            className="h-11 w-auto md:h-14"
+            className={`h-11 w-auto transition-all duration-200 md:h-14 ${
+              scrolled ? '' : 'brightness-0 invert'
+            }`}
             priority
           />
         </Link>
@@ -44,8 +62,10 @@ export default function Navbar() {
                   href={link.href}
                   className={`group relative pb-1 text-sm font-normal uppercase tracking-[0.35px] transition-colors duration-200 ${
                     isActive
-                      ? 'text-brand-dark after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent-primary'
-                      : 'text-gray-700 hover:text-brand-dark'
+                      ? `${scrolled ? 'text-brand-dark' : 'text-accent-light'} after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent-primary`
+                      : scrolled
+                        ? 'text-gray-700 hover:text-brand-dark'
+                        : 'text-accent-light/90 hover:text-accent-light'
                   }`}
                 >
                   {link.label}
