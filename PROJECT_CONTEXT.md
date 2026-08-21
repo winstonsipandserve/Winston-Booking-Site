@@ -130,4 +130,8 @@ Note: ball boy is a court-only add-on (courts have a ball boy; simulators do not
 
 ## Bulletin / Announcements
 
-- Admin-managed announcements/news section, displayed on the public homepage
+- One unified `Bulletin` model backs the admin panel (`/admin/bulletin`), the public `/news` page, and `/book`'s `AnnouncementGate` — these are not three separate data sources, though `/news` and `AnnouncementGate` are still on hardcoded arrays shaped to match this model pending their own frontend-wiring pass.
+- Fields: `title`, `body`, `excerpt` (a shorter summary distinct from the full body), `category` (`BulletinCategory`), `imageUrl`, `socialPlatform`/`socialUrl` (both optional, provided together or not at all), `isPublished`, `publishedAt`.
+- `BulletinCategory` is a fixed 4-value enum: Renovation, Closure, Tournament, Community. No other categories exist or are planned.
+- Every published bulletin carries a real `publishedAt` date — auto-set the first time a bulletin is published, and preserved (never reset) through any later unpublish/republish cycle. There is no "Ongoing"/evergreen concept — an unpublished bulletin is simply a draft with `publishedAt: null` until its first publish.
+- Bulletin images upload to a public Supabase Storage bucket (`bulletin-images`) — publicly readable via a constructed public URL, no signed-URL flow needed (unlike the private government-ID bucket used for membership applications).

@@ -30,6 +30,11 @@ export async function uploadToStorage(
   return { path }
 }
 
+export function getPublicUrl(bucket: string, path: string): string {
+  const { url } = getStorageEnv()
+  return `${url}/storage/v1/object/public/${bucket}/${path}`
+}
+
 export async function getSignedUrl(
   bucket: string,
   path: string,
