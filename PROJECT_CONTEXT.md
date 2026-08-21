@@ -123,7 +123,7 @@ Note: ball boy is a court-only add-on (courts have a ball boy; simulators do not
 - Manage all bookings
 - Manage courts & simulators (resources)
 - Manage membership accounts (including application approval/rejection)
-- Manage bulletin (announcements/news shown on the public homepage)
+- Manage bulletin (announcements/news shown on /news and /book's announcement gate — not the homepage)
 - Manage pricing rules (court/simulator rates, add-on service rates — member and non-member)
 
 ---
