@@ -1,6 +1,10 @@
+'use client'
+
+import { useState } from 'react'
 import Image from 'next/image'
 import { formatCentavos } from '@/lib/format'
 import { CheckIcon } from '@/components/ui/Icons'
+import Modal from '@/components/ui/Modal'
 
 // SAMPLE CONTENT — hardcoded placeholder membership status for this frontend-only pass.
 // Replace once member auth (Auth.js session tied to Customer/Membership) is wired.
@@ -20,6 +24,7 @@ const PERKS = ['Priority bookings', 'Facility use', 'Complimentary F&B (via cred
 const MEMBER_QR_VALUE = 'WSS-MEMBER-0001'
 
 export default function MembershipStatusCard() {
+  const [qrModalOpen, setQrModalOpen] = useState(false)
   const creditPct = Math.round(
     (SAMPLE_MEMBERSHIP.remainingCreditCentavos / SAMPLE_MEMBERSHIP.creditCentavos) * 100
   )
@@ -93,8 +98,30 @@ export default function MembershipStatusCard() {
           <p className="max-w-[160px] text-center text-xs text-accent-light/70">
             Show this code at the front desk for check-in.
           </p>
+          <button
+            type="button"
+            onClick={() => setQrModalOpen(true)}
+            className="text-xs font-medium text-accent-primary underline underline-offset-2 transition-colors hover:text-accent-dark"
+          >
+            View Full Screen
+          </button>
         </div>
       </div>
+
+      <Modal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} title="Member QR Code">
+        <div className="flex flex-col items-center gap-3">
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${MEMBER_QR_VALUE}`}
+            alt="QR code for member check-in at the front desk"
+            width={300}
+            height={300}
+            className="h-[300px] w-[300px]"
+          />
+          <p className="max-w-[240px] text-center text-xs text-brand-dark/60">
+            Show this code at the front desk for check-in.
+          </p>
+        </div>
+      </Modal>
     </div>
   )
 }

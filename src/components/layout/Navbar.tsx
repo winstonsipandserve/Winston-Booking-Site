@@ -97,6 +97,13 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-3 md:flex">
+          <Link
+            href="/book"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+          >
+            Book a Court
+            <span aria-hidden="true">→</span>
+          </Link>
           {signedIn ? (
             <button
               type="button"
@@ -117,13 +124,6 @@ export default function Navbar() {
               Sign In
             </Link>
           )}
-          <Link
-            href="/book"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-          >
-            Book a Court
-            <span aria-hidden="true">→</span>
-          </Link>
         </div>
 
         <button
@@ -167,6 +167,14 @@ export default function Navbar() {
             })}
           </ul>
           <div className="mt-6 flex flex-col gap-3">
+            <Link
+              href="/book"
+              onClick={() => setMenuOpen(false)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            >
+              Book a Court
+              <span aria-hidden="true">→</span>
+            </Link>
             {signedIn ? (
               <button
                 type="button"
@@ -187,14 +195,6 @@ export default function Navbar() {
                 Sign In
               </Link>
             )}
-            <Link
-              href="/book"
-              onClick={() => setMenuOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-            >
-              Book a Court
-              <span aria-hidden="true">→</span>
-            </Link>
           </div>
         </div>
       )}

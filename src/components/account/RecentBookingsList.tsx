@@ -178,7 +178,7 @@ export default function RecentBookingsList() {
   return (
     <div className="flex flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-card">
       <h2 className="font-serif text-xl text-brand-dark">Recent Bookings</h2>
-      <div className="mt-2 h-[600px] overflow-y-auto">
+      <div className="mt-2 h-[600px] overflow-y-auto overflow-x-hidden">
         <dl className="flex flex-col">
           {pageBookings.map((booking, index) => {
             const SportIcon = sportIconFor(booking.resourceTypeName)
