@@ -86,6 +86,14 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-3 md:flex">
           <Link
+            href="/login"
+            className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
+              scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
+            }`}
+          >
+            Sign In
+          </Link>
+          <Link
             href="/book"
             className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
           >
@@ -143,6 +151,13 @@ export default function Navbar() {
             })}
           </ul>
           <div className="mt-6 flex flex-col gap-3">
+            <Link
+              href="/login"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full rounded-lg border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            >
+              Sign In
+            </Link>
             <Link
               href="/book"
               onClick={() => setMenuOpen(false)}
