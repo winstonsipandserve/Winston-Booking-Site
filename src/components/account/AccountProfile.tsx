@@ -16,7 +16,7 @@ export function getInitials(name: string): string {
 
 export default function AccountProfile() {
   return (
-    <div className="flex flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-card">
+    <div className="flex h-full flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-card">
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-primary/10 text-sm font-semibold text-accent-primary">
           {getInitials(SAMPLE_PROFILE.name)}

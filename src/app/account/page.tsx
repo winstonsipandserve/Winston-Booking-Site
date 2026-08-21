@@ -39,9 +39,9 @@ export default function AccountPage() {
       </section>
 
       <section className="bg-background py-12 md:py-16">
-        <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-[320px_1fr] md:items-start md:px-10">
+        <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-[320px_1fr] md:px-10">
           <div className="flex flex-col gap-8">
-            <Reveal>
+            <Reveal className="h-full">
               <AccountProfile />
             </Reveal>
           </div>
