@@ -1,4 +1,4 @@
-import { LocationIcon, CalendarIcon } from '@/components/ui/Icons'
+import { TennisIcon, PickleballIcon, GolfIcon, CalendarIcon } from '@/components/ui/Icons'
 
 // SAMPLE CONTENT — hardcoded placeholder booking history for this frontend-only pass.
 // Replace once member auth (Auth.js session tied to Customer/Booking) is wired.
@@ -32,19 +32,28 @@ const STATUS_LABELS: Record<string, string> = {
   pending_payment: 'Pending Payment',
 }
 
+function sportIconFor(resourceTypeName: string) {
+  const label = resourceTypeName.toLowerCase()
+  if (label.includes('golf')) return GolfIcon
+  if (label.includes('pickleball')) return PickleballIcon
+  return TennisIcon
+}
+
 export default function RecentBookingsList() {
   return (
     <div className="flex flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-card">
       <h2 className="font-serif text-xl text-brand-dark">Recent Bookings</h2>
       <dl className="mt-2 flex flex-col">
-        {SAMPLE_BOOKINGS.map((booking, index) => (
+        {SAMPLE_BOOKINGS.map((booking, index) => {
+          const SportIcon = sportIconFor(booking.resourceTypeName)
+          return (
           <div
             key={booking.id}
-            className={`flex items-center justify-between gap-4 py-3 ${index > 0 ? 'border-t border-brand-dark/10' : ''}`}
+            className={`flex items-center justify-between gap-4 rounded-lg px-2 py-3 -mx-2 transition-colors duration-300 hover:bg-brand-dark/[0.02] ${index > 0 ? 'border-t border-brand-dark/10' : ''}`}
           >
             <dt className="flex items-center gap-3 text-brand-dark/70">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-primary/10 text-accent-primary">
-                <LocationIcon className="h-4 w-4" />
+                <SportIcon className="h-4 w-4" />
               </span>
               <span>
                 {booking.resourceTypeName} — {booking.resourceLabel}
@@ -60,7 +69,8 @@ export default function RecentBookingsList() {
               </span>
             </dd>
           </div>
-        ))}
+          )
+        })}
       </dl>
     </div>
   )
