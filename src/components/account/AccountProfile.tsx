@@ -24,17 +24,17 @@ export default function AccountProfile() {
         <h2 className="font-serif text-xl text-brand-dark">Profile</h2>
       </div>
       <dl className="mt-4 flex flex-col">
-        <div className="flex items-center justify-between gap-4 py-3">
+        <div className="flex flex-col gap-1 py-3">
           <dt className="text-brand-dark/70">Name</dt>
-          <dd className="text-right font-medium text-brand-dark">{SAMPLE_PROFILE.name}</dd>
+          <dd className="font-medium text-brand-dark">{SAMPLE_PROFILE.name}</dd>
         </div>
-        <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
+        <div className="flex flex-col gap-1 border-t border-brand-dark/10 py-3">
           <dt className="text-brand-dark/70">Email</dt>
-          <dd className="text-right font-medium text-brand-dark">{SAMPLE_PROFILE.email}</dd>
+          <dd className="font-medium text-brand-dark">{SAMPLE_PROFILE.email}</dd>
         </div>
-        <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
+        <div className="flex flex-col gap-1 border-t border-brand-dark/10 py-3">
           <dt className="text-brand-dark/70">Phone</dt>
-          <dd className="text-right font-medium text-brand-dark">{SAMPLE_PROFILE.phone}</dd>
+          <dd className="font-medium text-brand-dark">{SAMPLE_PROFILE.phone}</dd>
         </div>
       </dl>
     </div>
