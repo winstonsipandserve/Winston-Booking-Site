@@ -50,6 +50,9 @@ export default function AccountPage() {
             <Reveal delayMs={100}>
               <MembershipStatusCard />
             </Reveal>
+          </div>
+
+          <div className="flex flex-col gap-8 md:col-span-2">
             <Reveal delayMs={200}>
               <RecentBookingsList />
             </Reveal>

@@ -33,7 +33,7 @@ export default function MembershipStatusCard() {
             alt=""
             width={32}
             height={32}
-            className="h-8 w-8 object-contain"
+            className="h-8 w-8 object-contain brightness-0 invert"
           />
           <h2 className="font-serif text-xl text-neutral-100">Membership Status</h2>
         </div>
