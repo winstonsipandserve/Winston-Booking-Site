@@ -71,6 +71,13 @@ enum PaymentStatus {
   failed
 }
 
+enum BulletinCategory {
+  Renovation
+  Closure
+  Tournament
+  Community
+}
+
 // ── Resource model (Decision: Resource model) ─────────
 
 model ResourceType {
@@ -329,9 +336,14 @@ model Payment {
 // ── Bulletin ────────────────────────────────────────────
 
 model Bulletin {
-  id          String    @id @default(cuid())
+  id          String           @id @default(cuid())
   title       String
+  excerpt     String
   body        String
+  category    BulletinCategory
+  imageUrl    String           @map("image_url")
+  socialPlatform String?       @map("social_platform")
+  socialUrl      String?       @map("social_url")
   isPublished Boolean   @default(false) @map("is_published")
   publishedAt DateTime? @map("published_at")
   createdAt DateTime @default(now()) @map("created_at")
