@@ -44,14 +44,6 @@ export default function AccountPage() {
             <Reveal>
               <AccountProfile />
             </Reveal>
-
-            {/* Intentionally inert placeholder — no href/onClick — until member-aware pricing is designed and wired into the booking flow. */}
-            <div className="flex flex-col items-center gap-1.5 rounded-lg bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light">
-              Book a Court
-              <span className="text-xs font-normal normal-case tracking-normal text-brand-light/70">
-                Member pricing — coming soon
-              </span>
-            </div>
           </div>
 
           <div className="flex flex-col gap-8">

@@ -108,6 +108,14 @@ export default function MembershipStatusCard() {
         </div>
       </div>
 
+      {/* Intentionally inert placeholder — no href/onClick — until member-aware pricing is designed and wired into the booking flow. */}
+      <div className="mt-6 flex flex-col items-center gap-1.5 rounded-lg bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light">
+        Book a Court
+        <span className="text-xs font-normal normal-case tracking-normal text-brand-light/70">
+          Member pricing — coming soon
+        </span>
+      </div>
+
       <Modal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} title="Member QR Code">
         <div className="flex flex-col items-center gap-3">
           <img
