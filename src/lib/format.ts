@@ -12,3 +12,12 @@ export function parseCentavos(pesosInput: string): number | null {
   if (!Number.isFinite(value) || value < 0) return null
   return Math.round(value * 100)
 }
+
+export function formatBulletinDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Manila',
+  }).format(date)
+}

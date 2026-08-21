@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import AnnouncementGate from '@/components/booking/AnnouncementGate'
+import AnnouncementGate, { type GateNotice } from '@/components/booking/AnnouncementGate'
 import BookingForm, { type ResourcesResponse } from '@/components/booking/BookingForm'
 
 export default function BookPage() {
@@ -9,6 +9,7 @@ export default function BookPage() {
   const [data, setData] = useState<ResourcesResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [notices, setNotices] = useState<GateNotice[]>([])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -32,6 +33,25 @@ export default function BookPage() {
     }
   }, [])
 
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch('/api/bulletin/gate-notices', { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load notices')
+        return res.json() as Promise<{ notices: GateNotice[] }>
+      })
+      .then((json) => {
+        setNotices(json.notices)
+      })
+      .catch((err) => {
+        if ((err as Error).name === 'AbortError') return
+        setNotices([])
+      })
+    return () => {
+      controller.abort()
+    }
+  }, [])
+
   return (
     <div className="flex flex-1 flex-col items-center gap-8 bg-background px-6 py-16">
       <div className="flex flex-col items-center gap-2 text-center">
@@ -46,7 +66,7 @@ export default function BookPage() {
       {started ? (
         <BookingForm data={data} loading={loading} loadError={loadError} />
       ) : (
-        <AnnouncementGate onContinue={() => setStarted(true)} />
+        <AnnouncementGate notices={notices} onContinue={() => setStarted(true)} />
       )}
     </div>
   )
