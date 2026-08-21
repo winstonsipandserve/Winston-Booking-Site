@@ -6,7 +6,7 @@ export const SAMPLE_PROFILE = {
   phone: '+63 917 123 4567',
 }
 
-function getInitials(name: string): string {
+export function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/)
   return parts
     .slice(0, 2)

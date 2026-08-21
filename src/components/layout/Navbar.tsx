@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
+import { getInitials, SAMPLE_PROFILE } from '@/components/account/AccountProfile'
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -97,13 +98,23 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/book"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-          >
-            Book a Court
-            <span aria-hidden="true">→</span>
-          </Link>
+          {signedIn ? (
+            <Link
+              href="/account"
+              aria-label="My Account"
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-primary/10 text-sm font-bold text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            >
+              {getInitials(SAMPLE_PROFILE.name)}
+            </Link>
+          ) : (
+            <Link
+              href="/book"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            >
+              Book a Court
+              <span aria-hidden="true">→</span>
+            </Link>
+          )}
           {signedIn ? (
             <button
               type="button"
@@ -167,14 +178,27 @@ export default function Navbar() {
             })}
           </ul>
           <div className="mt-6 flex flex-col gap-3">
-            <Link
-              href="/book"
-              onClick={() => setMenuOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-            >
-              Book a Court
-              <span aria-hidden="true">→</span>
-            </Link>
+            {signedIn ? (
+              <Link
+                href="/account"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary/10 px-5 py-2.5 text-sm font-medium text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-primary/10 text-xs font-bold text-accent-primary">
+                  {getInitials(SAMPLE_PROFILE.name)}
+                </span>
+                My Account
+              </Link>
+            ) : (
+              <Link
+                href="/book"
+                onClick={() => setMenuOpen(false)}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              >
+                Book a Court
+                <span aria-hidden="true">→</span>
+              </Link>
+            )}
             {signedIn ? (
               <button
                 type="button"
