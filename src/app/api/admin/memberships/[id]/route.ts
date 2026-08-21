@@ -1,6 +1,8 @@
 import { auth } from '../../../../../../auth'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
+import { generateActivationToken } from '@/lib/member-activation'
+import { sendActivationEmail } from '@/lib/resend'
 
 interface ReviewRequestBody {
   action?: unknown
@@ -33,7 +35,10 @@ export async function PATCH(
     return Response.json({ error: 'A rejection reason is required' }, { status: 400 })
   }
 
-  const application = await prisma.membershipApplication.findUnique({ where: { id } })
+  const application = await prisma.membershipApplication.findUnique({
+    where: { id },
+    include: { customer: true },
+  })
   if (!application) {
     return Response.json({ error: 'Membership application not found' }, { status: 404 })
   }
@@ -93,5 +98,20 @@ export async function PATCH(
     return { application: updatedApplication, membership }
   })
 
-  return Response.json(result, { status: 200 })
+  let activationEmailSent = false
+  if (!application.customer.passwordHash) {
+    const { rawToken, tokenHash, expiresAt } = generateActivationToken()
+    await prisma.memberActivationToken.create({
+      data: { customerId: application.customerId, tokenHash, expiresAt },
+    })
+    const activationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/activate?token=${rawToken}`
+    await sendActivationEmail({
+      to: application.customer.email,
+      name: application.customer.name,
+      activationUrl,
+    })
+    activationEmailSent = true
+  }
+
+  return Response.json({ ...result, activationEmailSent }, { status: 200 })
 }
