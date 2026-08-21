@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -18,8 +18,10 @@ const SCROLL_THRESHOLD = 50
 
 export default function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [signedIn, setSignedIn] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,6 +31,16 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  useEffect(() => {
+    setSignedIn(sessionStorage.getItem('winston_member_session') === 'true')
+  }, [])
+
+  function handleSignOut() {
+    sessionStorage.removeItem('winston_member_session')
+    setSignedIn(false)
+    router.push('/')
+  }
 
   return (
     <header
@@ -85,28 +97,32 @@ export default function Navbar() {
         </ul>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/login"
-            className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
-              scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
-            }`}
-          >
-            Sign In
-          </Link>
+          {signedIn ? (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
+                scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
+              }`}
+            >
+              Sign Out
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
+                scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
+              }`}
+            >
+              Sign In
+            </Link>
+          )}
           <Link
             href="/book"
             className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
           >
             Book a Court
             <span aria-hidden="true">→</span>
-          </Link>
-          <Link
-            href="/membership"
-            className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
-              scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
-            }`}
-          >
-            Become a Member
           </Link>
         </div>
 
@@ -151,13 +167,26 @@ export default function Navbar() {
             })}
           </ul>
           <div className="mt-6 flex flex-col gap-3">
-            <Link
-              href="/login"
-              onClick={() => setMenuOpen(false)}
-              className="block w-full rounded-lg border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-            >
-              Sign In
-            </Link>
+            {signedIn ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  handleSignOut()
+                }}
+                className="block w-full rounded-lg border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              >
+                Sign Out
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMenuOpen(false)}
+                className="block w-full rounded-lg border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              >
+                Sign In
+              </Link>
+            )}
             <Link
               href="/book"
               onClick={() => setMenuOpen(false)}
@@ -165,13 +194,6 @@ export default function Navbar() {
             >
               Book a Court
               <span aria-hidden="true">→</span>
-            </Link>
-            <Link
-              href="/membership"
-              onClick={() => setMenuOpen(false)}
-              className="block w-full rounded-lg border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-            >
-              Become a Member
             </Link>
           </div>
         </div>

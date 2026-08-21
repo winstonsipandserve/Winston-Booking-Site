@@ -23,11 +23,6 @@ export default function AccountPage() {
     setChecked(true)
   }, [router])
 
-  function handleSignOut() {
-    sessionStorage.removeItem('winston_member_session')
-    router.push('/')
-  }
-
   if (!checked) return null
 
   return (
@@ -49,14 +44,6 @@ export default function AccountPage() {
             <Reveal>
               <AccountProfile />
             </Reveal>
-
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="self-start rounded-lg border border-brand-dark/20 px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors duration-300 hover:bg-brand-dark/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-            >
-              Sign Out
-            </button>
           </div>
 
           <div className="flex flex-col gap-8">
