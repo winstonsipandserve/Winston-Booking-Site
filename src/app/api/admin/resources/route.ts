@@ -12,7 +12,7 @@ interface CreateResourceBody {
 
 export async function POST(request: Request) {
   const session = await auth()
-  if (!session?.user?.id) {
+  if (!session?.user?.id || session.user.role !== 'admin') {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
