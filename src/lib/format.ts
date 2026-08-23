@@ -21,3 +21,15 @@ export function formatBulletinDate(date: Date): string {
     timeZone: 'Asia/Manila',
   }).format(date)
 }
+
+export function formatBookingDateTime(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Manila',
+  }).format(date)
+}
