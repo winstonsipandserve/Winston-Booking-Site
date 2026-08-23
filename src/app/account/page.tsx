@@ -1,29 +1,20 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { redirect } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import Reveal from '@/components/ui/Reveal'
 import AccountProfile, { SAMPLE_PROFILE } from '@/components/account/AccountProfile'
 import MembershipStatusCard from '@/components/account/MembershipStatusCard'
 import RecentBookingsList from '@/components/account/RecentBookingsList'
+import { auth } from '../../../auth'
 
 const FIRST_NAME = SAMPLE_PROFILE.name.split(' ')[0]
 
-export default function AccountPage() {
-  const router = useRouter()
-  const [checked, setChecked] = useState(false)
+export default async function AccountPage() {
+  const session = await auth()
 
-  useEffect(() => {
-    if (sessionStorage.getItem('winston_member_session') !== 'true') {
-      router.push('/login')
-      return
-    }
-    setChecked(true)
-  }, [router])
-
-  if (!checked) return null
+  if (!session?.user?.id || session.user.role !== 'member') {
+    redirect('/login')
+  }
 
   return (
     <>

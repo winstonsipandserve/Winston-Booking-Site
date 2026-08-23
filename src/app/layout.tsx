@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Parisienne, Fraunces, Manrope } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 
 const parisienne = Parisienne({ variable: "--font-parisienne", subsets: ["latin"], weight: "400" });
@@ -15,7 +16,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${parisienne.variable} ${fraunces.variable} ${manrope.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }

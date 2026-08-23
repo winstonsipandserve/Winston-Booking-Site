@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useRouter } from 'next/navigation'
-import { getInitials, SAMPLE_PROFILE } from '@/components/account/AccountProfile'
+import { usePathname } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
+import { getInitials } from '@/components/account/AccountProfile'
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -19,10 +20,10 @@ const SCROLL_THRESHOLD = 50
 
 export default function Navbar() {
   const pathname = usePathname()
-  const router = useRouter()
+  const { data: session, status } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [signedIn, setSignedIn] = useState(false)
+  const signedIn = status === 'authenticated' && session?.user?.role === 'member'
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,14 +34,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  useEffect(() => {
-    setSignedIn(sessionStorage.getItem('winston_member_session') === 'true')
-  }, [])
-
   function handleSignOut() {
-    sessionStorage.removeItem('winston_member_session')
-    setSignedIn(false)
-    router.push('/')
+    signOut({ callbackUrl: '/' })
   }
 
   return (
@@ -104,7 +99,7 @@ export default function Navbar() {
               aria-label="My Account"
               className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-primary/10 text-sm font-bold text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
-              {getInitials(SAMPLE_PROFILE.name)}
+              {getInitials(session?.user?.name ?? '')}
             </Link>
           ) : (
             <Link
@@ -185,7 +180,7 @@ export default function Navbar() {
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary/10 px-5 py-2.5 text-sm font-medium text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-primary/10 text-xs font-bold text-accent-primary">
-                  {getInitials(SAMPLE_PROFILE.name)}
+                  {getInitials(session?.user?.name ?? '')}
                 </span>
                 My Account
               </Link>

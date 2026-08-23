@@ -1,8 +1,33 @@
+import { AuthError } from 'next-auth'
+import { redirect } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import LoginForm from '@/components/auth/LoginForm'
+import { signIn } from '../../../auth'
 
-export default function LoginPage() {
+async function memberSignIn(formData: FormData) {
+  'use server'
+  try {
+    await signIn('member-credentials', {
+      email: formData.get('email'),
+      password: formData.get('password'),
+      redirectTo: '/account',
+    })
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect('/login?error=1')
+    }
+    throw error
+  }
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const { error } = await searchParams
+
   return (
     <>
       <Navbar />
@@ -19,7 +44,7 @@ export default function LoginPage() {
 
       <section className="bg-background py-16 md:py-20">
         <div className="mx-auto max-w-6xl px-6 md:px-10">
-          <LoginForm />
+          <LoginForm action={memberSignIn} error={error === '1'} />
         </div>
       </section>
 
