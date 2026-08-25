@@ -2,9 +2,10 @@ import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
 
 const RESEND_API_BASE = 'https://api.resend.com/emails'
 
-// Resend's default sandbox sender — the project has no verified sending domain yet
-// (see CLAUDE.md → Open / Not Yet Decided → Domain + DNS).
-const FROM_ADDRESS = 'onboarding@resend.dev'
+// Sending domain is verified in Resend (SPF/DKIM live, DMARC monitor-only)
+// (see CLAUDE.md → Architecture Decisions → Transactional email sending domain).
+const FROM_ADDRESS = 'no-reply@winstonsipandserve.club'
+const REPLY_TO_ADDRESS = 'winstonsipandserve@gmail.com'
 
 interface SendActivationEmailInput {
   to: string
@@ -27,6 +28,7 @@ export async function sendActivationEmail({
       body: JSON.stringify({
         from: FROM_ADDRESS,
         to,
+        reply_to: REPLY_TO_ADDRESS,
         subject: 'Your Winston Sip and Serve membership is approved',
         html: `
           <p>Hi ${name},</p>
