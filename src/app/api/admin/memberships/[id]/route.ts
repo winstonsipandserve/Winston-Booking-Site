@@ -1,6 +1,6 @@
 import { auth } from '../../../../../../auth'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
+import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate, formatMembershipTier } from '@/lib/membership-pricing'
 import { generateActivationToken } from '@/lib/member-activation'
 import { sendActivationEmail } from '@/lib/resend'
 
@@ -109,6 +109,7 @@ export async function PATCH(
       to: application.customer.email,
       name: application.customer.name,
       activationUrl,
+      tierName: formatMembershipTier(application.requestedTier),
     })
     activationEmailSent = true
   }
