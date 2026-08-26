@@ -118,6 +118,7 @@ Use these when the task matches — don't reinvent what they already encode.
 - **Supabase** — official, OAuth-authenticated, **read-only**, scoped to `project_ref=vsmjybtidvmzvicdpkdo`. Docs/database/debugging/development features only. Safe to commit config (no secrets in it).
 - **Playwright** — official `@playwright/mcp`, project-scoped, for browser-based verification.
 - **Context7** — for current Next.js/Prisma/PayMongo/Auth.js documentation lookups.
+- **Resend** — official hosted MCP (`https://mcp.resend.com/mcp`), OAuth-authenticated, connected in both this planning chat and Claude Code CLI. Gives direct tool access to Resend's platform (send/list/cancel emails, delivery logs, domain verification, contacts, webhooks) — useful for VERIFY steps that previously required manually checking the Resend dashboard (e.g. the 2026-08-26 activation-email delivery confirmation).
 
 ---
 
