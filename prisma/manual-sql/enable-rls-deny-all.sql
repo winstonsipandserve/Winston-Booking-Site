@@ -65,3 +65,7 @@ CREATE POLICY deny_all_authenticated ON bulletins FOR ALL TO authenticated USING
 ALTER TABLE member_activation_tokens ENABLE ROW LEVEL SECURITY;
 CREATE POLICY deny_all_anon ON member_activation_tokens FOR ALL TO anon USING (false) WITH CHECK (false);
 CREATE POLICY deny_all_authenticated ON member_activation_tokens FOR ALL TO authenticated USING (false) WITH CHECK (false);
+
+ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
+CREATE POLICY deny_all_anon ON password_reset_tokens FOR ALL TO anon USING (false) WITH CHECK (false);
+CREATE POLICY deny_all_authenticated ON password_reset_tokens FOR ALL TO authenticated USING (false) WITH CHECK (false);

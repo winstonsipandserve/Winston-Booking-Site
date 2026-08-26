@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function LoginForm({
   action,
   error,
@@ -43,7 +45,12 @@ export default function LoginForm({
           Sign In
         </button>
 
-        <span className="text-center text-sm text-brand-dark/50">Forgot password?</span>
+        <Link
+          href="/forgot-password"
+          className="text-center text-sm text-brand-dark/50"
+        >
+          Forgot password?
+        </Link>
       </form>
     </div>
   )

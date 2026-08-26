@@ -93,6 +93,54 @@ export async function sendActivationEmail({
   }
 }
 
+interface SendPasswordResetEmailInput {
+  to: string
+  resetUrl: string
+}
+
+export async function sendPasswordResetEmail({
+  to,
+  resetUrl,
+}: SendPasswordResetEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>We received a request to reset the password for your Winston Sip &amp; Serve account.</p>
+    <p>This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email — your password won't be changed.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: 'Reset your Winston Sip & Serve password.',
+    eyebrowText: 'PASSWORD RESET',
+    headingText: 'Reset Your Password',
+    bodyHtml,
+    ctaText: 'Reset My Password',
+    ctaUrl: resetUrl,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Reset Your Winston Sip & Serve Password',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendPasswordResetEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendPasswordResetEmail threw', err)
+  }
+}
+
 interface SendRejectionEmailInput {
   to: string
   name: string
