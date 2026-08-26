@@ -2,7 +2,7 @@ import { auth } from '../../../../../../auth'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate, formatMembershipTier } from '@/lib/membership-pricing'
 import { generateActivationToken } from '@/lib/member-activation'
-import { sendActivationEmail } from '@/lib/resend'
+import { sendActivationEmail, sendRejectionEmail } from '@/lib/resend'
 
 interface ReviewRequestBody {
   action?: unknown
@@ -58,7 +58,13 @@ export async function PATCH(
         reviewedAt,
       },
     })
-    return Response.json(updated, { status: 200 })
+    await sendRejectionEmail({
+      to: application.customer.email,
+      name: application.customer.name,
+      reason: updated.rejectionReason as string,
+    })
+    const rejectionEmailSent = true
+    return Response.json({ ...updated, rejectionEmailSent }, { status: 200 })
   }
 
   const plan = MEMBERSHIP_TIER_PLANS[application.requestedTier]

@@ -92,3 +92,57 @@ export async function sendActivationEmail({
     console.error('Resend sendActivationEmail threw', err)
   }
 }
+
+interface SendRejectionEmailInput {
+  to: string
+  name: string
+  reason: string
+}
+
+export async function sendRejectionEmail({
+  to,
+  name,
+  reason,
+}: SendRejectionEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>Thank you for taking the time to apply for membership at Winston Sip &amp; Serve. We've completed our review of your application.</p>
+    <p>After careful review, we're unable to offer you membership at this time.</p>
+    <div style="margin: 24px 0; padding: 20px 24px; background-color: rgba(140, 90, 60, 0.08); border-left: 4px solid ${ACCENT_PRIMARY}; border-radius: 8px;">
+      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; font-weight: 600; color: ${BRAND_DARK};">Here's a bit more context from our team:</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">${reason}</p>
+    </div>
+    <p>You're always welcome at Winston as our guest — feel free to <a href="${process.env.NEXT_PUBLIC_APP_URL}/book" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">book a court</a>, simulator bay, or table at the café any time. And if your circumstances change, we'd be glad to have you apply again in the future.</p>
+    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">Warmly,<br />The Winston Sip &amp; Serve Team</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: "Thank you for applying — here's where things stand.",
+    eyebrowText: 'APPLICATION UPDATE',
+    headingText: `Thank You for Your Interest, ${name}`,
+    bodyHtml,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'An Update on Your Winston Sip & Serve Membership Application',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendRejectionEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendRejectionEmail threw', err)
+  }
+}
