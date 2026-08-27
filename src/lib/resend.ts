@@ -1,5 +1,6 @@
 import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
 import { buildBrandedEmail } from './email-templates'
+import { formatCentavos } from './format'
 
 const RESEND_API_BASE = 'https://api.resend.com/emails'
 
@@ -16,6 +17,8 @@ const BRAND_LIGHT = '#FDF3E7'
 const ACCENT_PRIMARY = '#C08552'
 const ACCENT_LIGHT = '#F5E6D3'
 const BODY_FONT = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+const HEADING_FONT = "Georgia, 'Times New Roman', serif"
+const DIVIDER_COLOR = 'rgba(140, 90, 60, 0.25)'
 
 interface SendActivationEmailInput {
   to: string
@@ -192,5 +195,146 @@ export async function sendRejectionEmail({
     }
   } catch (err) {
     console.error('Resend sendRejectionEmail threw', err)
+  }
+}
+
+interface BookingConfirmationAddOn {
+  name: string
+  amountCentavos: number
+}
+
+interface SendBookingConfirmationEmailInput {
+  to: string
+  name: string
+  bookingReference: string
+  resourceTypeName: string
+  resourceLabel: string
+  startTime: Date
+  endTime: Date
+  guestCount: number
+  guestFeeCentavos: number
+  addOns: BookingConfirmationAddOn[]
+  totalPaidCentavos: number
+}
+
+function formatManilaDate(date: Date): string {
+  return date.toLocaleDateString('en-PH', {
+    timeZone: 'Asia/Manila',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function formatManilaTime(date: Date): string {
+  return date.toLocaleTimeString('en-PH', {
+    timeZone: 'Asia/Manila',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+}
+
+function ledgerRow(label: string, value: string, isTotal = false): string {
+  const valueColor = isTotal ? ACCENT_PRIMARY : BRAND_DARK
+  const topBorder = isTotal ? `border-top: 1px solid ${DIVIDER_COLOR}; padding-top: 12px;` : ''
+  return `
+      <tr>
+        <td style="padding: 6px 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_MID}; ${topBorder}">${label}</td>
+        <td align="right" style="padding: 6px 0; font-family: ${BODY_FONT}; font-size: 14px; font-weight: ${isTotal ? 700 : 600}; color: ${valueColor}; ${topBorder}">${value}</td>
+      </tr>`
+}
+
+export async function sendBookingConfirmationEmail({
+  to,
+  name,
+  bookingReference,
+  resourceTypeName,
+  resourceLabel,
+  startTime,
+  endTime,
+  guestCount,
+  guestFeeCentavos,
+  addOns,
+  totalPaidCentavos,
+}: SendBookingConfirmationEmailInput): Promise<void> {
+  const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000)
+  const durationLabel =
+    durationMinutes % 60 === 0
+      ? `${durationMinutes / 60} hr${durationMinutes / 60 === 1 ? '' : 's'}`
+      : `${durationMinutes} min`
+
+  const ledgerRows = [
+    ledgerRow('Sport &amp; Court', `${resourceTypeName} &mdash; ${resourceLabel}`),
+    ledgerRow('Date', formatManilaDate(startTime)),
+    ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
+    ledgerRow('Duration', durationLabel),
+    ...(guestCount > 0
+      ? [ledgerRow(`Guest Fee (+${guestCount})`, formatCentavos(guestFeeCentavos))]
+      : []),
+    ...addOns.map((addOn) => ledgerRow(addOn.name, formatCentavos(addOn.amountCentavos))),
+    ledgerRow('Total Paid', formatCentavos(totalPaidCentavos), true),
+  ].join('')
+
+  const bodyHtml = `
+    <p>Hi ${name},</p>
+    <p>Your spot at Winston Sip &amp; Serve is locked in. Here's everything you need before you arrive.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 16px 20px; background-color: ${ACCENT_LIGHT};">
+          <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Booking Reference</p>
+          <p style="margin: 4px 0 0; font-family: ${HEADING_FONT}; font-size: 20px; font-weight: 700; color: ${BRAND_DARK};">${bookingReference}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRows}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin: 24px 0; padding: 18px 20px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
+      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 600; color: ${BRAND_DARK};">Before You Arrive</p>
+      <p style="margin: 0 0 6px; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK};">We're open 6:00 AM &ndash; 10:00 PM daily &mdash; try to arrive a few minutes early so your session starts right on time.</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK};">Bookings are confirmed and final. If anything comes up, just reply to this email and we'll help however we can.</p>
+    </div>
+    <p>While you're here &mdash; swing by the <a href="${process.env.NEXT_PUBLIC_APP_URL}/cafe-bar" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">Café &amp; Bar</a> for a coffee before your session or a cocktail after.</p>
+    <p style="margin: 20px 0 0;">And if you're booking often, membership pays for itself &mdash; member rates on every session, priority booking, and access to the Speakeasy Lounge.</p>
+    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you soon,<br />&mdash; The Winston Sip &amp; Serve Team</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Your booking is confirmed for ${formatManilaDate(startTime)}.`,
+    eyebrowText: 'BOOKING CONFIRMED',
+    headingText: `You're All Set, ${name}!`,
+    bodyHtml,
+    ctaText: 'Explore Membership Perks',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/membership`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `You're All Set, ${name} — Your Winston Booking is Confirmed`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendBookingConfirmationEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendBookingConfirmationEmail threw', err)
   }
 }

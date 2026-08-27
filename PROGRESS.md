@@ -15,7 +15,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - **Auth**: Email/password, live for admin (`credentials` provider) and member (`member-credentials` provider), JWT sessions, no adapter. Every `/api/admin/*` route + `(protected)/layout.tsx` require `role === 'admin'`. `/account` gates on `role === 'member'`, shows real `Customer`/`Membership`/`Booking` data.
 - **Forgot password**: Live end-to-end — `PasswordResetToken` (1hr expiry), enumeration-safe `/api/auth/forgot-password` (always 200), `/api/auth/reset-password`, `/forgot-password` + `/reset-password` pages.
 - **Membership application/approval**: Submission (`/membership/apply`) → admin review (`/admin/memberships`) → approve/reject mutation, live. Approval issues a `MemberActivationToken` + activation email; rejection sends a branded email with the admin's reason. Tier-activation *payment* (a real PayMongo charge) is not built — approval today just creates the `Membership` row free/manually.
-- **Transactional email**: `buildBrandedEmail` (shared layout) has 3 consumers — activation, rejection, forgot-password — all done. Sending from verified domain `no-reply@winstonsipandserve.club`, reply-to `winstonsipandserve@gmail.com`. Not yet designed: tier-activation payment confirmation, membership expiry/renewal reminders.
+- **Transactional email**: `buildBrandedEmail` (shared layout) has 4 consumers — activation, rejection, forgot-password, booking confirmation — all built. Sending from verified domain `no-reply@winstonsipandserve.club`, reply-to `winstonsipandserve@gmail.com`. Not yet designed: tier-activation payment confirmation, membership expiry/renewal reminders.
 - **Admin panel**: Bookings (list/detail/reschedule), Memberships (list/detail + approve/reject), Resources & Pricing (tabbed Courts/Simulators/Guest Fee — resource CRUD + pricing edit live, create/delete for pricing rows still disabled), Bulletin (full CRUD + image upload) — all live, gated by `(protected)/layout.tsx`. Not built: admin-side password reset, rate limiting, additional roles.
 - **Known dev-environment quirks** (mirrors CLAUDE.md's own Known Issues): `middleware.ts` does not execute locally (Next 16/Turbopack/Windows) — every gated route has its own working `auth()` check doing the real enforcement; re-verify against `staging` before assuming this is dev-only. The Browser pane doesn't composite frames in this environment — prefer DOM/class-based checks over `getComputedStyle`/screenshots for VERIFY.
 
@@ -160,6 +160,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-08-27 — `/reset-password` invisible-Navbar bug fixed (missing `bg-brand-dark` hero band) — `/forgot-password` has an identical bug in its lower section, not yet fixed
 - 2026-08-27 — `PROGRESS.md` compressed (552KB → ~28KB): full pre-2026-08-28 history moved verbatim into new `PROGRESS_ARCHIVE.md`; this file rewritten to current-state Build Status + one-line Completed Log entries + a trimmed Next Up. `CLAUDE.md`/`PROJECT_CONTEXT.md` untouched. See the "Entry format" note at the top of this file for the convention new entries should follow going forward
 - 2026-08-27 — `/forgot-password/page.tsx`'s leftover `bg-background` legacy token fixed → `bg-brand-light`, matching `/reset-password`'s lower section. Closes out the last item from the 2026-08-27 forgot-password-flow build
+- 2026-08-27 — `sendBookingConfirmationEmail` added as the 4th `buildBrandedEmail` consumer — booking-reference ledger card (sport/date/time/duration/guest fee/add-ons/total), Café & Bar cross-sell, membership upsell CTA. Reused `formatCentavos` from `src/lib/format.ts` for peso formatting rather than writing a duplicate (date/time formatting had no existing match, written fresh). Not yet wired to the PayMongo webhook — preview-only, sample email fired to arjayical22@gmail.com for template review.
 
 ---
 
@@ -174,6 +175,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - Member-repricing (the `priceUpdate` "your final price is X, was Y" notice) still unverified live — no active `Membership` rows exist to exercise it against; seed one when this path needs a real check.
 - `/api/resources` round-trip cost — measured 1.3–4s via instrumentation but 20–100ms live in a Browser-pane walkthrough; worth understanding whether this is Supabase-region latency or measurement variance before assuming production steady-state.
 - Admin: Pricing/Add-on/Guest-Fee rows are edit-only — create/delete for these three models still disabled by design.
+- Wire `sendBookingConfirmationEmail` into the PayMongo webhook's `payment.paid` handler (currently template-only, unused in the real booking flow).
 
 ---
 
