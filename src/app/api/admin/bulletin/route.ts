@@ -9,9 +9,18 @@ const MIME_TO_EXTENSION: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
 }
-const VALID_CATEGORIES = ['Renovation', 'Closure', 'Tournament', 'Community'] as const
+const VALID_CATEGORIES = [
+  'Renovation',
+  'Closure',
+  'Tournament',
+  'Community',
+  'General',
+  'FacilityMaintenance',
+] as const
 type BulletinCategoryValue = (typeof VALID_CATEGORIES)[number]
 const VALID_SOCIAL_PLATFORMS = ['instagram', 'facebook'] as const
+const VALID_PRIORITIES = ['Normal', 'High'] as const
+type BulletinPriorityValue = (typeof VALID_PRIORITIES)[number]
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -21,11 +30,23 @@ function isValidCategory(value: unknown): value is BulletinCategoryValue {
   return typeof value === 'string' && (VALID_CATEGORIES as readonly string[]).includes(value)
 }
 
+function isValidPriority(value: unknown): value is BulletinPriorityValue {
+  return typeof value === 'string' && (VALID_PRIORITIES as readonly string[]).includes(value)
+}
+
 function getOptionalString(formData: FormData, key: string): string | null {
   const value = formData.get(key)
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
   return trimmed === '' ? null : trimmed
+}
+
+function parseOptionalDate(formData: FormData, key: string): { error: string } | { value: Date | null } {
+  const raw = getOptionalString(formData, key)
+  if (raw === null) return { value: null }
+  const date = new Date(raw)
+  if (isNaN(date.getTime())) return { error: `${key} must be a valid date` }
+  return { value: date }
 }
 
 function validateImageFile(value: FormDataEntryValue | null): { error: string } | { file: File } {
@@ -49,6 +70,15 @@ interface ParsedBulletinFields {
   isPublished: boolean
   socialPlatform: string | null
   socialUrl: string | null
+  priority: BulletinPriorityValue
+  affectedFacility: string | null
+  impact: string | null
+  action: string | null
+  eventStartAt: Date | null
+  eventEndAt: Date | null
+  expiresAt: Date | null
+  ctaLabel: string | null
+  ctaUrl: string | null
 }
 
 function parseCommonFields(formData: FormData): { error: string } | { fields: ParsedBulletinFields } {
@@ -62,7 +92,10 @@ function parseCommonFields(formData: FormData): { error: string } | { fields: Pa
   if (!isNonEmptyString(excerpt)) return { error: 'Excerpt is required' }
   if (!isNonEmptyString(body)) return { error: 'Body is required' }
   if (!isValidCategory(category)) {
-    return { error: 'category must be one of Renovation, Closure, Tournament, Community' }
+    return {
+      error:
+        'category must be one of Renovation, Closure, Tournament, Community, General, FacilityMaintenance',
+    }
   }
   if (isPublishedRaw !== 'true' && isPublishedRaw !== 'false') {
     return { error: 'isPublished must be a boolean' }
@@ -77,6 +110,29 @@ function parseCommonFields(formData: FormData): { error: string } | { fields: Pa
     return { error: 'socialPlatform must be instagram or facebook' }
   }
 
+  const priorityRaw = formData.get('priority')
+  const priority = priorityRaw === null || priorityRaw === '' ? 'Normal' : priorityRaw
+  if (!isValidPriority(priority)) {
+    return { error: 'priority must be Normal or High' }
+  }
+
+  const affectedFacility = getOptionalString(formData, 'affectedFacility')
+  const impact = getOptionalString(formData, 'impact')
+  const action = getOptionalString(formData, 'action')
+
+  const ctaLabel = getOptionalString(formData, 'ctaLabel')
+  const ctaUrl = getOptionalString(formData, 'ctaUrl')
+  if ((ctaLabel === null) !== (ctaUrl === null)) {
+    return { error: 'ctaLabel and ctaUrl must be provided together' }
+  }
+
+  const eventStartAtResult = parseOptionalDate(formData, 'eventStartAt')
+  if ('error' in eventStartAtResult) return { error: eventStartAtResult.error }
+  const eventEndAtResult = parseOptionalDate(formData, 'eventEndAt')
+  if ('error' in eventEndAtResult) return { error: eventEndAtResult.error }
+  const expiresAtResult = parseOptionalDate(formData, 'expiresAt')
+  if ('error' in expiresAtResult) return { error: expiresAtResult.error }
+
   return {
     fields: {
       title: title.trim(),
@@ -86,6 +142,15 @@ function parseCommonFields(formData: FormData): { error: string } | { fields: Pa
       isPublished: isPublishedRaw === 'true',
       socialPlatform,
       socialUrl,
+      priority,
+      affectedFacility,
+      impact,
+      action,
+      eventStartAt: eventStartAtResult.value,
+      eventEndAt: eventEndAtResult.value,
+      expiresAt: expiresAtResult.value,
+      ctaLabel,
+      ctaUrl,
     },
   }
 }
@@ -135,6 +200,15 @@ export async function POST(request: Request) {
         imageUrl: getPublicUrl(BUCKET, imagePath),
         socialPlatform: fields.socialPlatform,
         socialUrl: fields.socialUrl,
+        priority: fields.priority,
+        affectedFacility: fields.affectedFacility,
+        impact: fields.impact,
+        action: fields.action,
+        eventStartAt: fields.eventStartAt,
+        eventEndAt: fields.eventEndAt,
+        expiresAt: fields.expiresAt,
+        ctaLabel: fields.ctaLabel,
+        ctaUrl: fields.ctaUrl,
         isPublished: fields.isPublished,
         publishedAt: fields.isPublished ? new Date() : null,
       },

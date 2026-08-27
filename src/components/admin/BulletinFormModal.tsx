@@ -5,7 +5,27 @@ import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
 import type { Bulletin } from '@prisma/client'
 
-const CATEGORIES = ['Renovation', 'Closure', 'Tournament', 'Community'] as const
+const CATEGORIES = [
+  { value: 'Renovation', label: 'Renovation' },
+  { value: 'Closure', label: 'Facility Closure' },
+  { value: 'Tournament', label: 'Tournament' },
+  { value: 'Community', label: 'Community Event' },
+  { value: 'General', label: 'General Announcement' },
+  { value: 'FacilityMaintenance', label: 'Facility Maintenance' },
+] as const
+const PRIORITIES = ['Normal', 'High'] as const
+
+function toDateTimeLocalValue(date: Date | null | undefined): string {
+  if (!date) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function toDateInputValue(date: Date | null | undefined): string {
+  if (!date) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
 
 interface BulletinFormModalProps {
   isOpen: boolean
@@ -38,6 +58,15 @@ function BulletinForm({
   const [category, setCategory] = useState<string>(bulletin?.category ?? '')
   const [socialPlatform, setSocialPlatform] = useState<string>(bulletin?.socialPlatform ?? '')
   const [socialUrl, setSocialUrl] = useState(bulletin?.socialUrl ?? '')
+  const [priority, setPriority] = useState<string>(bulletin?.priority ?? 'Normal')
+  const [affectedFacility, setAffectedFacility] = useState(bulletin?.affectedFacility ?? '')
+  const [impact, setImpact] = useState(bulletin?.impact ?? '')
+  const [action, setAction] = useState(bulletin?.action ?? '')
+  const [eventStartAt, setEventStartAt] = useState(toDateTimeLocalValue(bulletin?.eventStartAt))
+  const [eventEndAt, setEventEndAt] = useState(toDateTimeLocalValue(bulletin?.eventEndAt))
+  const [expiresAt, setExpiresAt] = useState(toDateInputValue(bulletin?.expiresAt))
+  const [ctaLabel, setCtaLabel] = useState(bulletin?.ctaLabel ?? '')
+  const [ctaUrl, setCtaUrl] = useState(bulletin?.ctaUrl ?? '')
   const [isPublished, setIsPublished] = useState(bulletin?.isPublished ?? false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(bulletin?.imageUrl ?? null)
@@ -77,6 +106,10 @@ function BulletinForm({
       setError('Social Platform and Social URL must be provided together')
       return
     }
+    if ((ctaLabel.trim() === '') !== (ctaUrl.trim() === '')) {
+      setError('CTA Label and CTA URL must be provided together')
+      return
+    }
 
     setError(null)
     setIsSubmitting(true)
@@ -87,9 +120,20 @@ function BulletinForm({
     formData.set('body', body.trim())
     formData.set('category', category)
     formData.set('isPublished', String(isPublished))
+    formData.set('priority', priority)
     if (socialPlatform) {
       formData.set('socialPlatform', socialPlatform)
       formData.set('socialUrl', socialUrl.trim())
+    }
+    if (affectedFacility.trim()) formData.set('affectedFacility', affectedFacility.trim())
+    if (impact.trim()) formData.set('impact', impact.trim())
+    if (action.trim()) formData.set('action', action.trim())
+    if (eventStartAt) formData.set('eventStartAt', eventStartAt)
+    if (eventEndAt) formData.set('eventEndAt', eventEndAt)
+    if (expiresAt) formData.set('expiresAt', expiresAt)
+    if (ctaLabel.trim()) {
+      formData.set('ctaLabel', ctaLabel.trim())
+      formData.set('ctaUrl', ctaUrl.trim())
     }
     if (imageFile) {
       formData.set('image', imageFile)
@@ -140,7 +184,7 @@ function BulletinForm({
       </label>
 
       <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Body
+        Description
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -160,11 +204,87 @@ function BulletinForm({
             Select a category
           </option>
           {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
+            <option key={c.value} value={c.value}>
+              {c.label}
             </option>
           ))}
         </select>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm text-gray-900">
+        Priority
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+        >
+          {PRIORITIES.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm text-gray-900">
+        Affected Facility
+        <input
+          type="text"
+          value={affectedFacility}
+          onChange={(e) => setAffectedFacility(e.target.value)}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm text-gray-900">
+        Impact
+        <textarea
+          value={impact}
+          onChange={(e) => setImpact(e.target.value)}
+          rows={2}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm text-gray-900">
+        Action
+        <textarea
+          value={action}
+          onChange={(e) => setAction(e.target.value)}
+          rows={2}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+        />
+      </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Event Start
+          <input
+            type="datetime-local"
+            value={eventStartAt}
+            onChange={(e) => setEventStartAt(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Event End
+          <input
+            type="datetime-local"
+            value={eventEndAt}
+            onChange={(e) => setEventEndAt(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          />
+        </label>
+      </div>
+
+      <label className="flex flex-col gap-1 text-sm text-gray-900">
+        Expiration
+        <input
+          type="date"
+          value={expiresAt}
+          onChange={(e) => setExpiresAt(e.target.value)}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+        />
       </label>
 
       <label className="flex flex-col gap-1 text-sm text-gray-900">
@@ -204,6 +324,28 @@ function BulletinForm({
             type="text"
             value={socialUrl}
             onChange={(e) => setSocialUrl(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          />
+        </label>
+      )}
+
+      <label className="flex flex-col gap-1 text-sm text-gray-900">
+        CTA Label
+        <input
+          type="text"
+          value={ctaLabel}
+          onChange={(e) => setCtaLabel(e.target.value)}
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+        />
+      </label>
+
+      {ctaLabel && (
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          CTA URL
+          <input
+            type="text"
+            value={ctaUrl}
+            onChange={(e) => setCtaUrl(e.target.value)}
             className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
           />
         </label>

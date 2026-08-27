@@ -1,7 +1,13 @@
 import Reveal from '@/components/ui/Reveal'
 import NewsCard from './NewsCard'
 
-export type NewsCategory = 'Renovation' | 'Closure' | 'Tournament' | 'Community'
+export type NewsCategory =
+  | 'Renovation'
+  | 'Closure'
+  | 'Tournament'
+  | 'Community'
+  | 'General'
+  | 'FacilityMaintenance'
 
 export interface NewsItem {
   id: string

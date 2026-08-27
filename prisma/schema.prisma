@@ -76,6 +76,13 @@ enum BulletinCategory {
   Closure
   Tournament
   Community
+  General
+  FacilityMaintenance
+}
+
+enum BulletinPriority {
+  Normal
+  High
 }
 
 // ── Resource model (Decision: Resource model) ─────────
@@ -381,6 +388,15 @@ model Bulletin {
   imageUrl    String           @map("image_url")
   socialPlatform String?       @map("social_platform")
   socialUrl      String?       @map("social_url")
+  priority        BulletinPriority @default(Normal)
+  affectedFacility String?         @map("affected_facility")
+  impact           String?
+  action           String?
+  eventStartAt     DateTime?       @map("event_start_at")
+  eventEndAt       DateTime?       @map("event_end_at")
+  expiresAt        DateTime?       @map("expires_at")
+  ctaLabel         String?         @map("cta_label")
+  ctaUrl           String?         @map("cta_url")
   isPublished Boolean   @default(false) @map("is_published")
   publishedAt DateTime? @map("published_at")
   createdAt DateTime @default(now()) @map("created_at")
