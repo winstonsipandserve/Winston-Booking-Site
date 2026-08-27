@@ -40,3 +40,32 @@ export async function PATCH(
 
   return Response.json(addOnPricingRule, { status: 200 })
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await auth()
+  if (!session?.user?.id || session.user.role !== 'admin') {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { id } = await params
+
+  const existing = await prisma.addOnPricingRule.findUnique({ where: { id } })
+  if (!existing) {
+    return Response.json({ error: 'Add-on pricing rule not found' }, { status: 404 })
+  }
+
+  const usageCount = await prisma.bookingAddOn.count({ where: { addOnPricingRuleId: id } })
+  if (usageCount > 0) {
+    return Response.json(
+      { error: 'This pricing rule has been used in past bookings and cannot be deleted' },
+      { status: 409 },
+    )
+  }
+
+  await prisma.addOnPricingRule.delete({ where: { id } })
+
+  return Response.json({ success: true }, { status: 200 })
+}

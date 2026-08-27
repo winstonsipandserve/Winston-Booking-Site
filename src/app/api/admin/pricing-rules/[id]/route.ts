@@ -40,3 +40,24 @@ export async function PATCH(
 
   return Response.json(pricingRule, { status: 200 })
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const session = await auth()
+  if (!session?.user?.id || session.user.role !== 'admin') {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { id } = await params
+
+  const existing = await prisma.pricingRule.findUnique({ where: { id } })
+  if (!existing) {
+    return Response.json({ error: 'Pricing rule not found' }, { status: 404 })
+  }
+
+  await prisma.pricingRule.delete({ where: { id } })
+
+  return Response.json({ success: true }, { status: 200 })
+}

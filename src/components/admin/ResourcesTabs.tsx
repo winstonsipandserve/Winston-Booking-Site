@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatCentavos } from '@/lib/format'
 import DisableResourceModal from '@/components/admin/DisableResourceModal'
-import PriceEditModal, { type PriceEditField } from '@/components/admin/PriceEditModal'
-import type { Prisma, GuestFeeRule, ResourceCategory, RateTier } from '@prisma/client'
+import PriceEditModal, { type PriceEditField, type PriceCreateField } from '@/components/admin/PriceEditModal'
+import type { Prisma, GuestFeeRule, ResourceCategory, RateTier, AddOnService } from '@prisma/client'
 
 type ResourceTypeWithRelations = Prisma.ResourceTypeGetPayload<{
   include: {
@@ -49,16 +49,17 @@ function ChevronIcon({ className = '' }: { className?: string }) {
   )
 }
 
-function EditIconButton({ label }: { label: string }) {
+function TrashIcon({ className = '' }: { className?: string }) {
   return (
-    <button
-      type="button"
-      disabled
-      aria-label={label}
-      className="text-gray-400 hover:text-gray-700 disabled:cursor-not-allowed"
-    >
-      <PencilIcon className="h-4 w-4" />
-    </button>
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-.7 12.1a2 2 0 0 1-2 1.9H8.7a2 2 0 0 1-2-1.9L6 7h12Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 
@@ -70,28 +71,136 @@ function ActionIconButton({ label, onClick }: { label: string; onClick: () => vo
   )
 }
 
-function PriceCell({ price, addLabel }: { price: number | undefined; addLabel: string }) {
+function PriceCell({
+  price,
+  addLabel,
+  onAdd,
+  deleteLabel,
+  onDelete,
+  errorMessage,
+}: {
+  price: number | undefined
+  addLabel: string
+  onAdd: () => void
+  deleteLabel: string
+  onDelete: () => void
+  errorMessage?: string
+}) {
   if (price === undefined) {
     return (
       <button
         type="button"
-        disabled
+        onClick={onAdd}
         aria-label={addLabel}
-        className="rounded border border-dashed border-gray-200 px-2 py-0.5 text-xs text-gray-400 disabled:cursor-not-allowed"
+        className="rounded border border-dashed border-gray-300 px-2 py-0.5 text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-700"
       >
         + Add
       </button>
     )
   }
-  return <>{formatCentavos(price)}</>
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <span>{formatCentavos(price)}</span>
+        <button type="button" onClick={onDelete} aria-label={deleteLabel} className="text-gray-300 hover:text-red-600">
+          <TrashIcon className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {errorMessage && <p className="text-xs text-red-600">{errorMessage}</p>}
+    </div>
+  )
 }
 
-function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
+function tierLabel(tier: RateTier): string {
+  return tier === 'member' ? 'Member' : 'Non-Member'
+}
+
+function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations; addOnServices: AddOnService[] }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [disablingResource, setDisablingResource] = useState<ResourceRow | null>(null)
   const [editingRow, setEditingRow] = useState<{ title: string; fields: PriceEditField[] } | null>(null)
+  const [creatingCell, setCreatingCell] = useState<{ title: string; createField: PriceCreateField } | null>(null)
+  const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({})
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
+
+  function clearDeleteError(cellKey: string) {
+    setDeleteErrors((prev) => {
+      if (!(cellKey in prev)) return prev
+      const next = { ...prev }
+      delete next[cellKey]
+      return next
+    })
+  }
+
+  async function handleDeletePricingRule(ruleId: string, cellKey: string, label: string) {
+    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return
+    clearDeleteError(cellKey)
+    try {
+      const res = await fetch(`/api/admin/pricing-rules/${ruleId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const json = await res.json().catch(() => null)
+        setDeleteErrors((prev) => ({ ...prev, [cellKey]: json?.error ?? 'Something went wrong. Please try again.' }))
+        return
+      }
+      router.refresh()
+    } catch {
+      setDeleteErrors((prev) => ({ ...prev, [cellKey]: 'Something went wrong. Please try again.' }))
+    }
+  }
+
+  async function handleDeleteAddOnPricingRule(ruleId: string, cellKey: string, label: string) {
+    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return
+    clearDeleteError(cellKey)
+    try {
+      const res = await fetch(`/api/admin/add-on-pricing-rules/${ruleId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const json = await res.json().catch(() => null)
+        setDeleteErrors((prev) => ({ ...prev, [cellKey]: json?.error ?? 'Something went wrong. Please try again.' }))
+        return
+      }
+      router.refresh()
+    } catch {
+      setDeleteErrors((prev) => ({ ...prev, [cellKey]: 'Something went wrong. Please try again.' }))
+    }
+  }
+
+  function openCreateRate(tier: RateTier, durationMinutes: number, rowLabel: string) {
+    setCreatingCell({
+      title: `Add ${rowLabel} ${tierLabel(tier)} rate`,
+      createField: {
+        label: `${tierLabel(tier)} rate`,
+        endpoint: '/api/admin/pricing-rules',
+        body: { resourceTypeId: rt.id, rateTier: tier, durationMinutes },
+      },
+    })
+  }
+
+  function openCreateCoaching(tier: RateTier, paxCount: number | null, rowLabel: string) {
+    const coachingService = addOnServices.find((s) => s.slug === 'coaching_fee')
+    if (!coachingService) return
+    setCreatingCell({
+      title: `Add ${rowLabel} ${tierLabel(tier)} rate`,
+      createField: {
+        label: `${tierLabel(tier)} rate`,
+        endpoint: '/api/admin/add-on-pricing-rules',
+        body: { addOnServiceId: coachingService.id, resourceTypeId: rt.id, rateTier: tier, paxCount },
+      },
+    })
+  }
+
+  function openCreateBallBoy(tier: RateTier) {
+    const ballBoyService = addOnServices.find((s) => s.slug === 'ball_boy')
+    if (!ballBoyService) return
+    setCreatingCell({
+      title: `Add Ball Boy ${tierLabel(tier)} rate`,
+      createField: {
+        label: `${tierLabel(tier)} rate`,
+        endpoint: '/api/admin/add-on-pricing-rules',
+        body: { addOnServiceId: ballBoyService.id, resourceTypeId: rt.id, rateTier: tier, paxCount: null },
+      },
+    })
+  }
 
   async function handleEnable(resource: ResourceRow) {
     if (!window.confirm(`Enable ${resource.label}? This will clear its disabled reason.`)) {
@@ -298,19 +407,37 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
               <tbody>
                 {durations.map((duration) => {
                   const rowLabel = isCourt ? 'Hourly rate' : durationLabel(duration)
+                  const memberRule = findRateRule('member', duration)
+                  const nonMemberRule = findRateRule('non_member', duration)
+                  const memberCellKey = `rate-member-${duration}`
+                  const nonMemberCellKey = `rate-nonMember-${duration}`
                   return (
                     <tr key={duration} className="border-b border-gray-100 last:border-b-0">
                       <td className="px-3 py-2 text-gray-900">{rowLabel}</td>
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
-                          price={findRate('member', duration)}
+                          price={memberRule?.priceCentavos}
                           addLabel={`Add ${rowLabel} member rate`}
+                          onAdd={() => openCreateRate('member', duration, rowLabel)}
+                          deleteLabel={`Delete ${rowLabel} member rate`}
+                          onDelete={() =>
+                            memberRule &&
+                            handleDeletePricingRule(memberRule.id, memberCellKey, `${rowLabel} member rate`)
+                          }
+                          errorMessage={deleteErrors[memberCellKey]}
                         />
                       </td>
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
-                          price={findRate('non_member', duration)}
+                          price={nonMemberRule?.priceCentavos}
                           addLabel={`Add ${rowLabel} non-member rate`}
+                          onAdd={() => openCreateRate('non_member', duration, rowLabel)}
+                          deleteLabel={`Delete ${rowLabel} non-member rate`}
+                          onDelete={() =>
+                            nonMemberRule &&
+                            handleDeletePricingRule(nonMemberRule.id, nonMemberCellKey, `${rowLabel} non-member rate`)
+                          }
+                          errorMessage={deleteErrors[nonMemberCellKey]}
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -321,9 +448,7 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                               label={`Edit ${rowLabel}`}
                               onClick={() => setEditingRow({ title: `Edit ${rowLabel}`, fields })}
                             />
-                          ) : (
-                            <EditIconButton label={`Edit ${rowLabel}`} />
-                          )
+                          ) : null
                         })()}
                       </td>
                     </tr>
@@ -360,12 +485,26 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                         <PriceCell
                           price={findCoaching('member', 1)}
                           addLabel="Add Coaching (1 pax) member rate"
+                          onAdd={() => openCreateCoaching('member', 1, 'Coaching (1 pax)')}
+                          deleteLabel="Delete Coaching (1 pax) member rate"
+                          onDelete={() => {
+                            const rule = findCoachingRule('member', 1)
+                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-member-1', 'Coaching (1 pax) member rate')
+                          }}
+                          errorMessage={deleteErrors['coaching-member-1']}
                         />
                       </td>
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={findCoaching('non_member', 1)}
                           addLabel="Add Coaching (1 pax) non-member rate"
+                          onAdd={() => openCreateCoaching('non_member', 1, 'Coaching (1 pax)')}
+                          deleteLabel="Delete Coaching (1 pax) non-member rate"
+                          onDelete={() => {
+                            const rule = findCoachingRule('non_member', 1)
+                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-nonMember-1', 'Coaching (1 pax) non-member rate')
+                          }}
+                          errorMessage={deleteErrors['coaching-nonMember-1']}
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -376,9 +515,7 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                               label="Edit Coaching (1 pax)"
                               onClick={() => setEditingRow({ title: 'Edit Coaching (1 pax)', fields })}
                             />
-                          ) : (
-                            <EditIconButton label="Edit Coaching (1 pax)" />
-                          )
+                          ) : null
                         })()}
                       </td>
                     </tr>
@@ -388,12 +525,26 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                         <PriceCell
                           price={findCoaching('member', 2)}
                           addLabel="Add Coaching (2 pax) member rate"
+                          onAdd={() => openCreateCoaching('member', 2, 'Coaching (2 pax)')}
+                          deleteLabel="Delete Coaching (2 pax) member rate"
+                          onDelete={() => {
+                            const rule = findCoachingRule('member', 2)
+                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-member-2', 'Coaching (2 pax) member rate')
+                          }}
+                          errorMessage={deleteErrors['coaching-member-2']}
                         />
                       </td>
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={findCoaching('non_member', 2)}
                           addLabel="Add Coaching (2 pax) non-member rate"
+                          onAdd={() => openCreateCoaching('non_member', 2, 'Coaching (2 pax)')}
+                          deleteLabel="Delete Coaching (2 pax) non-member rate"
+                          onDelete={() => {
+                            const rule = findCoachingRule('non_member', 2)
+                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-nonMember-2', 'Coaching (2 pax) non-member rate')
+                          }}
+                          errorMessage={deleteErrors['coaching-nonMember-2']}
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -404,19 +555,37 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                               label="Edit Coaching (2 pax)"
                               onClick={() => setEditingRow({ title: 'Edit Coaching (2 pax)', fields })}
                             />
-                          ) : (
-                            <EditIconButton label="Edit Coaching (2 pax)" />
-                          )
+                          ) : null
                         })()}
                       </td>
                     </tr>
                     <tr className="last:border-b-0">
                       <td className="px-3 py-2 text-gray-900">Ball Boy</td>
                       <td className="px-3 py-2 text-gray-900">
-                        <PriceCell price={findBallBoy('member')} addLabel="Add Ball Boy member rate" />
+                        <PriceCell
+                          price={findBallBoy('member')}
+                          addLabel="Add Ball Boy member rate"
+                          onAdd={() => openCreateBallBoy('member')}
+                          deleteLabel="Delete Ball Boy member rate"
+                          onDelete={() => {
+                            const rule = findBallBoyRule('member')
+                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'ballBoy-member', 'Ball Boy member rate')
+                          }}
+                          errorMessage={deleteErrors['ballBoy-member']}
+                        />
                       </td>
                       <td className="px-3 py-2 text-gray-900">
-                        <PriceCell price={findBallBoy('non_member')} addLabel="Add Ball Boy non-member rate" />
+                        <PriceCell
+                          price={findBallBoy('non_member')}
+                          addLabel="Add Ball Boy non-member rate"
+                          onAdd={() => openCreateBallBoy('non_member')}
+                          deleteLabel="Delete Ball Boy non-member rate"
+                          onDelete={() => {
+                            const rule = findBallBoyRule('non_member')
+                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'ballBoy-nonMember', 'Ball Boy non-member rate')
+                          }}
+                          errorMessage={deleteErrors['ballBoy-nonMember']}
+                        />
                       </td>
                       <td className="px-3 py-2">
                         {(() => {
@@ -426,9 +595,7 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                               label="Edit Ball Boy"
                               onClick={() => setEditingRow({ title: 'Edit Ball Boy', fields })}
                             />
-                          ) : (
-                            <EditIconButton label="Edit Ball Boy" />
-                          )
+                          ) : null
                         })()}
                       </td>
                     </tr>
@@ -437,12 +604,29 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                   <tr className="last:border-b-0">
                     <td className="px-3 py-2 text-gray-900">Coaching</td>
                     <td className="px-3 py-2 text-gray-900">
-                      <PriceCell price={findCoaching('member', null)} addLabel="Add Coaching member rate" />
+                      <PriceCell
+                        price={findCoaching('member', null)}
+                        addLabel="Add Coaching member rate"
+                        onAdd={() => openCreateCoaching('member', null, 'Coaching')}
+                        deleteLabel="Delete Coaching member rate"
+                        onDelete={() => {
+                          const rule = findCoachingRule('member', null)
+                          if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-member-null', 'Coaching member rate')
+                        }}
+                        errorMessage={deleteErrors['coaching-member-null']}
+                      />
                     </td>
                     <td className="px-3 py-2 text-gray-900">
                       <PriceCell
                         price={findCoaching('non_member', null)}
                         addLabel="Add Coaching non-member rate"
+                        onAdd={() => openCreateCoaching('non_member', null, 'Coaching')}
+                        deleteLabel="Delete Coaching non-member rate"
+                        onDelete={() => {
+                          const rule = findCoachingRule('non_member', null)
+                          if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-nonMember-null', 'Coaching non-member rate')
+                        }}
+                        errorMessage={deleteErrors['coaching-nonMember-null']}
                       />
                     </td>
                     <td className="px-3 py-2">
@@ -453,9 +637,7 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                             label="Edit Coaching"
                             onClick={() => setEditingRow({ title: 'Edit Coaching', fields })}
                           />
-                        ) : (
-                          <EditIconButton label="Edit Coaching" />
-                        )
+                        ) : null
                       })()}
                     </td>
                   </tr>
@@ -477,6 +659,12 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
         title={editingRow?.title ?? ''}
         fields={editingRow?.fields ?? []}
       />
+      <PriceEditModal
+        isOpen={creatingCell !== null}
+        onClose={() => setCreatingCell(null)}
+        title={creatingCell?.title ?? ''}
+        createField={creatingCell?.createField}
+      />
     </div>
   )
 }
@@ -485,9 +673,10 @@ interface ResourcesTabsProps {
   courts: ResourceTypeWithRelations[]
   simulators: ResourceTypeWithRelations[]
   guestFeeRule: GuestFeeRule | null
+  addOnServices: AddOnService[]
 }
 
-export default function ResourcesTabs({ courts, simulators, guestFeeRule }: ResourcesTabsProps) {
+export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnServices }: ResourcesTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('courts')
   const [editingGuestFee, setEditingGuestFee] = useState(false)
 
@@ -519,7 +708,7 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule }: Reso
       {activeTab === 'courts' && (
         <div className="space-y-6">
           {courts.map((rt) => (
-            <ResourceTypeCard key={rt.id} rt={rt} />
+            <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} />
           ))}
         </div>
       )}
@@ -527,7 +716,7 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule }: Reso
       {activeTab === 'simulators' && (
         <div className="space-y-6">
           {simulators.map((rt) => (
-            <ResourceTypeCard key={rt.id} rt={rt} />
+            <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} />
           ))}
         </div>
       )}

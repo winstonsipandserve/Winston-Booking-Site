@@ -11,7 +11,7 @@ const RESOURCE_TYPE_ORDER: ResourceTypeSlug[] = [
 ]
 
 export default async function AdminResourcesPage() {
-  const [resourceTypes, guestFeeRule] = await Promise.all([
+  const [resourceTypes, guestFeeRule, addOnServices] = await Promise.all([
     prisma.resourceType.findMany({
       include: {
         resources: { orderBy: { label: 'asc' } },
@@ -21,6 +21,7 @@ export default async function AdminResourcesPage() {
       relationLoadStrategy: 'join',
     }),
     prisma.guestFeeRule.findFirst(),
+    prisma.addOnService.findMany(),
   ])
 
   const orderedResourceTypes = RESOURCE_TYPE_ORDER.map((slug) =>
@@ -35,12 +36,17 @@ export default async function AdminResourcesPage() {
       <h1 className="mb-2 text-xl font-semibold text-gray-900">Resources & Pricing</h1>
       <p className="mb-6 text-sm italic text-gray-400">
         New courts and simulators are added directly in the database — existing ones can only be
-        edited (pricing) or disabled/enabled from this panel. Pricing, add-on, and guest fee editing
-        controls below are still previews only — changes there require a direct database update
-        until that mutation slice ships.
+        edited (pricing) or disabled/enabled from this panel. Pricing and add-on rows below support
+        full create/edit/delete. Guest Fee remains edit-only, permanently, by design — its shape has
+        nothing to key a second row on.
       </p>
 
-      <ResourcesTabs courts={courts} simulators={simulators} guestFeeRule={guestFeeRule} />
+      <ResourcesTabs
+        courts={courts}
+        simulators={simulators}
+        guestFeeRule={guestFeeRule}
+        addOnServices={addOnServices}
+      />
     </div>
   )
 }
