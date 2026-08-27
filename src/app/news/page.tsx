@@ -3,13 +3,14 @@ import Footer from '@/components/layout/Footer'
 import NewsHero from '@/components/news/NewsHero'
 import NewsGrid from '@/components/news/NewsGrid'
 import { prisma } from '@/lib/prisma'
-import { formatBulletinDate } from '@/lib/format'
+import { formatBulletinDate, formatBookingDateTime } from '@/lib/format'
+import { bulletinNotExpiredWhere, bulletinOrderBy } from '@/lib/bulletin'
 import type { NewsItem } from '@/components/news/NewsGrid'
 
 export default async function NewsPage() {
   const bulletins = await prisma.bulletin.findMany({
-    where: { isPublished: true },
-    orderBy: { publishedAt: 'desc' },
+    where: { isPublished: true, ...bulletinNotExpiredWhere() },
+    orderBy: bulletinOrderBy,
   })
 
   const items: NewsItem[] = bulletins.map((bulletin) => ({
@@ -17,10 +18,19 @@ export default async function NewsPage() {
     category: bulletin.category,
     title: bulletin.title,
     excerpt: bulletin.excerpt,
+    body: bulletin.body,
     date: formatBulletinDate(bulletin.publishedAt as Date),
     image: bulletin.imageUrl,
     socialPlatform: bulletin.socialPlatform as NewsItem['socialPlatform'],
     socialUrl: bulletin.socialUrl ?? undefined,
+    priority: bulletin.priority,
+    affectedFacility: bulletin.affectedFacility ?? undefined,
+    impact: bulletin.impact ?? undefined,
+    action: bulletin.action ?? undefined,
+    eventStartAt: bulletin.eventStartAt ? formatBookingDateTime(bulletin.eventStartAt) : undefined,
+    eventEndAt: bulletin.eventEndAt ? formatBookingDateTime(bulletin.eventEndAt) : undefined,
+    ctaLabel: bulletin.ctaLabel ?? undefined,
+    ctaUrl: bulletin.ctaUrl ?? undefined,
   }))
 
   return (

@@ -3,6 +3,9 @@ export type GateNotice = {
   title: string
   body: string
   publishedAt: string
+  priority: 'Normal' | 'High'
+  affectedFacility?: string
+  action?: string
 }
 
 interface AnnouncementGateProps {
@@ -38,8 +41,15 @@ export default function AnnouncementGate({ notices, onContinue }: AnnouncementGa
                 className={`flex flex-col gap-1 py-4 ${index === 0 ? '' : 'border-t border-brand-dark/10'}`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-medium uppercase tracking-wide text-accent-primary">
-                    {notice.category}
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs font-medium uppercase tracking-wide text-accent-primary">
+                      {notice.category}
+                    </span>
+                    {notice.priority === 'High' && (
+                      <span className="rounded-full bg-brand-dark px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-brand-light">
+                        High Priority
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs uppercase tracking-wide text-neutral-700/60">
                     {notice.publishedAt}
@@ -47,6 +57,13 @@ export default function AnnouncementGate({ notices, onContinue }: AnnouncementGa
                 </div>
                 <h3 className="font-serif text-lg text-brand-dark">{notice.title}</h3>
                 <p className="font-sans text-sm text-neutral-700">{notice.body}</p>
+                {(notice.affectedFacility || notice.action) && (
+                  <p className="mt-1 text-xs text-brand-dark/70">
+                    {notice.affectedFacility}
+                    {notice.affectedFacility && notice.action && ' — '}
+                    {notice.action}
+                  </p>
+                )}
               </div>
             ))}
           </div>

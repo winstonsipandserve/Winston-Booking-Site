@@ -38,16 +38,62 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
         <span className="absolute left-4 top-4 rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
           {item.category}
         </span>
+        {item.priority === 'High' && (
+          <span className="absolute right-4 top-4 rounded-full bg-brand-dark px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
+            High Priority
+          </span>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-6">
         <h3 className="font-serif text-lg text-brand-dark">{item.title}</h3>
-        <p className="mt-2 line-clamp-3 text-sm text-neutral-700">{item.excerpt}</p>
+
+        {item.affectedFacility && (
+          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-brand-dark/60">
+            Affects: {item.affectedFacility}
+          </p>
+        )}
+
+        <div className="mt-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-brand-dark/60">Description</p>
+          <p className="mt-1 text-sm text-neutral-700">{item.body}</p>
+        </div>
+
+        {item.impact && (
+          <div className="mt-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-brand-dark/60">Impact</p>
+            <p className="mt-1 text-sm text-neutral-700">{item.impact}</p>
+          </div>
+        )}
+
+        {item.action && (
+          <div className="mt-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-brand-dark/60">Action</p>
+            <p className="mt-1 text-sm text-neutral-700">{item.action}</p>
+          </div>
+        )}
+
+        {(item.eventStartAt || item.eventEndAt) && (
+          <p className="mt-3 text-sm text-neutral-700">
+            {item.eventStartAt}
+            {item.eventStartAt && item.eventEndAt && ' – '}
+            {item.eventEndAt}
+          </p>
+        )}
 
         <div className="mt-4 flex items-center gap-1.5 text-xs uppercase tracking-wide text-brand-dark/60">
           <CalendarIcon className="h-3.5 w-3.5" />
           <span>{item.date}</span>
         </div>
+
+        {item.ctaLabel && item.ctaUrl && (
+          <a
+            href={item.ctaUrl}
+            className="mt-4 inline-flex items-center justify-center gap-2 self-start rounded-lg bg-accent-primary px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+          >
+            {item.ctaLabel}
+          </a>
+        )}
 
         {item.socialUrl && item.socialPlatform && (
           <a

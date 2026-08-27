@@ -14,10 +14,19 @@ export interface NewsItem {
   category: NewsCategory
   title: string
   excerpt: string
+  body: string
   date: string // display string, e.g. "August 2026" — not a real ISO timestamp requirement yet
   image: string // '/images/placeholder.jpg', varied objectPosition per item
   socialPlatform?: 'instagram' | 'facebook'
   socialUrl?: string // always '#' in this pass — real post URLs not yet available
+  priority: 'Normal' | 'High'
+  affectedFacility?: string
+  impact?: string
+  action?: string
+  eventStartAt?: string // pre-formatted display string
+  eventEndAt?: string // pre-formatted display string
+  ctaLabel?: string
+  ctaUrl?: string
 }
 
 const OBJECT_POSITIONS = ['center', 'top', '20% 70%', 'right']
