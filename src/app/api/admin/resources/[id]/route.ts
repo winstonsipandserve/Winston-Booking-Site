@@ -8,6 +8,7 @@ function isNonEmptyString(value: unknown): value is string {
 interface UpdateResourceBody {
   label?: unknown
   isActive?: unknown
+  disabledReason?: unknown
 }
 
 export async function PATCH(
@@ -33,15 +34,26 @@ export async function PATCH(
     return Response.json({ error: 'Malformed JSON body' }, { status: 400 })
   }
 
-  const { label, isActive } = body
+  const { label, isActive, disabledReason } = body
   if (label !== undefined && !isNonEmptyString(label)) {
     return Response.json({ error: 'label must be a non-empty string' }, { status: 400 })
   }
   if (isActive !== undefined && typeof isActive !== 'boolean') {
     return Response.json({ error: 'isActive must be a boolean' }, { status: 400 })
   }
-  if (label === undefined && isActive === undefined) {
+  if (disabledReason !== undefined && disabledReason !== null && typeof disabledReason !== 'string') {
+    return Response.json({ error: 'disabledReason must be a string or null' }, { status: 400 })
+  }
+  if (label === undefined && isActive === undefined && disabledReason === undefined) {
     return Response.json({ error: 'No fields to update' }, { status: 400 })
+  }
+
+  // Re-enabling always clears any prior disabled reason, regardless of what's in the body.
+  let disabledReasonToSet: string | null | undefined
+  if (isActive === true) {
+    disabledReasonToSet = null
+  } else if (disabledReason !== undefined) {
+    disabledReasonToSet = disabledReason === null ? null : (disabledReason as string).trim() || null
   }
 
   const resource = await prisma.resource.update({
@@ -49,43 +61,9 @@ export async function PATCH(
     data: {
       ...(label !== undefined ? { label: (label as string).trim() } : {}),
       ...(isActive !== undefined ? { isActive: isActive as boolean } : {}),
+      ...(disabledReasonToSet !== undefined ? { disabledReason: disabledReasonToSet } : {}),
     },
   })
 
   return Response.json(resource, { status: 200 })
-}
-
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'admin') {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const { id } = await params
-
-  const existing = await prisma.resource.findUnique({ where: { id } })
-  if (!existing) {
-    return Response.json({ error: 'Resource not found' }, { status: 404 })
-  }
-
-  const deletedBookings = await prisma.$transaction(async (tx) => {
-    const bookings = await tx.booking.findMany({ where: { resourceId: id }, select: { id: true } })
-    const bookingIds = bookings.map((b) => b.id)
-
-    if (bookingIds.length > 0) {
-      await tx.payment.deleteMany({ where: { bookingId: { in: bookingIds } } })
-      await tx.bookingReschedule.deleteMany({ where: { bookingId: { in: bookingIds } } })
-      await tx.bookingAddOn.deleteMany({ where: { bookingId: { in: bookingIds } } })
-      await tx.booking.deleteMany({ where: { id: { in: bookingIds } } })
-    }
-
-    await tx.resource.delete({ where: { id } })
-
-    return bookingIds.length
-  })
-
-  return Response.json({ deletedBookings }, { status: 200 })
 }

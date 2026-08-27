@@ -34,7 +34,8 @@ export default async function AdminResourcesPage() {
     <div>
       <h1 className="mb-2 text-xl font-semibold text-gray-900">Resources & Pricing</h1>
       <p className="mb-6 text-sm italic text-gray-400">
-        Add/Edit/Delete on resources (courts, bays) are live. Pricing, add-on, and guest fee editing
+        New courts and simulators are added directly in the database — existing ones can only be
+        edited (pricing) or disabled/enabled from this panel. Pricing, add-on, and guest fee editing
         controls below are still previews only — changes there require a direct database update
         until that mutation slice ships.
       </p>

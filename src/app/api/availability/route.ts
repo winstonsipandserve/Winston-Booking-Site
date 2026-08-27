@@ -16,6 +16,11 @@ export async function GET(request: Request) {
     return Response.json({ error: 'date must be in YYYY-MM-DD format' }, { status: 400 })
   }
 
+  const resource = await prisma.resource.findUnique({ where: { id: resourceId } })
+  if (!resource || !resource.isActive) {
+    return Response.json({ error: 'Resource not found' }, { status: 400 })
+  }
+
   const { start: windowStart, end: windowEnd } = phDateToUtcWindow(date)
 
   const bookings = await prisma.booking.findMany({

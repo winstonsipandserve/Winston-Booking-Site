@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatCentavos } from '@/lib/format'
-import ResourceFormModal from '@/components/admin/ResourceFormModal'
+import DisableResourceModal from '@/components/admin/DisableResourceModal'
 import PriceEditModal, { type PriceEditField } from '@/components/admin/PriceEditModal'
 import type { Prisma, GuestFeeRule, ResourceCategory, RateTier } from '@prisma/client'
 
@@ -41,21 +41,6 @@ function PencilIcon({ className = '' }: { className?: string }) {
   )
 }
 
-function TrashIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M5 7h14M9.5 7V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v2M6.5 7l.7 12a2 2 0 0 0 2 1.9h5.6a2 2 0 0 0 2-1.9l.7-12"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 function ChevronIcon({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
@@ -77,23 +62,10 @@ function EditIconButton({ label }: { label: string }) {
   )
 }
 
-function ActionIconButton({
-  label,
-  onClick,
-  variant,
-}: {
-  label: string
-  onClick: () => void
-  variant: 'edit' | 'delete'
-}) {
+function ActionIconButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className={variant === 'edit' ? 'text-gray-400 hover:text-gray-700' : 'text-gray-400 hover:text-red-600'}
-    >
-      {variant === 'edit' ? <PencilIcon className="h-4 w-4" /> : <TrashIcon className="h-4 w-4" />}
+    <button type="button" onClick={onClick} aria-label={label} className="text-gray-400 hover:text-gray-700">
+      <PencilIcon className="h-4 w-4" />
     </button>
   )
 }
@@ -117,25 +89,28 @@ function PriceCell({ price, addLabel }: { price: number | undefined; addLabel: s
 function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
-  const [addModalOpen, setAddModalOpen] = useState(false)
-  const [editingResource, setEditingResource] = useState<ResourceRow | null>(null)
+  const [disablingResource, setDisablingResource] = useState<ResourceRow | null>(null)
   const [editingRow, setEditingRow] = useState<{ title: string; fields: PriceEditField[] } | null>(null)
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
 
-  async function handleDelete(resource: ResourceRow) {
-    if (!window.confirm(`Delete ${resource.label}? This will also delete any bookings for this resource.`)) {
+  async function handleEnable(resource: ResourceRow) {
+    if (!window.confirm(`Enable ${resource.label}? This will clear its disabled reason.`)) {
       return
     }
     try {
-      const res = await fetch(`/api/admin/resources/${resource.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/resources/${resource.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: true }),
+      })
       if (!res.ok) {
         const json = await res.json().catch(() => null)
-        alert(json?.error ?? 'Failed to delete resource.')
+        alert(json?.error ?? 'Failed to enable resource.')
         return
       }
       router.refresh()
     } catch {
-      alert('Failed to delete resource.')
+      alert('Failed to enable resource.')
     }
   }
   const durations = isCourt
@@ -259,13 +234,6 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
           <h2 className="text-base font-semibold text-gray-900">{rt.name}</h2>
           <span className="text-xs text-gray-500">{pluralize(rt.resources.length, 'resource')}</span>
         </button>
-        <button
-          type="button"
-          onClick={() => setAddModalOpen(true)}
-          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-        >
-          + Add Resource
-        </button>
       </div>
 
       {isOpen && (
@@ -273,7 +241,12 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
           <div className="mb-5 divide-y divide-gray-100 rounded-lg border border-gray-200">
             {rt.resources.map((resource) => (
               <div key={resource.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-                <span className="text-gray-900">{resource.label}</span>
+                <div className="flex flex-col">
+                  <span className="text-gray-900">{resource.label}</span>
+                  {!resource.isActive && resource.disabledReason && (
+                    <span className="text-xs text-gray-400">{resource.disabledReason}</span>
+                  )}
+                </div>
                 <div className="flex items-center gap-3">
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -282,18 +255,23 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                   >
                     {resource.isActive ? 'Active' : 'Inactive'}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <ActionIconButton
-                      label={`Edit ${resource.label}`}
-                      variant="edit"
-                      onClick={() => setEditingResource(resource)}
-                    />
-                    <ActionIconButton
-                      label={`Delete ${resource.label}`}
-                      variant="delete"
-                      onClick={() => handleDelete(resource)}
-                    />
-                  </div>
+                  {resource.isActive ? (
+                    <button
+                      type="button"
+                      onClick={() => setDisablingResource(resource)}
+                      className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                    >
+                      Disable
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleEnable(resource)}
+                      className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                    >
+                      Enable
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -341,7 +319,6 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                           return fields.length > 0 ? (
                             <ActionIconButton
                               label={`Edit ${rowLabel}`}
-                              variant="edit"
                               onClick={() => setEditingRow({ title: `Edit ${rowLabel}`, fields })}
                             />
                           ) : (
@@ -397,7 +374,6 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                           return fields.length > 0 ? (
                             <ActionIconButton
                               label="Edit Coaching (1 pax)"
-                              variant="edit"
                               onClick={() => setEditingRow({ title: 'Edit Coaching (1 pax)', fields })}
                             />
                           ) : (
@@ -426,7 +402,6 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                           return fields.length > 0 ? (
                             <ActionIconButton
                               label="Edit Coaching (2 pax)"
-                              variant="edit"
                               onClick={() => setEditingRow({ title: 'Edit Coaching (2 pax)', fields })}
                             />
                           ) : (
@@ -449,7 +424,6 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                           return fields.length > 0 ? (
                             <ActionIconButton
                               label="Edit Ball Boy"
-                              variant="edit"
                               onClick={() => setEditingRow({ title: 'Edit Ball Boy', fields })}
                             />
                           ) : (
@@ -477,7 +451,6 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
                         return fields.length > 0 ? (
                           <ActionIconButton
                             label="Edit Coaching"
-                            variant="edit"
                             onClick={() => setEditingRow({ title: 'Edit Coaching', fields })}
                           />
                         ) : (
@@ -493,17 +466,10 @@ function ResourceTypeCard({ rt }: { rt: ResourceTypeWithRelations }) {
         </>
       )}
 
-      <ResourceFormModal
-        isOpen={addModalOpen}
-        onClose={() => setAddModalOpen(false)}
-        mode="add"
-        resourceTypeId={rt.id}
-      />
-      <ResourceFormModal
-        isOpen={editingResource !== null}
-        onClose={() => setEditingResource(null)}
-        mode="edit"
-        resource={editingResource ?? undefined}
+      <DisableResourceModal
+        isOpen={disablingResource !== null}
+        onClose={() => setDisablingResource(null)}
+        resource={disablingResource}
       />
       <PriceEditModal
         isOpen={editingRow !== null}
@@ -572,7 +538,6 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule }: Reso
             <h2 className="text-base font-semibold text-gray-900">Guest Fee</h2>
             <ActionIconButton
               label="Edit Guest Fee"
-              variant="edit"
               onClick={() => setEditingGuestFee(true)}
             />
           </div>

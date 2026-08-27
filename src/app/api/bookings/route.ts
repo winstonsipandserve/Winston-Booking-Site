@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     include: { resourceType: true },
     relationLoadStrategy: 'query',
   })
-  if (!resource) {
+  if (!resource || !resource.isActive) {
     return Response.json({ error: 'Resource not found' }, { status: 400 })
   }
   const { resourceType } = resource
