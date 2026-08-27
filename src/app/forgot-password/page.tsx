@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
         </div>
       </section>
 
-      <section className="bg-background py-16 md:py-20">
+      <section className="bg-brand-light py-16 md:py-20">
         <div className="mx-auto max-w-6xl px-6 md:px-10">
           <ForgotPasswordForm />
         </div>

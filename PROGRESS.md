@@ -159,12 +159,12 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-08-27 — Real membership data reset at Arjay's request, for a clean testing slate (Customer rows preserved, `passwordHash` reset to null) — gov-ID images from the deleted applications are now orphaned in Storage (flagged, not cleaned up)
 - 2026-08-27 — `/reset-password` invisible-Navbar bug fixed (missing `bg-brand-dark` hero band) — `/forgot-password` has an identical bug in its lower section, not yet fixed
 - 2026-08-27 — `PROGRESS.md` compressed (552KB → ~28KB): full pre-2026-08-28 history moved verbatim into new `PROGRESS_ARCHIVE.md`; this file rewritten to current-state Build Status + one-line Completed Log entries + a trimmed Next Up. `CLAUDE.md`/`PROJECT_CONTEXT.md` untouched. See the "Entry format" note at the top of this file for the convention new entries should follow going forward
+- 2026-08-27 — `/forgot-password/page.tsx`'s leftover `bg-background` legacy token fixed → `bg-brand-light`, matching `/reset-password`'s lower section. Closes out the last item from the 2026-08-27 forgot-password-flow build
 
 ---
 
 ## Next Up
 
-- `/forgot-password/page.tsx`'s lower section still has a leftover `bg-background` legacy token (quick one-line fix — `/reset-password`'s identical bug is already fixed).
 - Orphaned gov-ID images in the private `membership-applications` Storage bucket, left over from the 2026-08-27 membership-data reset — not cleaned up.
 - Membership tier-activation payment flow (real PayMongo charge for the ₱5,500/12,500/22,500 plans) — unbuilt. Blocks the two undesigned email cases (tier-activation confirmation, expiry/renewal reminder) and member pricing/duration/coaching-tier UI in the booking wizard.
 - Member-aware booking flow — `/book` only supports non-member pricing today; Navbar's Book a Court is hidden for logged-in members with a placeholder-only entry on `/account`.
