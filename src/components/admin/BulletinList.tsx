@@ -102,11 +102,15 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
               key={bulletin.id}
               className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-4"
             >
-              <img
-                src={bulletin.imageUrl}
-                alt=""
-                className="h-16 w-16 shrink-0 rounded-lg border border-gray-200 object-cover"
-              />
+              {bulletin.imageUrl ? (
+                <img
+                  src={bulletin.imageUrl}
+                  alt=""
+                  className="h-16 w-16 shrink-0 rounded-lg border border-gray-200 object-cover"
+                />
+              ) : (
+                <div className="h-16 w-16 shrink-0 rounded-lg border border-gray-200 bg-gray-100" />
+              )}
 
               <div className="min-w-0 flex-1">
                 <div className="mb-1.5 flex flex-wrap items-center gap-2">

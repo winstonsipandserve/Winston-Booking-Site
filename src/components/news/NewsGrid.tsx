@@ -16,7 +16,7 @@ export interface NewsItem {
   excerpt: string
   body: string
   date: string // display string, e.g. "August 2026" — not a real ISO timestamp requirement yet
-  image: string // '/images/placeholder.jpg', varied objectPosition per item
+  image: string | null // null when the bulletin's category doesn't require one
   socialPlatform?: 'instagram' | 'facebook'
   socialUrl?: string // always '#' in this pass — real post URLs not yet available
   priority: 'Normal' | 'High'

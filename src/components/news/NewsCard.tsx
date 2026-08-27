@@ -26,26 +26,40 @@ interface NewsCardProps {
 export default function NewsCard({ item, objectPosition = 'center' }: NewsCardProps) {
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-brand-dark/10 bg-brand-light shadow-card">
-      <div className="group relative aspect-[4/3] w-full overflow-hidden">
-        <Image
-          src={item.image}
-          alt={item.title}
-          fill
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-          style={{ objectPosition }}
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/60 via-brand-dark/5 to-transparent" />
-        <span className="absolute left-4 top-4 rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
-          {item.category}
-        </span>
-        {item.priority === 'High' && (
-          <span className="absolute right-4 top-4 rounded-full bg-brand-dark px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
-            High Priority
+      {item.image && (
+        <div className="group relative aspect-[4/3] w-full overflow-hidden">
+          <Image
+            src={item.image}
+            alt={item.title}
+            fill
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+            style={{ objectPosition }}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/60 via-brand-dark/5 to-transparent" />
+          <span className="absolute left-4 top-4 rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
+            {item.category}
           </span>
-        )}
-      </div>
+          {item.priority === 'High' && (
+            <span className="absolute right-4 top-4 rounded-full bg-brand-dark px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
+              High Priority
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-1 flex-col p-6">
+        {!item.image && (
+          <div className="mb-3 flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
+              {item.category}
+            </span>
+            {item.priority === 'High' && (
+              <span className="inline-flex items-center rounded-full bg-brand-dark px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
+                High Priority
+              </span>
+            )}
+          </div>
+        )}
         <h3 className="font-serif text-lg text-brand-dark">{item.title}</h3>
 
         {item.affectedFacility && (

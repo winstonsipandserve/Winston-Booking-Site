@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
 import type { Bulletin } from '@prisma/client'
+import { BULLETIN_CATEGORY_RULES, isValidCategory } from '@/lib/bulletin-validation'
 
 const CATEGORIES = [
   { value: 'Renovation', label: 'Renovation' },
@@ -78,6 +79,8 @@ function BulletinForm({
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const rules = category && isValidCategory(category) ? BULLETIN_CATEGORY_RULES[category] : null
+
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
     setImageFile(file)
@@ -103,9 +106,36 @@ function BulletinForm({
       setError('Category is required')
       return
     }
-    if (mode === 'add' && !imageFile) {
-      setError('Image is required')
+    if (!affectedFacility.trim()) {
+      setError('Affected Facility is required')
       return
+    }
+    if (!impact.trim()) {
+      setError('Impact is required')
+      return
+    }
+    if (!action.trim()) {
+      setError('Action is required')
+      return
+    }
+    if (!eventStartAt) {
+      setError('Event Start is required')
+      return
+    }
+    if (rules?.requireEventEndAt && !eventEndAt) {
+      setError('Event End is required for this category')
+      return
+    }
+    if (rules?.requireExpiresAt && !expiresAt) {
+      setError('Expiration is required for this category')
+      return
+    }
+    if (rules?.requireImage) {
+      const hasImage = mode === 'add' ? Boolean(imageFile) : Boolean(imageFile) || Boolean(bulletin?.imageUrl)
+      if (!hasImage) {
+        setError('Image is required for this category')
+        return
+      }
     }
     if ((socialPlatform === '') !== (socialUrl.trim() === '')) {
       setError('Social Platform and Social URL must be provided together')
@@ -113,6 +143,10 @@ function BulletinForm({
     }
     if ((ctaLabel.trim() === '') !== (ctaUrl.trim() === '')) {
       setError('CTA Label and CTA URL must be provided together')
+      return
+    }
+    if (rules?.requireCta && (!ctaLabel.trim() || !ctaUrl.trim())) {
+      setError('CTA Label and CTA URL are required for this category')
       return
     }
 
@@ -170,20 +204,40 @@ function BulletinForm({
       onSubmit={handleSubmit}
       className="scrollbar-thin flex max-h-[80vh] flex-col overflow-y-auto pr-1"
     >
-      <FormSection title="Content" first>
+      <FormSection title="Category" first>
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Title
+          Category *
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            autoFocus
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          >
+            <option value="" disabled>
+              Select a category
+            </option>
+            {CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </FormSection>
+
+      <FormSection title="Content">
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Title *
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            autoFocus
             className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
           />
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Excerpt
+          Excerpt *
           <textarea
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
@@ -193,7 +247,7 @@ function BulletinForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Description
+          Description *
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
@@ -203,46 +257,26 @@ function BulletinForm({
         </label>
       </FormSection>
 
-      <FormSection title="Classification">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
-            Category
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-            >
-              <option value="" disabled>
-                Select a category
+      <FormSection title="Priority">
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Priority
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          >
+            {PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {p}
               </option>
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
-            Priority
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-            >
-              {PRIORITIES.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+            ))}
+          </select>
+        </label>
       </FormSection>
 
       <FormSection title="Impact Details">
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Affected Facility
+          Affected Facility *
           <input
             type="text"
             value={affectedFacility}
@@ -252,7 +286,7 @@ function BulletinForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Impact
+          Impact *
           <textarea
             value={impact}
             onChange={(e) => setImpact(e.target.value)}
@@ -262,7 +296,7 @@ function BulletinForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Action
+          Action *
           <textarea
             value={action}
             onChange={(e) => setAction(e.target.value)}
@@ -275,7 +309,7 @@ function BulletinForm({
       <FormSection title="Scheduling">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm text-gray-900">
-            Event Start
+            Event Start *
             <input
               type="datetime-local"
               value={eventStartAt}
@@ -284,7 +318,7 @@ function BulletinForm({
             />
           </label>
           <label className="flex flex-col gap-1 text-sm text-gray-900">
-            Event End
+            Event End{rules?.requireEventEndAt ? ' *' : ''}
             <input
               type="datetime-local"
               value={eventEndAt}
@@ -295,7 +329,7 @@ function BulletinForm({
         </div>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Expiration
+          Expiration{rules?.requireExpiresAt ? ' *' : ''}
           <input
             type="date"
             value={expiresAt}
@@ -307,7 +341,7 @@ function BulletinForm({
 
       <FormSection title="Media & Links">
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Image{mode === 'edit' ? ' (optional — leave blank to keep current)' : ''}
+          Image{rules?.requireImage ? ' *' : ''}{mode === 'edit' ? ' (optional — leave blank to keep current)' : ''}
           <input
             type="file"
             accept="image/jpeg,image/png"
@@ -352,7 +386,7 @@ function BulletinForm({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <label className="flex flex-col gap-1 text-sm text-gray-900">
-            CTA Label
+            CTA Label{rules?.requireCta ? ' *' : ''}
             <input
               type="text"
               value={ctaLabel}
@@ -363,7 +397,7 @@ function BulletinForm({
 
           {ctaLabel && (
             <label className="flex flex-col gap-1 text-sm text-gray-900">
-              CTA URL
+              CTA URL{rules?.requireCta ? ' *' : ''}
               <input
                 type="text"
                 value={ctaUrl}

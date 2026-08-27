@@ -385,7 +385,7 @@ model Bulletin {
   excerpt     String
   body        String
   category    BulletinCategory
-  imageUrl    String           @map("image_url")
+  imageUrl    String?          @map("image_url")
   socialPlatform String?       @map("social_platform")
   socialUrl      String?       @map("social_url")
   priority        BulletinPriority @default(Normal)
