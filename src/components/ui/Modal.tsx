@@ -8,9 +8,16 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: React.ReactNode
+  maxWidthClassName?: string
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  maxWidthClassName = 'max-w-sm',
+}: ModalProps) {
   useEffect(() => {
     if (!isOpen) return
     const onKeyDown = (e: KeyboardEvent) => {
@@ -37,7 +44,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="relative my-auto w-full max-w-sm rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
+        className={`relative my-auto w-full ${maxWidthClassName} rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10`}
       >
         <button
           type="button"

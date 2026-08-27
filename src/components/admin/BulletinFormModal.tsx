@@ -36,7 +36,12 @@ interface BulletinFormModalProps {
 
 export default function BulletinFormModal({ isOpen, onClose, mode, bulletin }: BulletinFormModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={mode === 'add' ? 'Add Bulletin' : 'Edit Bulletin'}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={mode === 'add' ? 'Add Bulletin' : 'Edit Bulletin'}
+      maxWidthClassName="max-w-3xl"
+    >
       {isOpen && <BulletinForm mode={mode} bulletin={bulletin} onClose={onClose} />}
     </Modal>
   )
@@ -161,204 +166,225 @@ function BulletinForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Title
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          autoFocus
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Excerpt
-        <textarea
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
-          rows={2}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Description
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={5}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Category
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        >
-          <option value="" disabled>
-            Select a category
-          </option>
-          {CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Priority
-        <select
-          value={priority}
-          onChange={(e) => setPriority(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        >
-          {PRIORITIES.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Affected Facility
-        <input
-          type="text"
-          value={affectedFacility}
-          onChange={(e) => setAffectedFacility(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Impact
-        <textarea
-          value={impact}
-          onChange={(e) => setImpact(e.target.value)}
-          rows={2}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Action
-        <textarea
-          value={action}
-          onChange={(e) => setAction(e.target.value)}
-          rows={2}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        />
-      </label>
-
-      <div className="grid grid-cols-2 gap-3">
+    <form
+      onSubmit={handleSubmit}
+      className="scrollbar-thin flex max-h-[80vh] flex-col overflow-y-auto pr-1"
+    >
+      <FormSection title="Content" first>
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Event Start
-          <input
-            type="datetime-local"
-            value={eventStartAt}
-            onChange={(e) => setEventStartAt(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Event End
-          <input
-            type="datetime-local"
-            value={eventEndAt}
-            onChange={(e) => setEventEndAt(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-          />
-        </label>
-      </div>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Expiration
-        <input
-          type="date"
-          value={expiresAt}
-          onChange={(e) => setExpiresAt(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Image{mode === 'edit' ? ' (optional — leave blank to keep current)' : ''}
-        <input
-          type="file"
-          accept="image/jpeg,image/png"
-          onChange={handleImageChange}
-          className="text-sm text-gray-900"
-        />
-      </label>
-      {imagePreview && (
-        <img
-          src={imagePreview}
-          alt=""
-          className="h-24 w-24 rounded-lg border border-gray-200 object-cover"
-        />
-      )}
-
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        Social Platform
-        <select
-          value={socialPlatform}
-          onChange={(e) => setSocialPlatform(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        >
-          <option value="">None</option>
-          <option value="instagram">Instagram</option>
-          <option value="facebook">Facebook</option>
-        </select>
-      </label>
-
-      {socialPlatform && (
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Social URL
+          Title
           <input
             type="text"
-            value={socialUrl}
-            onChange={(e) => setSocialUrl(e.target.value)}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            autoFocus
             className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
           />
         </label>
-      )}
 
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
-        CTA Label
-        <input
-          type="text"
-          value={ctaLabel}
-          onChange={(e) => setCtaLabel(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-        />
-      </label>
-
-      {ctaLabel && (
         <label className="flex flex-col gap-1 text-sm text-gray-900">
-          CTA URL
+          Excerpt
+          <textarea
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            rows={2}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Description
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={5}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          />
+        </label>
+      </FormSection>
+
+      <FormSection title="Classification">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm text-gray-900">
+            Category
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="" disabled>
+                Select a category
+              </option>
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-gray-900">
+            Priority
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            >
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </FormSection>
+
+      <FormSection title="Impact Details">
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Affected Facility
           <input
             type="text"
-            value={ctaUrl}
-            onChange={(e) => setCtaUrl(e.target.value)}
+            value={affectedFacility}
+            onChange={(e) => setAffectedFacility(e.target.value)}
             className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
           />
         </label>
-      )}
 
-      <label className="flex items-center gap-2 text-sm text-gray-900">
-        <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
-        Published
-      </label>
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Impact
+          <textarea
+            value={impact}
+            onChange={(e) => setImpact(e.target.value)}
+            rows={2}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          />
+        </label>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Action
+          <textarea
+            value={action}
+            onChange={(e) => setAction(e.target.value)}
+            rows={2}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          />
+        </label>
+      </FormSection>
 
-      <div className="mt-2 flex items-center justify-end gap-3">
+      <FormSection title="Scheduling">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm text-gray-900">
+            Event Start
+            <input
+              type="datetime-local"
+              value={eventStartAt}
+              onChange={(e) => setEventStartAt(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-gray-900">
+            Event End
+            <input
+              type="datetime-local"
+              value={eventEndAt}
+              onChange={(e) => setEventEndAt(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            />
+          </label>
+        </div>
+
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Expiration
+          <input
+            type="date"
+            value={expiresAt}
+            onChange={(e) => setExpiresAt(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          />
+        </label>
+      </FormSection>
+
+      <FormSection title="Media & Links">
+        <label className="flex flex-col gap-1 text-sm text-gray-900">
+          Image{mode === 'edit' ? ' (optional — leave blank to keep current)' : ''}
+          <input
+            type="file"
+            accept="image/jpeg,image/png"
+            onChange={handleImageChange}
+            className="text-sm text-gray-900"
+          />
+        </label>
+        {imagePreview && (
+          <img
+            src={imagePreview}
+            alt=""
+            className="h-24 w-24 rounded-lg border border-gray-200 object-cover"
+          />
+        )}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm text-gray-900">
+            Social Platform
+            <select
+              value={socialPlatform}
+              onChange={(e) => setSocialPlatform(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="">None</option>
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+            </select>
+          </label>
+
+          {socialPlatform && (
+            <label className="flex flex-col gap-1 text-sm text-gray-900">
+              Social URL
+              <input
+                type="text"
+                value={socialUrl}
+                onChange={(e) => setSocialUrl(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              />
+            </label>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm text-gray-900">
+            CTA Label
+            <input
+              type="text"
+              value={ctaLabel}
+              onChange={(e) => setCtaLabel(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            />
+          </label>
+
+          {ctaLabel && (
+            <label className="flex flex-col gap-1 text-sm text-gray-900">
+              CTA URL
+              <input
+                type="text"
+                value={ctaUrl}
+                onChange={(e) => setCtaUrl(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              />
+            </label>
+          )}
+        </div>
+      </FormSection>
+
+      <FormSection title="Publish">
+        <label className="flex items-center gap-2 text-sm text-gray-900">
+          <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
+          Published
+        </label>
+      </FormSection>
+
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
+      <div className="mt-5 flex items-center justify-end gap-3 border-t border-gray-100 pt-5">
         <button
           type="button"
           onClick={onClose}
@@ -375,5 +401,22 @@ function BulletinForm({
         </button>
       </div>
     </form>
+  )
+}
+
+function FormSection({
+  title,
+  first,
+  children,
+}: {
+  title: string
+  first?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div className={first ? 'flex flex-col gap-4' : 'flex flex-col gap-4 border-t border-gray-100 pt-5'}>
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">{title}</h4>
+      {children}
+    </div>
   )
 }
