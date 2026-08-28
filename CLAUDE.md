@@ -193,6 +193,8 @@ Known issue: `middleware.ts` is effectively dead code locally right now — it d
 
 Known issue: `Navbar` is `fixed` and transparent (light-colored nav text) until scrolled, tuned for pages with a photo/dark hero directly underneath — on any page whose top section is plain light background instead, the unscrolled nav text becomes unreadable against it. The fix (first applied on `/reset-password`, reused on `/book/confirmation`) is to give the page its own `bg-brand-dark` band directly below `<Navbar />` (`pt-40 pb-20 md:pt-48 md:pb-28`, same shape as `/account`'s page header), not a lighter-padding-only patch. `/book` itself (the announcement gate + wizard) and `/forgot-password`'s lower section still have this bug and are not yet fixed — same root cause, apply the same pattern when addressed.
 
+Known issue (fixed 2026-08-29): Vercel's build was type-checking against a stale generated Prisma Client. Vercel's `node_modules` cache persists across deploys when the lockfile is unchanged, so `@prisma/client`'s postinstall-only generation was silently never re-running — every schema change since the very first deploy attempt was building against whatever client shape existed at that first install. Fixed by making `prisma generate` part of the `build` script itself (`"build": "prisma generate && next build"`), not install-time, so it's unskippable on every Vercel build regardless of cache state.
+
 ---
 
 ## Open / Not Yet Decided
