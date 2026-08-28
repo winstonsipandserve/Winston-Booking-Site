@@ -1,5 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { verifyPaymongoWebhookSignature } from '@/lib/paymongo'
+import { sendBookingConfirmationEmail } from '@/lib/resend'
+
+const ADD_ON_EMAIL_LABELS: Record<string, string> = {
+  ball_boy: 'Ball Boy',
+  coaching_fee: 'Coaching',
+}
 
 interface PaymongoWebhookEvent {
   data?: {
@@ -57,7 +63,12 @@ export async function POST(request: Request) {
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { payment: true },
+    include: {
+      payment: true,
+      customer: true,
+      resource: { include: { resourceType: true } },
+      addOns: { include: { addOnService: true, addOnPricingRule: true } },
+    },
     relationLoadStrategy: 'query',
   })
 
@@ -69,6 +80,8 @@ export async function POST(request: Request) {
   if (booking.payment?.status === 'paid') {
     return Response.json({ received: true }, { status: 200 })
   }
+
+  let bookingConfirmed = false
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -86,6 +99,7 @@ export async function POST(request: Request) {
           where: { id: booking.id },
           data: { status: 'confirmed' },
         })
+        bookingConfirmed = true
       } else {
         console.error(
           `PAYMENT COLLECTED FOR NON-PENDING BOOKING — manual review needed: bookingId=${booking.id} status=${booking.status}`,
@@ -95,6 +109,45 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('Failed to process PayMongo webhook', bookingId, err)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
+
+  if (bookingConfirmed) {
+    if (!booking.customer) {
+      console.error(`Booking confirmed but no customer attached — skipping confirmation email: bookingId=${booking.id}`)
+    } else {
+      const addOnsTotalCentavos = booking.addOns.reduce((sum, addOn) => sum + addOn.amountCentavos, 0)
+      const totalPaidCentavos = booking.totalAmountCentavos + addOnsTotalCentavos
+
+      let guestFeeCentavos = 0
+      if (booking.guestCount > 0) {
+        const guestFeeRule = await prisma.guestFeeRule.findFirst()
+        if (!guestFeeRule) {
+          console.error('GuestFeeRule table is empty — cannot compute guest fee for confirmation email', booking.id)
+        } else {
+          guestFeeCentavos = booking.guestCount * guestFeeRule.amountCentavos
+        }
+      }
+
+      const addOns = booking.addOns.map((addOn) => {
+        const label = ADD_ON_EMAIL_LABELS[addOn.addOnService.slug] ?? addOn.addOnService.slug
+        const paxSuffix = addOn.addOnPricingRule.paxCount !== null ? ` (${addOn.addOnPricingRule.paxCount} pax)` : ''
+        return { name: `${label}${paxSuffix}`, amountCentavos: addOn.amountCentavos }
+      })
+
+      await sendBookingConfirmationEmail({
+        to: booking.customer.email,
+        name: booking.customer.name,
+        bookingReference: booking.id,
+        resourceTypeName: booking.resource.resourceType.name,
+        resourceLabel: booking.resource.label,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        guestCount: booking.guestCount,
+        guestFeeCentavos,
+        addOns,
+        totalPaidCentavos,
+      })
+    }
   }
 
   return Response.json({ received: true }, { status: 200 })
