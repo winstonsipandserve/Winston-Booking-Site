@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getSignedUrl } from '@/lib/supabase-storage'
 import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
+import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
 import { formatMembershipTier } from '@/lib/format'
 import {
   getMembershipDisplayStatus,
@@ -177,6 +178,13 @@ export default async function AdminMembershipApplicationDetailPage({
         <section>
           <h2 className="mb-4 text-sm font-semibold text-gray-900">Review Actions</h2>
           <MembershipReviewActions applicationId={application.id} />
+        </section>
+      )}
+
+      {displayStatus === 'expired' && (
+        <section className="mt-6">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900">Renewal</h2>
+          <SendRenewalLinkButton applicationId={application.id} />
         </section>
       )}
     </div>

@@ -256,6 +256,66 @@ export async function sendMembershipPaymentEmail({
   }
 }
 
+interface SendRenewalPaymentLinkEmailInput {
+  to: string
+  name: string
+  tierName: string
+  amountCentavos: number
+  paymentUrl: string
+}
+
+export async function sendRenewalPaymentLinkEmail({
+  to,
+  name,
+  tierName,
+  amountCentavos,
+  paymentUrl,
+}: SendRenewalPaymentLinkEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>Hi ${name},</p>
+    <p>A member of our team has prepared your membership renewal at the ${tierName} tier. Completing payment below reactivates your membership right away.</p>
+    <div style="margin: 24px 0; padding: 20px 24px; background-color: ${ACCENT_LIGHT}; border-radius: 12px;">
+      <p style="margin: 0 0 4px; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Amount Due</p>
+      <p style="margin: 0; font-family: ${HEADING_FONT}; font-size: 28px; font-weight: 700; color: ${BRAND_DARK};">${formatCentavos(amountCentavos)}</p>
+      <p style="margin: 4px 0 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_MID};">${tierName} Membership Renewal</p>
+    </div>
+    <p>Complete your payment below to reactivate your membership.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Complete your payment to renew your ${tierName} membership.`,
+    eyebrowText: 'TIME TO RENEW',
+    headingText: `Ready to Renew, ${name}?`,
+    bodyHtml,
+    ctaText: 'Complete Payment',
+    ctaUrl: paymentUrl,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Renew Your Winston Sip & Serve Membership',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendRenewalPaymentLinkEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendRenewalPaymentLinkEmail threw', err)
+  }
+}
+
 interface SendPasswordResetEmailInput {
   to: string
   resetUrl: string

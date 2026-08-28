@@ -206,6 +206,7 @@ model AdminUser {
   role         AdminRole @default(admin)
   reviewedApplications MembershipApplication[] @relation("ApplicationReviewedBy")
   performedReschedules BookingReschedule[]     @relation("ReschedulePerformedBy")
+  initiatedRenewalPayments MembershipPayment[] @relation("MembershipPaymentInitiatedByAdmin")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -255,11 +256,16 @@ model MembershipPayment {
   paymongoCheckoutSessionId String?       @unique @map("paymongo_checkout_session_id")
   paymongoPaymentIntentId   String?       @unique @map("paymongo_payment_intent_id")
   paidAt                    DateTime?     @map("paid_at")
+  /// Set only when an admin sends a manual renewal-payment-link (see CLAUDE.md → Membership
+  /// payment model). Null for self-service renewal and the original application-flow payment.
+  initiatedByAdminId String?    @map("initiated_by_admin_id")
+  initiatedByAdmin   AdminUser? @relation("MembershipPaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([applicationId])
   @@index([customerId])
+  @@index([initiatedByAdminId])
   @@map("membership_payments")
 }
 
