@@ -16,14 +16,3 @@ export function computeMembershipEndDate(startDate: Date, tier: MembershipTier):
   endDate.setMonth(endDate.getMonth() + MEMBERSHIP_TIER_PLANS[tier].months)
   return endDate
 }
-
-export function formatMembershipTier(tier: MembershipTier): string {
-  switch (tier) {
-    case 'three_month':
-      return '3-Month'
-    case 'six_month':
-      return '6-Month'
-    case 'twelve_month':
-      return '12-Month'
-  }
-}
