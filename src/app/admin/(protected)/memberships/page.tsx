@@ -2,6 +2,11 @@ import Link from 'next/link'
 import type { ApplicationStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { formatMembershipTier } from '@/lib/format'
+import {
+  getMembershipDisplayStatus,
+  MEMBERSHIP_DISPLAY_STATUS_LABELS,
+  MEMBERSHIP_DISPLAY_STATUS_CLASSES,
+} from '@/lib/membership-display-status'
 
 const PAGE_SIZE = 25
 
@@ -44,7 +49,7 @@ export default async function AdminMembershipsPage({
   const [applications, totalCount] = await Promise.all([
     prisma.membershipApplication.findMany({
       where,
-      include: { customer: true, reviewedBy: true },
+      include: { customer: true, reviewedBy: true, membership: true },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -130,7 +135,18 @@ export default async function AdminMembershipsPage({
                 <td className="px-4 py-2.5 text-gray-900">{application.customer.name}</td>
                 <td className="px-4 py-2.5 text-gray-900">{application.customer.email}</td>
                 <td className="px-4 py-2.5 text-gray-900">{formatMembershipTier(application.requestedTier)}</td>
-                <td className="px-4 py-2.5 text-gray-900">{application.status}</td>
+                <td className="px-4 py-2.5">
+                  {(() => {
+                    const displayStatus = getMembershipDisplayStatus(application)
+                    return (
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${MEMBERSHIP_DISPLAY_STATUS_CLASSES[displayStatus]}`}
+                      >
+                        {MEMBERSHIP_DISPLAY_STATUS_LABELS[displayStatus]}
+                      </span>
+                    )
+                  })()}
+                </td>
                 <td className="px-4 py-2.5 text-gray-900">{formatDateTime(application.createdAt)}</td>
                 <td className="px-4 py-2.5 text-gray-900">
                   {application.reviewedBy?.name ?? '—'}

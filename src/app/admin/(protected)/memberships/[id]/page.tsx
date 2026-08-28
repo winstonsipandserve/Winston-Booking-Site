@@ -3,14 +3,12 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getSignedUrl } from '@/lib/supabase-storage'
 import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
-import type { ApplicationStatus } from '@prisma/client'
 import { formatMembershipTier } from '@/lib/format'
-
-const STATUS_PILL_CLASSES: Record<ApplicationStatus, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-}
+import {
+  getMembershipDisplayStatus,
+  MEMBERSHIP_DISPLAY_STATUS_LABELS,
+  MEMBERSHIP_DISPLAY_STATUS_CLASSES,
+} from '@/lib/membership-display-status'
 
 export default async function AdminMembershipApplicationDetailPage({
   params,
@@ -21,13 +19,15 @@ export default async function AdminMembershipApplicationDetailPage({
 
   const application = await prisma.membershipApplication.findUnique({
     where: { id },
-    include: { customer: true, reviewedBy: true },
+    include: { customer: true, reviewedBy: true, membership: true },
     relationLoadStrategy: 'query',
   })
 
   if (!application) {
     notFound()
   }
+
+  const displayStatus = getMembershipDisplayStatus(application)
 
   const [govIdFrontUrl, govIdBackUrl, govIdSelfieUrl] = await Promise.all([
     getSignedUrl('membership-applications', application.govIdFrontUrl),
@@ -51,9 +51,9 @@ export default async function AdminMembershipApplicationDetailPage({
           <p className="text-xs font-mono text-gray-400">{application.id}</p>
         </div>
         <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize ${STATUS_PILL_CLASSES[application.status]}`}
+          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${MEMBERSHIP_DISPLAY_STATUS_CLASSES[displayStatus]}`}
         >
-          {application.status}
+          {MEMBERSHIP_DISPLAY_STATUS_LABELS[displayStatus]}
         </span>
       </div>
 
