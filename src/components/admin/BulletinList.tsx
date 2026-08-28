@@ -61,7 +61,6 @@ interface BulletinListProps {
 
 export default function BulletinList({ bulletins }: BulletinListProps) {
   const router = useRouter()
-  const [addModalOpen, setAddModalOpen] = useState(false)
   const [editingBulletin, setEditingBulletin] = useState<Bulletin | null>(null)
 
   async function handleDelete(bulletin: Bulletin) {
@@ -83,16 +82,6 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-end">
-        <button
-          type="button"
-          onClick={() => setAddModalOpen(true)}
-          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-        >
-          + Add Bulletin
-        </button>
-      </div>
-
       {bulletins.length === 0 ? (
         <p className="text-sm text-gray-500">No bulletins yet.</p>
       ) : (
@@ -159,7 +148,6 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
         </div>
       )}
 
-      <BulletinFormModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} mode="add" />
       <BulletinFormModal
         isOpen={editingBulletin !== null}
         onClose={() => setEditingBulletin(null)}
