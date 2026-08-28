@@ -27,6 +27,7 @@ interface AddOnsStepProps {
   coachingPricing: CoachingPricing
   coachingPaxCount: number | null
   onCoachingPaxCountChange: (value: number) => void
+  hideGuestCount: boolean
 }
 
 export default function AddOnsStep({
@@ -41,6 +42,7 @@ export default function AddOnsStep({
   coachingPricing,
   coachingPaxCount,
   onCoachingPaxCountChange,
+  hideGuestCount,
 }: AddOnsStepProps) {
   const coachingPriceCentavos =
     coachingPricing.mode === 'flat'
@@ -60,7 +62,7 @@ export default function AddOnsStep({
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
       <h2 className="font-serif text-2xl text-brand-dark">Add-Ons</h2>
 
-      {isCourt && (
+      {isCourt && !hideGuestCount && (
         <div className="flex flex-col gap-2">
           <label htmlFor="guestCount" className="text-sm font-medium text-brand-dark">
             Number of guests
@@ -89,6 +91,10 @@ export default function AddOnsStep({
             </button>
           </div>
         </div>
+      )}
+
+      {isCourt && hideGuestCount && (
+        <p className="text-sm text-brand-dark/60">Guest fee doesn&apos;t apply to member bookings.</p>
       )}
 
       <div className="flex flex-col gap-3">

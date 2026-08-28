@@ -12,6 +12,14 @@ export interface ResolveCustomerResult {
   isMember: boolean
 }
 
+export async function isActiveMember(customerId: string): Promise<boolean> {
+  const now = new Date()
+  const activeMembership = await prisma.membership.findFirst({
+    where: { customerId, status: 'active', endDate: { gte: now } },
+  })
+  return !!activeMembership
+}
+
 export async function resolveCustomer(
   input: ResolveCustomerInput,
 ): Promise<ResolveCustomerResult> {
@@ -29,10 +37,7 @@ export async function resolveCustomer(
     customerRecord = await prisma.customer.create({ data: { name, email, phone } })
   }
 
-  const now = new Date()
-  const activeMembership = await prisma.membership.findFirst({
-    where: { customerId: customerRecord.id, status: 'active', endDate: { gte: now } },
-  })
+  const isMember = await isActiveMember(customerRecord.id)
 
-  return { customer: customerRecord, isMember: !!activeMembership }
+  return { customer: customerRecord, isMember }
 }

@@ -14,10 +14,13 @@ interface ResourceTypeOption {
   resources: { id: string; label: string }[]
 }
 
+type RateTier = 'member' | 'non_member'
+
 interface SportStepProps {
   resourceTypes: ResourceTypeOption[]
   resourceTypeId: string
   onSelect: (resourceTypeId: string) => void
+  rateTier: RateTier
 }
 
 function countLabel(count: number, category: ResourceCategory): string {
@@ -67,7 +70,34 @@ const NON_MEMBER_PRICING: Record<string, PricingInfo> = {
   },
 }
 
-export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: SportStepProps) {
+const MEMBER_PRICING: Record<string, PricingInfo> = {
+  tennis_court: { tiers: [{ label: 'Per hour', price: '₱650' }] },
+  pickleball_court: { tiers: [{ label: 'Per hour', price: '₱550' }] },
+  tennis_sim: {
+    tiers: [
+      { label: '15 minutes', price: '₱250' },
+      { label: '30 minutes', price: '₱400' },
+      { label: '60 minutes', price: '₱750' },
+    ],
+  },
+  pickleball_sim: {
+    tiers: [
+      { label: '15 minutes', price: '₱250' },
+      { label: '30 minutes', price: '₱400' },
+      { label: '60 minutes', price: '₱750' },
+    ],
+  },
+  golf_sim: {
+    tiers: [
+      { label: '30 minutes', price: '₱450' },
+      { label: '60 minutes', price: '₱950' },
+      { label: '90 minutes', price: '₱1,400' },
+    ],
+  },
+}
+
+export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rateTier }: SportStepProps) {
+  const PRICING = rateTier === 'member' ? MEMBER_PRICING : NON_MEMBER_PRICING
   const [pricingSlug, setPricingSlug] = useState<string | null>(null)
 
   return (
@@ -103,7 +133,7 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: S
               <span className="text-sm text-brand-dark/60">
                 {countLabel(rt.resources.length, rt.category)}
               </span>
-              {NON_MEMBER_PRICING[rt.slug] && (
+              {PRICING[rt.slug] && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -120,14 +150,14 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: S
         })}
       </div>
 
-      {pricingSlug && NON_MEMBER_PRICING[pricingSlug] && (
+      {pricingSlug && PRICING[pricingSlug] && (
         <Modal
           isOpen={true}
           onClose={() => setPricingSlug(null)}
           title={`${resourceTypes.find((rt) => rt.slug === pricingSlug)?.name ?? ''} Pricing`}
         >
           <ul className="flex flex-col divide-y divide-brand-dark/10">
-            {NON_MEMBER_PRICING[pricingSlug].tiers.map((tier) => (
+            {PRICING[pricingSlug].tiers.map((tier) => (
               <li key={tier.label} className="flex items-center justify-between py-2 text-sm text-brand-dark">
                 <span>{tier.label}</span>
                 <span className="font-semibold text-accent-primary">{tier.price}</span>
@@ -135,7 +165,9 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect }: S
             ))}
           </ul>
           <p className="mt-3 text-xs text-brand-dark/50">
-            Non-member rates shown. Member pricing is applied automatically at checkout for active members.
+            {rateTier === 'member'
+              ? 'Member rates shown.'
+              : 'Non-member rates shown. Member pricing is applied automatically at checkout for active members.'}
           </p>
         </Modal>
       )}

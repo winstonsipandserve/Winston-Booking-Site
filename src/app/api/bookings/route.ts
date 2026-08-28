@@ -4,6 +4,8 @@ import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 import { priceBooking } from '@/lib/booking-pricing'
+import { isActiveMember } from '@/lib/customer-resolution'
+import { auth } from '../../../../auth'
 
 interface BookingRequestBody {
   resourceId?: unknown
@@ -31,6 +33,9 @@ function isExclusionViolation(err: unknown): boolean {
 }
 
 export async function POST(request: Request) {
+  const session = await auth()
+  const isMemberSession = !!session?.user?.id && session.user.role === 'member'
+
   let body: BookingRequestBody
   try {
     body = await request.json()
@@ -66,7 +71,14 @@ export async function POST(request: Request) {
     return Response.json({ error: 'startTime must be a valid ISO 8601 date' }, { status: 400 })
   }
 
-  const guestCount = guestCountRaw
+  let customerId: string | null = null
+  let isMember = false
+  if (isMemberSession) {
+    customerId = session!.user.id
+    isMember = await isActiveMember(customerId)
+  }
+
+  const guestCount = isMember ? 0 : guestCountRaw
 
   const resource = await prisma.resource.findUnique({
     where: { id: resourceId },
@@ -119,7 +131,7 @@ export async function POST(request: Request) {
     ballBoy,
     coaching,
     coachingPaxCount,
-    isMember: false,
+    isMember,
   })
   if ('error' in priceResult) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })
@@ -160,7 +172,7 @@ export async function POST(request: Request) {
 
       const createdBooking = await tx.booking.create({
         data: {
-          customerId: null,
+          customerId,
           resourceId: resource.id,
           startTime: parsedStartTime,
           endTime,
@@ -213,6 +225,8 @@ export async function POST(request: Request) {
         amountCentavos: addOn.amountCentavos,
       })),
       addOnsTotalCentavos,
+      customerAttached: isMemberSession,
+      isMember,
     },
     { status: 201 },
   )

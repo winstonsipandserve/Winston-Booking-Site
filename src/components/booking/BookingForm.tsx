@@ -62,18 +62,24 @@ const EMPTY_COACHING_PRICING: CoachingPricing = {
   pax2PriceCentavos: null,
 }
 
-function getBallBoyPricing(resourceType: ResourceTypeOption | null): BallBoyPricing {
+function getBallBoyPricing(
+  resourceType: ResourceTypeOption | null,
+  rateTier: RateTier,
+): BallBoyPricing {
   if (!resourceType) return EMPTY_BALL_BOY_PRICING
   const rule = resourceType.addOnPricing.find(
-    (a) => a.service === 'ball_boy' && a.rateTier === 'non_member',
+    (a) => a.service === 'ball_boy' && a.rateTier === rateTier,
   )
   return rule ? { available: true, priceCentavos: rule.priceCentavos } : EMPTY_BALL_BOY_PRICING
 }
 
-function getCoachingPricing(resourceType: ResourceTypeOption | null): CoachingPricing {
+function getCoachingPricing(
+  resourceType: ResourceTypeOption | null,
+  rateTier: RateTier,
+): CoachingPricing {
   if (!resourceType) return EMPTY_COACHING_PRICING
   const rules = resourceType.addOnPricing.filter(
-    (a) => a.service === 'coaching_fee' && a.rateTier === 'non_member',
+    (a) => a.service === 'coaching_fee' && a.rateTier === rateTier,
   )
   if (rules.length === 0) return EMPTY_COACHING_PRICING
   const flatRule = rules.find((r) => r.paxCount === null)
@@ -108,25 +114,33 @@ interface BusyRange {
 const COURT_DURATIONS_MINUTES = [60, 120, 180, 240]
 const TOTAL_STEPS = 5
 
-function getDurationOptions(resourceType: ResourceTypeOption): number[] {
+function getDurationOptions(resourceType: ResourceTypeOption, rateTier: RateTier): number[] {
   if (resourceType.category === 'court') return COURT_DURATIONS_MINUTES
   return Array.from(
     new Set(
-      resourceType.pricing
-        .filter((p) => p.rateTier === 'non_member')
-        .map((p) => p.durationMinutes),
+      resourceType.pricing.filter((p) => p.rateTier === rateTier).map((p) => p.durationMinutes),
     ),
   ).sort((a, b) => a - b)
+}
+
+interface MemberContext {
+  name: string
+  email: string
+  phone: string
+  isActiveMember: boolean
 }
 
 interface BookingFormProps {
   data: ResourcesResponse | null
   loading: boolean
   loadError: string | null
+  memberContext: MemberContext | null
 }
 
-export default function BookingForm({ data, loading, loadError }: BookingFormProps) {
+export default function BookingForm({ data, loading, loadError, memberContext }: BookingFormProps) {
   const [step, setStep] = useState(1)
+
+  const rateTier: RateTier = memberContext?.isActiveMember ? 'member' : 'non_member'
 
   const [resourceTypeId, setResourceTypeId] = useState('')
   const [resourceId, setResourceId] = useState('')
@@ -168,24 +182,30 @@ export default function BookingForm({ data, loading, loadError }: BookingFormPro
 
   const durationOptions = useMemo(() => {
     if (!selectedResourceType) return []
-    return getDurationOptions(selectedResourceType)
-  }, [selectedResourceType])
+    return getDurationOptions(selectedResourceType, rateTier)
+  }, [selectedResourceType, rateTier])
 
-  const ballBoyPricing = useMemo(() => getBallBoyPricing(selectedResourceType), [selectedResourceType])
-  const coachingPricing = useMemo(() => getCoachingPricing(selectedResourceType), [selectedResourceType])
+  const ballBoyPricing = useMemo(
+    () => getBallBoyPricing(selectedResourceType, rateTier),
+    [selectedResourceType, rateTier],
+  )
+  const coachingPricing = useMemo(
+    () => getCoachingPricing(selectedResourceType, rateTier),
+    [selectedResourceType, rateTier],
+  )
 
   // Reset dependent fields whenever the chosen resource type changes.
   useEffect(() => {
     if (!selectedResourceType) return
     setResourceId('')
     setGuestCount(0)
-    const durations = getDurationOptions(selectedResourceType)
+    const durations = getDurationOptions(selectedResourceType, rateTier)
     setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
     if (selectedResourceType.category !== 'court') {
       setBallBoy(false)
     }
     setCoachingPaxCount(null)
-    if (!getCoachingPricing(selectedResourceType).available) {
+    if (!getCoachingPricing(selectedResourceType, rateTier).available) {
       setCoaching(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -238,7 +258,7 @@ export default function BookingForm({ data, loading, loadError }: BookingFormPro
     const duration = Number(durationMinutes)
     if (isCourt) {
       const hourlyRate = selectedResourceType.pricing.find(
-        (p) => p.rateTier === 'non_member' && p.durationMinutes === 60,
+        (p) => p.rateTier === rateTier && p.durationMinutes === 60,
       )
       if (!hourlyRate) return null
       const base = hourlyRate.priceCentavos * (duration / 60)
@@ -246,10 +266,10 @@ export default function BookingForm({ data, loading, loadError }: BookingFormPro
       return base + guestFee
     }
     const tierRate = selectedResourceType.pricing.find(
-      (p) => p.rateTier === 'non_member' && p.durationMinutes === duration,
+      (p) => p.rateTier === rateTier && p.durationMinutes === duration,
     )
     return tierRate ? tierRate.priceCentavos : null
-  }, [selectedResourceType, durationMinutes, guestCount, isCourt, data])
+  }, [selectedResourceType, durationMinutes, guestCount, isCourt, data, rateTier])
 
   const addOnsEstimateCentavos = useMemo(() => {
     let total = 0
@@ -337,7 +357,7 @@ export default function BookingForm({ data, loading, loadError }: BookingFormPro
           resourceId,
           startTime: new Date(startTimeLocal).toISOString(),
           durationMinutes: Number(durationMinutes),
-          guestCount: isCourt ? guestCount : 0,
+          guestCount: isCourt && rateTier === 'non_member' ? guestCount : 0,
           ballBoy,
           coaching,
           ...(coaching && isCourt && coachingPaxCount !== null ? { coachingPaxCount } : {}),
@@ -345,11 +365,19 @@ export default function BookingForm({ data, loading, loadError }: BookingFormPro
       })
 
       if (res.status === 201) {
-        const booking: { id: string; totalAmountCentavos: number; addOnsTotalCentavos: number } =
-          await res.json()
+        const booking: {
+          id: string
+          totalAmountCentavos: number
+          addOnsTotalCentavos: number
+          customerAttached: boolean
+          isMember: boolean
+        } = await res.json()
         setBookingId(booking.id)
         setCreatedTotalCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)
         setShowPayment(true)
+        if (booking.customerAttached) {
+          setCustomerAttached(true)
+        }
       } else if (res.status === 409) {
         setSubmitError('That slot was just booked by someone else — please pick a different time.')
       } else if (res.status === 400) {
@@ -449,6 +477,7 @@ export default function BookingForm({ data, loading, loadError }: BookingFormPro
           resourceTypes={data.resourceTypes}
           resourceTypeId={resourceTypeId}
           onSelect={setResourceTypeId}
+          rateTier={rateTier}
         />
       )}
 
@@ -491,6 +520,7 @@ export default function BookingForm({ data, loading, loadError }: BookingFormPro
           coachingPricing={coachingPricing}
           coachingPaxCount={coachingPaxCount}
           onCoachingPaxCountChange={setCoachingPaxCount}
+          hideGuestCount={rateTier === 'member'}
         />
       )}
 
@@ -548,6 +578,7 @@ export default function BookingForm({ data, loading, loadError }: BookingFormPro
           checkoutError={checkoutError}
           onPayNow={handlePayNow}
           onStartOver={handleStartOver}
+          knownCustomer={memberContext ? { name: memberContext.name, email: memberContext.email } : null}
         />
       )}
 

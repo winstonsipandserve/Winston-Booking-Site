@@ -6,6 +6,11 @@ interface PriceUpdate {
   finalCentavos: number
 }
 
+interface KnownCustomer {
+  name: string
+  email: string
+}
+
 interface PaymentStepProps {
   resourceTypeName: string
   resourceLabel: string
@@ -34,6 +39,7 @@ interface PaymentStepProps {
   checkoutError: string | null
   onPayNow: () => void
   onStartOver: () => void
+  knownCustomer: KnownCustomer | null
 }
 
 export default function PaymentStep({
@@ -64,8 +70,11 @@ export default function PaymentStep({
   checkoutError,
   onPayNow,
   onStartOver,
+  knownCustomer,
 }: PaymentStepProps) {
-  const isValid = name.trim().length > 0 && phone.trim().length > 0 && email.trim().length > 0
+  const isValid = knownCustomer
+    ? true
+    : name.trim().length > 0 && phone.trim().length > 0 && email.trim().length > 0
   const disabled = checkingOut || attachingCustomer || (!customerAttached && !isValid)
 
   const buttonLabel = checkingOut
@@ -100,52 +109,59 @@ export default function PaymentStep({
         addOnsEstimateCentavos={addOnsEstimateCentavos}
       />
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="name" className="text-sm font-medium text-brand-dark">
-            Name
-          </label>
-          <input
-            id="name"
-            type="text"
-            required
-            value={name}
-            disabled={customerAttached}
-            onChange={(e) => onNameChange(e.target.value)}
-            className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
-          />
+      {knownCustomer ? (
+        <div className="rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-4 text-sm text-brand-dark shadow-xl shadow-brand-dark/10">
+          Booking under <span className="font-medium">{knownCustomer.name}</span> (
+          {knownCustomer.email})
         </div>
+      ) : (
+        <div className="flex flex-col gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="name" className="text-sm font-medium text-brand-dark">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              required
+              value={name}
+              disabled={customerAttached}
+              onChange={(e) => onNameChange(e.target.value)}
+              className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
+            />
+          </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="phone" className="text-sm font-medium text-brand-dark">
-            Phone
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            required
-            value={phone}
-            disabled={customerAttached}
-            onChange={(e) => onPhoneChange(e.target.value)}
-            className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
-          />
-        </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="phone" className="text-sm font-medium text-brand-dark">
+              Phone
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              required
+              value={phone}
+              disabled={customerAttached}
+              onChange={(e) => onPhoneChange(e.target.value)}
+              className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
+            />
+          </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-brand-dark">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={email}
-            disabled={customerAttached}
-            onChange={(e) => onEmailChange(e.target.value)}
-            className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
-          />
+          <div className="flex flex-col gap-1">
+            <label htmlFor="email" className="text-sm font-medium text-brand-dark">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              required
+              value={email}
+              disabled={customerAttached}
+              onChange={(e) => onEmailChange(e.target.value)}
+              className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="rounded-xl border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-3 text-sm text-brand-dark/70">
         All bookings are final. We don&apos;t offer refunds or rescheduling once a booking is

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { formatCentavos } from '@/lib/format'
 import { CheckIcon } from '@/components/ui/Icons'
 import Modal from '@/components/ui/Modal'
@@ -138,13 +139,15 @@ export default function MembershipStatusCard({ membership, customerId }: Members
         </div>
       </div>
 
-      {/* Intentionally inert placeholder — no href/onClick — until member-aware pricing is designed and wired into the booking flow. */}
-      <div className="mt-6 flex flex-col items-center gap-1.5 rounded-lg bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light">
+      <Link
+        href="/book"
+        className="mt-6 flex flex-col items-center gap-1.5 rounded-lg bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+      >
         Book a Court
         <span className="text-xs font-normal normal-case tracking-normal text-brand-light/70">
-          Member pricing — coming soon
+          Member pricing applied automatically.
         </span>
-      </div>
+      </Link>
 
       <Modal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} title="Member QR Code">
         <div className="flex flex-col items-center gap-3">
