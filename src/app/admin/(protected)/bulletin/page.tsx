@@ -12,7 +12,7 @@ export default async function AdminBulletinPage() {
         <BulletinAddButton />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 p-4">
         <BulletinList bulletins={bulletins} />
       </div>
     </div>
