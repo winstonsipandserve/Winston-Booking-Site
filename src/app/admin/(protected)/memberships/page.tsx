@@ -7,6 +7,7 @@ import {
   MEMBERSHIP_DISPLAY_STATUS_LABELS,
   MEMBERSHIP_DISPLAY_STATUS_CLASSES,
 } from '@/lib/membership-display-status'
+import { getLatestMembershipsByCustomerIds } from '@/lib/membership-latest'
 
 const PAGE_SIZE = 25
 
@@ -49,7 +50,7 @@ export default async function AdminMembershipsPage({
   const [applications, totalCount] = await Promise.all([
     prisma.membershipApplication.findMany({
       where,
-      include: { customer: true, reviewedBy: true, membership: true },
+      include: { customer: true, reviewedBy: true },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -58,6 +59,9 @@ export default async function AdminMembershipsPage({
     prisma.membershipApplication.count({ where }),
   ])
   console.timeEnd('memberships:promiseAll')
+
+  const customerIds = [...new Set(applications.map((application) => application.customerId))]
+  const latestMembershipsByCustomer = await getLatestMembershipsByCustomerIds(customerIds)
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
@@ -137,7 +141,10 @@ export default async function AdminMembershipsPage({
                 <td className="px-4 py-2.5 text-gray-900">{formatMembershipTier(application.requestedTier)}</td>
                 <td className="px-4 py-2.5">
                   {(() => {
-                    const displayStatus = getMembershipDisplayStatus(application)
+                    const displayStatus = getMembershipDisplayStatus({
+                      status: application.status,
+                      latestMembership: latestMembershipsByCustomer.get(application.customerId) ?? null,
+                    })
                     return (
                       <span
                         className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${MEMBERSHIP_DISPLAY_STATUS_CLASSES[displayStatus]}`}

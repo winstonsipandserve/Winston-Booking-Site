@@ -9,6 +9,7 @@ import {
   MEMBERSHIP_DISPLAY_STATUS_LABELS,
   MEMBERSHIP_DISPLAY_STATUS_CLASSES,
 } from '@/lib/membership-display-status'
+import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
 
 export default async function AdminMembershipApplicationDetailPage({
   params,
@@ -19,7 +20,7 @@ export default async function AdminMembershipApplicationDetailPage({
 
   const application = await prisma.membershipApplication.findUnique({
     where: { id },
-    include: { customer: true, reviewedBy: true, membership: true },
+    include: { customer: true, reviewedBy: true },
     relationLoadStrategy: 'query',
   })
 
@@ -27,7 +28,8 @@ export default async function AdminMembershipApplicationDetailPage({
     notFound()
   }
 
-  const displayStatus = getMembershipDisplayStatus(application)
+  const latestMembership = await getLatestMembershipByCustomerId(application.customerId)
+  const displayStatus = getMembershipDisplayStatus({ status: application.status, latestMembership })
 
   const [govIdFrontUrl, govIdBackUrl, govIdSelfieUrl] = await Promise.all([
     getSignedUrl('membership-applications', application.govIdFrontUrl),
