@@ -1,6 +1,7 @@
+import type { MembershipTier } from '@prisma/client'
 import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
 import { buildBrandedEmail } from './email-templates'
-import { formatCentavos } from './format'
+import { formatCentavos, formatMembershipTier } from './format'
 
 const RESEND_API_BASE = 'https://api.resend.com/emails'
 
@@ -422,5 +423,132 @@ export async function sendBookingConfirmationEmail({
     }
   } catch (err) {
     console.error('Resend sendBookingConfirmationEmail threw', err)
+  }
+}
+
+interface ReminderCustomer {
+  name: string
+  email: string
+}
+
+interface ReminderMembership {
+  tier: MembershipTier
+  endDate: Date
+  creditBalanceCentavos: number
+}
+
+export async function sendMembershipExpiryReminderEmail(
+  customer: ReminderCustomer,
+  membership: ReminderMembership,
+  daysRemaining: 14 | 3,
+): Promise<void> {
+  const tierName = formatMembershipTier(membership.tier)
+  const endDateLabel = formatManilaDate(membership.endDate)
+  const urgent = daysRemaining === 3
+
+  const creditLine =
+    membership.creditBalanceCentavos > 0
+      ? `<p style="margin: 16px 0 0; font-size: 14px; color: ${BRAND_MID};">You still have ${formatCentavos(membership.creditBalanceCentavos)} in unused F&amp;B credit &mdash; it does not roll over and will be forfeited once your membership expires.</p>`
+      : ''
+
+  const bodyHtml = urgent
+    ? `
+    <p>Hi ${customer.name},</p>
+    <p>Your ${tierName} membership expires in just ${daysRemaining} days, on <strong>${endDateLabel}</strong>. Renew now to keep your member rates and perks going without a gap.</p>${creditLine}
+  `
+    : `
+    <p>Hi ${customer.name},</p>
+    <p>Just a heads-up &mdash; your ${tierName} membership is set to expire on <strong>${endDateLabel}</strong>, ${daysRemaining} days from now. Renew any time before then to keep your priority booking, member rates, and Speakeasy Lounge access going.</p>${creditLine}
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: urgent
+      ? `Your membership expires in ${daysRemaining} days &mdash; renew now.`
+      : `Your membership expires in ${daysRemaining} days.`,
+    eyebrowText: urgent ? 'EXPIRES SOON' : 'MEMBERSHIP REMINDER',
+    headingText: urgent ? `${daysRemaining} Days Left, ${customer.name}` : 'Your Membership Is Expiring Soon',
+    bodyHtml,
+    ctaText: 'Renew Your Membership',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/membership/apply`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: customer.email,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: urgent
+          ? `Your Winston Membership Expires in ${daysRemaining} Days`
+          : 'Your Winston Membership Expires Soon',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendMembershipExpiryReminderEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendMembershipExpiryReminderEmail threw', err)
+  }
+}
+
+export async function sendMembershipExpiredEmail(
+  customer: ReminderCustomer,
+  membership: ReminderMembership,
+): Promise<void> {
+  const tierName = formatMembershipTier(membership.tier)
+  const endDateLabel = formatManilaDate(membership.endDate)
+
+  const creditNote =
+    membership.creditBalanceCentavos > 0
+      ? ` Any unused F&amp;B credit (${formatCentavos(membership.creditBalanceCentavos)}) does not roll over and has now been forfeited.`
+      : ''
+
+  const bodyHtml = `
+    <p>Hi ${customer.name},</p>
+    <p>Your ${tierName} membership expired on ${endDateLabel}.${creditNote}</p>
+    <div style="margin: 24px 0; padding: 20px 24px; background-color: rgba(140, 90, 60, 0.08); border-left: 4px solid ${ACCENT_PRIMARY}; border-radius: 8px;">
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">You're still always welcome at Winston as a guest &mdash; book a court, simulator bay, or table at the café any time. Reapply below whenever you're ready to pick your member rates and perks back up.</p>
+    </div>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Your ${tierName} membership has expired.`,
+    eyebrowText: 'MEMBERSHIP EXPIRED',
+    headingText: 'Your Membership Has Expired',
+    bodyHtml,
+    ctaText: 'Reapply for Membership',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/membership/apply`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: customer.email,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Your Winston Sip & Serve Membership Has Expired',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendMembershipExpiredEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendMembershipExpiredEmail threw', err)
   }
 }
