@@ -190,6 +190,8 @@ Note: `prisma migrate dev`/`--create-only` will fail (P3006/P1014) against a fre
 
 Known issue: `middleware.ts` is effectively dead code locally right now — it does not appear to execute in this Next 16.3.0/Turbopack-on-Windows dev setup (confirmed via instrumentation logging zero invocations across a full debugging session). Any new route added under its matcher must include its own explicit auth check, never rely on the matcher alone. Worth re-verifying against `staging` before assuming this is dev-only.
 
+Known issue: `Navbar` is `fixed` and transparent (light-colored nav text) until scrolled, tuned for pages with a photo/dark hero directly underneath — on any page whose top section is plain light background instead, the unscrolled nav text becomes unreadable against it. The fix (first applied on `/reset-password`, reused on `/book/confirmation`) is to give the page its own `bg-brand-dark` band directly below `<Navbar />` (`pt-40 pb-20 md:pt-48 md:pb-28`, same shape as `/account`'s page header), not a lighter-padding-only patch. `/book` itself (the announcement gate + wizard) and `/forgot-password`'s lower section still have this bug and are not yet fixed — same root cause, apply the same pattern when addressed.
+
 ---
 
 ## Open / Not Yet Decided

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { formatCentavos } from '@/lib/format'
 
 export interface BookingAddOn {
@@ -36,60 +37,87 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
 
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
-      <h2 className="text-2xl font-semibold">Booking confirmed</h2>
-      <p className="text-sm font-medium">Booking Reference: {booking.id}</p>
-      <dl className="flex flex-col gap-2 text-sm">
-        <div className="flex justify-between gap-4">
-          <dt className="font-medium">Resource</dt>
-          <dd>
-            {booking.resource.typeName} — {booking.resource.label}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-4">
-          <dt className="font-medium">Date &amp; time</dt>
-          <dd>{start.toLocaleString('en-PH')}</dd>
-        </div>
-        <div className="flex justify-between gap-4">
-          <dt className="font-medium">Duration</dt>
-          <dd>{durationMinutes} minutes</dd>
-        </div>
-        {booking.guestCount > 0 && (
-          <div className="flex justify-between gap-4">
-            <dt className="font-medium">Guests</dt>
-            <dd>{booking.guestCount}</dd>
+      <div className="flex flex-col gap-1 text-center">
+        <h2 className="font-serif text-2xl text-brand-dark">Booking confirmed</h2>
+        <p className="text-sm text-brand-dark/60">
+          Booking Reference:{' '}
+          <span className="font-mono text-sm text-brand-dark">{booking.id}</span>
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+        <dl className="flex flex-col">
+          <div className="flex justify-between gap-4 py-3">
+            <dt className="text-brand-dark/70">Resource</dt>
+            <dd className="text-right font-medium text-brand-dark">
+              {booking.resource.typeName} — {booking.resource.label}
+            </dd>
           </div>
-        )}
-        <div className="flex justify-between gap-4">
-          <dt className="font-medium">Price</dt>
-          <dd>{formatCentavos(booking.totalAmountCentavos)}</dd>
-        </div>
-        {booking.addOns.map((addOn, i) => (
-          <div key={i} className="flex justify-between gap-4">
-            <dt className="font-medium">
-              {ADD_ON_LABELS[addOn.service] ?? addOn.service}
-              {addOn.paxCount !== null && ` — ${addOn.paxCount} Pax`}
-            </dt>
-            <dd>{formatCentavos(addOn.amountCentavos)}</dd>
+          <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+            <dt className="text-brand-dark/70">Date &amp; time</dt>
+            <dd className="text-right font-medium text-brand-dark">
+              {start.toLocaleString('en-PH')}
+            </dd>
           </div>
-        ))}
-        {booking.addOns.length > 0 && (
-          <>
-            <div className="flex justify-between gap-4">
-              <dt className="font-medium">Add-ons total</dt>
-              <dd>{formatCentavos(booking.addOnsTotalCentavos)}</dd>
+          <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+            <dt className="text-brand-dark/70">Duration</dt>
+            <dd className="text-right font-medium text-brand-dark">{durationMinutes} minutes</dd>
+          </div>
+          {booking.guestCount > 0 && (
+            <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+              <dt className="text-brand-dark/70">Guests</dt>
+              <dd className="text-right font-medium text-brand-dark">{booking.guestCount}</dd>
             </div>
-            <div className="flex justify-between gap-4">
-              <dt className="font-medium">Total</dt>
-              <dd>
-                {formatCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)}
+          )}
+          <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+            <dt className="text-brand-dark/70">Price</dt>
+            <dd className="text-right font-medium text-brand-dark">
+              {formatCentavos(booking.totalAmountCentavos)}
+            </dd>
+          </div>
+          {booking.addOns.map((addOn, i) => (
+            <div
+              key={i}
+              className="flex justify-between gap-4 border-t border-brand-dark/10 py-3"
+            >
+              <dt className="text-brand-dark/70">
+                {ADD_ON_LABELS[addOn.service] ?? addOn.service}
+                {addOn.paxCount !== null && ` — ${addOn.paxCount} Pax`}
+              </dt>
+              <dd className="text-right font-medium text-brand-dark">
+                {formatCentavos(addOn.amountCentavos)}
               </dd>
             </div>
-          </>
-        )}
-      </dl>
-      <p className="rounded border border-black/[.08] bg-black/[.03] px-3 py-2 text-sm text-zinc-600 dark:border-white/[.08] dark:bg-white/[.04] dark:text-zinc-400">
+          ))}
+          {booking.addOns.length > 0 && (
+            <>
+              <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+                <dt className="text-brand-dark/70">Add-ons total</dt>
+                <dd className="text-right font-medium text-brand-dark">
+                  {formatCentavos(booking.addOnsTotalCentavos)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+                <dt className="text-brand-dark/70">Total</dt>
+                <dd className="text-right font-medium text-brand-dark">
+                  {formatCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)}
+                </dd>
+              </div>
+            </>
+          )}
+        </dl>
+      </div>
+
+      <p className="rounded-xl border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-3 text-sm text-brand-dark/70">
         Thanks, {booking.customer.name}! Your payment is confirmed and your slot is booked.
       </p>
+
+      <Link
+        href="/"
+        className="rounded-full bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+      >
+        Back to Home
+      </Link>
     </div>
   )
 }
