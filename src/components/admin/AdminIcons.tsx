@@ -67,6 +67,36 @@ export function BulletinIcon({ className = '' }: IconProps) {
   )
 }
 
+export function RevenueIcon({ className = '' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M14.5 9.3c-.4-.8-1.3-1.3-2.5-1.3-1.6 0-2.8.9-2.8 2s1.2 1.7 2.8 2c1.6.3 2.8.9 2.8 2s-1.2 2-2.8 2c-1.2 0-2.1-.5-2.5-1.3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path d="M12 6.5v11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function TrendingIcon({ className = '' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M3.5 16.5l5.5-5.5 3.5 3.5 7.5-7.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M15.5 6.5h4.5V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function FoldIcon({ className = '' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
