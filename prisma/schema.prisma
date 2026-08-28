@@ -54,6 +54,7 @@ enum MembershipStatus {
 
 enum CreditTransactionReason {
   activation
+  renewal
 }
 
 enum AdminRole {
@@ -156,6 +157,7 @@ model Customer {
   memberships            Membership[]
   activationTokens       MemberActivationToken[]
   passwordResetTokens    PasswordResetToken[]
+  membershipPayments     MembershipPayment[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -242,9 +244,11 @@ model MembershipApplication {
 // independent of future MEMBERSHIP_TIER_PLANS edits — same pattern as BookingAddOn.
 
 model MembershipPayment {
-  id            String                @id @default(cuid())
-  applicationId String                @map("application_id")
-  application   MembershipApplication @relation(fields: [applicationId], references: [id])
+  id            String                 @id @default(cuid())
+  applicationId String?                @map("application_id")
+  application   MembershipApplication? @relation(fields: [applicationId], references: [id])
+  customerId    String                 @map("customer_id")
+  customer      Customer               @relation(fields: [customerId], references: [id])
   tier          MembershipTier
   amountCentavos            Int           @map("amount_centavos")
   status                    PaymentStatus @default(pending)
@@ -255,6 +259,7 @@ model MembershipPayment {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([applicationId])
+  @@index([customerId])
   @@map("membership_payments")
 }
 
@@ -262,10 +267,10 @@ model MembershipPayment {
 
 model Membership {
   id                    String                @id @default(cuid())
-  customerId            String                @map("customer_id")
-  customer              Customer              @relation(fields: [customerId], references: [id])
-  applicationId         String                @unique @map("application_id")
-  application           MembershipApplication @relation(fields: [applicationId], references: [id])
+  customerId            String                 @map("customer_id")
+  customer              Customer               @relation(fields: [customerId], references: [id])
+  applicationId         String?                @unique @map("application_id")
+  application           MembershipApplication? @relation(fields: [applicationId], references: [id])
   tier                  MembershipTier
   status                MembershipStatus      @default(active)
   startDate             DateTime              @map("start_date")

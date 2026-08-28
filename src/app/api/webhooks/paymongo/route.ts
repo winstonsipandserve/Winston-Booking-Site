@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { verifyPaymongoWebhookSignature } from '@/lib/paymongo'
-import { sendBookingConfirmationEmail, sendActivationEmail } from '@/lib/resend'
+import { sendBookingConfirmationEmail, sendActivationEmail, sendMembershipRenewalEmail } from '@/lib/resend'
 import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import { generateActivationToken } from '@/lib/member-activation'
@@ -173,7 +173,7 @@ async function handleMembershipPaymentWebhook(
 ): Promise<Response> {
   const membershipPayment = await prisma.membershipPayment.findUnique({
     where: { id: membershipPaymentId },
-    include: { application: { include: { customer: true } } },
+    include: { customer: true },
     relationLoadStrategy: 'query',
   })
 
@@ -186,10 +186,10 @@ async function handleMembershipPaymentWebhook(
     return Response.json({ received: true }, { status: 200 })
   }
 
-  const { application } = membershipPayment
-  const plan = MEMBERSHIP_TIER_PLANS[application.requestedTier]
+  const isRenewal = membershipPayment.applicationId === null
+  const plan = MEMBERSHIP_TIER_PLANS[membershipPayment.tier]
   const startDate = paidAt
-  const endDate = computeMembershipEndDate(startDate, application.requestedTier)
+  const endDate = computeMembershipEndDate(startDate, membershipPayment.tier)
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -204,9 +204,9 @@ async function handleMembershipPaymentWebhook(
 
       const membership = await tx.membership.create({
         data: {
-          customerId: application.customerId,
-          applicationId: application.id,
-          tier: application.requestedTier,
+          customerId: membershipPayment.customerId,
+          applicationId: membershipPayment.applicationId,
+          tier: membershipPayment.tier,
           status: 'active',
           startDate,
           endDate,
@@ -219,7 +219,7 @@ async function handleMembershipPaymentWebhook(
         data: {
           membershipId: membership.id,
           amountCentavos: plan.creditCentavos,
-          reason: 'activation',
+          reason: isRenewal ? 'renewal' : 'activation',
         },
       })
     })
@@ -228,17 +228,34 @@ async function handleMembershipPaymentWebhook(
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 
-  if (!application.customer.passwordHash) {
+  if (isRenewal) {
+    const expiryDateLabel = new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'Asia/Manila',
+    }).format(endDate)
+
+    await sendMembershipRenewalEmail({
+      to: membershipPayment.customer.email,
+      name: membershipPayment.customer.name,
+      tierName: formatMembershipTier(membershipPayment.tier),
+      amountPaidCentavos: plan.totalCentavos,
+      activationFeeCentavos: plan.activationFeeCentavos,
+      creditBalanceCentavos: plan.creditCentavos,
+      expiryDateLabel,
+    })
+  } else if (!membershipPayment.customer.passwordHash) {
     const { rawToken, tokenHash, expiresAt } = generateActivationToken()
     await prisma.memberActivationToken.create({
-      data: { customerId: application.customerId, tokenHash, expiresAt },
+      data: { customerId: membershipPayment.customerId, tokenHash, expiresAt },
     })
     const activationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/activate?token=${rawToken}`
     await sendActivationEmail({
-      to: application.customer.email,
-      name: application.customer.name,
+      to: membershipPayment.customer.email,
+      name: membershipPayment.customer.name,
       activationUrl,
-      tierName: formatMembershipTier(application.requestedTier),
+      tierName: formatMembershipTier(membershipPayment.tier),
       amountPaidCentavos: plan.totalCentavos,
       activationFeeCentavos: plan.activationFeeCentavos,
       creditBalanceCentavos: plan.creditCentavos,

@@ -139,9 +139,18 @@ export default function MembershipStatusCard({ membership, customerId }: Members
         </div>
       </div>
 
+      {membership.isExpired && (
+        <Link
+          href="/account/renew"
+          className="mt-6 flex flex-col items-center gap-1.5 rounded-lg bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+        >
+          Renew Membership
+        </Link>
+      )}
+
       <Link
         href="/book"
-        className="mt-6 flex flex-col items-center gap-1.5 rounded-lg bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+        className={`flex flex-col items-center gap-1.5 rounded-lg bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark ${membership.isExpired ? 'mt-3' : 'mt-6'}`}
       >
         Book a Court
         <span className="text-xs font-normal normal-case tracking-normal text-brand-light/70">

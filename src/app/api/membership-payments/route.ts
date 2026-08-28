@@ -71,6 +71,7 @@ export async function POST(request: Request) {
   const membershipPayment = await prisma.membershipPayment.create({
     data: {
       applicationId: application.id,
+      customerId: application.customerId,
       tier: application.requestedTier,
       amountCentavos: plan.totalCentavos,
       status: 'pending',

@@ -123,6 +123,79 @@ export async function sendActivationEmail({
   }
 }
 
+interface SendMembershipRenewalEmailInput {
+  to: string
+  name: string
+  tierName: string
+  amountPaidCentavos: number
+  activationFeeCentavos: number
+  creditBalanceCentavos: number
+  expiryDateLabel: string
+}
+
+export async function sendMembershipRenewalEmail({
+  to,
+  name,
+  tierName,
+  amountPaidCentavos,
+  activationFeeCentavos,
+  creditBalanceCentavos,
+  expiryDateLabel,
+}: SendMembershipRenewalEmailInput): Promise<void> {
+  const receiptHtml = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos))}
+            ${ledgerRow('F&amp;B Credit', formatCentavos(creditBalanceCentavos))}
+            ${ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true)}
+          </table>
+        </td>
+      </tr>
+    </table>`
+
+  const bodyHtml = `
+    <p>Hi ${name},</p>
+    <p>Your ${tierName} membership at Winston Sip &amp; Serve has been renewed — your member rates, priority booking, and Speakeasy Lounge access are all still yours.</p>${receiptHtml}
+    <p>Your membership is now active through <strong>${expiryDateLabel}</strong>.</p>
+    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you on the court,<br />— The Winston Sip &amp; Serve Team</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Your membership is renewed through ${expiryDateLabel}.`,
+    eyebrowText: 'WELCOME BACK',
+    headingText: `You're Renewed, ${name}!`,
+    bodyHtml,
+    ctaText: 'View My Account',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Welcome Back — Your Winston Sip & Serve Membership Has Been Renewed',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendMembershipRenewalEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendMembershipRenewalEmail threw', err)
+  }
+}
+
 interface SendMembershipPaymentEmailInput {
   to: string
   name: string
