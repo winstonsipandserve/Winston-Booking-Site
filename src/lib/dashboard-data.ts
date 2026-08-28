@@ -1,4 +1,3 @@
-import type { MembershipTier } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import {
   BUSINESS_CLOSE_HOUR,
@@ -10,7 +9,7 @@ import {
   toPhDateString,
   toPhMonthKey,
 } from '@/lib/business-hours'
-import { formatShortDate } from '@/lib/format'
+import { formatMembershipTier, formatShortDate } from '@/lib/format'
 
 export interface DashboardStats {
   bookingsToday: number
@@ -58,18 +57,6 @@ export interface DashboardData {
   resourceBreakdown: ResourceBreakdownEntry[]
   recentBookings: RecentBooking[]
   recentApplications: RecentApplication[]
-}
-
-/** Mirrors the formatTier() helper duplicated in the admin memberships pages. */
-function formatTier(tier: MembershipTier): string {
-  switch (tier) {
-    case 'three_month':
-      return '3-Month'
-    case 'six_month':
-      return '6-Month'
-    case 'twelve_month':
-      return '12-Month'
-  }
 }
 
 function formatTimeOnly(date: Date): string {
@@ -221,7 +208,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const recentApplications: RecentApplication[] = recentApplicationsRaw.map((a) => ({
     name: a.customer.name,
-    tier: formatTier(a.requestedTier),
+    tier: formatMembershipTier(a.requestedTier),
     submitted: formatShortDate(a.createdAt),
   }))
 

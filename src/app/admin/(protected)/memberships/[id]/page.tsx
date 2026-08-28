@@ -3,18 +3,8 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getSignedUrl } from '@/lib/supabase-storage'
 import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
-import type { ApplicationStatus, MembershipTier } from '@prisma/client'
-
-function formatTier(tier: MembershipTier) {
-  switch (tier) {
-    case 'three_month':
-      return '3-Month'
-    case 'six_month':
-      return '6-Month'
-    case 'twelve_month':
-      return '12-Month'
-  }
-}
+import type { ApplicationStatus } from '@prisma/client'
+import { formatMembershipTier } from '@/lib/format'
 
 const STATUS_PILL_CLASSES: Record<ApplicationStatus, string> = {
   pending: 'bg-amber-100 text-amber-800',
@@ -88,7 +78,7 @@ export default async function AdminMembershipApplicationDetailPage({
           <h2 className="mb-4 text-sm font-semibold text-gray-900">Application</h2>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm">
             <span className="text-gray-500">Requested Tier</span>
-            <span className="text-right font-medium text-gray-900">{formatTier(application.requestedTier)}</span>
+            <span className="text-right font-medium text-gray-900">{formatMembershipTier(application.requestedTier)}</span>
           </div>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm">
             <span className="text-gray-500">Address</span>

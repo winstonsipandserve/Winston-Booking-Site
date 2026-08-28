@@ -1,3 +1,16 @@
+import type { MembershipTier } from '@prisma/client'
+
+export function formatMembershipTier(tier: MembershipTier): string {
+  switch (tier) {
+    case 'three_month':
+      return '3-Month'
+    case 'six_month':
+      return '6-Month'
+    case 'twelve_month':
+      return '12-Month'
+  }
+}
+
 export function formatCentavos(centavos: number): string {
   return `₱${(centavos / 100).toLocaleString('en-PH', {
     minimumFractionDigits: 2,

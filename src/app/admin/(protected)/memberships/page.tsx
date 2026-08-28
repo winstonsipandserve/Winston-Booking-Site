@@ -1,22 +1,12 @@
 import Link from 'next/link'
-import type { ApplicationStatus, MembershipTier, Prisma } from '@prisma/client'
+import type { ApplicationStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { formatMembershipTier } from '@/lib/format'
 
 const PAGE_SIZE = 25
 
 function isApplicationStatus(value: string): value is ApplicationStatus {
   return value === 'pending' || value === 'approved' || value === 'rejected'
-}
-
-function formatTier(tier: MembershipTier) {
-  switch (tier) {
-    case 'three_month':
-      return '3-Month'
-    case 'six_month':
-      return '6-Month'
-    case 'twelve_month':
-      return '12-Month'
-  }
 }
 
 function formatDateTime(date: Date) {
@@ -139,7 +129,7 @@ export default async function AdminMembershipsPage({
               >
                 <td className="px-4 py-2.5 text-gray-900">{application.customer.name}</td>
                 <td className="px-4 py-2.5 text-gray-900">{application.customer.email}</td>
-                <td className="px-4 py-2.5 text-gray-900">{formatTier(application.requestedTier)}</td>
+                <td className="px-4 py-2.5 text-gray-900">{formatMembershipTier(application.requestedTier)}</td>
                 <td className="px-4 py-2.5 text-gray-900">{application.status}</td>
                 <td className="px-4 py-2.5 text-gray-900">{formatDateTime(application.createdAt)}</td>
                 <td className="px-4 py-2.5 text-gray-900">
