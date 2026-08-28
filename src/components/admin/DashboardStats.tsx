@@ -6,35 +6,35 @@ import {
   ResourcesIcon,
 } from '@/components/admin/AdminIcons'
 import { formatCentavos } from '@/lib/format'
-import { DASHBOARD_STATS } from '@/lib/dashboard-mock-data'
+import type { DashboardStats as DashboardStatsData } from '@/lib/dashboard-data'
 
-export default function DashboardStats() {
+export default function DashboardStats({ stats }: { stats: DashboardStatsData }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       <DashboardStatCard
         icon={<BookingsIcon className="h-5 w-5" />}
         label="Bookings Today"
-        value={String(DASHBOARD_STATS.bookingsToday)}
+        value={String(stats.bookingsToday)}
       />
       <DashboardStatCard
         icon={<RevenueIcon className="h-5 w-5" />}
         label="Revenue This Month"
-        value={formatCentavos(DASHBOARD_STATS.revenueThisMonthCentavos)}
+        value={formatCentavos(stats.revenueThisMonthCentavos)}
       />
       <DashboardStatCard
         icon={<MembershipsIcon className="h-5 w-5" />}
         label="Pending Applications"
-        value={String(DASHBOARD_STATS.pendingApplications)}
+        value={String(stats.pendingApplications)}
       />
       <DashboardStatCard
         icon={<MembershipsIcon className="h-5 w-5" />}
         label="Active Memberships"
-        value={String(DASHBOARD_STATS.activeMemberships)}
+        value={String(stats.activeMemberships)}
       />
       <DashboardStatCard
         icon={<ResourcesIcon className="h-5 w-5" />}
         label="Resource Utilization"
-        value={`${DASHBOARD_STATS.resourceUtilizationPct}%`}
+        value={`${stats.resourceUtilizationPct}%`}
       />
     </div>
   )

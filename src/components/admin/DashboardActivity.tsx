@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { RECENT_BOOKINGS, RECENT_APPLICATIONS } from '@/lib/dashboard-mock-data'
+import type { RecentBooking, RecentApplication } from '@/lib/dashboard-data'
 
 function BookingStatusPill({ status }: { status: 'confirmed' | 'pending' | 'cancelled' }) {
   if (status === 'confirmed') {
@@ -23,13 +23,18 @@ function BookingStatusPill({ status }: { status: 'confirmed' | 'pending' | 'canc
   )
 }
 
-export default function DashboardActivity() {
+interface DashboardActivityProps {
+  recentBookings: RecentBooking[]
+  recentApplications: RecentApplication[]
+}
+
+export default function DashboardActivity({ recentBookings, recentApplications }: DashboardActivityProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-gray-900">Recent Bookings</h2>
         <ul className="flex flex-col gap-3">
-          {RECENT_BOOKINGS.map((booking) => (
+          {recentBookings.map((booking) => (
             <li key={booking.reference} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-mono text-xs text-gray-500">{booking.reference}</p>
@@ -47,11 +52,11 @@ export default function DashboardActivity() {
         <div className="mb-3 flex items-center gap-2">
           <h2 className="text-sm font-semibold text-gray-900">Pending Membership Applications</h2>
           <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-            {RECENT_APPLICATIONS.length}
+            {recentApplications.length}
           </span>
         </div>
         <ul className="flex flex-col gap-3">
-          {RECENT_APPLICATIONS.map((application) => (
+          {recentApplications.map((application) => (
             <li key={application.name} className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900">{application.name}</p>

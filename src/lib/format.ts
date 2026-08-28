@@ -22,6 +22,14 @@ export function formatBulletinDate(date: Date): string {
   }).format(date)
 }
 
+export function formatShortDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'Asia/Manila',
+  }).format(date)
+}
+
 export function formatBookingDateTime(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',

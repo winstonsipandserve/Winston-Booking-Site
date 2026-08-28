@@ -16,7 +16,7 @@ import {
   Legend,
 } from 'recharts'
 import { formatCentavos } from '@/lib/format'
-import { BOOKINGS_TREND, REVENUE_TREND, RESOURCE_BREAKDOWN } from '@/lib/dashboard-mock-data'
+import type { BookingsTrendPoint, RevenueTrendPoint, ResourceBreakdownEntry } from '@/lib/dashboard-data'
 
 const RESOURCE_COLORS = ['#111827', '#374151', '#6b7280', '#9ca3af', '#d1d5db']
 
@@ -27,14 +27,20 @@ const tooltipStyle = {
   fontSize: '0.75rem',
 }
 
-export default function DashboardCharts() {
+interface DashboardChartsProps {
+  bookingsTrend: BookingsTrendPoint[]
+  revenueTrend: RevenueTrendPoint[]
+  resourceBreakdown: ResourceBreakdownEntry[]
+}
+
+export default function DashboardCharts({ bookingsTrend, revenueTrend, resourceBreakdown }: DashboardChartsProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-gray-900">Bookings Trend (Last 14 Days)</h2>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={BOOKINGS_TREND}>
+            <BarChart data={bookingsTrend}>
               <CartesianGrid stroke="#e5e7eb" vertical={false} />
               <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} />
               <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={{ stroke: '#e5e7eb' }} tickLine={false} />
@@ -53,7 +59,7 @@ export default function DashboardCharts() {
           <h2 className="mb-3 text-sm font-semibold text-gray-900">Revenue Trend (Last 6 Months)</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={REVENUE_TREND}>
+              <AreaChart data={revenueTrend}>
                 <defs>
                   <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#111827" stopOpacity={0.8} />
@@ -86,14 +92,14 @@ export default function DashboardCharts() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={RESOURCE_BREAKDOWN}
+                    data={resourceBreakdown}
                     dataKey="count"
                     nameKey="resourceType"
                     innerRadius="55%"
                     outerRadius="80%"
                     paddingAngle={2}
                   >
-                    {RESOURCE_BREAKDOWN.map((entry, index) => (
+                    {resourceBreakdown.map((entry, index) => (
                       <Cell key={entry.resourceType} fill={RESOURCE_COLORS[index % RESOURCE_COLORS.length]} />
                     ))}
                   </Pie>
@@ -102,7 +108,7 @@ export default function DashboardCharts() {
               </ResponsiveContainer>
             </div>
             <ul className="flex shrink-0 flex-col gap-1.5">
-              {RESOURCE_BREAKDOWN.map((entry, index) => (
+              {resourceBreakdown.map((entry, index) => (
                 <li key={entry.resourceType} className="flex items-center gap-2 text-xs text-gray-600">
                   <span
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
