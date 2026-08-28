@@ -11,7 +11,7 @@ export default function MembershipReviewActions({ applicationId }: { application
   const [error, setError] = useState<string | null>(null)
 
   async function handleApprove() {
-    if (!window.confirm('Approve this membership application? This will activate the membership immediately.')) {
+    if (!window.confirm('Approve this membership application? The applicant will be emailed a payment link — membership activates once payment is confirmed.')) {
       return
     }
     setIsApproving(true)

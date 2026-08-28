@@ -103,7 +103,7 @@ Note: ball boy is a court-only add-on (courts have a ball boy; simulators do not
 - Application enters pending state — does NOT create a Membership record yet
 - Submitting an application always resolves to a `Customer` record (created or matched by email) — this happens regardless of approval outcome. A rejected application leaves that `Customer` record in place with no `Membership` attached; this is a normal state, not an error condition.
 - Admin manually reviews and approves or rejects
-- Membership record (with tier, credit balance, expiry) is created only on approval
+- Approval alone does NOT create a Membership — it only flips the application to `approved` and emails the applicant a payment link. The Membership record (with tier, credit balance, expiry) is created only once that tier-activation payment is confirmed via the PayMongo webhook (see CLAUDE.md → Architecture Decisions → Membership payment model).
 - Government ID images: private storage, admin-only access — do not expose to the customer-facing membership account UI
 - Rejection requires a reason (non-empty string, enforced server-side, trimmed before storage) — not optional. Application carries status/reviewedById/reviewedAt for the audit trail (built 2026-08-20, see PROGRESS.md).
 

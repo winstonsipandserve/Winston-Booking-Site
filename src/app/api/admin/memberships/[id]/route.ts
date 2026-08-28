@@ -1,9 +1,8 @@
 import { auth } from '../../../../../../auth'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
+import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
-import { generateActivationToken } from '@/lib/member-activation'
-import { sendActivationEmail, sendRejectionEmail } from '@/lib/resend'
+import { sendMembershipPaymentEmail, sendRejectionEmail } from '@/lib/resend'
 
 interface ReviewRequestBody {
   action?: unknown
@@ -68,58 +67,26 @@ export async function PATCH(
     return Response.json({ ...updated, rejectionEmailSent }, { status: 200 })
   }
 
-  const plan = MEMBERSHIP_TIER_PLANS[application.requestedTier]
-  const endDate = computeMembershipEndDate(reviewedAt, application.requestedTier)
-
-  const result = await prisma.$transaction(async (tx) => {
-    const updatedApplication = await tx.membershipApplication.update({
-      where: { id },
-      data: {
-        status: 'approved',
-        reviewedById: session.user.id,
-        reviewedAt,
-      },
-    })
-
-    const membership = await tx.membership.create({
-      data: {
-        customerId: application.customerId,
-        applicationId: application.id,
-        tier: application.requestedTier,
-        status: 'active',
-        startDate: reviewedAt,
-        endDate,
-        activationFeeCentavos: plan.activationFeeCentavos,
-        creditBalanceCentavos: plan.creditCentavos,
-      },
-    })
-
-    await tx.membershipCreditTransaction.create({
-      data: {
-        membershipId: membership.id,
-        amountCentavos: plan.creditCentavos,
-        reason: 'activation',
-      },
-    })
-
-    return { application: updatedApplication, membership }
+  const updatedApplication = await prisma.membershipApplication.update({
+    where: { id },
+    data: {
+      status: 'approved',
+      reviewedById: session.user.id,
+      reviewedAt,
+    },
   })
 
-  let activationEmailSent = false
-  if (!application.customer.passwordHash) {
-    const { rawToken, tokenHash, expiresAt } = generateActivationToken()
-    await prisma.memberActivationToken.create({
-      data: { customerId: application.customerId, tokenHash, expiresAt },
-    })
-    const activationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/activate?token=${rawToken}`
-    await sendActivationEmail({
-      to: application.customer.email,
-      name: application.customer.name,
-      activationUrl,
-      tierName: formatMembershipTier(application.requestedTier),
-    })
-    activationEmailSent = true
-  }
+  const tierName = formatMembershipTier(application.requestedTier)
+  const amountCentavos = MEMBERSHIP_TIER_PLANS[application.requestedTier].totalCentavos
+  const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/pay/${application.id}`
+  await sendMembershipPaymentEmail({
+    to: application.customer.email,
+    name: application.customer.name,
+    tierName,
+    amountCentavos,
+    paymentUrl,
+  })
+  const paymentEmailSent = true
 
-  return Response.json({ ...result, activationEmailSent }, { status: 200 })
+  return Response.json({ application: updatedApplication, paymentEmailSent }, { status: 200 })
 }

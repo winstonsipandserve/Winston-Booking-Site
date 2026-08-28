@@ -228,10 +228,34 @@ model MembershipApplication {
   reviewedBy      AdminUser?        @relation("ApplicationReviewedBy", fields: [reviewedById], references: [id])
   reviewedAt      DateTime?         @map("reviewed_at")
   membership      Membership?
+  payments        MembershipPayment[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("membership_applications")
+}
+
+// ── Membership payment (Decision: Membership payment ↔ Payment relationship) ─
+// Dedicated model, not a link off the booking-scoped Payment table — see CLAUDE.md.
+// No unique constraint on applicationId: multiple rows can exist per application over
+// time (one per checkout attempt); tier/amountCentavos are a priced snapshot at creation,
+// independent of future MEMBERSHIP_TIER_PLANS edits — same pattern as BookingAddOn.
+
+model MembershipPayment {
+  id            String                @id @default(cuid())
+  applicationId String                @map("application_id")
+  application   MembershipApplication @relation(fields: [applicationId], references: [id])
+  tier          MembershipTier
+  amountCentavos            Int           @map("amount_centavos")
+  status                    PaymentStatus @default(pending)
+  paymongoCheckoutSessionId String?       @unique @map("paymongo_checkout_session_id")
+  paymongoPaymentIntentId   String?       @unique @map("paymongo_payment_intent_id")
+  paidAt                    DateTime?     @map("paid_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([applicationId])
+  @@map("membership_payments")
 }
 
 // ── Membership & credit ledger (Decision: Membership credit ledger) ─

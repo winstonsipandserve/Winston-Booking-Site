@@ -25,6 +25,9 @@ interface SendActivationEmailInput {
   name: string
   activationUrl: string
   tierName?: string
+  amountPaidCentavos?: number
+  activationFeeCentavos?: number
+  creditBalanceCentavos?: number
 }
 
 export async function sendActivationEmail({
@@ -32,10 +35,33 @@ export async function sendActivationEmail({
   name,
   activationUrl,
   tierName,
+  amountPaidCentavos,
+  activationFeeCentavos,
+  creditBalanceCentavos,
 }: SendActivationEmailInput): Promise<void> {
   const membershipPhrase = tierName
     ? `Your ${tierName} membership is confirmed, and we can't wait to see you on the court.`
     : `We can't wait to see you on the court.`
+
+  const hasReceipt =
+    amountPaidCentavos !== undefined &&
+    activationFeeCentavos !== undefined &&
+    creditBalanceCentavos !== undefined
+
+  const receiptHtml = hasReceipt
+    ? `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos))}
+            ${ledgerRow('F&amp;B Credit', formatCentavos(creditBalanceCentavos))}
+            ${ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true)}
+          </table>
+        </td>
+      </tr>
+    </table>`
+    : ''
 
   // The CTA button is built inline (matching buildBrandedEmail's own ctaHtml markup,
   // including the Outlook border-radius caveat) instead of via buildBrandedEmail's ctaText/
@@ -49,7 +75,7 @@ export async function sendActivationEmail({
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Priority booking on courts &amp; simulators</p>
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Member rates on every session</p>
       <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Access to the Speakeasy Lounge</p>
-    </div>
+    </div>${receiptHtml}
     <p>Set your password below to activate your account and lock in these perks.</p>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 28px auto 0;">
       <tr>
@@ -93,6 +119,66 @@ export async function sendActivationEmail({
     }
   } catch (err) {
     console.error('Resend sendActivationEmail threw', err)
+  }
+}
+
+interface SendMembershipPaymentEmailInput {
+  to: string
+  name: string
+  tierName: string
+  amountCentavos: number
+  paymentUrl: string
+}
+
+export async function sendMembershipPaymentEmail({
+  to,
+  name,
+  tierName,
+  amountCentavos,
+  paymentUrl,
+}: SendMembershipPaymentEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>Hi ${name},</p>
+    <p>Great news — your ${tierName} membership application has been approved! There's just one step left before your membership is active.</p>
+    <div style="margin: 24px 0; padding: 20px 24px; background-color: ${ACCENT_LIGHT}; border-radius: 12px;">
+      <p style="margin: 0 0 4px; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Amount Due</p>
+      <p style="margin: 0; font-family: ${HEADING_FONT}; font-size: 28px; font-weight: 700; color: ${BRAND_DARK};">${formatCentavos(amountCentavos)}</p>
+      <p style="margin: 4px 0 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_MID};">${tierName} Membership</p>
+    </div>
+    <p>Complete your payment below to activate your membership and set your account password.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Complete your payment to activate your ${tierName} membership.`,
+    eyebrowText: "YOU'RE APPROVED",
+    headingText: `One Step Left, ${name}`,
+    bodyHtml,
+    ctaText: 'Complete Payment',
+    ctaUrl: paymentUrl,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: "You're Approved — Complete Your Winston Sip & Serve Membership Payment",
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendMembershipPaymentEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendMembershipPaymentEmail threw', err)
   }
 }
 

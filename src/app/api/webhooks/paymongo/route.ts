@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma'
 import { verifyPaymongoWebhookSignature } from '@/lib/paymongo'
-import { sendBookingConfirmationEmail } from '@/lib/resend'
+import { sendBookingConfirmationEmail, sendActivationEmail } from '@/lib/resend'
+import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
+import { formatMembershipTier } from '@/lib/format'
+import { generateActivationToken } from '@/lib/member-activation'
 
 const ADD_ON_EMAIL_LABELS: Record<string, string> = {
   ball_boy: 'Ball Boy',
@@ -16,7 +19,7 @@ interface PaymongoWebhookEvent {
           status?: unknown
           payment_intent_id?: unknown
           paid_at?: unknown
-          metadata?: { bookingId?: unknown }
+          metadata?: { bookingId?: unknown; membershipPaymentId?: unknown }
         }
       }
     }
@@ -46,6 +49,7 @@ export async function POST(request: Request) {
 
   const paymentAttributes = event?.data?.attributes?.data?.attributes
   const bookingId = paymentAttributes?.metadata?.bookingId
+  const membershipPaymentId = paymentAttributes?.metadata?.membershipPaymentId
   const paymentStatus = paymentAttributes?.status
   const paymentIntentIdRaw = paymentAttributes?.payment_intent_id
   const paymentIntentId = isNonEmptyString(paymentIntentIdRaw) ? paymentIntentIdRaw : null
@@ -57,8 +61,13 @@ export async function POST(request: Request) {
     return Response.json({ received: true }, { status: 200 })
   }
 
+  if (isNonEmptyString(membershipPaymentId) && !isNonEmptyString(bookingId)) {
+    return handleMembershipPaymentWebhook(membershipPaymentId, paymentIntentId, paidAt)
+  }
+
   if (!isNonEmptyString(bookingId)) {
-    return Response.json({ error: 'Missing bookingId in webhook payload metadata' }, { status: 400 })
+    console.error('Webhook payload metadata has neither bookingId nor membershipPaymentId', paymentAttributes?.metadata)
+    return Response.json({ received: true }, { status: 200 })
   }
 
   const booking = await prisma.booking.findUnique({
@@ -155,4 +164,86 @@ export async function POST(request: Request) {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+async function handleMembershipPaymentWebhook(
+  membershipPaymentId: string,
+  paymentIntentId: string | null,
+  paidAt: Date,
+): Promise<Response> {
+  const membershipPayment = await prisma.membershipPayment.findUnique({
+    where: { id: membershipPaymentId },
+    include: { application: { include: { customer: true } } },
+    relationLoadStrategy: 'query',
+  })
+
+  if (!membershipPayment) {
+    console.error('Webhook received for unknown membershipPaymentId', membershipPaymentId)
+    return Response.json({ received: true }, { status: 200 })
+  }
+
+  if (membershipPayment.status === 'paid') {
+    return Response.json({ received: true }, { status: 200 })
+  }
+
+  const { application } = membershipPayment
+  const plan = MEMBERSHIP_TIER_PLANS[application.requestedTier]
+  const startDate = paidAt
+  const endDate = computeMembershipEndDate(startDate, application.requestedTier)
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.membershipPayment.update({
+        where: { id: membershipPayment.id },
+        data: {
+          status: 'paid',
+          paidAt,
+          paymongoPaymentIntentId: paymentIntentId,
+        },
+      })
+
+      const membership = await tx.membership.create({
+        data: {
+          customerId: application.customerId,
+          applicationId: application.id,
+          tier: application.requestedTier,
+          status: 'active',
+          startDate,
+          endDate,
+          activationFeeCentavos: plan.activationFeeCentavos,
+          creditBalanceCentavos: plan.creditCentavos,
+        },
+      })
+
+      await tx.membershipCreditTransaction.create({
+        data: {
+          membershipId: membership.id,
+          amountCentavos: plan.creditCentavos,
+          reason: 'activation',
+        },
+      })
+    })
+  } catch (err) {
+    console.error('Failed to process PayMongo membership payment webhook', membershipPaymentId, err)
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
+
+  if (!application.customer.passwordHash) {
+    const { rawToken, tokenHash, expiresAt } = generateActivationToken()
+    await prisma.memberActivationToken.create({
+      data: { customerId: application.customerId, tokenHash, expiresAt },
+    })
+    const activationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/activate?token=${rawToken}`
+    await sendActivationEmail({
+      to: application.customer.email,
+      name: application.customer.name,
+      activationUrl,
+      tierName: formatMembershipTier(application.requestedTier),
+      amountPaidCentavos: plan.totalCentavos,
+      activationFeeCentavos: plan.activationFeeCentavos,
+      creditBalanceCentavos: plan.creditCentavos,
+    })
+  }
+
+  return Response.json({ received: true }, { status: 200 })
 }
