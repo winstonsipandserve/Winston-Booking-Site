@@ -1,5 +1,4 @@
-import { signOut } from '../../../auth'
-import { SignOutIcon } from '@/components/admin/AdminIcons'
+import SignOutButton from '@/components/admin/SignOutButton'
 
 export default function AdminTopbar({ email }: { email: string }) {
   const initials = email.slice(0, 2).toUpperCase() || '?'
@@ -14,20 +13,7 @@ export default function AdminTopbar({ email }: { email: string }) {
         >
           {initials}
         </div>
-        <form
-          action={async () => {
-            'use server'
-            await signOut({ redirectTo: '/admin/login' })
-          }}
-        >
-          <button
-            type="submit"
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
-          >
-            <SignOutIcon className="h-4 w-4" />
-            Sign Out
-          </button>
-        </form>
+        <SignOutButton />
       </div>
     </header>
   )
