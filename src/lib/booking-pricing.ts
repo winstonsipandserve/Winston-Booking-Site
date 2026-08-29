@@ -24,6 +24,7 @@ export interface PriceBookingResult {
   totalAmountCentavos: number
   addOns: SelectedAddOn[]
   addOnsTotalCentavos: number
+  guestFeeWaived: boolean
 }
 
 export interface PriceBookingError {
@@ -66,12 +67,16 @@ export async function priceBooking(
   }
 
   const isNonMemberCourt = isCourt && rateTier === 'non_member'
+  let guestFeeWaived = false
   if (guestCount > 0 && !isNonMemberCourt) {
-    return { error: 'guestCount only applies to non-member court bookings', status: 400 }
+    if (!isMember) {
+      return { error: 'guestCount only applies to non-member court bookings', status: 400 }
+    }
+    guestFeeWaived = true
   }
 
   let guestFeeCentavos = 0
-  if (guestCount > 0) {
+  if (guestCount > 0 && !guestFeeWaived) {
     const guestFeeRule = await prisma.guestFeeRule.findFirst()
     if (!guestFeeRule) {
       console.error('GuestFeeRule table is empty — cannot price guest fee')
@@ -139,5 +144,5 @@ export async function priceBooking(
 
   const addOnsTotalCentavos = selectedAddOns.reduce((sum, addOn) => sum + addOn.amountCentavos, 0)
 
-  return { totalAmountCentavos, addOns: selectedAddOns, addOnsTotalCentavos }
+  return { totalAmountCentavos, addOns: selectedAddOns, addOnsTotalCentavos, guestFeeWaived }
 }

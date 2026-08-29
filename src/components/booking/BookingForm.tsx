@@ -171,6 +171,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   const [priceUpdate, setPriceUpdate] = useState<{
     originalCentavos: number
     finalCentavos: number
+    guestFeeWaived: boolean
   } | null>(null)
 
   const selectedResourceType = useMemo(
@@ -414,12 +415,20 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
       })
 
       if (res.status === 200) {
-        const json: { totalAmountCentavos: number; addOnsTotalCentavos: number; isMember: boolean } =
-          await res.json()
+        const json: {
+          totalAmountCentavos: number
+          addOnsTotalCentavos: number
+          isMember: boolean
+          guestFeeWaived: boolean
+        } = await res.json()
         setCustomerAttached(true)
         const finalTotal = json.totalAmountCentavos + json.addOnsTotalCentavos
         if (createdTotalCentavos !== null && finalTotal !== createdTotalCentavos) {
-          setPriceUpdate({ originalCentavos: createdTotalCentavos, finalCentavos: finalTotal })
+          setPriceUpdate({
+            originalCentavos: createdTotalCentavos,
+            finalCentavos: finalTotal,
+            guestFeeWaived: json.guestFeeWaived,
+          })
         } else {
           await startCheckout(bookingId)
         }

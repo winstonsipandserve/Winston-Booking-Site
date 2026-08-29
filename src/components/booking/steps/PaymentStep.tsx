@@ -4,6 +4,7 @@ import BookingSummary from '../BookingSummary'
 interface PriceUpdate {
   originalCentavos: number
   finalCentavos: number
+  guestFeeWaived: boolean
 }
 
 interface KnownCustomer {
@@ -170,8 +171,19 @@ export default function PaymentStep({
 
       {priceUpdate && (
         <div className="rounded-xl border border-accent-primary/30 bg-accent-primary/5 px-4 py-3 text-sm font-medium text-brand-dark">
-          Your final price is {formatCentavos(priceUpdate.finalCentavos)} (was{' '}
-          {formatCentavos(priceUpdate.originalCentavos)} for non-members) — member rate applied.
+          {priceUpdate.guestFeeWaived ? (
+            <>
+              Your final price is {formatCentavos(priceUpdate.finalCentavos)} (was{' '}
+              {formatCentavos(priceUpdate.originalCentavos)} for non-members, including guest fee)
+              — member rate applied, guest fee waived.
+            </>
+          ) : (
+            <>
+              Your final price is {formatCentavos(priceUpdate.finalCentavos)} (was{' '}
+              {formatCentavos(priceUpdate.originalCentavos)} for non-members) — member rate
+              applied.
+            </>
+          )}
         </div>
       )}
 
