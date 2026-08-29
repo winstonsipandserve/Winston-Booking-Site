@@ -1,6 +1,7 @@
 import { AuthError } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { signIn } from '../../../../auth'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 async function authenticate(formData: FormData) {
   'use server'
@@ -42,16 +43,7 @@ export default async function AdminLoginPage({
               className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
             />
           </label>
-          <label htmlFor="password" className="flex flex-col gap-1 text-sm text-gray-900">
-            Password
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-            />
-          </label>
+          <PasswordInput id="password" name="password" label="Password" required autoComplete="current-password" />
           <button
             type="submit"
             className="mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
