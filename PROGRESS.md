@@ -220,6 +220,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - Vercel Authentication is still OFF project-wide — a custom domain (`winstonsipandserve.club`, added 2026-08-29) now exists to support the Standard-Protection exemption path, but the actual decision (re-enable Standard Protection project-wide vs. choose another scheme) is still not made — revisit before real go-live.
 - Confirm Production's pinned "Production Overrides" (Framework Preset, etc.) actually get corrected as part of the eventual staging → main promotion — don't assume today's Project Settings fix alone reaches Production. The new custom domain already sits connected to Production and currently 404s for exactly this reason — confirmed 2026-08-29.
 - `[www.winstonsipandserve.club](https://www.winstonsipandserve.club)` (no-redirect fallback) and a `staging` subdomain (e.g. `staging.winstonsipandserve.club` → `staging` branch) were both considered on 2026-08-29 and deliberately deferred — no urgency, revisit if either becomes useful (e.g. routine staging review, or nearer the actual `main` promotion).
+- Every `/admin/*` page pays a measured ~500–600ms per-request connection-priming floor under transaction-mode pooling (see CLAUDE.md's Local-dev database connection bullet) — investigating whether Prisma Accelerate, a different pooling strategy, or Vercel Fluid Compute can reduce this project-wide. Not yet decided or fixed.
 
 ---
 
