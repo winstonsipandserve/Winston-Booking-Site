@@ -26,22 +26,40 @@ export default async function AdminLoginPage({
   const { error } = await searchParams
 
   return (
-    <div style={{ maxWidth: 360, margin: '4rem auto', fontFamily: 'sans-serif' }}>
-      <h1>Admin Login</h1>
-      {error && <p style={{ color: 'red' }}>Invalid email or password.</p>}
-      <form action={authenticate}>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="email">Email</label>
-          <br />
-          <input id="email" name="email" type="email" required style={{ width: '100%' }} />
-        </div>
-        <div style={{ marginBottom: '1rem' }}>
-          <label htmlFor="password">Password</label>
-          <br />
-          <input id="password" name="password" type="password" required style={{ width: '100%' }} />
-        </div>
-        <button type="submit">Sign In</button>
-      </form>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 font-sans">
+      <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Winston Sip &amp; Serve</p>
+        <h1 className="mt-1 text-xl font-semibold text-gray-900">Admin Login</h1>
+        {error && <p className="mt-4 text-sm text-red-600">Invalid email or password.</p>}
+        <form action={authenticate} className="mt-6 flex flex-col gap-4">
+          <label htmlFor="email" className="flex flex-col gap-1 text-sm text-gray-900">
+            Email
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            />
+          </label>
+          <label htmlFor="password" className="flex flex-col gap-1 text-sm text-gray-900">
+            Password
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            />
+          </label>
+          <button
+            type="submit"
+            className="mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800"
+          >
+            Sign In
+          </button>
+        </form>
+      </div>
     </div>
   )
 }
