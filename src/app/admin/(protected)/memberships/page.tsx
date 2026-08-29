@@ -1,18 +1,28 @@
 import Link from 'next/link'
-import type { ApplicationStatus, Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { formatMembershipTier } from '@/lib/format'
 import {
   getMembershipDisplayStatus,
   MEMBERSHIP_DISPLAY_STATUS_LABELS,
   MEMBERSHIP_DISPLAY_STATUS_CLASSES,
+  type MembershipDisplayStatus,
 } from '@/lib/membership-display-status'
 import { getLatestMembershipsByCustomerIds } from '@/lib/membership-latest'
 
 const PAGE_SIZE = 25
 
-function isApplicationStatus(value: string): value is ApplicationStatus {
-  return value === 'pending' || value === 'approved' || value === 'rejected'
+const VALID_STATUS_FILTER_VALUES = new Set([
+  'all',
+  'pending',
+  'awaiting_payment',
+  'active',
+  'expired',
+  'rejected',
+])
+
+function isMembershipDisplayStatusFilter(value: string): value is MembershipDisplayStatus | 'all' {
+  return VALID_STATUS_FILTER_VALUES.has(value)
 }
 
 function formatDateTime(date: Date) {
@@ -23,12 +33,18 @@ function formatDateTime(date: Date) {
   })
 }
 
-const STATUS_FILTERS: { label: string; value: ApplicationStatus | 'all' }[] = [
+const STATUS_FILTERS: { label: string; value: MembershipDisplayStatus | 'all' }[] = [
   { label: 'All', value: 'all' },
   { label: 'Pending', value: 'pending' },
-  { label: 'Approved', value: 'approved' },
+  { label: 'Awaiting Payment', value: 'awaiting_payment' },
+  { label: 'Active', value: 'active' },
+  { label: 'Expired', value: 'expired' },
   { label: 'Rejected', value: 'rejected' },
 ]
+
+type ApplicationWithRelations = Prisma.MembershipApplicationGetPayload<{
+  include: { customer: true; reviewedBy: true }
+}>
 
 export default async function AdminMembershipsPage({
   searchParams,
@@ -38,30 +54,59 @@ export default async function AdminMembershipsPage({
   console.time('memberships:pageTotal')
   const { status: statusParam, page: pageParam } = await searchParams
 
-  const status = statusParam && isApplicationStatus(statusParam) ? statusParam : undefined
+  const filter = statusParam && isMembershipDisplayStatusFilter(statusParam) ? statusParam : 'all'
   const page = Math.max(1, Number(pageParam) || 1)
 
-  const where: Prisma.MembershipApplicationWhereInput = {}
-  if (status) {
-    where.status = status
-  }
+  let applications: ApplicationWithRelations[]
+  let totalCount: number
+  let latestMembershipsByCustomer: Map<string, { endDate: Date }>
 
   console.time('memberships:promiseAll')
-  const [applications, totalCount] = await Promise.all([
-    prisma.membershipApplication.findMany({
-      where,
+  if (filter === 'all' || filter === 'pending' || filter === 'rejected') {
+    const where: Prisma.MembershipApplicationWhereInput = {}
+    if (filter !== 'all') {
+      where.status = filter
+    }
+
+    const [dbApplications, dbTotalCount] = await Promise.all([
+      prisma.membershipApplication.findMany({
+        where,
+        include: { customer: true, reviewedBy: true },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        relationLoadStrategy: 'join',
+      }),
+      prisma.membershipApplication.count({ where }),
+    ])
+    applications = dbApplications
+    totalCount = dbTotalCount
+
+    const customerIds = [...new Set(applications.map((application) => application.customerId))]
+    latestMembershipsByCustomer = await getLatestMembershipsByCustomerIds(customerIds)
+  } else {
+    const approvedApplications = await prisma.membershipApplication.findMany({
+      where: { status: 'approved' },
       include: { customer: true, reviewedBy: true },
       orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
       relationLoadStrategy: 'join',
-    }),
-    prisma.membershipApplication.count({ where }),
-  ])
-  console.timeEnd('memberships:promiseAll')
+    })
 
-  const customerIds = [...new Set(applications.map((application) => application.customerId))]
-  const latestMembershipsByCustomer = await getLatestMembershipsByCustomerIds(customerIds)
+    const customerIds = [...new Set(approvedApplications.map((application) => application.customerId))]
+    latestMembershipsByCustomer = await getLatestMembershipsByCustomerIds(customerIds)
+
+    const filteredApplications = approvedApplications.filter((application) => {
+      const displayStatus = getMembershipDisplayStatus({
+        status: application.status,
+        latestMembership: latestMembershipsByCustomer.get(application.customerId) ?? null,
+      })
+      return displayStatus === filter
+    })
+
+    totalCount = filteredApplications.length
+    applications = filteredApplications.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  }
+  console.timeEnd('memberships:promiseAll')
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
@@ -72,7 +117,7 @@ export default async function AdminMembershipsPage({
     return `/admin/memberships?${params.toString()}`
   }
 
-  function filterHref(value: ApplicationStatus | 'all') {
+  function filterHref(value: MembershipDisplayStatus | 'all') {
     const params = new URLSearchParams()
     if (value !== 'all') params.set('status', value)
     return `/admin/memberships?${params.toString()}`
@@ -85,19 +130,19 @@ export default async function AdminMembershipsPage({
       <h1 className="text-2xl font-semibold text-gray-900">Memberships</h1>
 
       <div className="flex items-center gap-2">
-        {STATUS_FILTERS.map((filter) => {
-          const isActive = (status ?? 'all') === filter.value
+        {STATUS_FILTERS.map((option) => {
+          const isActive = filter === option.value
           return (
             <Link
-              key={filter.value}
-              href={filterHref(filter.value)}
+              key={option.value}
+              href={filterHref(option.value)}
               className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
                 isActive
                   ? 'border-gray-900 bg-gray-900 text-white'
                   : 'border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
             >
-              {filter.label}
+              {option.label}
             </Link>
           )
         })}
