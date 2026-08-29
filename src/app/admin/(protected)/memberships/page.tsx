@@ -8,7 +8,6 @@ import {
   MEMBERSHIP_DISPLAY_STATUS_CLASSES,
   type MembershipDisplayStatus,
 } from '@/lib/membership-display-status'
-import { getLatestMembershipsByCustomerIds } from '@/lib/membership-latest'
 
 const PAGE_SIZE = 25
 
@@ -43,7 +42,10 @@ const STATUS_FILTERS: { label: string; value: MembershipDisplayStatus | 'all' }[
 ]
 
 type ApplicationWithRelations = Prisma.MembershipApplicationGetPayload<{
-  include: { customer: true; reviewedBy: true }
+  include: {
+    customer: { include: { memberships: true } }
+    reviewedBy: true
+  }
 }>
 
 export default async function AdminMembershipsPage({
@@ -71,7 +73,17 @@ export default async function AdminMembershipsPage({
     const [dbApplications, dbTotalCount] = await Promise.all([
       prisma.membershipApplication.findMany({
         where,
-        include: { customer: true, reviewedBy: true },
+        include: {
+          customer: {
+            include: {
+              memberships: {
+                orderBy: { startDate: 'desc' },
+                take: 1,
+              },
+            },
+          },
+          reviewedBy: true,
+        },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
@@ -82,18 +94,40 @@ export default async function AdminMembershipsPage({
     applications = dbApplications
     totalCount = dbTotalCount
 
-    const customerIds = [...new Set(applications.map((application) => application.customerId))]
-    latestMembershipsByCustomer = await getLatestMembershipsByCustomerIds(customerIds)
+    latestMembershipsByCustomer = new Map(
+      dbApplications
+        .filter((application) => application.customer.memberships.length > 0)
+        .map((application) => [
+          application.customerId,
+          { endDate: application.customer.memberships[0].endDate },
+        ]),
+    )
   } else {
     const approvedApplications = await prisma.membershipApplication.findMany({
       where: { status: 'approved' },
-      include: { customer: true, reviewedBy: true },
+      include: {
+        customer: {
+          include: {
+            memberships: {
+              orderBy: { startDate: 'desc' },
+              take: 1,
+            },
+          },
+        },
+        reviewedBy: true,
+      },
       orderBy: { createdAt: 'desc' },
       relationLoadStrategy: 'join',
     })
 
-    const customerIds = [...new Set(approvedApplications.map((application) => application.customerId))]
-    latestMembershipsByCustomer = await getLatestMembershipsByCustomerIds(customerIds)
+    latestMembershipsByCustomer = new Map(
+      approvedApplications
+        .filter((application) => application.customer.memberships.length > 0)
+        .map((application) => [
+          application.customerId,
+          { endDate: application.customer.memberships[0].endDate },
+        ]),
+    )
 
     const filteredApplications = approvedApplications.filter((application) => {
       const displayStatus = getMembershipDisplayStatus({
