@@ -103,7 +103,7 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
         {item.ctaLabel && item.ctaUrl && (
           <a
             href={item.ctaUrl}
-            className="mt-4 inline-flex items-center justify-center gap-2 self-start rounded-lg bg-accent-primary px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            className="mt-4 inline-flex items-center justify-center gap-2 self-start rounded-none bg-accent-primary px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
           >
             {item.ctaLabel}
           </a>

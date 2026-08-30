@@ -28,7 +28,7 @@ export default function SocialIcons({ variant = 'dark', className = '' }: Social
           key={icon.label}
           href="#"
           aria-label={icon.label}
-          className={`flex h-8 w-8 items-center justify-center rounded-full border transition-colors ${
+          className={`flex h-8 w-8 items-center justify-center rounded-none border transition-colors ${
             isLight
               ? 'border-white/30 text-white hover:bg-white/10'
               : 'border-brand-mid text-brand-dark hover:bg-accent-light'

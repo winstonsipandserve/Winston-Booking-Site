@@ -62,7 +62,7 @@ export default function ReviewStep({
           type="button"
           onClick={onBack}
           disabled={submitting}
-          className="flex-1 rounded-full border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark disabled:opacity-50"
+          className="flex-1 rounded-none border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark disabled:opacity-50"
         >
           Back
         </button>
@@ -70,7 +70,7 @@ export default function ReviewStep({
           type="button"
           onClick={onConfirmBooking}
           disabled={submitting}
-          className="flex-1 rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+          className="flex-1 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
         >
           {submitting ? 'Creating your booking…' : 'Confirm Booking'}
         </button>

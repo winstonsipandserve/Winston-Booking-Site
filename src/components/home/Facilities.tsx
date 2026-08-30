@@ -4,14 +4,17 @@ import Reveal from '@/components/ui/Reveal'
 interface FacilityTile {
   label: string
   large?: boolean
+  imageSeed: string
 }
 
+// TEMPORARY: Picsum stock placeholders standing in for real venue photography — swap imageSeed/src per
+// facility for real photos when available, structure stays the same.
 const FACILITIES: FacilityTile[] = [
-  { label: 'Tennis Courts', large: true },
-  { label: 'Pickleball Courts' },
-  { label: 'Golf Simulator' },
-  { label: 'Café & Bar' },
-  { label: 'Speakeasy Lounge' },
+  { label: 'Tennis Courts', large: true, imageSeed: 'winston-tennis-courts' },
+  { label: 'Pickleball Courts', imageSeed: 'winston-pickleball-courts' },
+  { label: 'Golf Simulator', imageSeed: 'winston-golf-simulator' },
+  { label: 'Café & Bar', imageSeed: 'winston-cafe-bar' },
+  { label: 'Speakeasy Lounge', imageSeed: 'winston-speakeasy-lounge' },
 ]
 
 const objectPositions = ['center', 'top', '20% 70%', 'right', 'bottom']
@@ -44,9 +47,9 @@ export default function Facilities() {
                   : 'h-40 sm:h-48 md:h-full'
               }
             >
-              <div className="group relative h-full w-full overflow-hidden rounded-2xl">
+              <div className="group relative h-full w-full overflow-hidden rounded-none">
                 <Image
-                  src="/images/placeholder.jpg"
+                  src={`https://picsum.photos/seed/${facility.imageSeed}/800/800`}
                   alt={facility.label}
                   fill
                   className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"

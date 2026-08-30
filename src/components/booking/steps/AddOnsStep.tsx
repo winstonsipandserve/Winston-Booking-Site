@@ -76,7 +76,7 @@ export default function AddOnsStep({
               aria-label="Decrease guest count"
               onClick={() => onGuestCountChange(Math.max(0, guestCount - 1))}
               disabled={guestCount <= 0}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-40"
             >
               −
             </button>
@@ -85,7 +85,7 @@ export default function AddOnsStep({
               type="button"
               aria-label="Increase guest count"
               onClick={() => onGuestCountChange(guestCount + 1)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark"
             >
               +
             </button>
@@ -103,7 +103,7 @@ export default function AddOnsStep({
             type="button"
             onClick={() => onBallBoyChange(!ballBoy)}
             aria-pressed={ballBoy}
-            className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+            className={`flex w-full items-center gap-3 rounded-none border px-4 py-3 text-left transition-colors ${
               ballBoy ? 'border-accent-primary bg-accent-primary/5' : 'border-brand-dark/10'
             }`}
           >
@@ -139,7 +139,7 @@ export default function AddOnsStep({
               type="button"
               onClick={() => onCoachingChange(!coaching)}
               aria-pressed={coaching}
-              className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+              className={`flex w-full items-center gap-3 rounded-none border px-4 py-3 text-left transition-colors ${
                 coaching ? 'border-accent-primary bg-accent-primary/5' : 'border-brand-dark/10'
               }`}
             >
@@ -178,7 +178,7 @@ export default function AddOnsStep({
                   type="button"
                   aria-pressed={coachingPaxCount === 1}
                   onClick={() => onCoachingPaxCountChange(1)}
-                  className={`rounded-full border px-4 py-2 text-sm font-medium text-brand-dark transition-colors ${
+                  className={`rounded-none border px-4 py-2 text-sm font-medium text-brand-dark transition-colors ${
                     coachingPaxCount === 1
                       ? 'border-accent-primary bg-accent-primary/5'
                       : 'border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
@@ -190,7 +190,7 @@ export default function AddOnsStep({
                   type="button"
                   aria-pressed={coachingPaxCount === 2}
                   onClick={() => onCoachingPaxCountChange(2)}
-                  className={`rounded-full border px-4 py-2 text-sm font-medium text-brand-dark transition-colors ${
+                  className={`rounded-none border px-4 py-2 text-sm font-medium text-brand-dark transition-colors ${
                     coachingPaxCount === 2
                       ? 'border-accent-primary bg-accent-primary/5'
                       : 'border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'

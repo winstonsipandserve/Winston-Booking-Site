@@ -19,14 +19,14 @@ export default function CtaBanner() {
           <div className="mt-10 flex flex-col gap-4 sm:flex-row">
             <Link
               href="/book"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="inline-flex items-center justify-center gap-2 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               Book Now
               <span aria-hidden="true">→</span>
             </Link>
             <Link
               href="/membership"
-              className="inline-flex items-center justify-center rounded-lg border border-brand-light px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="inline-flex items-center justify-center rounded-none border border-brand-light px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               Explore Membership
             </Link>

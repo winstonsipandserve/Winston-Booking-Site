@@ -81,7 +81,7 @@ export default function AnnouncementGate({ notices, onContinue }: AnnouncementGa
         <button
           type="button"
           onClick={onContinue}
-          className="self-center rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+          className="self-center rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
         >
           Continue to Booking
         </button>

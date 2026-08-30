@@ -75,7 +75,7 @@ export default function RecentBookingsList({ bookings }: { bookings: BookingList
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-lg border border-brand-dark/20 px-4 py-2 text-sm font-medium text-brand-dark/70 transition-colors duration-300 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="rounded-none border border-brand-dark/20 px-4 py-2 text-sm font-medium text-brand-dark/70 transition-colors duration-300 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               Previous
             </button>
@@ -86,7 +86,7 @@ export default function RecentBookingsList({ bookings }: { bookings: BookingList
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-lg border border-brand-dark/20 px-4 py-2 text-sm font-medium text-brand-dark/70 transition-colors duration-300 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="rounded-none border border-brand-dark/20 px-4 py-2 text-sm font-medium text-brand-dark/70 transition-colors duration-300 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               Next
             </button>

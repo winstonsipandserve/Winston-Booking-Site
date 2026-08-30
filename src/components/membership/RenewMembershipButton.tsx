@@ -45,7 +45,7 @@ export default function RenewMembershipButton({ tier }: RenewMembershipButtonPro
         type="button"
         onClick={handleClick}
         disabled={submitting}
-        className="w-full rounded-full bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50"
+        className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50"
       >
         {submitting ? 'Redirecting to payment…' : `Renew — ${formatMembershipTier(tier)}`}
       </button>

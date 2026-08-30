@@ -97,14 +97,14 @@ export default function Navbar() {
             <Link
               href="/account"
               aria-label="My Account"
-              className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-primary/10 text-sm font-bold text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="flex h-10 w-10 items-center justify-center rounded-none bg-accent-primary/10 text-sm font-bold text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               {getInitials(session?.user?.name ?? '')}
             </Link>
           ) : (
             <Link
               href="/book"
-              className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="inline-flex items-center gap-2 rounded-none bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               Book a Court
               <span aria-hidden="true">→</span>
@@ -114,7 +114,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={handleSignOut}
-              className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
+              className={`rounded-none border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
                 scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
               }`}
             >
@@ -123,7 +123,7 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className={`rounded-lg border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
+              className={`rounded-none border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
                 scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
               }`}
             >
@@ -137,7 +137,7 @@ export default function Navbar() {
           aria-label="Toggle menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-brand-dark md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-none text-brand-dark md:hidden"
         >
           <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-current stroke-2">
             {menuOpen ? (
@@ -177,7 +177,7 @@ export default function Navbar() {
               <Link
                 href="/account"
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary/10 px-5 py-2.5 text-sm font-medium text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+                className="flex w-full items-center justify-center gap-2 rounded-none bg-accent-primary/10 px-5 py-2.5 text-sm font-medium text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-primary/10 text-xs font-bold text-accent-primary">
                   {getInitials(session?.user?.name ?? '')}
@@ -188,7 +188,7 @@ export default function Navbar() {
               <Link
                 href="/book"
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+                className="flex w-full items-center justify-center gap-2 rounded-none bg-accent-primary px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
               >
                 Book a Court
                 <span aria-hidden="true">→</span>
@@ -201,7 +201,7 @@ export default function Navbar() {
                   setMenuOpen(false)
                   handleSignOut()
                 }}
-                className="block w-full rounded-lg border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+                className="block w-full rounded-none border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
               >
                 Sign Out
               </button>
@@ -209,7 +209,7 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="block w-full rounded-lg border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+                className="block w-full rounded-none border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
               >
                 Sign In
               </Link>

@@ -238,7 +238,7 @@ export default function MembershipApplicationForm() {
             accept={ACCEPTED_FILE_TYPES}
             disabled={submitting}
             onChange={handleFileChange('Government ID (front)', setGovIdFront)}
-            className="text-sm text-brand-dark file:mr-3 file:rounded-full file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
+            className="text-sm text-brand-dark file:mr-3 file:rounded-none file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
           />
         </div>
 
@@ -253,7 +253,7 @@ export default function MembershipApplicationForm() {
             accept={ACCEPTED_FILE_TYPES}
             disabled={submitting}
             onChange={handleFileChange('Government ID (back)', setGovIdBack)}
-            className="text-sm text-brand-dark file:mr-3 file:rounded-full file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
+            className="text-sm text-brand-dark file:mr-3 file:rounded-none file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
           />
         </div>
 
@@ -268,7 +268,7 @@ export default function MembershipApplicationForm() {
             accept={ACCEPTED_FILE_TYPES}
             disabled={submitting}
             onChange={handleFileChange('Selfie with ID', setGovIdSelfie)}
-            className="text-sm text-brand-dark file:mr-3 file:rounded-full file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
+            className="text-sm text-brand-dark file:mr-3 file:rounded-none file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
           />
         </div>
       </div>
@@ -279,7 +279,7 @@ export default function MembershipApplicationForm() {
       <button
         type="submit"
         disabled={!isValid || submitting}
-        className="w-full rounded-full bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+        className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
       >
         {submitting ? 'Submitting…' : 'Submit Application'}
       </button>

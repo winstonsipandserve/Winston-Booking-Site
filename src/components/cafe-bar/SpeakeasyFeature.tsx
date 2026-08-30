@@ -72,7 +72,7 @@ export default function SpeakeasyFeature() {
 
           <Link
             href="/membership"
-            className="mt-8 inline-flex items-center gap-2 rounded-lg bg-accent-primary px-8 py-3 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+            className="mt-8 inline-flex items-center gap-2 rounded-none bg-accent-primary px-8 py-3 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
           >
             Explore Membership
             <span aria-hidden="true">→</span>

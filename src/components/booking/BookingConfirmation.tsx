@@ -114,7 +114,7 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
 
       <Link
         href="/"
-        className="rounded-full bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+        className="rounded-none bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
       >
         Back to Home
       </Link>

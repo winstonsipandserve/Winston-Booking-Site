@@ -18,7 +18,7 @@ interface ApplicationStatusResult {
 type FetchResult = ApplicationStatusResult | 'not_found' | 'error'
 
 const CHECK_AGAIN_BUTTON_CLASSES =
-  'rounded-full bg-accent-primary px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50'
+  'rounded-none bg-accent-primary px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50'
 
 const BACK_HOME_LINK_CLASSES =
   'text-accent-primary underline underline-offset-2 hover:text-accent-dark'

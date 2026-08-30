@@ -19,7 +19,7 @@ export default function ApplyCta() {
           <div className="mt-10">
             <Link
               href="/membership/apply"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="inline-flex items-center justify-center gap-2 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
             >
               Apply for Membership
             </Link>
