@@ -21,7 +21,7 @@ export default function ModeSwitch({ mode, onModeChange }: ModeSwitchProps) {
         aria-pressed={mode === 'bar'}
         onClick={() => onModeChange('bar')}
         className={`rounded-none px-6 py-2 text-sm font-medium uppercase tracking-wide transition-colors duration-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
-          mode === 'bar' ? 'bg-accent-primary text-brand-light' : 'text-brand-light/70 hover:text-brand-light'
+          mode === 'bar' ? 'bg-accent-teal text-brand-light' : 'text-brand-light/70 hover:text-brand-light'
         }`}
       >
         Bar
