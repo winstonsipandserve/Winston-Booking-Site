@@ -1,15 +1,19 @@
+import Image from 'next/image'
 import Link from 'next/link'
-import Sunburst from '@/components/ui/Sunburst'
 
 export default function CtaBanner() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-brand-dark to-brand-mid py-24 md:py-28">
-      <Sunburst
-        lines={72}
-        className="pointer-events-none absolute -right-56 top-1/2 h-[700px] w-[700px] -translate-y-1/2 text-accent-light/[0.16] md:-right-64 md:h-[1000px] md:w-[1000px]"
+    <section className="relative overflow-hidden bg-brand-dark py-24 md:py-28">
+      <Image
+        src="/images/cta-background.jpg"
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover"
       />
+      <div className="pointer-events-none absolute inset-0 bg-brand-dark/70" />
 
-      <div className="relative mx-auto max-w-6xl px-6 md:px-10">
+      <div className="relative z-10 mx-auto max-w-6xl px-6 md:px-10">
         <div className="max-w-xl">
           <h2 className="font-serif text-4xl text-brand-light md:text-5xl">Ready to Play?</h2>
           <p className="mt-4 max-w-md text-brand-light/85">
