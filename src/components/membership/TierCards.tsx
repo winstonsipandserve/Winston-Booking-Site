@@ -78,7 +78,7 @@ export default function TierCards() {
                   <ul className="mt-6 flex flex-col gap-3">
                     {PERKS.map((perk) => (
                       <li key={perk} className="flex items-start gap-3 text-sm text-neutral-700">
-                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-primary/10 text-accent-primary">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-teal/10 text-accent-teal">
                           <CheckIcon className="h-3 w-3" />
                         </span>
                         <span>{perk}</span>
