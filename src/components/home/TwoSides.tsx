@@ -21,7 +21,7 @@ export default function TwoSides() {
             </p>
             <Link
               href="/book"
-              className="mt-6 text-sm font-medium uppercase tracking-wide text-accent-primary transition-colors hover:text-brand-dark"
+              className="mt-6 rounded-none bg-brand-light px-3 py-2 text-sm font-medium uppercase tracking-wide text-accent-primary transition-colors hover:text-brand-dark md:bg-transparent md:px-0 md:py-0"
             >
               Book a Court →
             </Link>
@@ -44,7 +44,7 @@ export default function TwoSides() {
             </p>
             <Link
               href="/cafe-bar"
-              className="mt-6 text-sm font-medium uppercase tracking-wide text-accent-light/90 transition-colors hover:text-accent-light"
+              className="mt-6 py-2 text-sm font-medium uppercase tracking-wide text-accent-light/90 transition-colors hover:text-accent-light md:py-0"
             >
               Visit the Café →
             </Link>

@@ -27,7 +27,7 @@ export default function StatsBar() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center md:py-10"
+            className="flex min-h-[140px] flex-col items-center justify-center gap-1.5 px-4 py-8 text-center sm:min-h-0 md:py-10"
           >
             <p className="font-serif text-3xl text-brand-light md:text-4xl">{stat.value}</p>
             <p className="text-xs uppercase tracking-[0.2em] text-brand-light/60 md:text-sm">

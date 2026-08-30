@@ -24,6 +24,11 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const signedIn = status === 'authenticated' && session?.user?.role === 'member'
+  // Menu-open forces the same solid header treatment as scrolled — otherwise the header strip
+  // stays near-transparent (showing whatever's behind it) while the dropdown panel below is opaque,
+  // producing a visible seam. The logo's invert state has to follow the same flag: leaving it tied
+  // to `scrolled` alone would put the light/inverted logo on a now-solid light header.
+  const headerSolid = scrolled || menuOpen
 
   useEffect(() => {
     const handleScroll = () => {
@@ -41,7 +46,7 @@ export default function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${
-        scrolled ? 'bg-brand-light' : 'bg-brand-light/[0.01]'
+        headerSolid ? 'bg-brand-light' : 'bg-brand-light/[0.01]'
       }`}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6">
@@ -55,7 +60,7 @@ export default function Navbar() {
             width={500}
             height={500}
             className={`h-11 w-auto transition-all duration-200 md:h-14 ${
-              scrolled ? 'brightness-100 invert-0' : 'brightness-0 invert'
+              headerSolid ? 'brightness-100 invert-0' : 'brightness-0 invert'
             }`}
             priority
           />
@@ -137,7 +142,7 @@ export default function Navbar() {
           aria-label="Toggle menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
-          className="flex h-10 w-10 items-center justify-center rounded-none text-brand-dark md:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-none text-brand-dark md:hidden"
         >
           <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-current stroke-2">
             {menuOpen ? (
