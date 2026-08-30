@@ -5,7 +5,7 @@ interface ModeSwitchProps {
 
 export default function ModeSwitch({ mode, onModeChange }: ModeSwitchProps) {
   return (
-    <div className="mt-8 inline-flex rounded-full border border-brand-light/25 bg-brand-light/5 p-1">
+    <div className="mt-8 inline-flex rounded-none border border-brand-light/25 bg-brand-light/5 p-1">
       <button
         type="button"
         aria-pressed={mode === 'cafe'}
