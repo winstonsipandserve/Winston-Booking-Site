@@ -11,7 +11,7 @@ export default function Hero() {
         className="object-cover object-[center_65%]"
         priority
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-dark/80 via-brand-dark/25 to-brand-dark/60" />
+      <div className="absolute inset-0 bg-brand-dark/55" />
 
       <div className="relative z-10 flex flex-col items-center px-6 pb-16 text-center">
         <span className="text-xs uppercase tracking-[0.35em] text-accent-light/90 md:text-sm">
