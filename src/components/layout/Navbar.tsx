@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { getInitials } from '@/components/account/AccountProfile'
+import Modal from '@/components/ui/Modal'
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -23,6 +24,8 @@ export default function Navbar() {
   const { data: session, status } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [signOutModalOpen, setSignOutModalOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const signedIn = status === 'authenticated' && session?.user?.role === 'member'
   // Menu-open forces the same solid header treatment as scrolled — otherwise the header strip
   // stays near-transparent (showing whatever's behind it) while the dropdown panel below is opaque,
@@ -118,7 +121,7 @@ export default function Navbar() {
           {signedIn ? (
             <button
               type="button"
-              onClick={handleSignOut}
+              onClick={() => setSignOutModalOpen(true)}
               className={`rounded-none border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
                 scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
               }`}
@@ -204,7 +207,7 @@ export default function Navbar() {
                 type="button"
                 onClick={() => {
                   setMenuOpen(false)
-                  handleSignOut()
+                  setSignOutModalOpen(true)
                 }}
                 className="block w-full rounded-none border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
               >
@@ -222,6 +225,30 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      <Modal isOpen={signOutModalOpen} onClose={() => setSignOutModalOpen(false)} title="Sign Out">
+        <p className="text-sm text-brand-dark/70">
+          You&apos;ll need to sign in again to access your account. Continue?
+        </p>
+        <div className="mt-6 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setSignOutModalOpen(false)}
+            disabled={isPending}
+            className="rounded-none border border-brand-dark/15 px-3 py-1.5 text-sm font-medium text-brand-dark/70 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => startTransition(handleSignOut)}
+            disabled={isPending}
+            className="rounded-none bg-accent-primary px-4 py-1.5 text-sm font-semibold text-brand-light hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? 'Signing Out…' : 'Sign Out'}
+          </button>
+        </div>
+      </Modal>
     </header>
   )
 }
