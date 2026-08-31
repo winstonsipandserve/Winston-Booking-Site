@@ -1,4 +1,4 @@
-import CheckInScanner from '@/components/admin/CheckInScanner'
+import CheckInTabs from '@/components/admin/CheckInTabs'
 
 export default function AdminCheckInPage() {
   return (
@@ -8,7 +8,7 @@ export default function AdminCheckInPage() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 p-4">
-        <CheckInScanner />
+        <CheckInTabs />
       </div>
     </div>
   )

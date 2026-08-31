@@ -155,6 +155,8 @@ model Customer {
   passwordHash String? @map("password_hash")
   /// Null until first generated on /account load (see getOrCreateCheckInToken). Front-desk check-in QR payload.
   checkInToken String? @unique @map("check_in_token")
+  /// Zero-padded 6-digit fallback code, always created/rotated together with checkInToken.
+  checkInCode  String? @unique @map("check_in_code") @db.VarChar(6)
   bookings               Booking[]
   membershipApplications MembershipApplication[]
   memberships            Membership[]

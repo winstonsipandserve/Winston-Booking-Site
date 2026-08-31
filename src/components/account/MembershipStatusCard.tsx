@@ -26,6 +26,7 @@ type MembershipStatusCardProps =
       }
       customerId: string
       qrCodeDataUrl: string
+      checkInCode: string
     }
 
 export default function MembershipStatusCard(props: MembershipStatusCardProps) {
@@ -34,6 +35,9 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
   const [regenerateModalOpen, setRegenerateModalOpen] = useState(false)
   const [currentQrDataUrl, setCurrentQrDataUrl] = useState(
     membership ? props.qrCodeDataUrl : '',
+  )
+  const [currentCheckInCode, setCurrentCheckInCode] = useState(
+    membership ? props.checkInCode : '',
   )
   const [regenerateError, setRegenerateError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -49,6 +53,7 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
           return
         }
         setCurrentQrDataUrl(json.qrCodeDataUrl)
+        setCurrentCheckInCode(json.checkInCode)
         setRegenerateModalOpen(false)
       } catch {
         setRegenerateError('Something went wrong. Please try again.')
@@ -151,6 +156,9 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
           <p className="max-w-[160px] text-center text-xs text-accent-light/70">
             Show this code at the front desk for check-in.
           </p>
+          <p className="text-xs font-medium tracking-[0.15em] text-accent-light/90">
+            Check-in code: {currentCheckInCode}
+          </p>
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -200,6 +208,9 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
           />
           <p className="max-w-[240px] text-center text-xs text-brand-dark/60">
             Show this code at the front desk for check-in.
+          </p>
+          <p className="text-sm font-medium tracking-[0.15em] text-brand-dark/80">
+            Check-in code: {currentCheckInCode}
           </p>
         </div>
       </Modal>

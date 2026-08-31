@@ -14,9 +14,9 @@ export async function POST() {
   }
 
   try {
-    const token = await regenerateCheckInToken(customer.id)
+    const { token, code } = await regenerateCheckInToken(customer.id)
     const qrCodeDataUrl = await generateQrCodeDataUrl(token)
-    return Response.json({ qrCodeDataUrl }, { status: 200 })
+    return Response.json({ qrCodeDataUrl, checkInCode: code }, { status: 200 })
   } catch (err) {
     console.error('Failed to regenerate check-in token', customer.id, err)
     return Response.json({ error: 'Unable to regenerate QR code' }, { status: 500 })

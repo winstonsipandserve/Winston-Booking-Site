@@ -53,18 +53,20 @@ export default async function AccountPage() {
         }
         customerId: string
         qrCodeDataUrl: string
+        checkInCode: string
       } = { membership: null, customerId: customer.id }
 
   if (membership) {
     const displayFields = await buildMembershipDisplayFields(membership)
 
-    const checkInToken = await getOrCreateCheckInToken(customer.id)
+    const { token: checkInToken, code: checkInCode } = await getOrCreateCheckInToken(customer.id)
     const qrCodeDataUrl = await generateQrCodeDataUrl(checkInToken)
 
     membershipStatusProps = {
       membership: displayFields,
       customerId: customer.id,
       qrCodeDataUrl,
+      checkInCode,
     }
   }
 
