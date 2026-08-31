@@ -9,6 +9,7 @@ import {
   ResourcesIcon,
   MembershipsIcon,
   BulletinIcon,
+  CheckInIcon,
   FoldIcon,
 } from '@/components/admin/AdminIcons'
 
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { href: '/admin/resources', label: 'Resources & Pricing', icon: ResourcesIcon },
   { href: '/admin/memberships', label: 'Memberships', icon: MembershipsIcon },
   { href: '/admin/bulletin', label: 'Bulletin', icon: BulletinIcon },
+  { href: '/admin/check-in', label: 'Check-In', icon: CheckInIcon },
 ]
 
 export default function AdminSidebar() {

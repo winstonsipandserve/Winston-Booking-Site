@@ -5,9 +5,10 @@ import Reveal from '@/components/ui/Reveal'
 import AccountProfile from '@/components/account/AccountProfile'
 import MembershipStatusCard from '@/components/account/MembershipStatusCard'
 import RecentBookingsList, { type BookingListItem } from '@/components/account/RecentBookingsList'
-import { formatBookingDateTime, formatMembershipTier } from '@/lib/format'
+import { formatBookingDateTime } from '@/lib/format'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
+import { buildMembershipDisplayFields } from '@/lib/membership-latest'
 import { auth } from '../../../auth'
 
 export default async function AccountPage() {
@@ -55,31 +56,13 @@ export default async function AccountPage() {
       } = { membership: null, customerId: customer.id }
 
   if (membership) {
-    const activationTransaction = await prisma.membershipCreditTransaction.findFirst({
-      where: { membershipId: membership.id, reason: 'activation' },
-      orderBy: { createdAt: 'asc' },
-    })
-
-    const creditCentavos = activationTransaction?.amountCentavos ?? membership.creditBalanceCentavos
-    const isExpired = membership.endDate < now
+    const displayFields = await buildMembershipDisplayFields(membership)
 
     const checkInToken = await getOrCreateCheckInToken(customer.id)
     const qrCodeDataUrl = await generateQrCodeDataUrl(checkInToken)
 
     membershipStatusProps = {
-      membership: {
-        tierName: formatMembershipTier(membership.tier),
-        activationCentavos: membership.activationFeeCentavos,
-        creditCentavos,
-        remainingCreditCentavos: membership.creditBalanceCentavos,
-        expiryDateLabel: new Intl.DateTimeFormat('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-          timeZone: 'Asia/Manila',
-        }).format(membership.endDate),
-        isExpired,
-      },
+      membership: displayFields,
       customerId: customer.id,
       qrCodeDataUrl,
     }
