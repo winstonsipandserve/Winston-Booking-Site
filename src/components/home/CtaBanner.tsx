@@ -5,7 +5,7 @@ export default function CtaBanner() {
   return (
     <section className="relative overflow-hidden bg-brand-dark py-24 md:py-28">
       <Image
-        src="/images/cta-background03.jpg"
+        src="/images/cta/cta-background.jpg"
         alt=""
         fill
         sizes="100vw"

@@ -4,17 +4,18 @@ import Reveal from '@/components/ui/Reveal'
 interface FacilityTile {
   label: string
   large?: boolean
-  imageSeed: string
+  image: string
 }
 
-// TEMPORARY: Picsum stock placeholders standing in for real venue photography — swap imageSeed/src per
-// facility for real photos when available, structure stays the same.
+// TEMPORARY: these are the shared placeholder.jpg copied 5x under public/images/facilities/,
+// standing in for real venue photography — swap each file (or the `image` path per facility)
+// once real photos are available.
 const FACILITIES: FacilityTile[] = [
-  { label: 'Tennis Courts', large: true, imageSeed: 'winston-tennis-courts' },
-  { label: 'Pickleball Courts', imageSeed: 'winston-pickleball-courts' },
-  { label: 'Golf Simulator', imageSeed: 'winston-golf-simulator' },
-  { label: 'Café & Bar', imageSeed: 'winston-cafe-bar' },
-  { label: 'Speakeasy Lounge', imageSeed: 'winston-speakeasy-lounge' },
+  { label: 'Tennis Courts', large: true, image: '/images/facilities/tennis-courts.jpg' },
+  { label: 'Pickleball Courts', image: '/images/facilities/pickleball-courts.jpg' },
+  { label: 'Golf Simulator', image: '/images/facilities/golf-simulator.jpg' },
+  { label: 'Café & Bar', image: '/images/facilities/cafe-bar.jpg' },
+  { label: 'Speakeasy Lounge', image: '/images/facilities/speakeasy-lounge.jpg' },
 ]
 
 const objectPositions = ['center', 'top', '20% 70%', 'right', 'bottom']
@@ -49,7 +50,7 @@ export default function Facilities() {
             >
               <div className="group relative h-full w-full overflow-hidden rounded-none">
                 <Image
-                  src={`https://picsum.photos/seed/${facility.imageSeed}/800/800`}
+                  src={facility.image}
                   alt={facility.label}
                   fill
                   className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"

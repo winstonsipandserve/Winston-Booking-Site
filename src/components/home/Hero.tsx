@@ -5,7 +5,7 @@ export default function Hero() {
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
       <Image
-        src="/images/hero-background02.jpg"
+        src="/images/hero/hero-background.jpg"
         alt="Tennis court with diagonal white lines, blue court and green surround"
         fill
         className="object-cover object-[center_65%]"
