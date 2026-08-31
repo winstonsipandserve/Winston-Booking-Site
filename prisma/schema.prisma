@@ -87,11 +87,6 @@ enum BulletinCategory {
   FacilityMaintenance
 }
 
-enum BulletinPriority {
-  Normal
-  High
-}
-
 // ── Resource model (Decision: Resource model) ─────────
 
 model ResourceType {
@@ -446,7 +441,6 @@ model Bulletin {
   imageUrl    String?          @map("image_url")
   socialPlatform String?       @map("social_platform")
   socialUrl      String?       @map("social_url")
-  priority        BulletinPriority @default(Normal)
   affectedFacility String?         @map("affected_facility")
   impact           String?
   action           String?

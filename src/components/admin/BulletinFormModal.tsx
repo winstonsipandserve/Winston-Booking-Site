@@ -14,7 +14,6 @@ const CATEGORIES = [
   { value: 'General', label: 'General Announcement' },
   { value: 'FacilityMaintenance', label: 'Facility Maintenance' },
 ] as const
-const PRIORITIES = ['Normal', 'High'] as const
 
 function toDateTimeLocalValue(date: Date | null | undefined): string {
   if (!date) return ''
@@ -64,7 +63,6 @@ function BulletinForm({
   const [category, setCategory] = useState<string>(bulletin?.category ?? '')
   const [socialPlatform, setSocialPlatform] = useState<string>(bulletin?.socialPlatform ?? '')
   const [socialUrl, setSocialUrl] = useState(bulletin?.socialUrl ?? '')
-  const [priority, setPriority] = useState<string>(bulletin?.priority ?? 'Normal')
   const [affectedFacility, setAffectedFacility] = useState(bulletin?.affectedFacility ?? '')
   const [impact, setImpact] = useState(bulletin?.impact ?? '')
   const [action, setAction] = useState(bulletin?.action ?? '')
@@ -159,7 +157,6 @@ function BulletinForm({
     formData.set('body', body.trim())
     formData.set('category', category)
     formData.set('isPublished', String(isPublished))
-    formData.set('priority', priority)
     if (socialPlatform) {
       formData.set('socialPlatform', socialPlatform)
       formData.set('socialUrl', socialUrl.trim())
@@ -254,23 +251,6 @@ function BulletinForm({
             rows={5}
             className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
           />
-        </label>
-      </FormSection>
-
-      <FormSection title="Priority">
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Priority
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-          >
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
         </label>
       </FormSection>
 

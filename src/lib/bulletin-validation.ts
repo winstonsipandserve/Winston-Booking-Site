@@ -16,8 +16,6 @@ export const VALID_CATEGORIES = [
 export type BulletinCategoryValue = (typeof VALID_CATEGORIES)[number]
 
 export const VALID_SOCIAL_PLATFORMS = ['instagram', 'facebook'] as const
-export const VALID_PRIORITIES = ['Normal', 'High'] as const
-export type BulletinPriorityValue = (typeof VALID_PRIORITIES)[number]
 
 /** Which fields a category requires, beyond the fields required for every category. */
 export const BULLETIN_CATEGORY_RULES: Record<
@@ -43,10 +41,6 @@ export function isNonEmptyString(value: unknown): value is string {
 
 export function isValidCategory(value: unknown): value is BulletinCategoryValue {
   return typeof value === 'string' && (VALID_CATEGORIES as readonly string[]).includes(value)
-}
-
-export function isValidPriority(value: unknown): value is BulletinPriorityValue {
-  return typeof value === 'string' && (VALID_PRIORITIES as readonly string[]).includes(value)
 }
 
 export function getOptionalString(formData: FormData, key: string): string | null {
@@ -83,7 +77,6 @@ export interface ParsedBulletinFields {
   isPublished: boolean
   socialPlatform: string | null
   socialUrl: string | null
-  priority: BulletinPriorityValue
   affectedFacility: string
   impact: string
   action: string
@@ -120,12 +113,6 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   }
   if (socialPlatform !== null && !(VALID_SOCIAL_PLATFORMS as readonly string[]).includes(socialPlatform)) {
     return { error: 'socialPlatform must be instagram or facebook' }
-  }
-
-  const priorityRaw = formData.get('priority')
-  const priority = priorityRaw === null || priorityRaw === '' ? 'Normal' : priorityRaw
-  if (!isValidPriority(priority)) {
-    return { error: 'priority must be Normal or High' }
   }
 
   const affectedFacility = getOptionalString(formData, 'affectedFacility')
@@ -169,7 +156,6 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
       isPublished: isPublishedRaw === 'true',
       socialPlatform,
       socialUrl,
-      priority,
       affectedFacility,
       impact,
       action,

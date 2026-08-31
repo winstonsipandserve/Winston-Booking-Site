@@ -14,7 +14,6 @@ export async function GET() {
     title: bulletin.title,
     body: bulletin.body,
     publishedAt: formatBulletinDate(bulletin.publishedAt as Date),
-    priority: bulletin.priority,
     affectedFacility: bulletin.affectedFacility ?? undefined,
     action: bulletin.action ?? undefined,
   }))

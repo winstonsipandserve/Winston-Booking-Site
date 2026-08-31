@@ -7,8 +7,7 @@ export function bulletinNotExpiredWhere(): Prisma.BulletinWhereInput {
   }
 }
 
-/** Shared sort for public bulletin surfaces: High priority first, then most recently published. */
+/** Shared sort for public bulletin surfaces: most recently published first. */
 export const bulletinOrderBy: Prisma.BulletinOrderByWithRelationInput[] = [
-  { priority: 'desc' },
   { publishedAt: 'desc' },
 ]

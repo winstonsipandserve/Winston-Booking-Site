@@ -82,7 +82,6 @@ export async function PATCH(
         ...(newImageUrl ? { imageUrl: newImageUrl } : {}),
         socialPlatform: fields.socialPlatform,
         socialUrl: fields.socialUrl,
-        priority: fields.priority,
         affectedFacility: fields.affectedFacility,
         impact: fields.impact,
         action: fields.action,

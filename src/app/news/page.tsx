@@ -23,7 +23,6 @@ export default async function NewsPage() {
     image: bulletin.imageUrl,
     socialPlatform: bulletin.socialPlatform as NewsItem['socialPlatform'],
     socialUrl: bulletin.socialUrl ?? undefined,
-    priority: bulletin.priority,
     affectedFacility: bulletin.affectedFacility ?? undefined,
     impact: bulletin.impact ?? undefined,
     action: bulletin.action ?? undefined,

@@ -39,11 +39,6 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
           <span className="absolute left-4 top-4 rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
             {item.category}
           </span>
-          {item.priority === 'High' && (
-            <span className="absolute right-4 top-4 rounded-full bg-brand-dark px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
-              High Priority
-            </span>
-          )}
         </div>
       )}
 
@@ -53,11 +48,6 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
             <span className="inline-flex items-center rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
               {item.category}
             </span>
-            {item.priority === 'High' && (
-              <span className="inline-flex items-center rounded-full bg-brand-dark px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
-                High Priority
-              </span>
-            )}
           </div>
         )}
         <h3 className="font-serif text-lg text-brand-dark">{item.title}</h3>

@@ -64,7 +64,6 @@ export async function POST(request: Request) {
         imageUrl,
         socialPlatform: fields.socialPlatform,
         socialUrl: fields.socialUrl,
-        priority: fields.priority,
         affectedFacility: fields.affectedFacility,
         impact: fields.impact,
         action: fields.action,

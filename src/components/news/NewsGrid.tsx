@@ -19,7 +19,6 @@ export interface NewsItem {
   image: string | null // null when the bulletin's category doesn't require one
   socialPlatform?: 'instagram' | 'facebook'
   socialUrl?: string // always '#' in this pass — real post URLs not yet available
-  priority: 'Normal' | 'High'
   affectedFacility?: string
   impact?: string
   action?: string
