@@ -152,6 +152,8 @@ model Customer {
   phone        String
   /// Null until a member completes activation via MemberActivationToken. Non-member Customer rows never get one.
   passwordHash String? @map("password_hash")
+  /// Null until first generated on /account load (see getOrCreateCheckInToken). Front-desk check-in QR payload.
+  checkInToken String? @unique @map("check_in_token")
   bookings               Booking[]
   membershipApplications MembershipApplication[]
   memberships            Membership[]

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCentavos } from '@/lib/format'
@@ -25,13 +25,36 @@ type MembershipStatusCardProps =
         isExpired: boolean
       }
       customerId: string
+      qrCodeDataUrl: string
     }
 
-export default function MembershipStatusCard({ membership, customerId }: MembershipStatusCardProps) {
+export default function MembershipStatusCard(props: MembershipStatusCardProps) {
+  const { membership } = props
   const [qrModalOpen, setQrModalOpen] = useState(false)
-  // Placeholder value only — real per-member QR scheme (check-in token vs. credit
-  // redemption, static vs. rotating, generation method) is not yet decided.
-  const memberQrValue = `WSS-MEMBER-${customerId}`
+  const [regenerateModalOpen, setRegenerateModalOpen] = useState(false)
+  const [currentQrDataUrl, setCurrentQrDataUrl] = useState(
+    membership ? props.qrCodeDataUrl : '',
+  )
+  const [regenerateError, setRegenerateError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  function handleRegenerateConfirm() {
+    setRegenerateError(null)
+    startTransition(async () => {
+      try {
+        const res = await fetch('/api/account/check-in-token/regenerate', { method: 'POST' })
+        const json = await res.json().catch(() => null)
+        if (!res.ok) {
+          setRegenerateError(json?.error ?? 'Something went wrong. Please try again.')
+          return
+        }
+        setCurrentQrDataUrl(json.qrCodeDataUrl)
+        setRegenerateModalOpen(false)
+      } catch {
+        setRegenerateError('Something went wrong. Please try again.')
+      }
+    })
+  }
 
   if (!membership) {
     return (
@@ -117,9 +140,8 @@ export default function MembershipStatusCard({ membership, customerId }: Members
 
         <div className="flex flex-col items-center gap-2 md:shrink-0">
           <div className="rounded-xl bg-brand-light p-3">
-            {/* memberQrValue is a placeholder — real encoding scheme not yet decided */}
             <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${memberQrValue}`}
+              src={currentQrDataUrl}
               alt="QR code for member check-in at the front desk"
               width={140}
               height={140}
@@ -129,13 +151,22 @@ export default function MembershipStatusCard({ membership, customerId }: Members
           <p className="max-w-[160px] text-center text-xs text-accent-light/70">
             Show this code at the front desk for check-in.
           </p>
-          <button
-            type="button"
-            onClick={() => setQrModalOpen(true)}
-            className="text-xs font-medium text-accent-primary underline underline-offset-2 transition-colors hover:text-accent-dark"
-          >
-            View Full Screen
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setQrModalOpen(true)}
+              className="text-xs font-medium text-accent-primary underline underline-offset-2 transition-colors hover:text-accent-dark"
+            >
+              View Full Screen
+            </button>
+            <button
+              type="button"
+              onClick={() => setRegenerateModalOpen(true)}
+              className="text-xs font-medium text-accent-light/70 underline underline-offset-2 transition-colors hover:text-accent-light"
+            >
+              Regenerate Code
+            </button>
+          </div>
         </div>
       </div>
 
@@ -161,7 +192,7 @@ export default function MembershipStatusCard({ membership, customerId }: Members
       <Modal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} title="Member QR Code">
         <div className="flex flex-col items-center gap-3">
           <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${memberQrValue}`}
+            src={currentQrDataUrl}
             alt="QR code for member check-in at the front desk"
             width={300}
             height={300}
@@ -170,6 +201,41 @@ export default function MembershipStatusCard({ membership, customerId }: Members
           <p className="max-w-[240px] text-center text-xs text-brand-dark/60">
             Show this code at the front desk for check-in.
           </p>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={regenerateModalOpen}
+        onClose={() => {
+          setRegenerateModalOpen(false)
+          setRegenerateError(null)
+        }}
+        title="Regenerate QR Code"
+      >
+        <p className="text-sm text-brand-dark/70">
+          Your current QR code will stop working immediately. Continue?
+        </p>
+        {regenerateError && <p className="mt-2 text-sm text-red-600">{regenerateError}</p>}
+        <div className="mt-6 flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setRegenerateModalOpen(false)
+              setRegenerateError(null)
+            }}
+            disabled={isPending}
+            className="rounded-lg border border-brand-dark/15 px-3 py-1.5 text-sm font-medium text-brand-dark/70 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleRegenerateConfirm}
+            disabled={isPending}
+            className="rounded-lg bg-accent-primary px-4 py-1.5 text-sm font-semibold text-brand-light hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? 'Regenerating…' : 'Regenerate'}
+          </button>
         </div>
       </Modal>
     </div>

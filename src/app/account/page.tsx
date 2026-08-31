@@ -7,6 +7,7 @@ import MembershipStatusCard from '@/components/account/MembershipStatusCard'
 import RecentBookingsList, { type BookingListItem } from '@/components/account/RecentBookingsList'
 import { formatBookingDateTime, formatMembershipTier } from '@/lib/format'
 import { prisma } from '@/lib/prisma'
+import { getOrCreateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
 import { auth } from '../../../auth'
 
 export default async function AccountPage() {
@@ -50,6 +51,7 @@ export default async function AccountPage() {
           isExpired: boolean
         }
         customerId: string
+        qrCodeDataUrl: string
       } = { membership: null, customerId: customer.id }
 
   if (membership) {
@@ -60,6 +62,9 @@ export default async function AccountPage() {
 
     const creditCentavos = activationTransaction?.amountCentavos ?? membership.creditBalanceCentavos
     const isExpired = membership.endDate < now
+
+    const checkInToken = await getOrCreateCheckInToken(customer.id)
+    const qrCodeDataUrl = await generateQrCodeDataUrl(checkInToken)
 
     membershipStatusProps = {
       membership: {
@@ -76,6 +81,7 @@ export default async function AccountPage() {
         isExpired,
       },
       customerId: customer.id,
+      qrCodeDataUrl,
     }
   }
 
