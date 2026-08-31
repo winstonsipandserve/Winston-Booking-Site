@@ -21,6 +21,7 @@ type ScanResult =
 
 export default function CheckInScanner() {
   const scannerRef = useRef<Html5Qrcode | null>(null)
+  const isHandlingScanRef = useRef(false)
   const [isScanning, setIsScanning] = useState(false)
   const [cameraError, setCameraError] = useState<string | null>(null)
   const [isVerifying, setIsVerifying] = useState(false)
@@ -65,6 +66,9 @@ export default function CheckInScanner() {
   }, [])
 
   async function handleDecode(token: string) {
+    if (isHandlingScanRef.current) return
+    isHandlingScanRef.current = true
+
     const scanner = scannerRef.current
     if (scanner?.isScanning) {
       scanner.pause(true)
@@ -101,6 +105,7 @@ export default function CheckInScanner() {
   }
 
   function handleScanNext() {
+    isHandlingScanRef.current = false
     setResult(null)
     const scanner = scannerRef.current
     if (scanner?.isScanning) {
