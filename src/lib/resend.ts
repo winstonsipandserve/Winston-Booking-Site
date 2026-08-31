@@ -681,6 +681,71 @@ export async function sendStaffBookingNotificationEmail({
   }
 }
 
+interface SendStaffMembershipApplicationEmailInput {
+  applicationId: string
+  customerName: string
+  customerEmail: string
+  contactNumber: string
+  address: string
+  requestedTier: MembershipTier
+  submittedAt: Date
+}
+
+export async function sendStaffMembershipApplicationEmail({
+  applicationId,
+  customerName,
+  customerEmail,
+  contactNumber,
+  address,
+  requestedTier,
+  submittedAt,
+}: SendStaffMembershipApplicationEmailInput): Promise<void> {
+  const tierName = formatMembershipTier(requestedTier)
+
+  const bodyHtml = `
+    <p>A new membership application has been submitted.</p>
+    <p style="margin: 20px 0 4px;"><strong>${customerName}</strong></p>
+    <p style="margin: 0 0 2px;"><a href="mailto:${customerEmail}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${customerEmail}</a></p>
+    <p style="margin: 0 0 2px;">${contactNumber}</p>
+    <p style="margin: 0 0 20px;">${address}</p>
+    <p style="margin: 0 0 4px;"><strong>Requested Tier:</strong> ${tierName}</p>
+    <p style="margin: 0;"><strong>Submitted Date:</strong> ${formatManilaDate(submittedAt)}</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `New membership application from ${customerName} — ${tierName}.`,
+    eyebrowText: 'NEW APPLICATION',
+    headingText: `New Membership Application — ${customerName}`,
+    bodyHtml,
+    ctaText: 'View in Admin',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/admin/memberships/${applicationId}`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: REPLY_TO_ADDRESS,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `[Membership Application] New application — ${customerName} — ${tierName}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendStaffMembershipApplicationEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendStaffMembershipApplicationEmail threw', err)
+  }
+}
+
 interface ReminderCustomer {
   name: string
   email: string

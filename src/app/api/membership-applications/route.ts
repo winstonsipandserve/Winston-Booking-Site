@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { resolveCustomer } from '@/lib/customer-resolution'
 import { uploadToStorage, deleteFromStorage } from '@/lib/supabase-storage'
+import { sendStaffMembershipApplicationEmail } from '@/lib/resend'
 
 const BUCKET = 'membership-applications'
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
@@ -124,6 +125,16 @@ export async function POST(request: Request) {
         govIdBackUrl: backPath,
         govIdSelfieUrl: selfiePath,
       },
+    })
+
+    await sendStaffMembershipApplicationEmail({
+      applicationId: application.id,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      contactNumber: phone,
+      address,
+      requestedTier: application.requestedTier,
+      submittedAt: application.createdAt,
     })
 
     return Response.json(
