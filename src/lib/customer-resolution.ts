@@ -1,4 +1,4 @@
-import { Customer } from '@prisma/client'
+import { Customer, Membership } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 export interface ResolveCustomerInput {
@@ -12,12 +12,15 @@ export interface ResolveCustomerResult {
   isMember: boolean
 }
 
-export async function isActiveMember(customerId: string): Promise<boolean> {
+export async function getActiveMembership(customerId: string): Promise<Membership | null> {
   const now = new Date()
-  const activeMembership = await prisma.membership.findFirst({
+  return prisma.membership.findFirst({
     where: { customerId, status: 'active', endDate: { gte: now } },
   })
-  return !!activeMembership
+}
+
+export async function isActiveMember(customerId: string): Promise<boolean> {
+  return !!(await getActiveMembership(customerId))
 }
 
 export async function resolveCustomer(

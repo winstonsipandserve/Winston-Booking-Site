@@ -1,10 +1,11 @@
-import { Prisma } from '@prisma/client'
+import { Booking, Membership, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 import { priceBooking } from '@/lib/booking-pricing'
-import { isActiveMember } from '@/lib/customer-resolution'
+import { getActiveMembership } from '@/lib/customer-resolution'
+import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { auth } from '../../../../auth'
 
 interface BookingRequestBody {
@@ -73,9 +74,11 @@ export async function POST(request: Request) {
 
   let customerId: string | null = null
   let isMember = false
+  let activeMembership: Membership | null = null
   if (isMemberSession) {
     customerId = session!.user.id
-    isMember = await isActiveMember(customerId)
+    activeMembership = await getActiveMembership(customerId)
+    isMember = !!activeMembership
   }
 
   const guestCount = isMember ? 0 : guestCountRaw
@@ -137,11 +140,12 @@ export async function POST(request: Request) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })
   }
   const { totalAmountCentavos, addOns: selectedAddOns, addOnsTotalCentavos } = priceResult
+  const grandTotalCentavos = totalAmountCentavos + addOnsTotalCentavos
 
-  let booking
   let checkoutSessionIdsToExpire: string[] = []
+  let txResult: { booking: Booking; creditCovered: boolean }
   try {
-    booking = await prisma.$transaction(async (tx) => {
+    txResult = await prisma.$transaction(async (tx) => {
       const holdCutoff = new Date(Date.now() - HOLD_MINUTES * 60000)
       const staleBookings = await tx.booking.findMany({
         where: {
@@ -170,13 +174,32 @@ export async function POST(request: Request) {
           .map((b) => b.payment!.paymongoCheckoutSessionId!)
       }
 
+      // If this is a member booking and their credit balance fully covers the grand
+      // total, atomically decrement it and confirm the booking immediately — no
+      // PayMongo checkout needed. The `gte` filter inside updateMany (not a separate
+      // findUnique-then-update) is what makes this concurrency-safe: if two bookings
+      // race for the same balance, only one update can match once the first has
+      // already decremented it below the threshold.
+      let creditCovered = false
+      if (
+        isMember &&
+        activeMembership &&
+        activeMembership.creditBalanceCentavos >= grandTotalCentavos
+      ) {
+        const decrement = await tx.membership.updateMany({
+          where: { id: activeMembership.id, creditBalanceCentavos: { gte: grandTotalCentavos } },
+          data: { creditBalanceCentavos: { decrement: grandTotalCentavos } },
+        })
+        creditCovered = decrement.count === 1
+      }
+
       const createdBooking = await tx.booking.create({
         data: {
           customerId,
           resourceId: resource.id,
           startTime: parsedStartTime,
           endTime,
-          status: 'pending_payment',
+          status: creditCovered ? 'confirmed' : 'pending_payment',
           guestCount,
           totalAmountCentavos,
         },
@@ -194,7 +217,27 @@ export async function POST(request: Request) {
         })
       }
 
-      return createdBooking
+      if (creditCovered && activeMembership) {
+        await tx.payment.create({
+          data: {
+            bookingId: createdBooking.id,
+            amountCentavos: grandTotalCentavos,
+            status: 'paid',
+            method: 'membership_credit',
+            paidAt: new Date(),
+          },
+        })
+        await tx.membershipCreditTransaction.create({
+          data: {
+            membershipId: activeMembership.id,
+            bookingId: createdBooking.id,
+            amountCentavos: -grandTotalCentavos,
+            reason: 'booking_redemption',
+          },
+        })
+      }
+
+      return { booking: createdBooking, creditCovered }
     })
   } catch (err) {
     console.error('Booking creation failed', err)
@@ -204,8 +247,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 
+  const { booking, creditCovered } = txResult
+
   for (const checkoutSessionId of checkoutSessionIdsToExpire) {
     await expirePaymongoCheckoutSession(checkoutSessionId)
+  }
+
+  if (creditCovered && activeMembership) {
+    await sendBookingConfirmationEmailForBooking(booking.id, {
+      amountCentavos: grandTotalCentavos,
+      remainingBalanceCentavos: activeMembership.creditBalanceCentavos - grandTotalCentavos,
+    })
   }
 
   const holdExpiresAt = new Date(booking.createdAt.getTime() + HOLD_MINUTES * 60000)
@@ -227,6 +279,7 @@ export async function POST(request: Request) {
       addOnsTotalCentavos,
       customerAttached: isMemberSession,
       isMember,
+      creditCovered,
     },
     { status: 201 },
   )

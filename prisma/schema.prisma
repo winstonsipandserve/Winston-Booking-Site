@@ -55,6 +55,12 @@ enum MembershipStatus {
 enum CreditTransactionReason {
   activation
   renewal
+  booking_redemption
+}
+
+enum PaymentMethod {
+  paymongo
+  membership_credit
 }
 
 enum AdminRole {
@@ -302,11 +308,19 @@ model MembershipCreditTransaction {
   id             String                  @id @default(cuid())
   membershipId   String                  @map("membership_id")
   membership     Membership              @relation(fields: [membershipId], references: [id])
-  amountCentavos Int                     @map("amount_centavos")
+  /// Set only for booking_redemption rows — which booking this debit paid for.
+  /// Null for activation/renewal credits, which have no associated booking.
+  bookingId String?  @map("booking_id")
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+  /// Positive for credits added (activation/renewal), negative for debits
+  /// (booking_redemption) — SUM(amountCentavos) per membership always recovers
+  /// the correct balance regardless of reason.
+  amountCentavos Int @map("amount_centavos")
   reason         CreditTransactionReason
   createdAt      DateTime @default(now()) @map("created_at")
   // No updatedAt — immutable audit row, corrections are new rows, never edits.
 
+  @@index([bookingId])
   @@map("membership_credit_transactions")
 }
 
@@ -327,6 +341,7 @@ model Booking {
   reschedules BookingReschedule[]
   addOns      BookingAddOn[]
   payment     Payment?
+  creditTransactions MembershipCreditTransaction[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -410,6 +425,7 @@ model Payment {
   booking   Booking?      @relation(fields: [bookingId], references: [id])
   amountCentavos          Int           @map("amount_centavos")
   status                  PaymentStatus @default(pending)
+  method                  PaymentMethod @default(paymongo)
   paymongoCheckoutSessionId String?     @unique @map("paymongo_checkout_session_id")
   paymongoPaymentIntentId String?       @unique @map("paymongo_payment_intent_id")
   paidAt                  DateTime?     @map("paid_at")

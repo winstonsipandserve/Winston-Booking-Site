@@ -372,7 +372,12 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           addOnsTotalCentavos: number
           customerAttached: boolean
           isMember: boolean
+          creditCovered: boolean
         } = await res.json()
+        if (booking.creditCovered) {
+          window.location.href = `/book/confirmation?bookingId=${booking.id}`
+          return
+        }
         setBookingId(booking.id)
         setCreatedTotalCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)
         setShowPayment(true)

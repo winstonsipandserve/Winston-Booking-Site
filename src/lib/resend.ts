@@ -435,6 +435,7 @@ interface SendBookingConfirmationEmailInput {
   guestFeeCentavos: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
+  creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
 }
 
 function formatManilaDate(date: Date): string {
@@ -478,6 +479,7 @@ export async function sendBookingConfirmationEmail({
   guestFeeCentavos,
   addOns,
   totalPaidCentavos,
+  creditRedemption,
 }: SendBookingConfirmationEmailInput): Promise<void> {
   const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000)
   const durationLabel =
@@ -515,6 +517,10 @@ export async function sendBookingConfirmationEmail({
         </td>
       </tr>
     </table>
+    ${creditRedemption ? `
+    <div style="margin: 20px 0 0; padding: 14px 18px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK};">This booking was covered by your F&amp;B credit. You have <strong>${formatCentavos(creditRedemption.remainingBalanceCentavos)}</strong> remaining.</p>
+    </div>` : ''}
     <div style="margin: 24px 0; padding: 18px 20px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 600; color: ${BRAND_DARK};">Before You Arrive</p>
       <p style="margin: 0 0 6px; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK};">We're open 6:00 AM &ndash; 10:00 PM daily &mdash; try to arrive a few minutes early so your session starts right on time.</p>

@@ -1,14 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import { verifyPaymongoWebhookSignature } from '@/lib/paymongo'
-import { sendBookingConfirmationEmail, sendActivationEmail, sendMembershipRenewalEmail } from '@/lib/resend'
+import { sendActivationEmail, sendMembershipRenewalEmail } from '@/lib/resend'
+import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import { generateActivationToken } from '@/lib/member-activation'
-
-const ADD_ON_EMAIL_LABELS: Record<string, string> = {
-  ball_boy: 'Ball Boy',
-  coaching_fee: 'Coaching',
-}
 
 interface PaymongoWebhookEvent {
   data?: {
@@ -121,42 +117,7 @@ export async function POST(request: Request) {
   }
 
   if (bookingConfirmed) {
-    if (!booking.customer) {
-      console.error(`Booking confirmed but no customer attached — skipping confirmation email: bookingId=${booking.id}`)
-    } else {
-      const addOnsTotalCentavos = booking.addOns.reduce((sum, addOn) => sum + addOn.amountCentavos, 0)
-      const totalPaidCentavos = booking.totalAmountCentavos + addOnsTotalCentavos
-
-      let guestFeeCentavos = 0
-      if (booking.guestCount > 0) {
-        const guestFeeRule = await prisma.guestFeeRule.findFirst()
-        if (!guestFeeRule) {
-          console.error('GuestFeeRule table is empty — cannot compute guest fee for confirmation email', booking.id)
-        } else {
-          guestFeeCentavos = booking.guestCount * guestFeeRule.amountCentavos
-        }
-      }
-
-      const addOns = booking.addOns.map((addOn) => {
-        const label = ADD_ON_EMAIL_LABELS[addOn.addOnService.slug] ?? addOn.addOnService.slug
-        const paxSuffix = addOn.addOnPricingRule.paxCount !== null ? ` (${addOn.addOnPricingRule.paxCount} pax)` : ''
-        return { name: `${label}${paxSuffix}`, amountCentavos: addOn.amountCentavos }
-      })
-
-      await sendBookingConfirmationEmail({
-        to: booking.customer.email,
-        name: booking.customer.name,
-        bookingReference: booking.id,
-        resourceTypeName: booking.resource.resourceType.name,
-        resourceLabel: booking.resource.label,
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-        guestCount: booking.guestCount,
-        guestFeeCentavos,
-        addOns,
-        totalPaidCentavos,
-      })
-    }
+    await sendBookingConfirmationEmailForBooking(booking.id)
   }
 
   return Response.json({ received: true }, { status: 200 })
