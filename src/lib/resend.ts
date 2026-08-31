@@ -746,6 +746,158 @@ export async function sendStaffMembershipApplicationEmail({
   }
 }
 
+interface SendStaffMembershipActivationEmailInput {
+  applicationId: string
+  customerName: string
+  customerEmail: string
+  tierName: string
+  amountPaidCentavos: number
+  activationFeeCentavos: number
+  creditBalanceCentavos: number
+  expiryDateLabel: string
+}
+
+export async function sendStaffMembershipActivationEmail({
+  applicationId,
+  customerName,
+  customerEmail,
+  tierName,
+  amountPaidCentavos,
+  activationFeeCentavos,
+  creditBalanceCentavos,
+  expiryDateLabel,
+}: SendStaffMembershipActivationEmailInput): Promise<void> {
+  const ledgerRows = [
+    ledgerRow('Tier', tierName),
+    ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos)),
+    ledgerRow('F&amp;B Credit Granted', formatCentavos(creditBalanceCentavos)),
+    ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true),
+  ].join('')
+
+  const bodyHtml = `
+    <p>A membership payment has been received and a new member activated.</p>
+    <p style="margin: 20px 0 4px;"><strong>${customerName}</strong></p>
+    <p style="margin: 0 0 20px;"><a href="mailto:${customerEmail}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${customerEmail}</a></p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRows}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <p style="margin: 0; font-size: 14px; color: ${BRAND_MID};">Membership active through ${expiryDateLabel}.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `New member activated — ${customerName} — ${tierName}.`,
+    eyebrowText: 'NEW MEMBER',
+    headingText: `New Member Activated — ${customerName}`,
+    bodyHtml,
+    ctaText: 'View Application',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/admin/memberships/${applicationId}`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: REPLY_TO_ADDRESS,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `[Membership Payment] New member activated — ${customerName} — ${tierName}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendStaffMembershipActivationEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendStaffMembershipActivationEmail threw', err)
+  }
+}
+
+interface SendStaffMembershipRenewalEmailInput {
+  customerName: string
+  customerEmail: string
+  tierName: string
+  amountPaidCentavos: number
+  activationFeeCentavos: number
+  creditBalanceCentavos: number
+  expiryDateLabel: string
+}
+
+export async function sendStaffMembershipRenewalEmail({
+  customerName,
+  customerEmail,
+  tierName,
+  amountPaidCentavos,
+  activationFeeCentavos,
+  creditBalanceCentavos,
+  expiryDateLabel,
+}: SendStaffMembershipRenewalEmailInput): Promise<void> {
+  const ledgerRows = [
+    ledgerRow('Tier', tierName),
+    ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos)),
+    ledgerRow('F&amp;B Credit Granted', formatCentavos(creditBalanceCentavos)),
+    ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true),
+  ].join('')
+
+  const bodyHtml = `
+    <p>A membership renewal payment has been received.</p>
+    <p style="margin: 20px 0 4px;"><strong>${customerName}</strong></p>
+    <p style="margin: 0 0 20px;"><a href="mailto:${customerEmail}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${customerEmail}</a></p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRows}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <p style="margin: 0; font-size: 14px; color: ${BRAND_MID};">Membership active through ${expiryDateLabel}.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Membership renewed — ${customerName} — ${tierName}.`,
+    eyebrowText: 'RENEWAL',
+    headingText: `Membership Renewed — ${customerName}`,
+    bodyHtml,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: REPLY_TO_ADDRESS,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `[Membership Renewal] Membership renewed — ${customerName} — ${tierName}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendStaffMembershipRenewalEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendStaffMembershipRenewalEmail threw', err)
+  }
+}
+
 interface ReminderCustomer {
   name: string
   email: string

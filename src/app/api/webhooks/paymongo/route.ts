@@ -1,6 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { verifyPaymongoWebhookSignature } from '@/lib/paymongo'
-import { sendActivationEmail, sendMembershipRenewalEmail } from '@/lib/resend'
+import {
+  sendActivationEmail,
+  sendMembershipRenewalEmail,
+  sendStaffMembershipActivationEmail,
+  sendStaffMembershipRenewalEmail,
+} from '@/lib/resend'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
@@ -151,6 +156,13 @@ async function handleMembershipPaymentWebhook(
   const plan = MEMBERSHIP_TIER_PLANS[membershipPayment.tier]
   const startDate = paidAt
   const endDate = computeMembershipEndDate(startDate, membershipPayment.tier)
+  const tierName = formatMembershipTier(membershipPayment.tier)
+  const expiryDateLabel = new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Manila',
+  }).format(endDate)
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -190,37 +202,60 @@ async function handleMembershipPaymentWebhook(
   }
 
   if (isRenewal) {
-    const expiryDateLabel = new Intl.DateTimeFormat('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      timeZone: 'Asia/Manila',
-    }).format(endDate)
-
     await sendMembershipRenewalEmail({
       to: membershipPayment.customer.email,
       name: membershipPayment.customer.name,
-      tierName: formatMembershipTier(membershipPayment.tier),
+      tierName,
       amountPaidCentavos: plan.totalCentavos,
       activationFeeCentavos: plan.activationFeeCentavos,
       creditBalanceCentavos: plan.creditCentavos,
       expiryDateLabel,
     })
-  } else if (!membershipPayment.customer.passwordHash) {
-    const { rawToken, tokenHash, expiresAt } = generateActivationToken()
-    await prisma.memberActivationToken.create({
-      data: { customerId: membershipPayment.customerId, tokenHash, expiresAt },
-    })
-    const activationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/activate?token=${rawToken}`
-    await sendActivationEmail({
-      to: membershipPayment.customer.email,
-      name: membershipPayment.customer.name,
-      activationUrl,
-      tierName: formatMembershipTier(membershipPayment.tier),
+    await sendStaffMembershipRenewalEmail({
+      customerName: membershipPayment.customer.name,
+      customerEmail: membershipPayment.customer.email,
+      tierName,
       amountPaidCentavos: plan.totalCentavos,
       activationFeeCentavos: plan.activationFeeCentavos,
       creditBalanceCentavos: plan.creditCentavos,
+      expiryDateLabel,
     })
+  } else {
+    const applicationId = membershipPayment.applicationId
+    if (!applicationId) {
+      console.error(
+        'Non-renewal membership payment has no applicationId — cannot build admin link',
+        membershipPayment.id,
+      )
+    } else {
+      await sendStaffMembershipActivationEmail({
+        applicationId,
+        customerName: membershipPayment.customer.name,
+        customerEmail: membershipPayment.customer.email,
+        tierName,
+        amountPaidCentavos: plan.totalCentavos,
+        activationFeeCentavos: plan.activationFeeCentavos,
+        creditBalanceCentavos: plan.creditCentavos,
+        expiryDateLabel,
+      })
+    }
+
+    if (!membershipPayment.customer.passwordHash) {
+      const { rawToken, tokenHash, expiresAt } = generateActivationToken()
+      await prisma.memberActivationToken.create({
+        data: { customerId: membershipPayment.customerId, tokenHash, expiresAt },
+      })
+      const activationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/activate?token=${rawToken}`
+      await sendActivationEmail({
+        to: membershipPayment.customer.email,
+        name: membershipPayment.customer.name,
+        activationUrl,
+        tierName,
+        amountPaidCentavos: plan.totalCentavos,
+        activationFeeCentavos: plan.activationFeeCentavos,
+        creditBalanceCentavos: plan.creditCentavos,
+      })
+    }
   }
 
   return Response.json({ received: true }, { status: 200 })
