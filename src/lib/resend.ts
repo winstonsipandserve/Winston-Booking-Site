@@ -565,6 +565,122 @@ export async function sendBookingConfirmationEmail({
   }
 }
 
+interface SendStaffBookingNotificationEmailInput {
+  bookingReference: string
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+  resourceTypeName: string
+  resourceLabel: string
+  startTime: Date
+  endTime: Date
+  guestCount: number
+  guestFeeCentavos: number
+  addOns: BookingConfirmationAddOn[]
+  totalPaidCentavos: number
+  creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
+}
+
+export async function sendStaffBookingNotificationEmail({
+  bookingReference,
+  customerName,
+  customerEmail,
+  customerPhone,
+  resourceTypeName,
+  resourceLabel,
+  startTime,
+  endTime,
+  guestCount,
+  guestFeeCentavos,
+  addOns,
+  totalPaidCentavos,
+  creditRedemption,
+}: SendStaffBookingNotificationEmailInput): Promise<void> {
+  const durationMinutes = Math.round((endTime.getTime() - startTime.getTime()) / 60000)
+  const durationLabel =
+    durationMinutes % 60 === 0
+      ? `${durationMinutes / 60} hr${durationMinutes / 60 === 1 ? '' : 's'}`
+      : `${durationMinutes} min`
+
+  const ledgerRows = [
+    ledgerRow('Sport &amp; Court', `${resourceTypeName} &mdash; ${resourceLabel}`),
+    ledgerRow('Date', formatManilaDate(startTime)),
+    ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
+    ledgerRow('Duration', durationLabel),
+    ...(guestCount > 0
+      ? [ledgerRow(`Guest Fee (+${guestCount})`, formatCentavos(guestFeeCentavos))]
+      : []),
+    ...addOns.map((addOn) => ledgerRow(addOn.name, formatCentavos(addOn.amountCentavos))),
+    ledgerRow('Total Paid', formatCentavos(totalPaidCentavos), true),
+  ].join('')
+
+  const paymentMethodLine = creditRedemption
+    ? `Paid via F&amp;B Credit &mdash; ${formatCentavos(creditRedemption.amountCentavos)} applied, ${formatCentavos(creditRedemption.remainingBalanceCentavos)} remaining`
+    : 'Paid via PayMongo'
+
+  const bodyHtml = `
+    <p>A new booking has been confirmed.</p>
+    <p style="margin: 20px 0 4px;"><strong>${customerName}</strong></p>
+    <p style="margin: 0 0 2px;"><a href="mailto:${customerEmail}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${customerEmail}</a></p>
+    <p style="margin: 0 0 20px;">${customerPhone}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 16px 20px; background-color: ${ACCENT_LIGHT};">
+          <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Booking Reference</p>
+          <p style="margin: 4px 0 0; font-family: ${HEADING_FONT}; font-size: 20px; font-weight: 700; color: ${BRAND_DARK};">${bookingReference}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRows}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <p style="margin: 0; font-size: 14px; color: ${BRAND_MID};">${paymentMethodLine}</p>
+  `
+
+  const subjectDateLabel = startTime.toLocaleDateString('en-PH', {
+    timeZone: 'Asia/Manila',
+    month: 'short',
+    day: 'numeric',
+  })
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `New booking — ${resourceLabel} — ${subjectDateLabel}, ${formatManilaTime(startTime)}.`,
+    eyebrowText: 'NEW BOOKING',
+    headingText: `New Booking — ${resourceLabel}`,
+    bodyHtml,
+    ctaText: 'View in Admin',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/admin/bookings/${bookingReference}`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: REPLY_TO_ADDRESS,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `[Booking] New booking — ${resourceLabel} — ${subjectDateLabel}, ${formatManilaTime(startTime)}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendStaffBookingNotificationEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendStaffBookingNotificationEmail threw', err)
+  }
+}
+
 interface ReminderCustomer {
   name: string
   email: string

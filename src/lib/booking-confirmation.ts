@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { sendBookingConfirmationEmail } from '@/lib/resend'
+import { sendBookingConfirmationEmail, sendStaffBookingNotificationEmail } from '@/lib/resend'
 
 export const ADD_ON_EMAIL_LABELS: Record<string, string> = {
   ball_boy: 'Ball Boy',
@@ -64,6 +64,22 @@ export async function sendBookingConfirmationEmailForBooking(
     to: booking.customer.email,
     name: booking.customer.name,
     bookingReference: booking.id,
+    resourceTypeName: booking.resource.resourceType.name,
+    resourceLabel: booking.resource.label,
+    startTime: booking.startTime,
+    endTime: booking.endTime,
+    guestCount: booking.guestCount,
+    guestFeeCentavos,
+    addOns,
+    totalPaidCentavos,
+    creditRedemption,
+  })
+
+  await sendStaffBookingNotificationEmail({
+    bookingReference: booking.id,
+    customerName: booking.customer.name,
+    customerEmail: booking.customer.email,
+    customerPhone: booking.customer.phone,
     resourceTypeName: booking.resource.resourceType.name,
     resourceLabel: booking.resource.label,
     startTime: booking.startTime,
