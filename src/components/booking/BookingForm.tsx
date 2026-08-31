@@ -8,6 +8,8 @@ import DateTimeStep from './steps/DateTimeStep'
 import AddOnsStep from './steps/AddOnsStep'
 import ReviewStep from './steps/ReviewStep'
 import PaymentStep from './steps/PaymentStep'
+import Modal from '@/components/ui/Modal'
+import { formatCentavos } from '@/lib/format'
 
 type RateTier = 'member' | 'non_member'
 type ResourceCategory = 'court' | 'simulator'
@@ -128,6 +130,7 @@ interface MemberContext {
   email: string
   phone: string
   isActiveMember: boolean
+  creditBalanceCentavos: number
 }
 
 interface BookingFormProps {
@@ -173,6 +176,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     finalCentavos: number
     guestFeeWaived: boolean
   } | null>(null)
+  const [showInsufficientCreditModal, setShowInsufficientCreditModal] = useState(false)
 
   const selectedResourceType = useMemo(
     () => data?.resourceTypes.find((rt) => rt.id === resourceTypeId) ?? null,
@@ -399,6 +403,17 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     }
   }
 
+  function handleConfirmBookingClick() {
+    if (rateTier === 'member' && memberContext && estimateCentavos !== null) {
+      const totalCentavos = estimateCentavos + addOnsEstimateCentavos
+      if (memberContext.creditBalanceCentavos < totalCentavos) {
+        setShowInsufficientCreditModal(true)
+        return
+      }
+    }
+    handleConfirmBooking()
+  }
+
   async function handlePayNow() {
     if (!bookingId) return
 
@@ -458,6 +473,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setAttachError(null)
     setCustomerAttached(false)
     setPriceUpdate(null)
+    setShowInsufficientCreditModal(false)
     setCheckingOut(false)
     setCheckoutError(null)
     setResourceTypeId('')
@@ -557,8 +573,46 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           submitting={submitting}
           submitError={submitError}
           onBack={() => setStep(4)}
-          onConfirmBooking={handleConfirmBooking}
+          onConfirmBooking={handleConfirmBookingClick}
         />
+      )}
+
+      {step === 5 && !showPayment && (
+        <Modal
+          isOpen={showInsufficientCreditModal}
+          onClose={() => setShowInsufficientCreditModal(false)}
+          title="Your F&B Credit Won't Cover This"
+        >
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-brand-dark/80">
+              {memberContext && memberContext.creditBalanceCentavos === 0
+                ? "You don't currently have any F&B credit available."
+                : `Your F&B credit balance is ${formatCentavos(memberContext?.creditBalanceCentavos ?? 0)}, which isn't enough to cover this booking.`}
+              {' '}This booking totals {formatCentavos((estimateCentavos ?? 0) + addOnsEstimateCentavos)}.
+              Since your credit doesn't fully cover it, none of it will be applied — you'll pay the
+              full amount via PayMongo, and your credit balance will stay untouched.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowInsufficientCreditModal(false)}
+                className="flex-1 rounded-none border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark"
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowInsufficientCreditModal(false)
+                  handleConfirmBooking()
+                }}
+                className="flex-1 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+              >
+                Continue Booking
+              </button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {step === 5 && showPayment && bookingId && (

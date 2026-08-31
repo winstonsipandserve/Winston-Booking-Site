@@ -9,6 +9,7 @@ interface MemberContext {
   email: string
   phone: string
   isActiveMember: boolean
+  creditBalanceCentavos: number
 }
 
 interface BookingPageClientProps {
