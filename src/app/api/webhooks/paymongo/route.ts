@@ -237,6 +237,7 @@ async function handleMembershipPaymentWebhook(
         activationFeeCentavos: plan.activationFeeCentavos,
         creditBalanceCentavos: plan.creditCentavos,
         expiryDateLabel,
+        paymongoPaymentIntentId: paymentIntentId,
       })
     }
 
@@ -254,6 +255,8 @@ async function handleMembershipPaymentWebhook(
         amountPaidCentavos: plan.totalCentavos,
         activationFeeCentavos: plan.activationFeeCentavos,
         creditBalanceCentavos: plan.creditCentavos,
+        expiryDateLabel,
+        paymongoPaymentIntentId: paymentIntentId,
       })
     }
   }

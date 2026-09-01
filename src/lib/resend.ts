@@ -2,6 +2,7 @@ import type { MembershipTier } from '@prisma/client'
 import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
 import { buildBrandedEmail } from './email-templates'
 import { formatCentavos, formatMembershipTier } from './format'
+import { renderMembershipCertificatePdf } from './membership-certificate-pdf'
 
 const RESEND_API_BASE = 'https://api.resend.com/emails'
 
@@ -29,6 +30,8 @@ interface SendActivationEmailInput {
   amountPaidCentavos?: number
   activationFeeCentavos?: number
   creditBalanceCentavos?: number
+  expiryDateLabel?: string
+  paymongoPaymentIntentId?: string | null
 }
 
 export async function sendActivationEmail({
@@ -39,6 +42,8 @@ export async function sendActivationEmail({
   amountPaidCentavos,
   activationFeeCentavos,
   creditBalanceCentavos,
+  expiryDateLabel,
+  paymongoPaymentIntentId,
 }: SendActivationEmailInput): Promise<void> {
   const membershipPhrase = tierName
     ? `Your ${tierName} membership is confirmed, and we can't wait to see you on the court.`
@@ -48,6 +53,8 @@ export async function sendActivationEmail({
     amountPaidCentavos !== undefined &&
     activationFeeCentavos !== undefined &&
     creditBalanceCentavos !== undefined
+
+  const isMembershipActivation = hasReceipt && !!tierName
 
   const receiptHtml = hasReceipt
     ? `
@@ -68,15 +75,19 @@ export async function sendActivationEmail({
   // including the Outlook border-radius caveat) instead of via buildBrandedEmail's ctaText/
   // ctaUrl params, because the expiry notice below needs to render after the button —
   // buildBrandedEmail always renders bodyHtml before its own CTA, with nothing after it.
-  const bodyHtml = `
-    <p>Hi ${name},</p>
-    <p>Congratulations — you're officially a Winston Sip &amp; Serve member! ${membershipPhrase}</p>
+  const perksHtml = isMembershipActivation
+    ? ''
+    : `
     <div style="margin: 24px 0; padding: 20px 24px; background-color: ${ACCENT_LIGHT}; border-radius: 12px;">
       <p style="margin: 0 0 12px; font-family: ${BODY_FONT}; font-size: 15px; font-weight: 600; color: ${BRAND_DARK};">As a member, you get:</p>
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Priority booking on courts &amp; simulators</p>
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Member rates on every session</p>
       <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Access to the Speakeasy Lounge</p>
-    </div>${receiptHtml}
+    </div>`
+
+  const bodyHtml = `
+    <p>Hi ${name},</p>
+    <p>Congratulations — you're officially a Winston Sip &amp; Serve member! ${membershipPhrase}</p>${perksHtml}${receiptHtml}
     <p>Set your password below to activate your account and lock in these perks.</p>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 28px auto 0;">
       <tr>
@@ -98,6 +109,27 @@ export async function sendActivationEmail({
     bodyHtml,
   })
 
+  let attachments: { filename: string; content: string }[] | undefined
+
+  if (isMembershipActivation) {
+    try {
+      const pdfBuffer = await renderMembershipCertificatePdf({
+        customerName: name,
+        tierName: tierName!,
+        activationFeeCentavos: activationFeeCentavos!,
+        creditBalanceCentavos: creditBalanceCentavos!,
+        amountPaidCentavos: amountPaidCentavos!,
+        expiryDateLabel,
+        paymongoPaymentIntentId,
+      })
+      attachments = [
+        { filename: 'winston-membership-certificate.pdf', content: pdfBuffer.toString('base64') },
+      ]
+    } catch (err) {
+      console.error('renderMembershipCertificatePdf failed', err)
+    }
+  }
+
   try {
     const res = await fetch(RESEND_API_BASE, {
       method: 'POST',
@@ -112,6 +144,7 @@ export async function sendActivationEmail({
         subject: `Welcome to Winston Sip & Serve, ${name}!`,
         html,
         text,
+        ...(attachments ? { attachments } : {}),
       }),
     })
     if (!res.ok) {
@@ -755,6 +788,7 @@ interface SendStaffMembershipActivationEmailInput {
   activationFeeCentavos: number
   creditBalanceCentavos: number
   expiryDateLabel: string
+  paymongoPaymentIntentId: string | null
 }
 
 export async function sendStaffMembershipActivationEmail({
@@ -766,12 +800,14 @@ export async function sendStaffMembershipActivationEmail({
   activationFeeCentavos,
   creditBalanceCentavos,
   expiryDateLabel,
+  paymongoPaymentIntentId,
 }: SendStaffMembershipActivationEmailInput): Promise<void> {
   const ledgerRows = [
     ledgerRow('Tier', tierName),
     ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos)),
     ledgerRow('F&amp;B Credit Granted', formatCentavos(creditBalanceCentavos)),
     ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true),
+    ledgerRow('PayMongo Reference', paymongoPaymentIntentId ?? 'Not available'),
   ].join('')
 
   const bodyHtml = `
