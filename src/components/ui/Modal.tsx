@@ -9,6 +9,7 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   maxWidthClassName?: string
+  variant?: 'brand' | 'neutral'
 }
 
 export default function Modal({
@@ -17,6 +18,7 @@ export default function Modal({
   title,
   children,
   maxWidthClassName = 'max-w-sm',
+  variant = 'brand',
 }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return
@@ -44,19 +46,33 @@ export default function Modal({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className={`relative my-auto w-full ${maxWidthClassName} rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10`}
+        className={`relative my-auto w-full ${maxWidthClassName} rounded-2xl border px-6 py-6 shadow-xl ${
+          variant === 'neutral'
+            ? 'border-gray-200 bg-white shadow-gray-900/10'
+            : 'border-brand-dark/10 bg-brand-light shadow-brand-dark/10'
+        }`}
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-4 top-4 text-brand-dark/50 transition-colors hover:text-brand-dark"
+          className={`absolute right-4 top-4 transition-colors ${
+            variant === 'neutral'
+              ? 'text-gray-400 hover:text-gray-600'
+              : 'text-brand-dark/50 hover:text-brand-dark'
+          }`}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1 1L17 17M17 1L1 17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
-        <h3 className="pr-6 font-serif text-lg text-brand-dark">{title}</h3>
+        <h3
+          className={`pr-6 ${
+            variant === 'neutral' ? 'text-lg font-semibold text-gray-900' : 'font-serif text-lg text-brand-dark'
+          }`}
+        >
+          {title}
+        </h3>
         <div className="mt-4">{children}</div>
       </div>
     </div>,

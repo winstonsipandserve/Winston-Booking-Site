@@ -8,6 +8,7 @@ import {
   MEMBERSHIP_DISPLAY_STATUS_CLASSES,
   type MembershipDisplayStatus,
 } from '@/lib/membership-display-status'
+import MembershipsFilterModal from '@/components/admin/MembershipsFilterModal'
 
 const PAGE_SIZE = 25
 
@@ -31,15 +32,6 @@ function formatDateTime(date: Date) {
     year: 'numeric',
   })
 }
-
-const STATUS_FILTERS: { label: string; value: MembershipDisplayStatus | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Awaiting Payment', value: 'awaiting_payment' },
-  { label: 'Active', value: 'active' },
-  { label: 'Expired', value: 'expired' },
-  { label: 'Rejected', value: 'rejected' },
-]
 
 type ApplicationWithRelations = Prisma.MembershipApplicationGetPayload<{
   include: {
@@ -151,12 +143,6 @@ export default async function AdminMembershipsPage({
     return `/admin/memberships?${params.toString()}`
   }
 
-  function filterHref(value: MembershipDisplayStatus | 'all') {
-    const params = new URLSearchParams()
-    if (value !== 'all') params.set('status', value)
-    return `/admin/memberships?${params.toString()}`
-  }
-
   console.timeEnd('memberships:pageTotal')
 
   return (
@@ -164,22 +150,13 @@ export default async function AdminMembershipsPage({
       <h1 className="text-2xl font-semibold text-gray-900">Memberships</h1>
 
       <div className="flex items-center gap-2">
-        {STATUS_FILTERS.map((option) => {
-          const isActive = filter === option.value
-          return (
-            <Link
-              key={option.value}
-              href={filterHref(option.value)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-                isActive
-                  ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {option.label}
-            </Link>
-          )
-        })}
+        <MembershipsFilterModal status={filter} />
+        <button
+          type="button"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        >
+          Export
+        </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200">

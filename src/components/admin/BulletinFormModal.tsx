@@ -41,6 +41,7 @@ export default function BulletinFormModal({ isOpen, onClose, mode, bulletin }: B
       onClose={onClose}
       title={mode === 'add' ? 'Add Bulletin' : 'Edit Bulletin'}
       maxWidthClassName="max-w-3xl"
+      variant="neutral"
     >
       {isOpen && <BulletinForm mode={mode} bulletin={bulletin} onClose={onClose} />}
     </Modal>
@@ -201,38 +202,40 @@ function BulletinForm({
       onSubmit={handleSubmit}
       className="scrollbar-thin flex max-h-[80vh] flex-col overflow-y-auto pr-1"
     >
-      <FormSection title="Category" first>
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Category *
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            autoFocus
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-          >
-            <option value="" disabled>
-              Select a category
-            </option>
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
+      <FormSection title="Details" first>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm text-gray-900">
+            Category *
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              autoFocus
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            >
+              <option value="" disabled>
+                Select a category
               </option>
-            ))}
-          </select>
-        </label>
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-gray-900">
+            Title *
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            />
+          </label>
+        </div>
       </FormSection>
 
       <FormSection title="Content">
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
-          Title *
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
-          />
-        </label>
-
         <label className="flex flex-col gap-1 text-sm text-gray-900">
           Excerpt *
           <textarea

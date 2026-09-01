@@ -62,7 +62,7 @@ export default function BookingsFilterModal({
         {isFilterActive && <span className="h-1.5 w-1.5 rounded-full bg-gray-900" aria-hidden="true" />}
       </button>
 
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Filter Bookings">
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Filter Bookings" variant="neutral">
         <div className="flex flex-col gap-4">
           <div>
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
