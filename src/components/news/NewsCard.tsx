@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { CalendarIcon } from '@/components/ui/Icons'
+import { CATEGORY_LABELS } from '@/lib/bulletin-validation'
 import type { NewsItem } from './NewsGrid'
 
 // Icon paths copied verbatim from src/components/ui/SocialIcons.tsx (Facebook/Instagram
@@ -25,7 +26,7 @@ interface NewsCardProps {
 
 export default function NewsCard({ item, objectPosition = 'center' }: NewsCardProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-brand-dark/10 bg-brand-light shadow-card">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-brand-dark/20 bg-brand-light shadow-card">
       {item.image && (
         <div className="group relative aspect-[4/3] w-full overflow-hidden">
           <Image
@@ -37,7 +38,7 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/60 via-brand-dark/5 to-transparent" />
           <span className="absolute left-4 top-4 rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
-            {item.category}
+            {CATEGORY_LABELS[item.category]}
           </span>
         </div>
       )}
@@ -46,7 +47,7 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
         {!item.image && (
           <div className="mb-3 flex items-center gap-2">
             <span className="inline-flex items-center rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
-              {item.category}
+              {CATEGORY_LABELS[item.category]}
             </span>
           </div>
         )}

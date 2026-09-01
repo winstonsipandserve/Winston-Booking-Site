@@ -14,7 +14,7 @@ interface AnnouncementGateProps {
 
 export default function AnnouncementGate({ notices, onContinue }: AnnouncementGateProps) {
   return (
-    <div className="relative w-full py-2">
+    <div className="relative w-full py-10 md:py-16">
       <svg
         className="pointer-events-none absolute inset-0 h-full w-full text-brand-dark/[0.05]"
         preserveAspectRatio="xMidYMid slice"

@@ -15,6 +15,15 @@ export const VALID_CATEGORIES = [
 ] as const
 export type BulletinCategoryValue = (typeof VALID_CATEGORIES)[number]
 
+export const CATEGORY_LABELS: Record<BulletinCategoryValue, string> = {
+  Renovation: 'Renovation',
+  Closure: 'Facility Closure',
+  Tournament: 'Tournament',
+  Community: 'Community Event',
+  General: 'General Announcement',
+  FacilityMaintenance: 'Facility Maintenance',
+}
+
 export const VALID_SOCIAL_PLATFORMS = ['instagram', 'facebook'] as const
 
 /** Which fields a category requires, beyond the fields required for every category. */

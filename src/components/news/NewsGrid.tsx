@@ -1,4 +1,8 @@
+'use client'
+
+import { useState } from 'react'
 import Reveal from '@/components/ui/Reveal'
+import { CATEGORY_LABELS } from '@/lib/bulletin-validation'
 import NewsCard from './NewsCard'
 
 export type NewsCategory =
@@ -35,14 +39,51 @@ interface NewsGridProps {
 }
 
 export default function NewsGrid({ items }: NewsGridProps) {
+  const [selectedCategory, setSelectedCategory] = useState<NewsCategory | 'All'>('All')
+
+  const filteredItems =
+    selectedCategory === 'All' ? items : items.filter((item) => item.category === selectedCategory)
+
   return (
     <section className="bg-background py-24 md:py-28">
       <div className="mx-auto max-w-6xl px-6 md:px-10">
-        {items.length === 0 ? (
-          <p className="text-center text-sm text-neutral-700">No announcements yet — check back soon.</p>
+        <div className="mb-10 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('All')}
+            className={
+              selectedCategory === 'All'
+                ? 'rounded-full bg-accent-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-light'
+                : 'rounded-full border border-brand-dark/20 px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-dark transition-colors hover:border-accent-primary'
+            }
+          >
+            All
+          </button>
+          {(Object.keys(CATEGORY_LABELS) as NewsCategory[]).map((category) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setSelectedCategory(category)}
+              className={
+                selectedCategory === category
+                  ? 'rounded-full bg-accent-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-light'
+                  : 'rounded-full border border-brand-dark/20 px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-dark transition-colors hover:border-accent-primary'
+              }
+            >
+              {CATEGORY_LABELS[category]}
+            </button>
+          ))}
+        </div>
+
+        {filteredItems.length === 0 ? (
+          <p className="text-center text-sm text-neutral-700">
+            {items.length === 0
+              ? 'No announcements yet — check back soon.'
+              : 'No announcements in this category yet.'}
+          </p>
         ) : (
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((item, index) => (
+            {filteredItems.map((item, index) => (
               <Reveal key={item.id} delayMs={index * 100}>
                 <NewsCard item={item} objectPosition={OBJECT_POSITIONS[index % OBJECT_POSITIONS.length]} />
               </Reveal>
