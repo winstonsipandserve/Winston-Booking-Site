@@ -37,9 +37,7 @@ export default async function BookPage() {
     <>
       <Navbar />
 
-      <div className="pt-28 md:pt-32">
-        <BookingPageClient memberContext={memberContext} />
-      </div>
+      <BookingPageClient memberContext={memberContext} />
       <Footer />
     </>
   )

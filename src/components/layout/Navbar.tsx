@@ -56,7 +56,7 @@ export default function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${
-        headerSolid ? 'bg-brand-light' : 'bg-brand-light/[0.01]'
+        headerSolid ? 'bg-brand-light' : 'bg-brand-light/0'
       }`}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6">
@@ -152,7 +152,9 @@ export default function Navbar() {
           aria-label="Toggle menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
-          className="flex h-11 w-11 items-center justify-center rounded-none text-brand-dark md:hidden"
+          className={`flex h-11 w-11 items-center justify-center rounded-none md:hidden ${
+            headerSolid ? 'text-brand-dark' : 'text-accent-light'
+          }`}
         >
           <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-current stroke-2">
             {menuOpen ? (

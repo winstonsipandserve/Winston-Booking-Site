@@ -34,9 +34,7 @@ export default async function NewsPage() {
   return (
     <>
       <Navbar />
-      <div className="pt-28 md:pt-32">
-        <NewsGrid items={items} />
-      </div>
+      <NewsGrid items={items} />
       <Footer />
     </>
   )
