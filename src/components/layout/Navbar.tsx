@@ -19,6 +19,8 @@ const NAV_LINKS = [
 
 const SCROLL_THRESHOLD = 50
 
+const FORCE_SOLID_PAGES = ['/book', '/news']
+
 export default function Navbar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
@@ -34,13 +36,18 @@ export default function Navbar() {
   const headerSolid = scrolled || menuOpen
 
   useEffect(() => {
+    if (FORCE_SOLID_PAGES.includes(pathname)) {
+      setScrolled(true)
+      return
+    }
+
     const handleScroll = () => {
       setScrolled(window.scrollY > SCROLL_THRESHOLD)
     }
     handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+  }, [pathname])
 
   function handleSignOut() {
     signOut({ callbackUrl: '/' })

@@ -1,6 +1,5 @@
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import NewsHero from '@/components/news/NewsHero'
 import NewsGrid from '@/components/news/NewsGrid'
 import { prisma } from '@/lib/prisma'
 import { formatBulletinDate, formatBookingDateTime } from '@/lib/format'
@@ -35,8 +34,9 @@ export default async function NewsPage() {
   return (
     <>
       <Navbar />
-      <NewsHero />
-      <NewsGrid items={items} />
+      <div className="pt-28 md:pt-32">
+        <NewsGrid items={items} />
+      </div>
       <Footer />
     </>
   )
