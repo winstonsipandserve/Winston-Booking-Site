@@ -106,7 +106,15 @@ export async function PATCH(
     )
   }
 
-  const { customer, isMember } = await resolveCustomer({ name, phone, email })
+  const { customer } = await resolveCustomer({ name, phone, email })
+
+  // Deliberate: the anonymous booking path never grants member rate or F&B
+  // credit, regardless of the resolved Customer's actual membership status —
+  // that requires an authenticated session. Otherwise, knowing a member's
+  // name/email/phone would be enough to obtain member pricing or spend their
+  // credit with no authentication at all. See CLAUDE.md → Architecture
+  // Decisions → "Two-phase booking pricing".
+  const isMember = false
 
   const durationMinutes = Math.round(
     (booking.endTime.getTime() - booking.startTime.getTime()) / 60000,

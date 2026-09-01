@@ -1,10 +1,10 @@
+import { RateTier } from '@prisma/client'
 import { formatCentavos } from '@/lib/format'
 import BookingSummary from '../BookingSummary'
 
 interface PriceUpdate {
   originalCentavos: number
   finalCentavos: number
-  guestFeeWaived: boolean
 }
 
 interface KnownCustomer {
@@ -41,6 +41,7 @@ interface PaymentStepProps {
   onPayNow: () => void
   onStartOver: () => void
   knownCustomer: KnownCustomer | null
+  rateTier: RateTier
 }
 
 export default function PaymentStep({
@@ -72,6 +73,7 @@ export default function PaymentStep({
   onPayNow,
   onStartOver,
   knownCustomer,
+  rateTier,
 }: PaymentStepProps) {
   const isValid = knownCustomer
     ? true
@@ -108,6 +110,7 @@ export default function PaymentStep({
         coachingPaxCount={coachingPaxCount}
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
+        rateTier={rateTier}
       />
 
       {knownCustomer ? (
@@ -171,19 +174,9 @@ export default function PaymentStep({
 
       {priceUpdate && (
         <div className="rounded-xl border border-accent-primary/30 bg-accent-primary/5 px-4 py-3 text-sm font-medium text-brand-dark">
-          {priceUpdate.guestFeeWaived ? (
-            <>
-              Your final price is {formatCentavos(priceUpdate.finalCentavos)} (was{' '}
-              {formatCentavos(priceUpdate.originalCentavos)} for non-members, including guest fee)
-              — member rate applied, guest fee waived.
-            </>
-          ) : (
-            <>
-              Your final price is {formatCentavos(priceUpdate.finalCentavos)} (was{' '}
-              {formatCentavos(priceUpdate.originalCentavos)} for non-members) — member rate
-              applied.
-            </>
-          )}
+          Your final price is {formatCentavos(priceUpdate.finalCentavos)} (was{' '}
+          {formatCentavos(priceUpdate.originalCentavos)}) — pricing was updated since you started
+          this booking.
         </div>
       )}
 

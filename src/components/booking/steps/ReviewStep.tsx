@@ -1,3 +1,4 @@
+import { RateTier } from '@prisma/client'
 import BookingSummary from '../BookingSummary'
 
 interface ReviewStepProps {
@@ -17,6 +18,7 @@ interface ReviewStepProps {
   submitError: string | null
   onBack: () => void
   onConfirmBooking: () => void
+  rateTier: RateTier
 }
 
 export default function ReviewStep({
@@ -36,6 +38,7 @@ export default function ReviewStep({
   submitError,
   onBack,
   onConfirmBooking,
+  rateTier,
 }: ReviewStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -52,6 +55,7 @@ export default function ReviewStep({
         coachingPaxCount={coachingPaxCount}
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
+        rateTier={rateTier}
         showIcons
       />
 

@@ -174,7 +174,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   const [priceUpdate, setPriceUpdate] = useState<{
     originalCentavos: number
     finalCentavos: number
-    guestFeeWaived: boolean
   } | null>(null)
   const [showInsufficientCreditModal, setShowInsufficientCreditModal] = useState(false)
 
@@ -447,7 +446,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           setPriceUpdate({
             originalCentavos: createdTotalCentavos,
             finalCentavos: finalTotal,
-            guestFeeWaived: json.guestFeeWaived,
           })
         } else {
           await startCheckout(bookingId)
@@ -574,6 +572,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           submitError={submitError}
           onBack={() => setStep(4)}
           onConfirmBooking={handleConfirmBookingClick}
+          rateTier={rateTier}
         />
       )}
 
@@ -647,6 +646,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           onPayNow={handlePayNow}
           onStartOver={handleStartOver}
           knownCustomer={memberContext ? { name: memberContext.name, email: memberContext.email } : null}
+          rateTier={rateTier}
         />
       )}
 

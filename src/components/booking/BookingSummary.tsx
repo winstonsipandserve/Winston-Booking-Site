@@ -1,3 +1,4 @@
+import { RateTier } from '@prisma/client'
 import { formatCentavos } from '@/lib/format'
 import { LocationIcon, CalendarIcon, ClockIcon, GuestsIcon, BallBoyIcon, CoachingIcon } from '@/components/ui/Icons'
 
@@ -14,6 +15,7 @@ interface BookingSummaryProps {
   coachingPaxCount: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
+  rateTier: RateTier
   showIcons?: boolean
 }
 
@@ -39,6 +41,7 @@ export default function BookingSummary({
   coachingPaxCount,
   estimateCentavos,
   addOnsEstimateCentavos,
+  rateTier,
   showIcons = false,
 }: BookingSummaryProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
@@ -124,7 +127,9 @@ export default function BookingSummary({
               Add-ons subtotal: {formatCentavos(addOnsEstimateCentavos)}
             </p>
             <p className="text-sm text-brand-dark/60">
-              Estimated at non-member rate — your final price reflects any active membership.
+              {rateTier === 'member'
+                ? 'Estimated at member rate.'
+                : 'Estimated at non-member rate. Member rate and F&B credit are only available when signed in to a membership account.'}
             </p>
           </>
         ) : (
