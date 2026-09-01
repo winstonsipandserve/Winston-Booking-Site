@@ -1,4 +1,6 @@
+import type { ReactNode } from 'react'
 import { formatCentavos } from '@/lib/format'
+import { AlertTriangleIcon, CheckCircleIcon, InfoIcon, XCircleIcon } from '@/components/admin/AdminIcons'
 
 export type CheckInResult =
   | { status: 'not_found' }
@@ -27,7 +29,7 @@ export default function CheckInResultCard({
     const message = result.status === 'not_found' ? 'Code not recognized' : result.message
     return (
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-        <p className="text-sm font-semibold text-red-700">{message}</p>
+        <StatusHeader icon={<XCircleIcon className="h-5 w-5" />} label={message} colorClass="text-red-700" />
         <ActionButton label={actionLabel} onClick={onAction} />
       </div>
     )
@@ -36,8 +38,12 @@ export default function CheckInResultCard({
   if (result.status === 'no_membership') {
     return (
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-6 text-center">
-        <p className="text-sm font-semibold text-gray-700">{result.name}</p>
-        <p className="text-sm text-gray-500">No membership on file.</p>
+        <StatusHeader
+          icon={<InfoIcon className="h-5 w-5" />}
+          label="No membership on file."
+          colorClass="text-gray-700"
+        />
+        <p className="text-sm font-semibold text-gray-900">{result.name}</p>
         <ActionButton label={actionLabel} onClick={onAction} />
       </div>
     )
@@ -48,12 +54,16 @@ export default function CheckInResultCard({
   return (
     <div
       className={`flex w-full max-w-sm flex-col items-center gap-3 rounded-xl border p-6 text-center ${
-        isActive ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'
+        isActive ? 'border-gray-200 bg-white' : 'border-amber-200 bg-amber-50'
       }`}
     >
-      <p className={`text-sm font-semibold ${isActive ? 'text-green-700' : 'text-amber-700'}`}>
-        {isActive ? 'Active Member' : 'Membership Expired'}
-      </p>
+      <StatusHeader
+        icon={
+          isActive ? <CheckCircleIcon className="h-5 w-5" /> : <AlertTriangleIcon className="h-5 w-5" />
+        }
+        label={isActive ? 'Active Member' : 'Membership Expired'}
+        colorClass={isActive ? 'text-gray-900' : 'text-amber-700'}
+      />
       <p className="text-base font-medium text-gray-900">{result.name}</p>
       <p className="text-xs text-gray-500">{result.email}</p>
       <div className="mt-2 flex w-full flex-col gap-1 border-t border-gray-200 pt-3 text-left text-sm text-gray-700">
@@ -73,6 +83,15 @@ export default function CheckInResultCard({
         </div>
       </div>
       <ActionButton label={actionLabel} onClick={onAction} />
+    </div>
+  )
+}
+
+function StatusHeader({ icon, label, colorClass }: { icon: ReactNode; label: string; colorClass: string }) {
+  return (
+    <div className={`flex items-center gap-2 ${colorClass}`}>
+      {icon}
+      <p className="text-sm font-semibold">{label}</p>
     </div>
   )
 }

@@ -21,19 +21,28 @@ export default function CheckInScanner() {
     scannerRef.current = scanner
     let cancelled = false
 
-    scanner
-      .start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => {
-          handleDecode(decodedText)
-        },
-        () => {
-          // Per-frame decode misses are expected while no code is in view — ignore.
-        },
-      )
+    const startPromise = scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        handleDecode(decodedText)
+      },
+      () => {
+        // Per-frame decode misses are expected while no code is in view — ignore.
+      },
+    )
+
+    startPromise
       .then(() => {
-        if (!cancelled) setIsScanning(true)
+        // React Strict Mode's dev-mode double-invoke can run this effect's
+        // cleanup before start() resolves. If that already happened, tear the
+        // camera down immediately instead of flipping to "scanning" — the
+        // cleanup below handles the opposite ordering (start() resolving
+        // before cleanup runs), so either way the camera stops exactly once.
+        if (cancelled) {
+          return scanner.stop().then(() => scanner.clear())
+        }
+        setIsScanning(true)
       })
       .catch((err) => {
         if (!cancelled) {
@@ -46,10 +55,13 @@ export default function CheckInScanner() {
 
     return () => {
       cancelled = true
-      const currentScanner = scannerRef.current
-      if (currentScanner?.isScanning) {
-        currentScanner.stop().catch(() => {})
-      }
+      startPromise
+        .then(() => {
+          if (scanner.isScanning) {
+            return scanner.stop().then(() => scanner.clear())
+          }
+        })
+        .catch(() => {})
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

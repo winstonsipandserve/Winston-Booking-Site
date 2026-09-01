@@ -12,7 +12,7 @@ const TABS = [
 type Tab = (typeof TABS)[number]['value']
 
 export default function CheckInTabs() {
-  const [activeTab, setActiveTab] = useState<Tab>('scan')
+  const [activeTab, setActiveTab] = useState<Tab | null>(null)
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -36,7 +36,11 @@ export default function CheckInTabs() {
         })}
       </div>
 
-      {activeTab === 'scan' ? <CheckInScanner /> : <CheckInCodeEntry />}
+      {activeTab === null && (
+        <p className="text-sm text-gray-500">Choose Scan or Enter Code to check in a member.</p>
+      )}
+      {activeTab === 'scan' && <CheckInScanner />}
+      {activeTab === 'code' && <CheckInCodeEntry />}
     </div>
   )
 }
