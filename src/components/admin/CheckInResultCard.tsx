@@ -2,6 +2,7 @@ import { formatCentavos } from '@/lib/format'
 
 export type CheckInResult =
   | { status: 'not_found' }
+  | { status: 'rate_limited'; message: string }
   | { status: 'no_membership'; name: string }
   | {
       status: 'active' | 'expired'
@@ -22,10 +23,11 @@ export default function CheckInResultCard({
   actionLabel: string
   onAction: () => void
 }) {
-  if (result.status === 'not_found') {
+  if (result.status === 'not_found' || result.status === 'rate_limited') {
+    const message = result.status === 'not_found' ? 'Code not recognized' : result.message
     return (
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-        <p className="text-sm font-semibold text-red-700">Code not recognized</p>
+        <p className="text-sm font-semibold text-red-700">{message}</p>
         <ActionButton label={actionLabel} onClick={onAction} />
       </div>
     )

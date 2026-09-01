@@ -212,10 +212,26 @@ model AdminUser {
   reviewedApplications MembershipApplication[] @relation("ApplicationReviewedBy")
   performedReschedules BookingReschedule[]     @relation("ReschedulePerformedBy")
   initiatedRenewalPayments MembershipPayment[] @relation("MembershipPaymentInitiatedByAdmin")
+  checkInLookupAttempts CheckInLookupAttempt[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("admin_users")
+}
+
+// ── Check-in code rate limiting (Decision: Member check-in) ──
+// Soft abuse-detection counter for /admin/check-in's Enter Code lookup — not a
+// financial/audit ledger, so no locking/transaction guarantee is required (see CLAUDE.md).
+
+model CheckInLookupAttempt {
+  id          String    @id @default(cuid())
+  adminUserId String    @map("admin_user_id")
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  // No updatedAt — write-once rows, cleared by opportunistic delete once outside the window.
+
+  @@index([adminUserId, createdAt])
+  @@map("check_in_lookup_attempts")
 }
 
 // ── Membership application & approval ─────────────────

@@ -19,7 +19,15 @@ export default function CheckInCodeEntry() {
       const res = await fetch(`/api/admin/check-in/code/${encodeURIComponent(code)}`)
       const json = await res.json().catch(() => null)
 
-      if (res.status === 404) {
+      if (res.status === 429) {
+        const retryAfterSeconds = json?.retryAfterSeconds
+        const minutes = typeof retryAfterSeconds === 'number' ? Math.ceil(retryAfterSeconds / 60) : null
+        const message =
+          minutes && minutes > 0
+            ? `Too many attempts. Try again in about ${minutes} minute${minutes === 1 ? '' : 's'}.`
+            : 'Too many attempts. Please wait before trying again.'
+        setResult({ status: 'rate_limited', message })
+      } else if (res.status === 404) {
         setResult({ status: 'not_found' })
       } else if (res.ok && json?.hasMembership === false) {
         setResult({ status: 'no_membership', name: json.name })
