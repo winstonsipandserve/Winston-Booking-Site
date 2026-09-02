@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import NewsGrid from '@/components/news/NewsGrid'
@@ -34,7 +35,9 @@ export default async function NewsPage() {
   return (
     <>
       <Navbar />
-      <NewsGrid items={items} />
+      <Suspense fallback={null}>
+        <NewsGrid items={items} />
+      </Suspense>
       <Footer />
     </>
   )

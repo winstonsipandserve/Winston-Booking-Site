@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Reveal from '@/components/ui/Reveal'
 import { CATEGORY_LABELS } from '@/lib/bulletin-validation'
 import NewsCard from './NewsCard'
@@ -34,12 +34,32 @@ export interface NewsItem {
 
 const OBJECT_POSITIONS = ['center', 'top', '20% 70%', 'right']
 
+const CATEGORY_KEYS = Object.keys(CATEGORY_LABELS) as NewsCategory[]
+
+function isNewsCategory(value: string | null): value is NewsCategory {
+  return value !== null && (CATEGORY_KEYS as string[]).includes(value)
+}
+
 interface NewsGridProps {
   items: NewsItem[]
 }
 
 export default function NewsGrid({ items }: NewsGridProps) {
-  const [selectedCategory, setSelectedCategory] = useState<NewsCategory | 'All'>('All')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const categoryParam = searchParams.get('category')
+  const selectedCategory: NewsCategory | 'All' = isNewsCategory(categoryParam) ? categoryParam : 'All'
+
+  function handleSelectCategory(category: NewsCategory | 'All') {
+    const params = new URLSearchParams(searchParams.toString())
+    if (category === 'All') {
+      params.delete('category')
+    } else {
+      params.set('category', category)
+    }
+    const query = params.toString()
+    router.replace(query ? `/news?${query}` : '/news', { scroll: false })
+  }
 
   const filteredItems =
     selectedCategory === 'All' ? items : items.filter((item) => item.category === selectedCategory)
@@ -50,7 +70,7 @@ export default function NewsGrid({ items }: NewsGridProps) {
         <div className="mb-10 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setSelectedCategory('All')}
+            onClick={() => handleSelectCategory('All')}
             className={
               selectedCategory === 'All'
                 ? 'rounded-full bg-accent-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-light'
@@ -63,7 +83,7 @@ export default function NewsGrid({ items }: NewsGridProps) {
             <button
               key={category}
               type="button"
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => handleSelectCategory(category)}
               className={
                 selectedCategory === category
                   ? 'rounded-full bg-accent-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-light'
