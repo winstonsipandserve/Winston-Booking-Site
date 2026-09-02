@@ -116,6 +116,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-09-02 — Doc-only: added two Next Up items that had been identified as open but were missing from the list — staging re-verification and `scripts/seed-sample-bulletins.ts` gitignore housekeeping.
 - 2026-09-02 — PROGRESS.md cleanup pass: `PROGRESS_ARCHIVE.md` extended and verified (12 previously-unarchived entries from 2026-08-10–2026-08-27 appended, plus the full 2026-08-28–2026-09-02 range archived verbatim for the first time), the 146 already-archived 2026-08-10–2026-08-27 entries pruned from this file's live Completed Log, and the 90 2026-08-28–2026-09-02 entries compressed in place to 1–3 sentences each. `PROGRESS.md` dropped from ~168KB to ~45KB.
 - 2026-09-02 — Doc-only: fixed 4 stale ordinal cross-references in Build Status ("second/third/fourth/fifth"-style pointers to Completed Log entries that had drifted out of position over time, predating the same-day archive cleanup) — corrected to their actual current positions.
+- 2026-09-02 — Doc-only: graduated the Vercel Deployment Protection decision (re-enabled Standard Protection, bypass secret, Shareable Links guidance) from a "Resolved" Open/Not Yet Decided bullet into a proper Architecture Decisions entry in CLAUDE.md, replacing it and the matching Known Issues paragraph with short pointers — closes the last remaining "resolved but never graduated" doc-drift item.
 
 ---
 
