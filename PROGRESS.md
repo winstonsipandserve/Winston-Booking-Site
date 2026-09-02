@@ -117,6 +117,7 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - 2026-09-02 — PROGRESS.md cleanup pass: `PROGRESS_ARCHIVE.md` extended and verified (12 previously-unarchived entries from 2026-08-10–2026-08-27 appended, plus the full 2026-08-28–2026-09-02 range archived verbatim for the first time), the 146 already-archived 2026-08-10–2026-08-27 entries pruned from this file's live Completed Log, and the 90 2026-08-28–2026-09-02 entries compressed in place to 1–3 sentences each. `PROGRESS.md` dropped from ~168KB to ~45KB.
 - 2026-09-02 — Doc-only: fixed 4 stale ordinal cross-references in Build Status ("second/third/fourth/fifth"-style pointers to Completed Log entries that had drifted out of position over time, predating the same-day archive cleanup) — corrected to their actual current positions.
 - 2026-09-02 — Doc-only: graduated the Vercel Deployment Protection decision (re-enabled Standard Protection, bypass secret, Shareable Links guidance) from a "Resolved" Open/Not Yet Decided bullet into a proper Architecture Decisions entry in CLAUDE.md, replacing it and the matching Known Issues paragraph with short pointers — closes the last remaining "resolved but never graduated" doc-drift item.
+- 2026-09-02 — Doc-only: added two previously-untracked pending items to Next Up — Supabase Pro upgrade (confirmed still on Free tier) and Vercel account 2FA (confirmed Inactive via dashboard check) — both had only existed in prior planning-session notes, not in PROGRESS.md itself.
 
 ---
 
@@ -135,6 +136,8 @@ Build status and change log for Winston Sip and Serve. Updated as a standard par
 - `CATEGORY_LABELS` (added 2026-09-02, `bulletin-validation.ts`) is now the single source of truth for human-readable `BulletinCategory` display text, used by `/news`'s filter pills and `NewsCard`'s badges — if a 7th category is ever added, it needs an entry here (TypeScript's `Record<BulletinCategoryValue, string>` will already fail to compile without one).
 - Staging re-verification — the `syd1` region fix and Vercel Auth re-enable (2026-08-30) were only ever applied by redeploying `dev`; staging's last live-verify pass predates both. Needs a full end-to-end click-through against the deployed `staging` URL before it can be considered current.
 - `scripts/seed-sample-bulletins.ts` gitignore housekeeping — the file's header claims persistence but `scripts/` is entirely gitignored, so it's untracked. Open decision: untrack it (move the script elsewhere), or fix the header comment to reflect its actual gitignored status.
+- Supabase project (`vsmjybtidvmzvicdpkdo`) is still on the Free tier — upgrading to Pro is required before launch, for backups and a higher connection limit (two separate paid actions, neither yet actioned as of 2026-09-02).
+- Vercel account two-factor authentication is confirmed **Inactive** (checked 2026-09-02, Account Settings → Security → Two-Factor Authentication) — Vercel flags this as strongly recommended; not yet enabled, no target date set.
 
 ---
 
