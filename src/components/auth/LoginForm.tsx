@@ -35,7 +35,7 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+    <div className="mx-auto flex w-full max-w-md flex-col rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="email" className="text-sm font-medium text-brand-dark">
@@ -46,7 +46,7 @@ export default function LoginForm() {
             name="email"
             type="email"
             required
-            className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none"
+            className="rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none"
           />
         </div>
 
@@ -56,7 +56,7 @@ export default function LoginForm() {
           label="Password"
           required
           labelClassName="flex flex-col gap-1 text-sm font-medium text-brand-dark"
-          inputClassName="w-full rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 pr-10 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none"
+          inputClassName="w-full rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 pr-10 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none"
           toggleClassName="absolute right-2 top-1/2 -translate-y-1/2 text-brand-dark/40 hover:text-brand-dark"
         />
 

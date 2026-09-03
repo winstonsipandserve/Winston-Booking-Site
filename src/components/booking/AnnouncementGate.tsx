@@ -33,7 +33,7 @@ export default function AnnouncementGate({ notices, onContinue }: AnnouncementGa
         <rect width="100%" height="100%" fill="url(#gate-dot-pattern)" />
       </svg>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-col gap-6 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-col gap-6 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
         {notices.length > 0 && (
           <div className="flex flex-col">
             {notices.map((notice, index) => (

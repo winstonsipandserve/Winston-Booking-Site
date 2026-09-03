@@ -95,7 +95,7 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
                   onSelect(rt.id)
                 }
               }}
-              className={`flex cursor-pointer flex-col items-start gap-1 rounded px-4 py-3 text-left transition-colors ${
+              className={`flex cursor-pointer flex-col items-start gap-1 rounded-none px-4 py-3 text-left transition-colors ${
                 isSelected
                   ? 'border-2 border-accent-primary bg-accent-primary/10'
                   : 'border border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'

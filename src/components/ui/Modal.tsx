@@ -46,10 +46,10 @@ export default function Modal({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className={`relative my-auto w-full ${maxWidthClassName} rounded-2xl border px-6 py-6 shadow-xl ${
+        className={`relative my-auto w-full ${maxWidthClassName} border px-6 py-6 shadow-xl ${
           variant === 'neutral'
-            ? 'border-gray-200 bg-white shadow-gray-900/10'
-            : 'border-brand-dark/10 bg-brand-light shadow-brand-dark/10'
+            ? 'rounded-2xl border-gray-200 bg-white shadow-gray-900/10'
+            : 'rounded-card border-brand-dark/10 bg-brand-light shadow-brand-dark/10'
         }`}
       >
         <button

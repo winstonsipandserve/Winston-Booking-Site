@@ -14,7 +14,7 @@ export default function HoursLocation() {
           <p className="text-sm uppercase tracking-[0.3em] text-accent-primary">Location</p>
           <h2 className="mt-4 font-serif text-3xl text-brand-dark md:text-4xl">Find Us</h2>
           <p className="mt-4 text-sm font-medium text-neutral-700">East Fairview Park Subdivision</p>
-          <div className="mt-4 overflow-hidden rounded-2xl shadow-card">
+          <div className="mt-4 overflow-hidden rounded-card shadow-card">
             <div className="relative aspect-[16/9] w-full">
               <Image src="/images/placeholder.jpg" alt="Map to Winston Sip and Serve" fill className="object-cover" />
             </div>

@@ -20,7 +20,7 @@ interface SuccessResult {
 }
 
 function inputClassName() {
-  return 'rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
+  return 'rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
 }
 
 export default function MembershipApplicationForm() {
@@ -109,7 +109,7 @@ export default function MembershipApplicationForm() {
 
   if (submitState === 'success' && successResult) {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
         <h2 className="font-serif text-2xl text-brand-dark">Application Submitted</h2>
         <p className="text-sm text-brand-dark/60">
           Application ID: <span className="font-medium text-brand-dark">{successResult.id}</span>
@@ -128,7 +128,7 @@ export default function MembershipApplicationForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
+      className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
     >
       <div className="flex flex-col gap-1">
         <label htmlFor="name" className="text-sm font-medium text-brand-dark">
@@ -198,7 +198,7 @@ export default function MembershipApplicationForm() {
             return (
               <label
                 key={tier.value}
-                className={`flex cursor-pointer items-center justify-between rounded px-4 py-3 text-left transition-colors ${
+                className={`flex cursor-pointer items-center justify-between rounded-none px-4 py-3 text-left transition-colors ${
                   isSelected
                     ? 'border-2 border-accent-primary bg-accent-primary/10'
                     : 'border border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'

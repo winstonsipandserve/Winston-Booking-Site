@@ -104,9 +104,9 @@ export default function MenuHighlights() {
                 {category.items.map((item) => (
                   <div
                     key={item.name}
-                    className="flex items-center gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light p-4 shadow-card"
+                    className="flex items-center gap-4 rounded-card border border-brand-dark/10 bg-brand-light p-4 shadow-card"
                   >
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl">
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-card-inline">
                       <Image src={item.image} alt={item.name} fill className="object-cover" />
                     </div>
                     <div className="min-w-0">

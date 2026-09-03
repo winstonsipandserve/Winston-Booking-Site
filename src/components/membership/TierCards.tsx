@@ -53,8 +53,8 @@ export default function TierCards() {
                 <div
                   className={
                     tier.featured
-                      ? 'relative flex h-full flex-col rounded-2xl border-2 border-accent-primary bg-brand-light p-6 shadow-xl shadow-brand-dark/10 md:scale-105'
-                      : 'flex h-full flex-col rounded-2xl border border-brand-dark/10 bg-brand-light p-6 shadow-card'
+                      ? 'relative flex h-full flex-col rounded-card border-2 border-accent-primary bg-brand-light p-6 shadow-xl shadow-brand-dark/10 md:scale-105'
+                      : 'flex h-full flex-col rounded-card border border-brand-dark/10 bg-brand-light p-6 shadow-card'
                   }
                 >
                   {tier.featured && (

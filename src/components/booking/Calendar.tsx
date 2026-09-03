@@ -79,13 +79,13 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
   ]
 
   return (
-    <div className="flex w-full flex-col gap-2 rounded border border-brand-dark/20 bg-brand-light p-3">
+    <div className="flex w-full flex-col gap-2 rounded-card border border-brand-dark/20 bg-brand-light p-3">
       <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={goPrevMonth}
           disabled={isAtCurrentMonth}
-          className="rounded px-2 py-1 text-sm font-medium text-brand-dark hover:bg-brand-dark/5 disabled:opacity-30"
+          className="rounded-none px-2 py-1 text-sm font-medium text-brand-dark hover:bg-brand-dark/5 disabled:opacity-30"
         >
           ← Prev
         </button>
@@ -95,7 +95,7 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
         <button
           type="button"
           onClick={goNextMonth}
-          className="rounded px-2 py-1 text-sm font-medium text-brand-dark hover:bg-brand-dark/5"
+          className="rounded-none px-2 py-1 text-sm font-medium text-brand-dark hover:bg-brand-dark/5"
         >
           Next →
         </button>
@@ -125,7 +125,7 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
               disabled={isPast}
               aria-disabled={isPast}
               onClick={() => onSelectDate(dateStr)}
-              className={`rounded py-2 text-sm transition-colors ${
+              className={`rounded-none py-2 text-sm transition-colors ${
                 isSelected
                   ? 'bg-brand-dark text-brand-light hover:bg-brand-dark'
                   : isPast

@@ -13,7 +13,7 @@ export default function MembershipRenewalConfirmation({
         <h2 className="font-serif text-2xl text-brand-dark">Welcome back — your membership has been renewed!</h2>
       </div>
 
-      <div className="rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+      <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
         <dl className="flex flex-col">
           <div className="flex justify-between gap-4 py-3">
             <dt className="text-brand-dark/70">Membership Tier</dt>

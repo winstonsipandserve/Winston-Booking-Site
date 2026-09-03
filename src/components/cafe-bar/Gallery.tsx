@@ -40,7 +40,7 @@ export default function Gallery({ mode }: GalleryProps) {
         <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-3 md:gap-5">
           {tiles.map((tile, index) => (
             <Reveal key={tile.alt} delayMs={index * 100} className="h-56 md:h-72">
-              <div className="group relative h-full w-full overflow-hidden rounded-2xl">
+              <div className="group relative h-full w-full overflow-hidden rounded-card">
                 <Image
                   src="/images/placeholder.jpg"
                   alt={tile.alt}

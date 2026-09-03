@@ -131,7 +131,7 @@ export default function TimeSlotGrid({
   return (
     <div className="flex flex-col gap-2">
       {closingWarning && (
-        <div className="rounded border border-amber-400/60 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="rounded-none border border-amber-400/60 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {closingWarning}
         </div>
       )}
@@ -153,7 +153,7 @@ export default function TimeSlotGrid({
                 }
                 onSelectSlot(slot.startIso)
               }}
-              className={`rounded px-2 py-2 text-sm transition-colors ${
+              className={`rounded-none px-2 py-2 text-sm transition-colors ${
                 isInSelectedRange
                   ? 'border-2 border-accent-primary bg-accent-primary/10 font-semibold text-brand-dark'
                   : slot.disabled

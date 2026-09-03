@@ -51,7 +51,7 @@ export default async function MembershipRenewalPaymentPage({
           </div>
         ) : (
           <div className="flex w-full max-w-md flex-col gap-4">
-            <div className="rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+            <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
               <dl className="flex flex-col">
                 <div className="flex justify-between gap-4 py-3">
                   <dt className="text-brand-dark/70">Tier</dt>

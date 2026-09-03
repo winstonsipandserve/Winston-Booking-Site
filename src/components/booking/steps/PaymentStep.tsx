@@ -117,12 +117,12 @@ export default function PaymentStep({
       />
 
       {knownCustomer ? (
-        <div className="rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-4 text-sm text-brand-dark shadow-xl shadow-brand-dark/10">
+        <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-4 text-sm text-brand-dark shadow-xl shadow-brand-dark/10">
           Booking under <span className="font-medium">{knownCustomer.name}</span> (
           {knownCustomer.email})
         </div>
       ) : (
-        <div className="flex flex-col gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10">
+        <div className="flex flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10">
           <div className="flex flex-col gap-1">
             <label htmlFor="name" className="text-sm font-medium text-brand-dark">
               Name
@@ -134,7 +134,7 @@ export default function PaymentStep({
               value={name}
               disabled={customerAttached}
               onChange={(e) => onNameChange(e.target.value)}
-              className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
+              className="rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function PaymentStep({
               value={phone}
               disabled={customerAttached}
               onChange={(e) => onPhoneChange(e.target.value)}
-              className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
+              className="rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
             />
           </div>
 
@@ -164,19 +164,19 @@ export default function PaymentStep({
               value={email}
               disabled={customerAttached}
               onChange={(e) => onEmailChange(e.target.value)}
-              className="rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
+              className="rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
             />
           </div>
         </div>
       )}
 
-      <div className="rounded-xl border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-3 text-sm text-brand-dark/70">
+      <div className="rounded-card-inline border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-3 text-sm text-brand-dark/70">
         All bookings are final. We don&apos;t offer refunds or rescheduling once a booking is
         confirmed.
       </div>
 
       {priceUpdate && (
-        <div className="rounded-xl border border-accent-primary/30 bg-accent-primary/5 px-4 py-3 text-sm font-medium text-brand-dark">
+        <div className="rounded-card-inline border border-accent-primary/30 bg-accent-primary/5 px-4 py-3 text-sm font-medium text-brand-dark">
           Your final price is {formatCentavos(priceUpdate.finalCentavos)} (was{' '}
           {formatCentavos(priceUpdate.originalCentavos)}) — pricing was updated since you started
           this booking.

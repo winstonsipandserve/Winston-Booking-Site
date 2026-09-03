@@ -49,7 +49,7 @@ export default function BookingSummary({
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
 
   return (
-    <div className="flex flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+    <div className="flex flex-col rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
       <dl className="flex flex-col">
         <div className="flex items-center justify-between gap-4 py-3">
           <dt className="flex items-center gap-2 text-brand-dark/70">

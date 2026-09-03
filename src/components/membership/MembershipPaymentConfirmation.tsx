@@ -13,7 +13,7 @@ export default function MembershipPaymentConfirmation({
         <h2 className="font-serif text-2xl text-brand-dark">Welcome to Winston Sip &amp; Serve!</h2>
       </div>
 
-      <div className="rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+      <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
         <dl className="flex flex-col">
           <div className="flex justify-between gap-4 py-3">
             <dt className="text-brand-dark/70">Membership Tier</dt>
@@ -22,7 +22,7 @@ export default function MembershipPaymentConfirmation({
         </dl>
       </div>
 
-      <p className="rounded-xl border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-3 text-sm text-brand-dark/70">
+      <p className="rounded-card-inline border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-3 text-sm text-brand-dark/70">
         Check your email for an activation link to set your password and access your account.
       </p>
 

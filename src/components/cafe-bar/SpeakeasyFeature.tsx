@@ -51,7 +51,7 @@ export default function SpeakeasyFeature() {
             {TIERS.map((tier) => (
               <div
                 key={tier.label}
-                className="rounded-2xl border border-brand-light/15 bg-brand-light/5 p-6 text-left"
+                className="rounded-card border border-brand-light/15 bg-brand-light/5 p-6 text-left"
               >
                 <p className="text-xs uppercase tracking-[0.25em] text-accent-light/90">{tier.label}</p>
                 <p className="mt-3 font-serif text-3xl text-brand-light">

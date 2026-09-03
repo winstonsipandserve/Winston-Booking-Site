@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation'
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
 function inputClassName() {
-  return 'rounded-lg border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
+  return 'rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
 }
 
 export default function ResetPasswordForm() {
@@ -21,7 +21,7 @@ export default function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
         <p className="text-brand-dark/70">
           This reset link is missing its token. Please use the full link from your password
           reset email.
@@ -32,7 +32,7 @@ export default function ResetPasswordForm() {
 
   if (submitState === 'success') {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
         <h2 className="font-serif text-2xl text-brand-dark">Your password has been reset</h2>
         <p className="text-sm text-brand-dark/70">
           You can now sign in.{' '}
@@ -80,7 +80,7 @@ export default function ResetPasswordForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
+      className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
     >
       <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-brand-dark">

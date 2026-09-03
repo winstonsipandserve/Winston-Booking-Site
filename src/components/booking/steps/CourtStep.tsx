@@ -29,7 +29,7 @@ export default function CourtStep({
               key={r.id}
               type="button"
               onClick={() => onSelect(r.id)}
-              className={`rounded px-4 py-3 text-center text-brand-dark transition-colors ${
+              className={`rounded-none px-4 py-3 text-center text-brand-dark transition-colors ${
                 isSelected
                   ? 'border-2 border-accent-primary bg-accent-primary/10 font-semibold'
                   : 'border border-brand-dark/20 bg-brand-light font-medium hover:bg-brand-dark/5'
