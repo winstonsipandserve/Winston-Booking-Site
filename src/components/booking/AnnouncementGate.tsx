@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export type GateNotice = {
   category: string
   title: string
@@ -63,10 +65,9 @@ export default function AnnouncementGate({ notices, onContinue }: AnnouncementGa
 
         <p className="self-center text-center text-xs text-brand-dark/60">
           Already a member?{' '}
-          {/* Placeholder — link to https://winstonsportsclub.web.app/auth once member auth is live */}
-          <span className="font-medium text-accent-primary underline underline-offset-2">
+          <Link href="/login" className="font-medium text-accent-primary underline underline-offset-2">
             Sign in
-          </span>{' '}
+          </Link>{' '}
           for member rates and priority booking.
         </p>
 

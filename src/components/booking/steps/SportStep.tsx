@@ -6,12 +6,19 @@ import { TennisIcon, PickleballIcon, GolfIcon } from '@/components/ui/Icons'
 
 type ResourceCategory = 'court' | 'simulator'
 
+interface PricingRuleOption {
+  rateTier: RateTier
+  durationMinutes: number
+  priceCentavos: number
+}
+
 interface ResourceTypeOption {
   id: string
   slug: string
   name: string
   category: ResourceCategory
   resources: { id: string; label: string }[]
+  pricing: PricingRuleOption[]
 }
 
 type RateTier = 'member' | 'non_member'
@@ -45,60 +52,30 @@ interface PricingInfo {
   tiers: PriceTier[]
 }
 
-const NON_MEMBER_PRICING: Record<string, PricingInfo> = {
-  tennis_court: { tiers: [{ label: 'Per hour', price: '₱750' }] },
-  pickleball_court: { tiers: [{ label: 'Per hour', price: '₱650' }] },
-  tennis_sim: {
-    tiers: [
-      { label: '15 minutes', price: '₱300' },
-      { label: '30 minutes', price: '₱450' },
-      { label: '60 minutes', price: '₱800' },
-    ],
-  },
-  pickleball_sim: {
-    tiers: [
-      { label: '15 minutes', price: '₱300' },
-      { label: '30 minutes', price: '₱450' },
-      { label: '60 minutes', price: '₱800' },
-    ],
-  },
-  golf_sim: {
-    tiers: [
-      { label: '60 minutes', price: '₱1,150' },
-      { label: '90 minutes', price: '₱1,450' },
-    ],
-  },
+function formatWholePesos(centavos: number): string {
+  return `₱${(centavos / 100).toLocaleString('en-PH')}`
 }
 
-const MEMBER_PRICING: Record<string, PricingInfo> = {
-  tennis_court: { tiers: [{ label: 'Per hour', price: '₱650' }] },
-  pickleball_court: { tiers: [{ label: 'Per hour', price: '₱550' }] },
-  tennis_sim: {
-    tiers: [
-      { label: '15 minutes', price: '₱250' },
-      { label: '30 minutes', price: '₱400' },
-      { label: '60 minutes', price: '₱750' },
-    ],
-  },
-  pickleball_sim: {
-    tiers: [
-      { label: '15 minutes', price: '₱250' },
-      { label: '30 minutes', price: '₱400' },
-      { label: '60 minutes', price: '₱750' },
-    ],
-  },
-  golf_sim: {
-    tiers: [
-      { label: '30 minutes', price: '₱450' },
-      { label: '60 minutes', price: '₱950' },
-      { label: '90 minutes', price: '₱1,400' },
-    ],
-  },
+function getPricingInfo(resourceType: ResourceTypeOption, rateTier: RateTier): PricingInfo | null {
+  const rules = resourceType.pricing.filter((p) => p.rateTier === rateTier)
+  if (rules.length === 0) return null
+
+  if (resourceType.category === 'court') {
+    const hourly = rules.find((p) => p.durationMinutes === 60)
+    if (!hourly) return null
+    return { tiers: [{ label: 'Per hour', price: formatWholePesos(hourly.priceCentavos) }] }
+  }
+
+  const tiers = [...rules]
+    .sort((a, b) => a.durationMinutes - b.durationMinutes)
+    .map((p) => ({ label: `${p.durationMinutes} minutes`, price: formatWholePesos(p.priceCentavos) }))
+  return { tiers }
 }
 
 export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rateTier }: SportStepProps) {
-  const PRICING = rateTier === 'member' ? MEMBER_PRICING : NON_MEMBER_PRICING
   const [pricingSlug, setPricingSlug] = useState<string | null>(null)
+  const pricingResourceType = resourceTypes.find((rt) => rt.slug === pricingSlug) ?? null
+  const pricingInfo = pricingResourceType ? getPricingInfo(pricingResourceType, rateTier) : null
 
   return (
     <>
@@ -133,7 +110,7 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
               <span className="text-sm text-brand-dark/60">
                 {countLabel(rt.resources.length, rt.category)}
               </span>
-              {PRICING[rt.slug] && (
+              {getPricingInfo(rt, rateTier) && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -150,14 +127,14 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
         })}
       </div>
 
-      {pricingSlug && PRICING[pricingSlug] && (
+      {pricingInfo && (
         <Modal
           isOpen={true}
           onClose={() => setPricingSlug(null)}
-          title={`${resourceTypes.find((rt) => rt.slug === pricingSlug)?.name ?? ''} Pricing`}
+          title={`${pricingResourceType?.name ?? ''} Pricing`}
         >
           <ul className="flex flex-col divide-y divide-brand-dark/10">
-            {PRICING[pricingSlug].tiers.map((tier) => (
+            {pricingInfo.tiers.map((tier) => (
               <li key={tier.label} className="flex items-center justify-between py-2 text-sm text-brand-dark">
                 <span>{tier.label}</span>
                 <span className="font-semibold text-accent-primary">{tier.price}</span>
