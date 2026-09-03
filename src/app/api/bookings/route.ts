@@ -238,7 +238,7 @@ export async function POST(request: Request) {
       }
 
       return { booking: createdBooking, creditCovered }
-    })
+    }, { timeout: 15000 })
   } catch (err) {
     console.error('Booking creation failed', err)
     if (isExclusionViolation(err)) {

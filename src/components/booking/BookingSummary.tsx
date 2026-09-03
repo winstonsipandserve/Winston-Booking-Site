@@ -16,6 +16,7 @@ interface BookingSummaryProps {
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
   rateTier: RateTier
+  hasSession: boolean
   showIcons?: boolean
 }
 
@@ -42,6 +43,7 @@ export default function BookingSummary({
   estimateCentavos,
   addOnsEstimateCentavos,
   rateTier,
+  hasSession,
   showIcons = false,
 }: BookingSummaryProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
@@ -129,7 +131,9 @@ export default function BookingSummary({
             <p className="text-sm text-brand-dark/60">
               {rateTier === 'member'
                 ? 'Estimated at member rate.'
-                : 'Estimated at non-member rate. Member rate and F&B credit are only available when signed in to a membership account.'}
+                : hasSession
+                  ? "Estimated at non-member rate — your membership has expired. Renew your membership to restore member rate and F&B credit."
+                  : 'Estimated at non-member rate. Member rate and F&B credit are only available when signed in to a membership account.'}
             </p>
           </>
         ) : (

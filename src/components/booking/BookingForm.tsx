@@ -573,6 +573,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           onBack={() => setStep(4)}
           onConfirmBooking={handleConfirmBookingClick}
           rateTier={rateTier}
+          hasSession={!!memberContext}
         />
       )}
 
@@ -647,6 +648,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           onStartOver={handleStartOver}
           knownCustomer={memberContext ? { name: memberContext.name, email: memberContext.email } : null}
           rateTier={rateTier}
+          hasSession={!!memberContext}
         />
       )}
 

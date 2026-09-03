@@ -19,6 +19,7 @@ interface ReviewStepProps {
   onBack: () => void
   onConfirmBooking: () => void
   rateTier: RateTier
+  hasSession: boolean
 }
 
 export default function ReviewStep({
@@ -39,6 +40,7 @@ export default function ReviewStep({
   onBack,
   onConfirmBooking,
   rateTier,
+  hasSession,
 }: ReviewStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -56,6 +58,7 @@ export default function ReviewStep({
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
         rateTier={rateTier}
+        hasSession={hasSession}
         showIcons
       />
 

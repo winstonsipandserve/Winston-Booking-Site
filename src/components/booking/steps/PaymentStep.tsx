@@ -42,6 +42,7 @@ interface PaymentStepProps {
   onStartOver: () => void
   knownCustomer: KnownCustomer | null
   rateTier: RateTier
+  hasSession: boolean
 }
 
 export default function PaymentStep({
@@ -74,6 +75,7 @@ export default function PaymentStep({
   onStartOver,
   knownCustomer,
   rateTier,
+  hasSession,
 }: PaymentStepProps) {
   const isValid = knownCustomer
     ? true
@@ -111,6 +113,7 @@ export default function PaymentStep({
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
         rateTier={rateTier}
+        hasSession={hasSession}
       />
 
       {knownCustomer ? (
