@@ -88,10 +88,10 @@ export default function Navbar() {
                   href={link.href}
                   className={`group relative pb-1 text-sm font-normal uppercase tracking-[0.35px] transition-colors duration-200 ${
                     isActive
-                      ? `${scrolled ? 'text-brand-dark' : 'text-accent-light'} after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent-primary`
+                      ? `${scrolled ? 'text-brand-dark' : 'text-white'} after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent-primary`
                       : scrolled
                         ? 'text-gray-700 hover:text-brand-dark'
-                        : 'text-accent-light/90 hover:text-accent-light'
+                        : 'text-white/90 hover:text-white'
                   }`}
                 >
                   {link.label}
@@ -130,7 +130,7 @@ export default function Navbar() {
               type="button"
               onClick={() => setSignOutModalOpen(true)}
               className={`rounded-none border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
-                scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
+                scrolled ? 'border-brand-mid text-brand-dark' : 'border-white/60 text-white'
               }`}
             >
               Sign Out
@@ -139,7 +139,7 @@ export default function Navbar() {
             <Link
               href="/login"
               className={`rounded-none border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
-                scrolled ? 'border-brand-mid text-brand-dark' : 'border-accent-light/60 text-accent-light'
+                scrolled ? 'border-brand-mid text-brand-dark' : 'border-white/60 text-white'
               }`}
             >
               Sign In
