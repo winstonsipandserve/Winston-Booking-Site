@@ -48,7 +48,7 @@ export default function Facilities() {
                   : 'h-40 sm:h-48 md:h-full'
               }
             >
-              <div className="group relative h-full w-full overflow-hidden rounded-none">
+              <div className="group relative h-full w-full overflow-hidden rounded-card">
                 <Image
                   src={facility.image}
                   alt={facility.label}
