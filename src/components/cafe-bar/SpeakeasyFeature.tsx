@@ -3,23 +3,6 @@ import Reveal from '@/components/ui/Reveal'
 import Sunburst from '@/components/ui/Sunburst'
 import { CocktailIcon } from '@/components/ui/Icons'
 
-interface MembershipTier {
-  label: string
-  priceCentavos: number
-  activationCentavos: number
-  creditCentavos: number
-}
-
-const TIERS: MembershipTier[] = [
-  { label: '3-Month', priceCentavos: 550000, activationCentavos: 200000, creditCentavos: 350000 },
-  { label: '6-Month', priceCentavos: 1250000, activationCentavos: 600000, creditCentavos: 650000 },
-  { label: '12-Month', priceCentavos: 2250000, activationCentavos: 1050000, creditCentavos: 1200000 },
-]
-
-function formatWholePesos(centavos: number): string {
-  return `₱${(centavos / 100).toLocaleString('en-PH')}`
-}
-
 export default function SpeakeasyFeature() {
   return (
     <section className="relative overflow-hidden bg-brand-dark py-24 md:py-28">
@@ -46,24 +29,6 @@ export default function SpeakeasyFeature() {
           <p className="mt-6 text-sm uppercase tracking-[0.3em] text-accent-light/90">
             Evening hours — details coming soon.
           </p>
-
-          <div className="mt-14 grid w-full grid-cols-1 gap-5 sm:grid-cols-3">
-            {TIERS.map((tier) => (
-              <div
-                key={tier.label}
-                className="rounded-card border border-brand-light/15 bg-brand-light/5 p-6 text-left"
-              >
-                <p className="text-xs uppercase tracking-[0.25em] text-accent-light/90">{tier.label}</p>
-                <p className="mt-3 font-serif text-3xl text-brand-light">
-                  {formatWholePesos(tier.priceCentavos)}
-                </p>
-                <p className="mt-3 text-sm text-brand-light/70">
-                  {formatWholePesos(tier.activationCentavos)} activation +{' '}
-                  {formatWholePesos(tier.creditCentavos)} F&amp;B credit
-                </p>
-              </div>
-            ))}
-          </div>
 
           <p className="mt-8 max-w-xl text-sm text-brand-light/70">
             Members get exclusive access to the Speakeasy, plus F&amp;B credit that carries straight to
