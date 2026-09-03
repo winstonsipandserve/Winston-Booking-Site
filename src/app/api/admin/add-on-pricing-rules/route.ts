@@ -1,6 +1,7 @@
 import { auth } from '../../../../../auth'
 import { prisma } from '@/lib/prisma'
 import { RateTier } from '@prisma/client'
+import { isValidAddOnPricingRuleCombo } from '@/lib/pricing-rule-combos'
 
 interface CreateAddOnPricingRuleBody {
   addOnServiceId?: unknown
@@ -64,6 +65,14 @@ export async function POST(request: Request) {
   }
 
   const { paxCount } = paxResult
+
+  if (!isValidAddOnPricingRuleCombo(addOnService.slug, resourceType.slug, rateTier, paxCount)) {
+    return Response.json(
+      { error: 'This add-on/resource/rate combination is not offered — see PROJECT_CONTEXT.md\'s Add-On Services section' },
+      { status: 400 },
+    )
+  }
+
   const existing = await prisma.addOnPricingRule.findFirst({
     where: { addOnServiceId, resourceTypeId, rateTier, paxCount },
   })

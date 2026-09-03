@@ -1,6 +1,7 @@
 import { auth } from '../../../../../auth'
 import { prisma } from '@/lib/prisma'
 import { RateTier } from '@prisma/client'
+import { isValidPricingRuleCombo } from '@/lib/pricing-rule-combos'
 
 interface CreatePricingRuleBody {
   resourceTypeId?: unknown
@@ -44,6 +45,13 @@ export async function POST(request: Request) {
   const resourceType = await prisma.resourceType.findUnique({ where: { id: resourceTypeId } })
   if (!resourceType) {
     return Response.json({ error: 'Resource type not found' }, { status: 404 })
+  }
+
+  if (!isValidPricingRuleCombo(resourceType.slug, rateTier, durationMinutes)) {
+    return Response.json(
+      { error: 'This resource/rate/duration combination is not offered — see PROJECT_CONTEXT.md\'s Pricing section' },
+      { status: 400 },
+    )
   }
 
   const existing = await prisma.pricingRule.findFirst({

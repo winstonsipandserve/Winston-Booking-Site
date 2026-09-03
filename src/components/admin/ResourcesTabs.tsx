@@ -6,6 +6,7 @@ import { formatCentavos } from '@/lib/format'
 import DisableResourceModal from '@/components/admin/DisableResourceModal'
 import PriceEditModal, { type PriceEditField, type PriceCreateField } from '@/components/admin/PriceEditModal'
 import type { Prisma, GuestFeeRule, ResourceCategory, RateTier, AddOnService } from '@prisma/client'
+import { isValidPricingRuleCombo, isValidAddOnPricingRuleCombo } from '@/lib/pricing-rule-combos'
 
 type ResourceTypeWithRelations = Prisma.ResourceTypeGetPayload<{
   include: {
@@ -73,6 +74,7 @@ function ActionIconButton({ label, onClick }: { label: string; onClick: () => vo
 
 function PriceCell({
   price,
+  allowed,
   addLabel,
   onAdd,
   deleteLabel,
@@ -80,6 +82,7 @@ function PriceCell({
   errorMessage,
 }: {
   price: number | undefined
+  allowed: boolean
   addLabel: string
   onAdd: () => void
   deleteLabel: string
@@ -87,6 +90,7 @@ function PriceCell({
   errorMessage?: string
 }) {
   if (price === undefined) {
+    if (!allowed) return null
     return (
       <button
         type="button"
@@ -417,6 +421,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={memberRule?.priceCentavos}
+                          allowed={isValidPricingRuleCombo(rt.slug, 'member', duration)}
                           addLabel={`Add ${rowLabel} member rate`}
                           onAdd={() => openCreateRate('member', duration, rowLabel)}
                           deleteLabel={`Delete ${rowLabel} member rate`}
@@ -430,6 +435,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={nonMemberRule?.priceCentavos}
+                          allowed={isValidPricingRuleCombo(rt.slug, 'non_member', duration)}
                           addLabel={`Add ${rowLabel} non-member rate`}
                           onAdd={() => openCreateRate('non_member', duration, rowLabel)}
                           deleteLabel={`Delete ${rowLabel} non-member rate`}
@@ -484,6 +490,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={findCoaching('member', 1)}
+                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 1)}
                           addLabel="Add Coaching (1 pax) member rate"
                           onAdd={() => openCreateCoaching('member', 1, 'Coaching (1 pax)')}
                           deleteLabel="Delete Coaching (1 pax) member rate"
@@ -497,6 +504,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={findCoaching('non_member', 1)}
+                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 1)}
                           addLabel="Add Coaching (1 pax) non-member rate"
                           onAdd={() => openCreateCoaching('non_member', 1, 'Coaching (1 pax)')}
                           deleteLabel="Delete Coaching (1 pax) non-member rate"
@@ -524,6 +532,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={findCoaching('member', 2)}
+                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 2)}
                           addLabel="Add Coaching (2 pax) member rate"
                           onAdd={() => openCreateCoaching('member', 2, 'Coaching (2 pax)')}
                           deleteLabel="Delete Coaching (2 pax) member rate"
@@ -537,6 +546,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={findCoaching('non_member', 2)}
+                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 2)}
                           addLabel="Add Coaching (2 pax) non-member rate"
                           onAdd={() => openCreateCoaching('non_member', 2, 'Coaching (2 pax)')}
                           deleteLabel="Delete Coaching (2 pax) non-member rate"
@@ -564,6 +574,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={findBallBoy('member')}
+                          allowed={isValidAddOnPricingRuleCombo('ball_boy', rt.slug, 'member', null)}
                           addLabel="Add Ball Boy member rate"
                           onAdd={() => openCreateBallBoy('member')}
                           deleteLabel="Delete Ball Boy member rate"
@@ -577,6 +588,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       <td className="px-3 py-2 text-gray-900">
                         <PriceCell
                           price={findBallBoy('non_member')}
+                          allowed={isValidAddOnPricingRuleCombo('ball_boy', rt.slug, 'non_member', null)}
                           addLabel="Add Ball Boy non-member rate"
                           onAdd={() => openCreateBallBoy('non_member')}
                           deleteLabel="Delete Ball Boy non-member rate"
@@ -606,6 +618,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                     <td className="px-3 py-2 text-gray-900">
                       <PriceCell
                         price={findCoaching('member', null)}
+                        allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', null)}
                         addLabel="Add Coaching member rate"
                         onAdd={() => openCreateCoaching('member', null, 'Coaching')}
                         deleteLabel="Delete Coaching member rate"
@@ -619,6 +632,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                     <td className="px-3 py-2 text-gray-900">
                       <PriceCell
                         price={findCoaching('non_member', null)}
+                        allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', null)}
                         addLabel="Add Coaching non-member rate"
                         onAdd={() => openCreateCoaching('non_member', null, 'Coaching')}
                         deleteLabel="Delete Coaching non-member rate"
