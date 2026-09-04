@@ -29,7 +29,7 @@ interface PriceEditModalProps {
 
 export default function PriceEditModal({ isOpen, onClose, title, fields, createField }: PriceEditModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Modal isOpen={isOpen} onClose={onClose} title={title} variant="neutral">
       {isOpen && createField && <PriceCreateForm createField={createField} onClose={onClose} />}
       {isOpen && !createField && <PriceEditForm fields={fields ?? []} onClose={onClose} />}
     </Modal>

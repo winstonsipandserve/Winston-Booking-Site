@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import SignOutButton from '@/components/admin/SignOutButton'
 
 export default function AdminTopbar({ email }: { email: string }) {
@@ -5,7 +6,16 @@ export default function AdminTopbar({ email }: { email: string }) {
 
   return (
     <header className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-sm">
-      <span className="text-sm font-semibold text-gray-900">Winston Admin</span>
+      <div className="flex items-center gap-2">
+        <Image
+          src="/images/brand/winston-logo-emblem-transparent.png"
+          alt="Winston Sip & Serve"
+          width={500}
+          height={500}
+          className="h-8 w-auto"
+        />
+        <span className="text-sm font-semibold text-gray-900">Winston Admin</span>
+      </div>
       <div className="flex items-center gap-3">
         <div
           title={email}

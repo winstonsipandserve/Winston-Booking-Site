@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import type { BookingStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { formatCentavos } from '@/lib/format'
 import { phDateToUtcWindow } from '@/lib/business-hours'
 import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
+import BookingsSearchBar from '@/components/admin/BookingsSearchBar'
 
 const PAGE_SIZE = 25
 
@@ -24,9 +26,9 @@ function formatSubmittedAt(createdAt: Date) {
 export default async function AdminBookingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string; startDate?: string; endDate?: string }>
+  searchParams: Promise<{ status?: string; page?: string; startDate?: string; endDate?: string; search?: string }>
 }) {
-  const { status: statusParam, page: pageParam, startDate, endDate } = await searchParams
+  const { status: statusParam, page: pageParam, startDate, endDate, search } = await searchParams
 
   const status = statusParam && isBookingStatus(statusParam) ? statusParam : undefined
   const page = Math.max(1, Number(pageParam) || 1)
@@ -40,6 +42,15 @@ export default async function AdminBookingsPage({
       ...(startDate ? { gte: phDateToUtcWindow(startDate).start } : {}),
       ...(endDate ? { lt: phDateToUtcWindow(endDate).end } : {}),
     }
+  }
+  const trimmedSearch = search?.trim()
+  if (trimmedSearch) {
+    where.OR = [
+      { id: { contains: trimmedSearch, mode: 'insensitive' } },
+      { customer: { name: { contains: trimmedSearch, mode: 'insensitive' } } },
+      { resource: { label: { contains: trimmedSearch, mode: 'insensitive' } } },
+      { resource: { resourceType: { name: { contains: trimmedSearch, mode: 'insensitive' } } } },
+    ]
   }
 
   const [bookings, totalCount] = await Promise.all([
@@ -63,6 +74,7 @@ export default async function AdminBookingsPage({
   if (statusParam) filterParams.set('status', statusParam)
   if (startDate) filterParams.set('startDate', startDate)
   if (endDate) filterParams.set('endDate', endDate)
+  if (trimmedSearch) filterParams.set('search', trimmedSearch)
 
   function pageHref(targetPage: number) {
     const params = new URLSearchParams(filterParams)
@@ -89,19 +101,9 @@ export default async function AdminBookingsPage({
           </button>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="search"
-            placeholder="Search bookings…"
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
-          />
-          <button
-            type="button"
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-          >
-            Search
-          </button>
-        </div>
+        <Suspense fallback={null}>
+          <BookingsSearchBar />
+        </Suspense>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200">
