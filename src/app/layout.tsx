@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${parisienne.variable} ${fraunces.variable} ${manrope.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${parisienne.variable} ${fraunces.variable} ${manrope.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <SessionProvider>{children}</SessionProvider>
       </body>

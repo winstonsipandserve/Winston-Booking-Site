@@ -20,13 +20,13 @@ export default function SignOutButton() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+        className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
       >
         <SignOutIcon className="h-4 w-4" />
         Sign Out
       </button>
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Sign Out">
-        <p className="text-sm text-gray-600">
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Sign Out" variant="neutral">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
           You&apos;ll need to sign in again to access the admin panel. Continue?
         </p>
         <div className="mt-6 flex items-center justify-end gap-3">
@@ -34,7 +34,7 @@ export default function SignOutButton() {
             type="button"
             onClick={() => setIsOpen(false)}
             disabled={isPending}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             Cancel
           </button>
@@ -42,7 +42,7 @@ export default function SignOutButton() {
             type="button"
             onClick={handleConfirm}
             disabled={isPending}
-            className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
           >
             {isPending ? 'Signing out…' : 'Sign Out'}
           </button>

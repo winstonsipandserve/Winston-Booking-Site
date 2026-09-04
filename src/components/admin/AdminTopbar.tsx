@@ -12,7 +12,7 @@ export default function AdminTopbar({ email }: { email: string }) {
           alt="Winston Sip & Serve"
           width={500}
           height={500}
-          className="h-8 w-auto"
+          className="h-8 w-auto dark:brightness-125 dark:saturate-75"
         />
         <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Winston Admin</span>
       </div>
