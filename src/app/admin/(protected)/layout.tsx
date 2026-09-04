@@ -15,11 +15,16 @@ export default async function AdminProtectedLayout({
   }
 
   return (
-    <div className="flex h-screen flex-col gap-4 overflow-hidden bg-gray-50 p-4 font-sans text-gray-900">
+    <div className="flex h-screen flex-col gap-4 overflow-hidden bg-gray-50 p-4 font-sans text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{var t=localStorage.getItem('winston-admin-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+        }}
+      />
       <AdminTopbar email={activeSession.adminUser.email} />
       <div className="flex min-h-0 flex-1 gap-4">
         <AdminSidebar />
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           {children}
         </main>
       </div>

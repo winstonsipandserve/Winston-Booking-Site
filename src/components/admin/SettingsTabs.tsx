@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import ChangePasswordForm from '@/components/admin/ChangePasswordForm'
+import MyAccountTab from '@/components/admin/MyAccountTab'
 import AdminUsersTab from '@/components/admin/AdminUsersTab'
 
 type Tab = 'account' | 'adminUsers'
@@ -30,7 +30,7 @@ export default function SettingsTabs({ name, email }: SettingsTabsProps) {
             aria-selected={activeTab === tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
+              activeTab === tab.key ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
             }`}
           >
             {tab.label}
@@ -39,7 +39,7 @@ export default function SettingsTabs({ name, email }: SettingsTabsProps) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {activeTab === 'account' && <ChangePasswordForm name={name} email={email} />}
+        {activeTab === 'account' && <MyAccountTab name={name} email={email} />}
         {activeTab === 'adminUsers' && <AdminUsersTab />}
       </div>
     </div>

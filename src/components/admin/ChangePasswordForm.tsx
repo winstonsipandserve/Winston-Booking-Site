@@ -4,14 +4,9 @@ import { useState } from 'react'
 import PasswordInput from '@/components/ui/PasswordInput'
 import ConfirmModal from '@/components/admin/ConfirmModal'
 
-interface ChangePasswordFormProps {
-  name: string
-  email: string
-}
-
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
-export default function ChangePasswordForm({ name, email }: ChangePasswordFormProps) {
+export default function ChangePasswordForm() {
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [errorModalOpen, setErrorModalOpen] = useState(false)
@@ -57,21 +52,9 @@ export default function ChangePasswordForm({ name, email }: ChangePasswordFormPr
   }
 
   return (
-    <div className="max-w-md">
-      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">
-        <h2 className="mb-3 text-base font-semibold text-gray-900">Profile</h2>
-        <div className="flex flex-col gap-1 text-sm">
-          <span className="text-gray-500">Name</span>
-          <span className="text-gray-900">{name}</span>
-        </div>
-        <div className="mt-3 flex flex-col gap-1 text-sm">
-          <span className="text-gray-500">Email</span>
-          <span className="text-gray-900">{email}</span>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
-        <h2 className="mb-3 text-base font-semibold text-gray-900">Change Password</h2>
+    <>
+      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">Change Password</h2>
         <form key={formKey} onSubmit={handleSubmit} className="flex flex-col gap-4">
           <PasswordInput
             id="currentPassword"
@@ -96,13 +79,13 @@ export default function ChangePasswordForm({ name, email }: ChangePasswordFormPr
           />
 
           {submitState === 'success' && (
-            <p className="text-sm font-medium text-gray-900">Password changed successfully.</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Password changed successfully.</p>
           )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="mt-2 self-start rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 self-start rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? 'Saving…' : 'Change Password'}
           </button>
@@ -118,6 +101,6 @@ export default function ChangePasswordForm({ name, email }: ChangePasswordFormPr
         title="Unable to Change Password"
         message={submitError ?? 'There was a problem changing your password.'}
       />
-    </div>
+    </>
   )
 }

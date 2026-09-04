@@ -30,7 +30,7 @@ export default function AdminSidebar() {
 
   return (
     <aside
-      className={`flex shrink-0 flex-col gap-1 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition-[width] duration-200 ${
+      className={`flex shrink-0 flex-col gap-1 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm transition-[width] duration-200 dark:border-gray-800 dark:bg-gray-900 ${
         collapsed ? 'w-16' : 'w-[232px]'
       }`}
     >
@@ -42,7 +42,7 @@ export default function AdminSidebar() {
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
         >
           <FoldIcon
             className={`h-4 w-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
@@ -68,8 +68,8 @@ export default function AdminSidebar() {
                 collapsed ? 'justify-center' : ''
               } ${
                 isActive
-                  ? 'bg-gray-900 font-semibold text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-gray-900 font-semibold text-white dark:bg-gray-100 dark:text-gray-900'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
               }`}
             >
               <Icon className="h-5 w-5 shrink-0" />

@@ -72,45 +72,45 @@ export default function AdminUsersTab() {
   }
 
   if (loadError) {
-    return <p className="text-sm text-red-600">{loadError}</p>
+    return <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>
   }
 
   if (!adminUsers) {
-    return <p className="text-sm text-gray-500">Loading…</p>
+    return <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
       <table className="w-full min-w-[600px] border-collapse text-sm">
-        <thead className="bg-gray-50">
+        <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>
-            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Name</th>
-            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Email</th>
-            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Status</th>
-            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Created</th>
-            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">Actions</th>
+            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">Name</th>
+            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">Email</th>
+            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">Status</th>
+            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">Created</th>
+            <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">Actions</th>
           </tr>
         </thead>
         <tbody>
           {adminUsers.map((user) => (
-            <tr key={user.id} className="border-b border-gray-100 last:border-b-0">
-              <td className="px-3 py-2 text-gray-900">{user.name}</td>
-              <td className="px-3 py-2 text-gray-900">{user.email}</td>
+            <tr key={user.id} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
+              <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{user.name}</td>
+              <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{user.email}</td>
               <td className="px-3 py-2">
                 <span
                   className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                    user.isActive ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'
+                    user.isActive ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                   }`}
                 >
                   {user.isActive ? 'Active' : 'Inactive'}
                 </span>
               </td>
-              <td className="px-3 py-2 text-gray-500">{formatBulletinDate(new Date(user.createdAt))}</td>
+              <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{formatBulletinDate(new Date(user.createdAt))}</td>
               <td className="px-3 py-2">
                 <button
                   type="button"
                   onClick={() => openConfirm(user)}
-                  className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                  className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
                   {user.isActive ? 'Deactivate' : 'Reactivate'}
                 </button>

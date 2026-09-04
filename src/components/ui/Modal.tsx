@@ -48,7 +48,7 @@ export default function Modal({
         onClick={(e) => e.stopPropagation()}
         className={`relative my-auto w-full ${maxWidthClassName} border px-6 py-6 shadow-xl ${
           variant === 'neutral'
-            ? 'rounded-2xl border-gray-200 bg-white shadow-gray-900/10'
+            ? 'rounded-2xl border-gray-200 bg-white shadow-gray-900/10 dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/40'
             : 'rounded-card border-brand-dark/10 bg-brand-light shadow-brand-dark/10'
         }`}
       >
@@ -58,7 +58,7 @@ export default function Modal({
           aria-label="Close"
           className={`absolute right-4 top-4 transition-colors ${
             variant === 'neutral'
-              ? 'text-gray-400 hover:text-gray-600'
+              ? 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
               : 'text-brand-dark/50 hover:text-brand-dark'
           }`}
         >
@@ -68,7 +68,7 @@ export default function Modal({
         </button>
         <h3
           className={`pr-6 ${
-            variant === 'neutral' ? 'text-lg font-semibold text-gray-900' : 'font-serif text-lg text-brand-dark'
+            variant === 'neutral' ? 'text-lg font-semibold text-gray-900 dark:text-gray-100' : 'font-serif text-lg text-brand-dark'
           }`}
         >
           {title}
