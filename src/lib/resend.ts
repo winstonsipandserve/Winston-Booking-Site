@@ -1,5 +1,6 @@
 import type { MembershipTier } from '@prisma/client'
 import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
+import { ADMIN_PASSWORD_RESET_TOKEN_HOURS } from './admin-password-reset'
 import { buildBrandedEmail } from './email-templates'
 import { formatCentavos, formatMembershipTier } from './format'
 import { renderMembershipCertificatePdf } from './membership-certificate-pdf'
@@ -394,6 +395,54 @@ export async function sendPasswordResetEmail({
     }
   } catch (err) {
     console.error('Resend sendPasswordResetEmail threw', err)
+  }
+}
+
+interface SendAdminPasswordResetEmailInput {
+  to: string
+  resetUrl: string
+}
+
+export async function sendAdminPasswordResetEmail({
+  to,
+  resetUrl,
+}: SendAdminPasswordResetEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>We received a request to reset the password for your Winston Sip &amp; Serve admin account.</p>
+    <p>This link will expire in ${ADMIN_PASSWORD_RESET_TOKEN_HOURS} hour${ADMIN_PASSWORD_RESET_TOKEN_HOURS === 1 ? '' : 's'}. If you didn't request a password reset, you can safely ignore this email — your password won't be changed.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: 'Reset your Winston Sip & Serve admin password.',
+    eyebrowText: 'ADMIN PASSWORD RESET',
+    headingText: 'Reset Your Admin Password',
+    bodyHtml,
+    ctaText: 'Reset My Password',
+    ctaUrl: resetUrl,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Reset Your Winston Sip & Serve Admin Password',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendAdminPasswordResetEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendAdminPasswordResetEmail threw', err)
   }
 }
 

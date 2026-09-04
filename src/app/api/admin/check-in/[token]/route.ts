@@ -1,4 +1,4 @@
-import { auth } from '../../../../../../auth'
+import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { resolveAdminCheckInResult } from '@/lib/admin-check-in'
 
@@ -6,8 +6,8 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ token: string }> },
 ) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'admin') {
+  const activeSession = await getActiveAdminSession()
+  if (!activeSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -10,6 +10,7 @@ import {
   MembershipsIcon,
   BulletinIcon,
   CheckInIcon,
+  SettingsIcon,
   FoldIcon,
 } from '@/components/admin/AdminIcons'
 
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: '/admin/memberships', label: 'Memberships', icon: MembershipsIcon },
   { href: '/admin/bulletin', label: 'Bulletin', icon: BulletinIcon },
   { href: '/admin/check-in', label: 'Check-In', icon: CheckInIcon },
+  { href: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]
 
 export default function AdminSidebar() {

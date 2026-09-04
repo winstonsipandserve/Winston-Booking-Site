@@ -1,4 +1,4 @@
-import { auth } from '../../../../../auth'
+import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { RateTier } from '@prisma/client'
 import { isValidAddOnPricingRuleCombo } from '@/lib/pricing-rule-combos'
@@ -22,8 +22,8 @@ function parsePaxCount(value: unknown): { ok: true; paxCount: number | null } | 
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'admin') {
+  const activeSession = await getActiveAdminSession()
+  if (!activeSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

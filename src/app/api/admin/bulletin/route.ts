@@ -1,4 +1,4 @@
-import { auth } from '../../../../../auth'
+import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { uploadToStorage, deleteFromStorage, getPublicUrl } from '@/lib/supabase-storage'
 import { MIME_TO_EXTENSION, BULLETIN_CATEGORY_RULES, parseCommonFields, validateImageFile } from '@/lib/bulletin-validation'
@@ -6,8 +6,8 @@ import { MIME_TO_EXTENSION, BULLETIN_CATEGORY_RULES, parseCommonFields, validate
 const BUCKET = 'bulletin-images'
 
 export async function POST(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'admin') {
+  const activeSession = await getActiveAdminSession()
+  if (!activeSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

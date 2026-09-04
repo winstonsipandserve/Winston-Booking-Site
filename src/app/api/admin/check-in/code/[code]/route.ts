@@ -1,4 +1,4 @@
-import { auth } from '../../../../../../../auth'
+import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { resolveAdminCheckInResult } from '@/lib/admin-check-in'
 import { checkCheckInRateLimit, recordFailedCheckInAttempt } from '@/lib/check-in-rate-limit'
@@ -7,12 +7,12 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ code: string }> },
 ) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'admin') {
+  const activeSession = await getActiveAdminSession()
+  if (!activeSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { limited, retryAfterSeconds } = await checkCheckInRateLimit(session.user.id)
+  const { limited, retryAfterSeconds } = await checkCheckInRateLimit(activeSession.adminUser.id)
   if (limited) {
     return Response.json(
       { error: 'Too many attempts. Please wait before trying again.', retryAfterSeconds },
@@ -25,7 +25,7 @@ export async function GET(
   try {
     const customer = await prisma.customer.findUnique({ where: { checkInCode: code } })
     if (!customer) {
-      await recordFailedCheckInAttempt(session.user.id)
+      await recordFailedCheckInAttempt(activeSession.adminUser.id)
       return Response.json({ error: 'Code not recognized' }, { status: 404 })
     }
 

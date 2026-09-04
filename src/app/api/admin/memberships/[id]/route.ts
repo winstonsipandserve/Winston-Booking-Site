@@ -1,4 +1,4 @@
-import { auth } from '../../../../../../auth'
+import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
@@ -13,8 +13,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'admin') {
+  const activeSession = await getActiveAdminSession()
+  if (!activeSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -54,7 +54,7 @@ export async function PATCH(
       data: {
         status: 'rejected',
         rejectionReason: (reason as string).trim(),
-        reviewedById: session.user.id,
+        reviewedById: activeSession.adminUser.id,
         reviewedAt,
       },
     })
@@ -71,7 +71,7 @@ export async function PATCH(
     where: { id },
     data: {
       status: 'approved',
-      reviewedById: session.user.id,
+      reviewedById: activeSession.adminUser.id,
       reviewedAt,
     },
   })

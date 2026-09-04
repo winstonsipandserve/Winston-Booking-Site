@@ -1,4 +1,4 @@
-import { auth } from '../../../../../auth'
+import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { RateTier } from '@prisma/client'
 import { isValidPricingRuleCombo } from '@/lib/pricing-rule-combos'
@@ -15,8 +15,8 @@ function isValidRateTier(value: unknown): value is RateTier {
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'admin') {
+  const activeSession = await getActiveAdminSession()
+  if (!activeSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

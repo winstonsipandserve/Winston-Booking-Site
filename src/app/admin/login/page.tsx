@@ -1,5 +1,6 @@
 import { AuthError } from 'next-auth'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { signIn } from '../../../../auth'
 import PasswordInput from '@/components/ui/PasswordInput'
 import AdminLoginErrorModal from '@/components/admin/AdminLoginErrorModal'
@@ -52,6 +53,12 @@ export default async function AdminLoginPage({
             Sign In
           </button>
         </form>
+        <Link
+          href="/admin/forgot-password"
+          className="mt-4 block text-center text-sm text-gray-500 hover:text-gray-700 hover:underline"
+        >
+          Forgot password?
+        </Link>
       </div>
     </div>
   )

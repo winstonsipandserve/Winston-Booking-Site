@@ -1,4 +1,4 @@
-import { auth } from '../../../../../../../auth'
+import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
@@ -18,8 +18,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'admin') {
+  const activeSession = await getActiveAdminSession()
+  if (!activeSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -64,7 +64,7 @@ export async function POST(
           tier,
           amountCentavos: MEMBERSHIP_TIER_PLANS[tier].totalCentavos,
           status: 'pending',
-          initiatedByAdminId: session.user.id,
+          initiatedByAdminId: activeSession.adminUser.id,
         },
       })
 
