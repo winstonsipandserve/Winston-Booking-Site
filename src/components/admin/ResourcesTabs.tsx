@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatCentavos } from '@/lib/format'
 import DisableResourceModal from '@/components/admin/DisableResourceModal'
+import ConfirmModal from '@/components/admin/ConfirmModal'
 import PriceEditModal, { type PriceEditField, type PriceCreateField } from '@/components/admin/PriceEditModal'
 import type { Prisma, GuestFeeRule, ResourceCategory, RateTier, AddOnService } from '@prisma/client'
 import { isValidPricingRuleCombo, isValidAddOnPricingRuleCombo } from '@/lib/pricing-rule-combos'
@@ -126,6 +127,13 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
   const [editingRow, setEditingRow] = useState<{ title: string; fields: PriceEditField[] } | null>(null)
   const [creatingCell, setCreatingCell] = useState<{ title: string; createField: PriceCreateField } | null>(null)
   const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({})
+  const [pendingAction, setPendingAction] = useState<{
+    title: string
+    message: string
+    confirmLabel: string
+    confirmVariant: 'default' | 'danger'
+    onConfirm: () => void
+  } | null>(null)
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
 
   function clearDeleteError(cellKey: string) {
@@ -137,8 +145,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
     })
   }
 
-  async function handleDeletePricingRule(ruleId: string, cellKey: string, label: string) {
-    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return
+  async function doDeletePricingRule(ruleId: string, cellKey: string) {
     clearDeleteError(cellKey)
     try {
       const res = await fetch(`/api/admin/pricing-rules/${ruleId}`, { method: 'DELETE' })
@@ -153,8 +160,20 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
     }
   }
 
-  async function handleDeleteAddOnPricingRule(ruleId: string, cellKey: string, label: string) {
-    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return
+  function handleDeletePricingRule(ruleId: string, cellKey: string, label: string) {
+    setPendingAction({
+      title: 'Delete Rate?',
+      message: `Delete ${label}? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      confirmVariant: 'danger',
+      onConfirm: () => {
+        setPendingAction(null)
+        void doDeletePricingRule(ruleId, cellKey)
+      },
+    })
+  }
+
+  async function doDeleteAddOnPricingRule(ruleId: string, cellKey: string) {
     clearDeleteError(cellKey)
     try {
       const res = await fetch(`/api/admin/add-on-pricing-rules/${ruleId}`, { method: 'DELETE' })
@@ -167,6 +186,19 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
     } catch {
       setDeleteErrors((prev) => ({ ...prev, [cellKey]: 'Something went wrong. Please try again.' }))
     }
+  }
+
+  function handleDeleteAddOnPricingRule(ruleId: string, cellKey: string, label: string) {
+    setPendingAction({
+      title: 'Delete Rate?',
+      message: `Delete ${label}? This cannot be undone.`,
+      confirmLabel: 'Delete',
+      confirmVariant: 'danger',
+      onConfirm: () => {
+        setPendingAction(null)
+        void doDeleteAddOnPricingRule(ruleId, cellKey)
+      },
+    })
   }
 
   function openCreateRate(tier: RateTier, durationMinutes: number, rowLabel: string) {
@@ -206,10 +238,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
     })
   }
 
-  async function handleEnable(resource: ResourceRow) {
-    if (!window.confirm(`Enable ${resource.label}? This will clear its disabled reason.`)) {
-      return
-    }
+  async function doEnable(resource: ResourceRow) {
     try {
       const res = await fetch(`/api/admin/resources/${resource.id}`, {
         method: 'PATCH',
@@ -225,6 +254,19 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
     } catch {
       alert('Failed to enable resource.')
     }
+  }
+
+  function handleEnable(resource: ResourceRow) {
+    setPendingAction({
+      title: 'Enable Resource?',
+      message: `Enable ${resource.label}? This will clear its disabled reason.`,
+      confirmLabel: 'Enable',
+      confirmVariant: 'default',
+      onConfirm: () => {
+        setPendingAction(null)
+        void doEnable(resource)
+      },
+    })
   }
   const durations = isCourt
     ? [60]
@@ -678,6 +720,15 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
         onClose={() => setCreatingCell(null)}
         title={creatingCell?.title ?? ''}
         createField={creatingCell?.createField}
+      />
+      <ConfirmModal
+        isOpen={pendingAction !== null}
+        onClose={() => setPendingAction(null)}
+        onConfirm={() => pendingAction?.onConfirm()}
+        title={pendingAction?.title ?? ''}
+        message={pendingAction?.message ?? ''}
+        confirmLabel={pendingAction?.confirmLabel}
+        confirmVariant={pendingAction?.confirmVariant}
       />
     </div>
   )

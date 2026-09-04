@@ -2,6 +2,7 @@ import { AuthError } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { signIn } from '../../../../auth'
 import PasswordInput from '@/components/ui/PasswordInput'
+import AdminLoginErrorModal from '@/components/admin/AdminLoginErrorModal'
 
 async function authenticate(formData: FormData) {
   'use server'
@@ -31,7 +32,7 @@ export default async function AdminLoginPage({
       <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Winston Sip &amp; Serve</p>
         <h1 className="mt-1 text-xl font-semibold text-gray-900">Admin Login</h1>
-        {error && <p className="mt-4 text-sm text-red-600">Invalid email or password.</p>}
+        <AdminLoginErrorModal hasError={!!error} />
         <form action={authenticate} className="mt-6 flex flex-col gap-4">
           <label htmlFor="email" className="flex flex-col gap-1 text-sm text-gray-900">
             Email

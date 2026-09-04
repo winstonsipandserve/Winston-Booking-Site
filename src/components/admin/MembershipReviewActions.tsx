@@ -3,17 +3,16 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
+import ConfirmModal from '@/components/admin/ConfirmModal'
 
 export default function MembershipReviewActions({ applicationId }: { applicationId: string }) {
   const router = useRouter()
   const [isApproving, setIsApproving] = useState(false)
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleApprove() {
-    if (!window.confirm('Approve this membership application? The applicant will be emailed a payment link — membership activates once payment is confirmed.')) {
-      return
-    }
+  async function doApprove() {
     setIsApproving(true)
     setError(null)
     try {
@@ -40,7 +39,7 @@ export default function MembershipReviewActions({ applicationId }: { application
       <div className="mt-2 flex gap-3">
         <button
           type="button"
-          onClick={handleApprove}
+          onClick={() => setIsApproveModalOpen(true)}
           disabled={isApproving}
           className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -56,6 +55,18 @@ export default function MembershipReviewActions({ applicationId }: { application
         </button>
       </div>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+
+      <ConfirmModal
+        isOpen={isApproveModalOpen}
+        onClose={() => setIsApproveModalOpen(false)}
+        onConfirm={() => {
+          setIsApproveModalOpen(false)
+          void doApprove()
+        }}
+        title="Approve Application?"
+        message="Approve this membership application? The applicant will be emailed a payment link — membership activates once payment is confirmed."
+        confirmLabel="Approve"
+      />
 
       <RejectModal
         applicationId={applicationId}

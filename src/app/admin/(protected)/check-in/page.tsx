@@ -7,7 +7,7 @@ export default function AdminCheckInPage() {
         <h1 className="text-xl font-semibold text-gray-900">Check-In</h1>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 p-4">
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 p-4">
         <CheckInTabs />
       </div>
     </div>

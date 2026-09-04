@@ -12,7 +12,12 @@ interface DisableResourceModalProps {
 
 export default function DisableResourceModal({ isOpen, onClose, resource }: DisableResourceModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={resource ? `Disable ${resource.label}` : 'Disable Resource'}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={resource ? `Disable ${resource.label}` : 'Disable Resource'}
+      variant="neutral"
+    >
       {isOpen && resource && <DisableResourceForm resource={resource} onClose={onClose} />}
     </Modal>
   )

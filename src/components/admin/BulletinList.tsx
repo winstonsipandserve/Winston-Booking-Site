@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BulletinFormModal from '@/components/admin/BulletinFormModal'
+import ConfirmModal from '@/components/admin/ConfirmModal'
 import type { Bulletin } from '@prisma/client'
 
 function PencilIcon({ className = '' }: { className?: string }) {
@@ -62,11 +63,9 @@ interface BulletinListProps {
 export default function BulletinList({ bulletins }: BulletinListProps) {
   const router = useRouter()
   const [editingBulletin, setEditingBulletin] = useState<Bulletin | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<Bulletin | null>(null)
 
   async function handleDelete(bulletin: Bulletin) {
-    if (!window.confirm(`Delete "${bulletin.title}"? This cannot be undone.`)) {
-      return
-    }
     try {
       const res = await fetch(`/api/admin/bulletin/${bulletin.id}`, { method: 'DELETE' })
       if (!res.ok) {
@@ -77,6 +76,8 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
       router.refresh()
     } catch {
       alert('Failed to delete bulletin.')
+    } finally {
+      setPendingDelete(null)
     }
   }
 
@@ -140,7 +141,7 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
                 <ActionIconButton
                   label={`Delete ${bulletin.title}`}
                   variant="delete"
-                  onClick={() => handleDelete(bulletin)}
+                  onClick={() => setPendingDelete(bulletin)}
                 />
               </div>
             </div>
@@ -153,6 +154,15 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
         onClose={() => setEditingBulletin(null)}
         mode="edit"
         bulletin={editingBulletin ?? undefined}
+      />
+      <ConfirmModal
+        isOpen={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={() => pendingDelete && handleDelete(pendingDelete)}
+        title="Delete Bulletin?"
+        message={pendingDelete ? `Delete "${pendingDelete.title}"? This cannot be undone.` : ''}
+        confirmVariant="danger"
+        confirmLabel="Delete"
       />
     </div>
   )
