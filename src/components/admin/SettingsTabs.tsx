@@ -20,7 +20,7 @@ export default function SettingsTabs({ name, email }: SettingsTabsProps) {
   ]
 
   return (
-    <div>
+    <div className="flex min-h-0 flex-1 flex-col">
       <div role="tablist" className="mb-6 flex flex-wrap gap-2">
         {TAB_ITEMS.map((tab) => (
           <button
@@ -38,8 +38,10 @@ export default function SettingsTabs({ name, email }: SettingsTabsProps) {
         ))}
       </div>
 
-      {activeTab === 'account' && <ChangePasswordForm name={name} email={email} />}
-      {activeTab === 'adminUsers' && <AdminUsersTab />}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {activeTab === 'account' && <ChangePasswordForm name={name} email={email} />}
+        {activeTab === 'adminUsers' && <AdminUsersTab />}
+      </div>
     </div>
   )
 }

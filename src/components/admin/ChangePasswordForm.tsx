@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import PasswordInput from '@/components/ui/PasswordInput'
+import ConfirmModal from '@/components/admin/ConfirmModal'
 
 interface ChangePasswordFormProps {
   name: string
@@ -13,6 +14,7 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 export default function ChangePasswordForm({ name, email }: ChangePasswordFormProps) {
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [errorModalOpen, setErrorModalOpen] = useState(false)
   const [formKey, setFormKey] = useState(0)
 
   const submitting = submitState === 'submitting'
@@ -40,13 +42,16 @@ export default function ChangePasswordForm({ name, email }: ChangePasswordFormPr
       } else if (res.status === 400) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem changing your password.')
+        setErrorModalOpen(true)
         setSubmitState('error')
       } else {
         setSubmitError('Something went wrong. Please try again.')
+        setErrorModalOpen(true)
         setSubmitState('error')
       }
     } catch {
       setSubmitError('Something went wrong. Please try again.')
+      setErrorModalOpen(true)
       setSubmitState('error')
     }
   }
@@ -93,7 +98,6 @@ export default function ChangePasswordForm({ name, email }: ChangePasswordFormPr
           {submitState === 'success' && (
             <p className="text-sm font-medium text-gray-900">Password changed successfully.</p>
           )}
-          {submitError && <p className="text-sm text-red-600">{submitError}</p>}
 
           <button
             type="submit"
@@ -104,6 +108,16 @@ export default function ChangePasswordForm({ name, email }: ChangePasswordFormPr
           </button>
         </form>
       </div>
+
+      <ConfirmModal
+        isOpen={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        onConfirm={() => setErrorModalOpen(false)}
+        hideCancel
+        confirmLabel="OK"
+        title="Unable to Change Password"
+        message={submitError ?? 'There was a problem changing your password.'}
+      />
     </div>
   )
 }
