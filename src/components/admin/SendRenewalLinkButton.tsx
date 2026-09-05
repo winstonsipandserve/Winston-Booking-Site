@@ -17,7 +17,7 @@ export default function SendRenewalLinkButton({ applicationId }: { applicationId
       <button
         type="button"
         onClick={() => setIsModalOpen(true)}
-        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
       >
         Send Renewal Link
       </button>
@@ -81,16 +81,16 @@ function TierPickerModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Send Renewal Link">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Send Renewal Link" variant="neutral">
       {isOpen &&
         (confirmation ? (
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-gray-900">{confirmation}</p>
+            <p className="text-sm text-gray-900 dark:text-gray-100">{confirmation}</p>
             <div className="flex items-center justify-end">
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 Close
               </button>
@@ -98,12 +98,12 @@ function TierPickerModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <label className="flex flex-col gap-1 text-sm text-gray-900">
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
               Renewal tier
               <select
                 value={tier}
                 onChange={(e) => setTier(e.target.value as MembershipTier)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               >
                 {TIERS.map((t) => (
                   <option key={t} value={t}>
@@ -111,21 +111,21 @@ function TierPickerModal({
                   </option>
                 ))}
               </select>
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
             </label>
 
             <div className="mt-2 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
               >
                 Send Link
               </button>

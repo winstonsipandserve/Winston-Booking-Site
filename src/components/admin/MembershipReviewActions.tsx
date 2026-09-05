@@ -41,7 +41,7 @@ export default function MembershipReviewActions({ applicationId }: { application
           type="button"
           onClick={() => setIsApproveModalOpen(true)}
           disabled={isApproving}
-          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-green-700 dark:hover:bg-green-600"
         >
           Approve
         </button>
@@ -49,12 +49,12 @@ export default function MembershipReviewActions({ applicationId }: { application
           type="button"
           onClick={() => setIsRejectModalOpen(true)}
           disabled={isApproving}
-          className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40"
         >
           Reject
         </button>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <ConfirmModal
         isOpen={isApproveModalOpen}
@@ -120,33 +120,33 @@ function RejectModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reject Membership Application">
+    <Modal isOpen={isOpen} onClose={onClose} title="Reject Membership Application" variant="neutral">
       {isOpen && (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
             Rejection reason
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               placeholder="Explain why this application is being rejected"
             />
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           </label>
 
           <div className="mt-2 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600"
             >
               Reject
             </button>

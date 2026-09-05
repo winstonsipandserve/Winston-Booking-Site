@@ -41,21 +41,21 @@ export default function MembershipsFilterModal({ status }: { status: MembershipD
       <button
         type="button"
         onClick={openModal}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
       >
         Filter
-        {isFilterActive && <span className="h-1.5 w-1.5 rounded-full bg-gray-900" aria-hidden="true" />}
+        {isFilterActive && <span className="h-1.5 w-1.5 rounded-full bg-gray-900 dark:bg-gray-100" aria-hidden="true" />}
       </button>
 
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Filter Memberships" variant="neutral">
         <div className="flex flex-col gap-4">
           <div>
-            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               Status
             </span>
             <div className="flex flex-col gap-1.5">
               {STATUS_OPTIONS.map((option) => (
-                <label key={option.value} className="flex items-center gap-2 text-sm text-gray-900">
+                <label key={option.value} className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100">
                   <input
                     type="radio"
                     name="membership-status"
@@ -73,14 +73,14 @@ export default function MembershipsFilterModal({ status }: { status: MembershipD
             <button
               type="button"
               onClick={handleClear}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Clear
             </button>
             <button
               type="button"
               onClick={handleRun}
-              className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
+              className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
             >
               Run
             </button>

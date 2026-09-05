@@ -21,9 +21,9 @@ export const MEMBERSHIP_DISPLAY_STATUS_LABELS: Record<MembershipDisplayStatus, s
 }
 
 export const MEMBERSHIP_DISPLAY_STATUS_CLASSES: Record<MembershipDisplayStatus, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  awaiting_payment: 'bg-blue-100 text-blue-800',
-  active: 'bg-gray-900 text-white',
-  expired: 'bg-orange-100 text-orange-800',
-  rejected: 'bg-red-100 text-red-800',
+  pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  awaiting_payment: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+  active: 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900',
+  expired: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
+  rejected: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
 }
