@@ -39,7 +39,7 @@ export default async function AdminMembershipApplicationDetailPage({
   ])
 
   return (
-    <div className="relative isolate">
+    <div className="relative isolate flex flex-col">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
