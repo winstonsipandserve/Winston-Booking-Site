@@ -67,7 +67,7 @@ export default function CheckInCodeEntry() {
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col items-center gap-4">
-      <p className="text-sm text-gray-500">Enter the member&apos;s 6-digit check-in code.</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">Enter the member&apos;s 6-digit check-in code.</p>
       <input
         type="text"
         inputMode="numeric"
@@ -75,15 +75,15 @@ export default function CheckInCodeEntry() {
         value={code}
         onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
         placeholder="000000"
-        className="w-full rounded-lg border border-gray-200 px-4 py-2 text-center text-2xl font-semibold tracking-[0.3em] text-gray-900 focus:border-gray-400 focus:outline-none"
+        className="w-full rounded-lg border border-gray-200 px-4 py-2 text-center text-2xl font-semibold tracking-[0.3em] text-gray-900 focus:border-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-500"
       />
       {code.length > 0 && !isValidCode && (
-        <p className="text-xs text-red-600">Enter exactly 6 digits.</p>
+        <p className="text-xs text-red-600 dark:text-red-400">Enter exactly 6 digits.</p>
       )}
       <button
         type="submit"
         disabled={!isValidCode || isVerifying}
-        className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
       >
         {isVerifying ? 'Verifying…' : 'Check In'}
       </button>

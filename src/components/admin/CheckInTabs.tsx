@@ -26,8 +26,8 @@ export default function CheckInTabs() {
               onClick={() => setActiveTab(tab.value)}
               className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
                 isActive
-                  ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
+                  : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
               }`}
             >
               {tab.label}
@@ -37,7 +37,7 @@ export default function CheckInTabs() {
       </div>
 
       {activeTab === null && (
-        <p className="text-sm text-gray-500">Choose Scan or Enter Code to check in a member.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Choose Scan or Enter Code to check in a member.</p>
       )}
       {activeTab === 'scan' && <CheckInScanner />}
       {activeTab === 'code' && <CheckInCodeEntry />}

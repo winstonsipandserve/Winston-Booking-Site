@@ -118,18 +118,18 @@ export default function CheckInScanner() {
     <div className="flex flex-col items-center gap-4">
       <div
         id={SCANNER_ELEMENT_ID}
-        className={`w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 ${result ? 'hidden' : ''}`}
+        className={`w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 ${result ? 'hidden' : ''}`}
       />
 
-      {cameraError && <p className="max-w-sm text-center text-sm text-red-600">{cameraError}</p>}
+      {cameraError && <p className="max-w-sm text-center text-sm text-red-600 dark:text-red-400">{cameraError}</p>}
 
       {!cameraError && !result && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {isScanning ? "Point the camera at a member's QR code." : 'Starting camera…'}
         </p>
       )}
 
-      {isVerifying && <p className="text-sm text-gray-500">Verifying…</p>}
+      {isVerifying && <p className="text-sm text-gray-500 dark:text-gray-400">Verifying…</p>}
 
       {result && (
         <CheckInResultCard result={result} actionLabel="Scan Next" onAction={handleScanNext} />

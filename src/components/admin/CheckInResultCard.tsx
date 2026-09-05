@@ -28,8 +28,8 @@ export default function CheckInResultCard({
   if (result.status === 'not_found' || result.status === 'rate_limited') {
     const message = result.status === 'not_found' ? 'Code not recognized' : result.message
     return (
-      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-        <StatusHeader icon={<XCircleIcon className="h-5 w-5" />} label={message} colorClass="text-red-700" />
+      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/50 dark:bg-red-950/40">
+        <StatusHeader icon={<XCircleIcon className="h-5 w-5" />} label={message} colorClass="text-red-700 dark:text-red-400" />
         <ActionButton label={actionLabel} onClick={onAction} />
       </div>
     )
@@ -37,13 +37,13 @@ export default function CheckInResultCard({
 
   if (result.status === 'no_membership') {
     return (
-      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-6 text-center">
+      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-xl border border-gray-200 bg-gray-50 p-6 text-center dark:border-gray-700 dark:bg-gray-800">
         <StatusHeader
           icon={<InfoIcon className="h-5 w-5" />}
           label="No membership on file."
-          colorClass="text-gray-700"
+          colorClass="text-gray-700 dark:text-gray-300"
         />
-        <p className="text-sm font-semibold text-gray-900">{result.name}</p>
+        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{result.name}</p>
         <ActionButton label={actionLabel} onClick={onAction} />
       </div>
     )
@@ -54,7 +54,9 @@ export default function CheckInResultCard({
   return (
     <div
       className={`flex w-full max-w-sm flex-col items-center gap-3 rounded-xl border p-6 text-center ${
-        isActive ? 'border-gray-200 bg-white' : 'border-amber-200 bg-amber-50'
+        isActive
+          ? 'border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900'
+          : 'border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40'
       }`}
     >
       <StatusHeader
@@ -62,11 +64,11 @@ export default function CheckInResultCard({
           isActive ? <CheckCircleIcon className="h-5 w-5" /> : <AlertTriangleIcon className="h-5 w-5" />
         }
         label={isActive ? 'Active Member' : 'Membership Expired'}
-        colorClass={isActive ? 'text-gray-900' : 'text-amber-700'}
+        colorClass={isActive ? 'text-gray-900 dark:text-gray-100' : 'text-amber-700 dark:text-amber-400'}
       />
-      <p className="text-base font-medium text-gray-900">{result.name}</p>
-      <p className="text-xs text-gray-500">{result.email}</p>
-      <div className="mt-2 flex w-full flex-col gap-1 border-t border-gray-200 pt-3 text-left text-sm text-gray-700">
+      <p className="text-base font-medium text-gray-900 dark:text-gray-100">{result.name}</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">{result.email}</p>
+      <div className="mt-2 flex w-full flex-col gap-1 border-t border-gray-200 pt-3 text-left text-sm text-gray-700 dark:border-gray-800 dark:text-gray-300">
         <div className="flex justify-between">
           <span>Tier</span>
           <span className="font-medium">{result.tierName}</span>
@@ -101,7 +103,7 @@ function ActionButton({ label, onClick }: { label: string; onClick: () => void }
     <button
       type="button"
       onClick={onClick}
-      className="mt-2 rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800"
+      className="mt-2 rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
     >
       {label}
     </button>
