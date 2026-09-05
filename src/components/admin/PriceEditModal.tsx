@@ -76,30 +76,30 @@ function PriceCreateForm({ createField, onClose }: { createField: PriceCreateFie
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm text-gray-900">
+      <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
         {createField.label}
         <input
           type="text"
           inputMode="decimal"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
         />
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       </label>
 
       <div className="mt-2 flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
         >
           Create
         </button>
@@ -181,16 +181,16 @@ function PriceEditForm({ fields, onClose }: { fields: PriceEditField[]; onClose:
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {fields.map((field) => (
-        <label key={field.key} className="flex flex-col gap-1 text-sm text-gray-900">
+        <label key={field.key} className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           {field.label}
           <input
             type="text"
             inputMode="decimal"
             value={values[field.key]}
             onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
-          {fieldErrors[field.key] && <p className="text-sm text-red-600">{fieldErrors[field.key]}</p>}
+          {fieldErrors[field.key] && <p className="text-sm text-red-600 dark:text-red-400">{fieldErrors[field.key]}</p>}
         </label>
       ))}
 
@@ -198,14 +198,14 @@ function PriceEditForm({ fields, onClose }: { fields: PriceEditField[]; onClose:
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
         >
           Save
         </button>

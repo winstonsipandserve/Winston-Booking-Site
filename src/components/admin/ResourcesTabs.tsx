@@ -67,7 +67,7 @@ function TrashIcon({ className = '' }: { className?: string }) {
 
 function ActionIconButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} className="text-gray-400 hover:text-gray-700">
+    <button type="button" onClick={onClick} aria-label={label} className="text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300">
       <PencilIcon className="h-4 w-4" />
     </button>
   )
@@ -97,7 +97,7 @@ function PriceCell({
         type="button"
         onClick={onAdd}
         aria-label={addLabel}
-        className="rounded border border-dashed border-gray-300 px-2 py-0.5 text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-700"
+        className="rounded border border-dashed border-gray-300 px-2 py-0.5 text-xs text-gray-500 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-600 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-200"
       >
         + Add
       </button>
@@ -107,11 +107,11 @@ function PriceCell({
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <span>{formatCentavos(price)}</span>
-        <button type="button" onClick={onDelete} aria-label={deleteLabel} className="text-gray-300 hover:text-red-600">
+        <button type="button" onClick={onDelete} aria-label={deleteLabel} className="text-gray-300 hover:text-red-600 dark:text-gray-600 dark:hover:text-red-400">
           <TrashIcon className="h-3.5 w-3.5" />
         </button>
       </div>
-      {errorMessage && <p className="text-xs text-red-600">{errorMessage}</p>}
+      {errorMessage && <p className="text-xs text-red-600 dark:text-red-400">{errorMessage}</p>}
     </div>
   )
 }
@@ -375,7 +375,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
       <div className="mb-4 flex items-center justify-between gap-3">
         <button
           type="button"
@@ -384,28 +384,31 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
           className="flex items-center gap-2 text-left"
         >
           <ChevronIcon
-            className={`h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            className={`h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 dark:text-gray-400 ${isOpen ? 'rotate-180' : ''}`}
           />
-          <h2 className="text-base font-semibold text-gray-900">{rt.name}</h2>
-          <span className="text-xs text-gray-500">{pluralize(rt.resources.length, 'resource')}</span>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{rt.name}</h2>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{pluralize(rt.resources.length, 'resource')}</span>
         </button>
       </div>
 
       {isOpen && (
         <>
-          <div className="mb-5 divide-y divide-gray-100 rounded-lg border border-gray-200">
+          <div className="mb-5 divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
             {rt.resources.map((resource) => (
               <div key={resource.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
                 <div className="flex flex-col">
-                  <span className="text-gray-900">{resource.label}</span>
+                  <span className="text-gray-900 dark:text-gray-100">{resource.label}</span>
                   {!resource.isActive && resource.disabledReason && (
-                    <span className="text-xs text-gray-400">{resource.disabledReason}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">{resource.disabledReason}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      resource.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'
+                      resource.isActive
+                        ? /* Active badge: dark-only muted-green pairing is a deliberate exception, not the sitewide neutral-pill convention */
+                          'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                     }`}
                   >
                     {resource.isActive ? 'Active' : 'Inactive'}
@@ -414,7 +417,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                     <button
                       type="button"
                       onClick={() => setDisablingResource(resource)}
-                      className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                      className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     >
                       Disable
                     </button>
@@ -422,7 +425,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                     <button
                       type="button"
                       onClick={() => handleEnable(resource)}
-                      className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                      className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     >
                       Enable
                     </button>
@@ -432,20 +435,20 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
             ))}
           </div>
 
-          <div className="mb-5 overflow-x-auto rounded-lg border border-gray-200">
+          <div className="mb-5 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
             <table className="w-full min-w-[500px] border-collapse text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     {isCourt ? 'Rate' : 'Duration'}
                   </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Member
                   </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Non-Member
                   </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Actions
                   </th>
                 </tr>
@@ -458,9 +461,9 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                   const memberCellKey = `rate-member-${duration}`
                   const nonMemberCellKey = `rate-nonMember-${duration}`
                   return (
-                    <tr key={duration} className="border-b border-gray-100 last:border-b-0">
-                      <td className="px-3 py-2 text-gray-900">{rowLabel}</td>
-                      <td className="px-3 py-2 text-gray-900">
+                    <tr key={duration} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{rowLabel}</td>
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
                           price={memberRule?.priceCentavos}
                           allowed={isValidPricingRuleCombo(rt.slug, 'member', duration)}
@@ -474,7 +477,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           errorMessage={deleteErrors[memberCellKey]}
                         />
                       </td>
-                      <td className="px-3 py-2 text-gray-900">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
                           price={nonMemberRule?.priceCentavos}
                           allowed={isValidPricingRuleCombo(rt.slug, 'non_member', duration)}
@@ -506,20 +509,20 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
             </table>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
             <table className="w-full min-w-[500px] border-collapse text-sm">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Add-on
                   </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Member
                   </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Non-Member
                   </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700">
+                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Actions
                   </th>
                 </tr>
@@ -527,9 +530,9 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
               <tbody>
                 {isCourt ? (
                   <>
-                    <tr className="border-b border-gray-100">
-                      <td className="px-3 py-2 text-gray-900">Coaching (1 pax)</td>
-                      <td className="px-3 py-2 text-gray-900">
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching (1 pax)</td>
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
                           price={findCoaching('member', 1)}
                           allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 1)}
@@ -543,7 +546,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           errorMessage={deleteErrors['coaching-member-1']}
                         />
                       </td>
-                      <td className="px-3 py-2 text-gray-900">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
                           price={findCoaching('non_member', 1)}
                           allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 1)}
@@ -569,9 +572,9 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                         })()}
                       </td>
                     </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="px-3 py-2 text-gray-900">Coaching (2 pax)</td>
-                      <td className="px-3 py-2 text-gray-900">
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching (2 pax)</td>
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
                           price={findCoaching('member', 2)}
                           allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 2)}
@@ -585,7 +588,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           errorMessage={deleteErrors['coaching-member-2']}
                         />
                       </td>
-                      <td className="px-3 py-2 text-gray-900">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
                           price={findCoaching('non_member', 2)}
                           allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 2)}
@@ -612,8 +615,8 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                       </td>
                     </tr>
                     <tr className="last:border-b-0">
-                      <td className="px-3 py-2 text-gray-900">Ball Boy</td>
-                      <td className="px-3 py-2 text-gray-900">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Ball Boy</td>
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
                           price={findBallBoy('member')}
                           allowed={isValidAddOnPricingRuleCombo('ball_boy', rt.slug, 'member', null)}
@@ -627,7 +630,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           errorMessage={deleteErrors['ballBoy-member']}
                         />
                       </td>
-                      <td className="px-3 py-2 text-gray-900">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
                           price={findBallBoy('non_member')}
                           allowed={isValidAddOnPricingRuleCombo('ball_boy', rt.slug, 'non_member', null)}
@@ -656,8 +659,8 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                   </>
                 ) : (
                   <tr className="last:border-b-0">
-                    <td className="px-3 py-2 text-gray-900">Coaching</td>
-                    <td className="px-3 py-2 text-gray-900">
+                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching</td>
+                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                       <PriceCell
                         price={findCoaching('member', null)}
                         allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', null)}
@@ -671,7 +674,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                         errorMessage={deleteErrors['coaching-member-null']}
                       />
                     </td>
-                    <td className="px-3 py-2 text-gray-900">
+                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                       <PriceCell
                         price={findCoaching('non_member', null)}
                         allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', null)}
@@ -752,8 +755,8 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
   ]
 
   return (
-    <div>
-      <div role="tablist" className="mb-6 flex flex-wrap gap-2">
+    <div className="flex h-full min-h-0 flex-col">
+      <div role="tablist" className="mb-4 flex flex-wrap gap-2">
         {TAB_ITEMS.map((tab) => (
           <button
             key={tab.key}
@@ -762,7 +765,9 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
             aria-selected={activeTab === tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'
+              activeTab === tab.key
+                ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
             }`}
           >
             {tab.label}
@@ -770,56 +775,58 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
         ))}
       </div>
 
-      {activeTab === 'courts' && (
-        <div className="space-y-6">
-          {courts.map((rt) => (
-            <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} />
-          ))}
-        </div>
-      )}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {activeTab === 'courts' && (
+          <div className="space-y-6">
+            {courts.map((rt) => (
+              <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} />
+            ))}
+          </div>
+        )}
 
-      {activeTab === 'simulators' && (
-        <div className="space-y-6">
-          {simulators.map((rt) => (
-            <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} />
-          ))}
-        </div>
-      )}
+        {activeTab === 'simulators' && (
+          <div className="space-y-6">
+            {simulators.map((rt) => (
+              <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} />
+            ))}
+          </div>
+        )}
 
-      {activeTab === 'guestFee' && guestFeeRule && (
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-gray-900">Guest Fee</h2>
-            <ActionIconButton
-              label="Edit Guest Fee"
-              onClick={() => setEditingGuestFee(true)}
+        {activeTab === 'guestFee' && guestFeeRule && (
+          <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Guest Fee</h2>
+              <ActionIconButton
+                label="Edit Guest Fee"
+                onClick={() => setEditingGuestFee(true)}
+              />
+            </div>
+            <div className="flex items-center justify-between gap-4 py-2 text-sm">
+              <span className="text-gray-500 dark:text-gray-400">Non-member court guest surcharge</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                {formatCentavos(guestFeeRule.amountCentavos)}/hr
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Applies to non-member court bookings only; the booker is exempt from their own guest fee.
+            </p>
+            <PriceEditModal
+              isOpen={editingGuestFee}
+              onClose={() => setEditingGuestFee(false)}
+              title="Edit Guest Fee"
+              fields={[
+                {
+                  key: 'amount',
+                  label: 'Guest fee (per guest/hr)',
+                  endpoint: `/api/admin/guest-fee-rule/${guestFeeRule.id}`,
+                  bodyKey: 'amountCentavos',
+                  currentCentavos: guestFeeRule.amountCentavos,
+                },
+              ]}
             />
           </div>
-          <div className="flex items-center justify-between gap-4 py-2 text-sm">
-            <span className="text-gray-500">Non-member court guest surcharge</span>
-            <span className="text-right font-medium text-gray-900">
-              {formatCentavos(guestFeeRule.amountCentavos)}/hr
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-gray-500">
-            Applies to non-member court bookings only; the booker is exempt from their own guest fee.
-          </p>
-          <PriceEditModal
-            isOpen={editingGuestFee}
-            onClose={() => setEditingGuestFee(false)}
-            title="Edit Guest Fee"
-            fields={[
-              {
-                key: 'amount',
-                label: 'Guest fee (per guest/hr)',
-                endpoint: `/api/admin/guest-fee-rule/${guestFeeRule.id}`,
-                bodyKey: 'amountCentavos',
-                currentCentavos: guestFeeRule.amountCentavos,
-              },
-            ]}
-          />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
