@@ -204,13 +204,13 @@ function BulletinForm({
     >
       <FormSection title="Details" first>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
             Category *
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               autoFocus
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             >
               <option value="" disabled>
                 Select a category
@@ -223,130 +223,130 @@ function BulletinForm({
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
             Title *
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </label>
         </div>
       </FormSection>
 
       <FormSection title="Content">
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           Excerpt *
           <textarea
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
             rows={2}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           Description *
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={5}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
         </label>
       </FormSection>
 
       <FormSection title="Impact Details">
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           Affected Facility *
           <input
             type="text"
             value={affectedFacility}
             onChange={(e) => setAffectedFacility(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           Impact *
           <textarea
             value={impact}
             onChange={(e) => setImpact(e.target.value)}
             rows={2}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           Action *
           <textarea
             value={action}
             onChange={(e) => setAction(e.target.value)}
             rows={2}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
         </label>
       </FormSection>
 
       <FormSection title="Scheduling">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
             Event Start *
             <input
               type="datetime-local"
               value={eventStartAt}
               onChange={(e) => setEventStartAt(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
             Event End{rules?.requireEventEndAt ? ' *' : ''}
             <input
               type="datetime-local"
               value={eventEndAt}
               onChange={(e) => setEventEndAt(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </label>
         </div>
 
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           Expiration{rules?.requireExpiresAt ? ' *' : ''}
           <input
             type="date"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
         </label>
       </FormSection>
 
       <FormSection title="Media & Links">
-        <label className="flex flex-col gap-1 text-sm text-gray-900">
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           Image{rules?.requireImage ? ' *' : ''}{mode === 'edit' ? ' (optional — leave blank to keep current)' : ''}
           <input
             type="file"
             accept="image/jpeg,image/png"
             onChange={handleImageChange}
-            className="text-sm text-gray-900"
+            className="text-sm text-gray-900 dark:text-gray-100"
           />
         </label>
         {imagePreview && (
           <img
             src={imagePreview}
             alt=""
-            className="h-24 w-24 rounded-lg border border-gray-200 object-cover"
+            className="h-24 w-24 rounded-lg border border-gray-200 object-cover dark:border-gray-800"
           />
         )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
             Social Platform
             <select
               value={socialPlatform}
               onChange={(e) => setSocialPlatform(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             >
               <option value="">None</option>
               <option value="instagram">Instagram</option>
@@ -355,37 +355,37 @@ function BulletinForm({
           </label>
 
           {socialPlatform && (
-            <label className="flex flex-col gap-1 text-sm text-gray-900">
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
               Social URL
               <input
                 type="text"
                 value={socialUrl}
                 onChange={(e) => setSocialUrl(e.target.value)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </label>
           )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm text-gray-900">
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
             CTA Label{rules?.requireCta ? ' *' : ''}
             <input
               type="text"
               value={ctaLabel}
               onChange={(e) => setCtaLabel(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             />
           </label>
 
           {ctaLabel && (
-            <label className="flex flex-col gap-1 text-sm text-gray-900">
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
               CTA URL{rules?.requireCta ? ' *' : ''}
               <input
                 type="text"
                 value={ctaUrl}
                 onChange={(e) => setCtaUrl(e.target.value)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </label>
           )}
@@ -393,26 +393,26 @@ function BulletinForm({
       </FormSection>
 
       <FormSection title="Publish">
-        <label className="flex items-center gap-2 text-sm text-gray-900">
+        <label className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100">
           <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
           Published
         </label>
       </FormSection>
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-      <div className="mt-5 flex items-center justify-end gap-3 border-t border-gray-100 pt-5">
+      <div className="mt-5 flex items-center justify-end gap-3 border-t border-gray-100 pt-5 dark:border-gray-800">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
         >
           {mode === 'add' ? 'Add' : 'Save'}
         </button>
@@ -431,8 +431,14 @@ function FormSection({
   children: React.ReactNode
 }) {
   return (
-    <div className={first ? 'flex flex-col gap-4' : 'flex flex-col gap-4 border-t border-gray-100 pt-5'}>
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">{title}</h4>
+    <div
+      className={
+        first
+          ? 'flex flex-col gap-4'
+          : 'flex flex-col gap-4 border-t border-gray-100 pt-5 dark:border-gray-800'
+      }
+    >
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{title}</h4>
       {children}
     </div>
   )

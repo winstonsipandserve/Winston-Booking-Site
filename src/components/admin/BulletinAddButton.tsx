@@ -11,7 +11,7 @@ export default function BulletinAddButton() {
       <button
         type="button"
         onClick={() => setAddModalOpen(true)}
-        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
       >
         + Add Bulletin
       </button>

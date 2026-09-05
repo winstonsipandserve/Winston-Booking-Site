@@ -49,7 +49,11 @@ function ActionIconButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className={variant === 'edit' ? 'text-gray-400 hover:text-gray-700' : 'text-gray-400 hover:text-red-600'}
+      className={
+        variant === 'edit'
+          ? 'text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300'
+          : 'text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400'
+      }
     >
       {variant === 'edit' ? <PencilIcon className="h-4 w-4" /> : <TrashIcon className="h-4 w-4" />}
     </button>
@@ -84,43 +88,45 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
   return (
     <div>
       {bulletins.length === 0 ? (
-        <p className="text-sm text-gray-500">No bulletins yet.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">No bulletins yet.</p>
       ) : (
         <div className="space-y-4">
           {bulletins.map((bulletin) => (
             <div
               key={bulletin.id}
-              className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-4"
+              className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900"
             >
               {bulletin.imageUrl ? (
                 <img
                   src={bulletin.imageUrl}
                   alt=""
-                  className="h-16 w-16 shrink-0 rounded-lg border border-gray-200 object-cover"
+                  className="h-16 w-16 shrink-0 rounded-lg border border-gray-200 object-cover dark:border-gray-800"
                 />
               ) : (
-                <div className="h-16 w-16 shrink-0 rounded-lg border border-gray-200 bg-gray-100" />
+                <div className="h-16 w-16 shrink-0 rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-800 dark:bg-gray-800" />
               )}
 
               <div className="min-w-0 flex-1">
                 <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                  <h2 className="font-semibold text-gray-900">{bulletin.title}</h2>
-                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                  <h2 className="font-semibold text-gray-900 dark:text-gray-100">{bulletin.title}</h2>
+                  <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {bulletin.category}
                   </span>
                   <span
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                      bulletin.isPublished ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500'
+                      bulletin.isPublished
+                        ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
+                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                     }`}
                   >
                     {bulletin.isPublished ? 'Published' : 'Draft'}
                   </span>
                 </div>
 
-                <p className="mb-1.5 line-clamp-2 text-sm text-gray-600">{bulletin.excerpt}</p>
+                <p className="mb-1.5 line-clamp-2 text-sm text-gray-600 dark:text-gray-300">{bulletin.excerpt}</p>
 
                 {bulletin.publishedAt ? (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {bulletin.publishedAt.toLocaleDateString('en-PH', {
                       year: 'numeric',
                       month: 'short',
@@ -128,7 +134,7 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
                     })}
                   </p>
                 ) : (
-                  <p className="text-xs italic text-gray-400">Not yet published</p>
+                  <p className="text-xs italic text-gray-400 dark:text-gray-500">Not yet published</p>
                 )}
               </div>
 
