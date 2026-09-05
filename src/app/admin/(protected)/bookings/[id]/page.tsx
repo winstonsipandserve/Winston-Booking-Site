@@ -29,116 +29,141 @@ export default async function AdminBookingDetailPage({
 
   return (
     <div>
-      <p>
-        <Link href="/admin/bookings">&larr; Back to bookings</Link>
-      </p>
-      <h1>Booking {booking.id}</h1>
+      <Link
+        href="/admin/bookings"
+        className="mb-4 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+      >
+        <span className="mr-1">&larr;</span>
+        Back to bookings
+      </Link>
 
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Details</h2>
-        <table cellPadding={4}>
-          <tbody>
-            <tr>
-              <td>Resource</td>
-              <td>
-                {booking.resource.resourceType.name} — {booking.resource.label}
-              </td>
-            </tr>
-            <tr>
-              <td>Start</td>
-              <td>{booking.startTime.toLocaleString('en-PH')}</td>
-            </tr>
-            <tr>
-              <td>End</td>
-              <td>{booking.endTime.toLocaleString('en-PH')}</td>
-            </tr>
-            <tr>
-              <td>Status</td>
-              <td>{booking.status}</td>
-            </tr>
-            <tr>
-              <td>Guest count</td>
-              <td>{booking.guestCount}</td>
-            </tr>
-            <tr>
-              <td>Total</td>
-              <td>{formatCentavos(booking.totalAmountCentavos)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <h1 className="mb-6 text-xl font-semibold text-gray-900 dark:text-gray-100">Booking {booking.id}</h1>
 
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Customer</h2>
-        {booking.customer ? (
-          <p>
-            {booking.customer.name} — {booking.customer.email} — {booking.customer.phone}
-          </p>
-        ) : (
-          <p>No customer attached yet.</p>
-        )}
-      </section>
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Details</h2>
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400">Resource</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {booking.resource.resourceType.name} — {booking.resource.label}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400">Start</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {booking.startTime.toLocaleString('en-PH')}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400">End</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {booking.endTime.toLocaleString('en-PH')}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400">Status</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{booking.status}</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400">Guest count</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{booking.guestCount}</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+            <span className="text-gray-500 dark:text-gray-400">Total</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {formatCentavos(booking.totalAmountCentavos)}
+            </span>
+          </div>
+        </section>
 
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Add-ons</h2>
-        {booking.addOns.length > 0 ? (
-          <ul>
-            {booking.addOns.map((addOn) => (
-              <li key={addOn.id}>
-                {addOn.addOnService.name}
-                {addOn.addOnPricingRule.paxCount ? ` (${addOn.addOnPricingRule.paxCount} pax)` : ''} —{' '}
-                {formatCentavos(addOn.amountCentavos)}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No add-ons.</p>
-        )}
-      </section>
+        <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Customer</h2>
+          {booking.customer ? (
+            <p className="text-sm text-gray-900 dark:text-gray-100">
+              {booking.customer.name} — {booking.customer.email} — {booking.customer.phone}
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No customer attached yet.</p>
+          )}
+        </section>
+      </div>
 
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Payment</h2>
-        {booking.payment ? (
-          <p>
-            {booking.payment.status} — {formatCentavos(booking.payment.amountCentavos)}
-            {booking.payment.paidAt ? ` — paid ${booking.payment.paidAt.toLocaleString('en-PH')}` : ''}
-          </p>
-        ) : (
-          <p>No payment record.</p>
-        )}
-      </section>
-
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>Reschedule history</h2>
-        {booking.reschedules.length > 0 ? (
-          <table border={1} cellPadding={6} style={{ borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th>Original slot</th>
-                <th>New slot</th>
-                <th>Reason</th>
-                <th>Performed by</th>
-                <th>When</th>
-              </tr>
-            </thead>
-            <tbody>
-              {booking.reschedules.map((r) => (
-                <tr key={r.id}>
-                  <td>
-                    {r.originalStart.toLocaleString('en-PH')} &ndash; {r.originalEnd.toLocaleString('en-PH')}
-                  </td>
-                  <td>
-                    {r.newStart.toLocaleString('en-PH')} &ndash; {r.newEnd.toLocaleString('en-PH')}
-                  </td>
-                  <td>{r.reason}</td>
-                  <td>{r.performedBy.name}</td>
-                  <td>{r.createdAt.toLocaleString('en-PH')}</td>
-                </tr>
+      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+        <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Add-ons</h2>
+          {booking.addOns.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {booking.addOns.map((addOn) => (
+                <li key={addOn.id} className="text-sm text-gray-900 dark:text-gray-100">
+                  {addOn.addOnService.name}
+                  {addOn.addOnPricingRule.paxCount ? ` (${addOn.addOnPricingRule.paxCount} pax)` : ''} —{' '}
+                  {formatCentavos(addOn.amountCentavos)}
+                </li>
               ))}
-            </tbody>
-          </table>
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No add-ons.</p>
+          )}
+        </section>
+
+        <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Payment</h2>
+          {booking.payment ? (
+            <p className="text-sm text-gray-900 dark:text-gray-100">
+              {booking.payment.status} — {formatCentavos(booking.payment.amountCentavos)}
+              {booking.payment.paidAt ? ` — paid ${booking.payment.paidAt.toLocaleString('en-PH')}` : ''}
+            </p>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No payment record.</p>
+          )}
+        </section>
+      </div>
+
+      <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Reschedule history</h2>
+        {booking.reschedules.length > 0 ? (
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
+              <thead className="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                    Original slot
+                  </th>
+                  <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                    New slot
+                  </th>
+                  <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                    Reason
+                  </th>
+                  <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                    Performed by
+                  </th>
+                  <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                    When
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {booking.reschedules.map((r) => (
+                  <tr key={r.id} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
+                    <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      {r.originalStart.toLocaleString('en-PH')} &ndash; {r.originalEnd.toLocaleString('en-PH')}
+                    </td>
+                    <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      {r.newStart.toLocaleString('en-PH')} &ndash; {r.newEnd.toLocaleString('en-PH')}
+                    </td>
+                    <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{r.reason}</td>
+                    <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{r.performedBy.name}</td>
+                    <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      {r.createdAt.toLocaleString('en-PH')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <p>No reschedules yet.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No reschedules yet.</p>
         )}
       </section>
 

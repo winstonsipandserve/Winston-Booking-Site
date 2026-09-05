@@ -9,8 +9,8 @@ export default async function AdminPage() {
   return (
     <div className="flex h-full flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="text-sm text-gray-500">Overview of bookings, revenue, and membership activity</p>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Dashboard</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Overview of bookings, revenue, and membership activity</p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">

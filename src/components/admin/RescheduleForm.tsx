@@ -46,27 +46,49 @@ export default function RescheduleForm({ bookingId }: { bookingId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
-      <h3>Reschedule</h3>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <div style={{ marginBottom: '0.75rem' }}>
-        <label htmlFor="newDate">New date</label>
-        <br />
-        <input id="newDate" name="newDate" type="date" required />
-      </div>
-      <div style={{ marginBottom: '0.75rem' }}>
-        <label htmlFor="newStartTime">New start time</label>
-        <br />
-        <input id="newStartTime" name="newStartTime" type="time" required />
-      </div>
-      <div style={{ marginBottom: '0.75rem' }}>
-        <label htmlFor="reason">Reason</label>
-        <br />
-        <textarea id="reason" name="reason" required style={{ width: '100%', maxWidth: 400 }} />
-      </div>
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Rescheduling…' : 'Reschedule'}
-      </button>
-    </form>
+    <section className="mt-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+      <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Reschedule</h2>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+          New date
+          <input
+            name="newDate"
+            type="date"
+            required
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+          New start time
+          <input
+            name="newStartTime"
+            type="time"
+            required
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+          Reason
+          <textarea
+            name="reason"
+            required
+            rows={3}
+            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+          />
+        </label>
+
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+
+        <div className="mt-2 flex items-center justify-end gap-3">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+          >
+            {isSubmitting ? 'Rescheduling…' : 'Reschedule'}
+          </button>
+        </div>
+      </form>
+    </section>
   )
 }
