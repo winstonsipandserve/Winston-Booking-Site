@@ -135,8 +135,7 @@ export async function PATCH(
   if ('error' in priceResult) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })
   }
-  const { totalAmountCentavos, addOns: repricedAddOns, addOnsTotalCentavos, guestFeeWaived } =
-    priceResult
+  const { totalAmountCentavos, addOns: repricedAddOns, addOnsTotalCentavos } = priceResult
 
   await prisma.$transaction(async (tx) => {
     await tx.booking.update({
@@ -159,7 +158,7 @@ export async function PATCH(
   })
 
   return Response.json(
-    { totalAmountCentavos, addOnsTotalCentavos, isMember, guestFeeWaived },
+    { totalAmountCentavos, addOnsTotalCentavos, isMember },
     { status: 200 },
   )
 }

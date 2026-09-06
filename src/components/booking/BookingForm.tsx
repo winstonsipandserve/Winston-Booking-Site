@@ -438,7 +438,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           totalAmountCentavos: number
           addOnsTotalCentavos: number
           isMember: boolean
-          guestFeeWaived: boolean
         } = await res.json()
         setCustomerAttached(true)
         const finalTotal = json.totalAmountCentavos + json.addOnsTotalCentavos
