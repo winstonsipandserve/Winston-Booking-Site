@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getActiveAdminSession } from '@/lib/admin-session'
+import { ADMIN_THEME_INIT_SCRIPT } from '@/lib/admin-theme-init-script'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 
@@ -18,7 +19,7 @@ export default async function AdminProtectedLayout({
     <div className="flex h-screen flex-col gap-4 overflow-hidden bg-gray-50 p-4 font-sans text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       <script
         dangerouslySetInnerHTML={{
-          __html: `(function(){try{var t=localStorage.getItem('winston-admin-theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+          __html: ADMIN_THEME_INIT_SCRIPT,
         }}
       />
       <AdminTopbar email={activeSession.adminUser.email} />

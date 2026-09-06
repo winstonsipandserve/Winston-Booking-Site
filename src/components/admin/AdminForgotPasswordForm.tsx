@@ -10,7 +10,7 @@ export default function AdminForgotPasswordForm() {
 
   if (submitState === 'success') {
     return (
-      <p className="mt-6 text-sm text-gray-600">
+      <p className="mt-6 text-sm text-gray-600 dark:text-gray-300">
         If that email is registered, you&apos;ll receive a reset link shortly.
       </p>
     )
@@ -41,7 +41,7 @@ export default function AdminForgotPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
-      <label htmlFor="email" className="flex flex-col gap-1 text-sm text-gray-900">
+      <label htmlFor="email" className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
         Email
         <input
           id="email"
@@ -51,18 +51,18 @@ export default function AdminForgotPasswordForm() {
           disabled={submitting}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 disabled:opacity-50"
+          className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
         />
       </label>
 
       {submitState === 'error' && (
-        <p className="text-sm text-red-600">Something went wrong. Please try again.</p>
+        <p className="text-sm text-red-600 dark:text-red-400">Something went wrong. Please try again.</p>
       )}
 
       <button
         type="submit"
         disabled={submitting}
-        className="mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
       >
         {submitting ? 'Sending…' : 'Send Reset Link'}
       </button>

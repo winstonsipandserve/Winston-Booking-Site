@@ -6,7 +6,7 @@ import ConfirmModal from '@/components/admin/ConfirmModal'
 
 export default function AdminLoginErrorModal({ hasError }: { hasError: boolean }) {
   const router = useRouter()
-  const [isOpen, setIsOpen] = useState(hasError)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     setIsOpen(hasError)

@@ -16,7 +16,7 @@ export default function AdminResetPasswordForm() {
 
   if (!token) {
     return (
-      <p className="mt-6 text-sm text-gray-600">
+      <p className="mt-6 text-sm text-gray-600 dark:text-gray-300">
         This reset link is missing its token. Please use the full link from your password
         reset email.
       </p>
@@ -26,8 +26,11 @@ export default function AdminResetPasswordForm() {
   if (submitState === 'success') {
     return (
       <div className="mt-6">
-        <p className="text-sm text-gray-600">Your password has been reset.</p>
-        <Link href="/admin/login" className="mt-2 inline-block text-sm font-medium text-gray-900 hover:underline">
+        <p className="text-sm text-gray-600 dark:text-gray-300">Your password has been reset.</p>
+        <Link
+          href="/admin/login"
+          className="mt-2 inline-block text-sm font-medium text-gray-900 hover:underline dark:text-gray-100"
+        >
           Go to Sign In
         </Link>
       </div>
@@ -79,12 +82,12 @@ export default function AdminResetPasswordForm() {
         autoComplete="new-password"
       />
 
-      {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+      {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
 
       <button
         type="submit"
         disabled={submitting}
-        className="mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-2 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
       >
         {submitting ? 'Resetting…' : 'Reset Password'}
       </button>
