@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { ADMIN_THEME_INIT_SCRIPT } from '@/lib/admin-theme-init-script'
+import AdminThemeInit from '@/components/admin/AdminThemeInit'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 
@@ -22,6 +23,7 @@ export default async function AdminProtectedLayout({
           __html: ADMIN_THEME_INIT_SCRIPT,
         }}
       />
+      <AdminThemeInit />
       <AdminTopbar email={activeSession.adminUser.email} />
       <div className="flex min-h-0 flex-1 gap-4">
         <AdminSidebar />
