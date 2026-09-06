@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { resolveCustomer } from '@/lib/customer-resolution'
 import { uploadToStorage, deleteFromStorage } from '@/lib/supabase-storage'
 import { sendStaffMembershipApplicationEmail } from '@/lib/resend'
+import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
 
 const BUCKET = 'membership-applications'
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
@@ -90,14 +91,50 @@ export async function POST(request: Request) {
   try {
     const { customer } = await resolveCustomer({ name, phone, email })
 
-    const existingPending = await prisma.membershipApplication.findFirst({
-      where: { customerId: customer.id, status: 'pending' },
+    const latestApplication = await prisma.membershipApplication.findFirst({
+      where: { customerId: customer.id },
+      orderBy: { createdAt: 'desc' },
+      include: { membership: true },
     })
-    if (existingPending) {
-      return Response.json(
-        { error: 'An application is already pending for this email.' },
-        { status: 409 },
-      )
+    if (latestApplication) {
+      const displayStatus = getMembershipDisplayStatus({
+        status: latestApplication.status,
+        latestMembership: latestApplication.membership,
+      })
+      if (displayStatus === 'pending') {
+        return Response.json(
+          { error: 'An application is already pending for this email.' },
+          { status: 409 },
+        )
+      }
+      if (displayStatus === 'awaiting_payment') {
+        return Response.json(
+          {
+            error:
+              'Your previous application was approved and is awaiting payment. Please check your email for the payment link, or contact us if you need it resent.',
+          },
+          { status: 409 },
+        )
+      }
+      if (displayStatus === 'active') {
+        return Response.json(
+          {
+            error:
+              "This email already has an active membership. Please contact us if you'd like to renew or make changes.",
+          },
+          { status: 409 },
+        )
+      }
+      if (displayStatus === 'expired') {
+        return Response.json(
+          {
+            error:
+              'Your membership has expired. Please log in to your account to renew instead of submitting a new application.',
+          },
+          { status: 409 },
+        )
+      }
+      // 'rejected' falls through — a rejected most-recent application allows reapplication.
     }
 
     const applicationId = crypto.randomUUID()

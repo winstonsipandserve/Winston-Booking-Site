@@ -107,6 +107,7 @@ Note: ball boy is a court-only add-on (courts have a ball boy; simulators do not
 - Approval alone does NOT create a Membership — it only flips the application to `approved` and emails the applicant a payment link. The Membership record (with tier, credit balance, expiry) is created only once that tier-activation payment is confirmed via the PayMongo webhook (see CLAUDE.md → Architecture Decisions → Membership payment model).
 - Government ID images: private storage, admin-only access — do not expose to the customer-facing membership account UI
 - Rejection requires a reason (non-empty string, enforced server-side, trimmed before storage) — not optional. Application carries status/reviewedById/reviewedAt for the audit trail (built 2026-08-20, see PROGRESS.md).
+- A new application is blocked (409) whenever the same email's most recent application is pending, awaiting payment, tied to an active membership, or tied to an expired membership — each with its own distinct message. Only a rejected most-recent application allows reapplication; that case falls through and a brand-new application is created normally. This is derived from the same `getMembershipDisplayStatus()` the admin Memberships list uses (see CLAUDE.md), not a separate re-implementation (built 2026-09-07, see PROGRESS.md).
 
 ---
 
