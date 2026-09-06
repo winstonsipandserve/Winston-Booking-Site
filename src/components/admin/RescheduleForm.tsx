@@ -10,10 +10,11 @@ export default function RescheduleForm({ bookingId }: { bookingId: string }) {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const form = e.currentTarget
     setError(null)
     setIsSubmitting(true)
 
-    const formData = new FormData(e.currentTarget)
+    const formData = new FormData(form)
     const newDate = formData.get('newDate')
     const newStartTime = formData.get('newStartTime')
     const reason = formData.get('reason')
@@ -27,7 +28,7 @@ export default function RescheduleForm({ bookingId }: { bookingId: string }) {
 
       if (res.status === 200) {
         router.refresh()
-        e.currentTarget.reset()
+        form.reset()
         return
       }
 
