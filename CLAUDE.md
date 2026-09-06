@@ -195,6 +195,7 @@ This is Arjay's process — Claude Code should support it, not route around it:
 2. Finalized prompts are pasted into Claude Code, run against this local repo.
 3. Output is manually reviewed and validated (including browser verification where relevant) — not auto-approved.
 4. Git operations (`add`, `commit`, `push`) are done manually, not automated by Claude Code. Prompts that produce commits should end with an explicit git block for Arjay to review before running, not run automatically.
+5. **Claude Code must never enter credentials into any login form** — admin, member, or any other — under any circumstance. This applies regardless of who supplies the credential, whether the account is temporary/disposable/self-created for testing, or how much time pressure a task is under. It is not a judgment call to be weighed per-task; any login-gated VERIFY step is Arjay's to run manually, and prompts should say so explicitly rather than instructing otherwise.
 
 ### Branch Promotion Policy
 
