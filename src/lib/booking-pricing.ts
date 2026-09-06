@@ -65,11 +65,6 @@ export async function priceBooking(
     return { error: 'No pricing available for this resource, rate tier, and duration', status: 400 }
   }
 
-  const isNonMemberCourt = isCourt && rateTier === 'non_member'
-  if (guestCount > 0 && !isNonMemberCourt) {
-    return { error: 'guestCount only applies to non-member court bookings', status: 400 }
-  }
-
   let guestFeeCentavos = 0
   if (guestCount > 0) {
     const guestFeeRule = await prisma.guestFeeRule.findFirst()

@@ -27,7 +27,6 @@ interface AddOnsStepProps {
   coachingPricing: CoachingPricing
   coachingPaxCount: number | null
   onCoachingPaxCountChange: (value: number) => void
-  hideGuestCount: boolean
 }
 
 export default function AddOnsStep({
@@ -42,7 +41,6 @@ export default function AddOnsStep({
   coachingPricing,
   coachingPaxCount,
   onCoachingPaxCountChange,
-  hideGuestCount,
 }: AddOnsStepProps) {
   const coachingPriceCentavos =
     coachingPricing.mode === 'flat'
@@ -62,40 +60,34 @@ export default function AddOnsStep({
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
       <h2 className="font-serif text-2xl text-brand-dark">Add-Ons</h2>
 
-      {isCourt && !hideGuestCount && (
-        <div className="flex flex-col gap-2">
-          <label htmlFor="guestCount" className="text-sm font-medium text-brand-dark">
-            Number of guests
-          </label>
-          <div
-            id="guestCount"
-            className="flex w-full items-center justify-between rounded-none border border-brand-dark/20 px-2 py-2"
+      <div className="flex flex-col gap-2">
+        <label htmlFor="guestCount" className="text-sm font-medium text-brand-dark">
+          Number of guests
+        </label>
+        <div
+          id="guestCount"
+          className="flex w-full items-center justify-between rounded-none border border-brand-dark/20 px-2 py-2"
+        >
+          <button
+            type="button"
+            aria-label="Decrease guest count"
+            onClick={() => onGuestCountChange(Math.max(0, guestCount - 1))}
+            disabled={guestCount <= 0}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <button
-              type="button"
-              aria-label="Decrease guest count"
-              onClick={() => onGuestCountChange(Math.max(0, guestCount - 1))}
-              disabled={guestCount <= 0}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              −
-            </button>
-            <span className="text-base font-medium text-brand-dark">{guestCount}</span>
-            <button
-              type="button"
-              aria-label="Increase guest count"
-              onClick={() => onGuestCountChange(guestCount + 1)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark"
-            >
-              +
-            </button>
-          </div>
+            −
+          </button>
+          <span className="text-base font-medium text-brand-dark">{guestCount}</span>
+          <button
+            type="button"
+            aria-label="Increase guest count"
+            onClick={() => onGuestCountChange(guestCount + 1)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark"
+          >
+            +
+          </button>
         </div>
-      )}
-
-      {isCourt && hideGuestCount && (
-        <p className="text-sm text-brand-dark/60">Guest fee doesn&apos;t apply to member bookings.</p>
-      )}
+      </div>
 
       <div className="flex flex-col gap-3">
         {isCourt && (

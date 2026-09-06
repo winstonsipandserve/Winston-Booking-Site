@@ -55,10 +55,11 @@ Business rules, pricing, and membership logic for Winston Sip and Serve, as fina
 
 ## Guest Fee Rule
 
-- Applies to non-member court bookings only (NOT simulators, NOT member bookings)
-- ₱150/hr per additional guest, booker is exempt from their own guest fee
-- Single lump-sum charge to the booker covering court rate + (guest fee × non-exempt guest count) — one Payment record per Booking, not split per guest
-- Example: 6-person tennis court booking (1 booker + 5 guests), non-member: ₱750 court + (5 × ₱150) = ₱1,500 total, charged to booker
+- Applies to all bookings — every resource type (courts and simulators) and both rate tiers (member and non-member)
+- Flat ₱150 per additional guest, regardless of booking duration; booker is exempt from their own guest fee
+- Single lump-sum charge to the booker covering base rate + (guest fee × non-exempt guest count) — one Payment record per Booking, not split per guest
+- Example (court): 6-person tennis court booking (1 booker + 5 guests), non-member: ₱750 court + (5 × ₱150) = ₱1,500 total, charged to booker
+- Example (simulator): member golf-sim booking (60min) with 2 additional guests: ₱950 sim + (2 × ₱150) = ₱1,250 total, charged to booker
 - Rate is admin-editable via the panel, not hardcoded — stored in a dedicated `GuestFeeRule` table (see CLAUDE.md → Architecture Decisions), same DB-driven pricing pattern as `PricingRule`/`AddOnPricingRule`.
 
 ---

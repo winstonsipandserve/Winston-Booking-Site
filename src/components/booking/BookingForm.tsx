@@ -260,19 +260,19 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   const estimateCentavos = useMemo(() => {
     if (!selectedResourceType || !durationMinutes || !data) return null
     const duration = Number(durationMinutes)
+    const guestFee = guestCount * data.guestFeeCentavos
     if (isCourt) {
       const hourlyRate = selectedResourceType.pricing.find(
         (p) => p.rateTier === rateTier && p.durationMinutes === 60,
       )
       if (!hourlyRate) return null
       const base = hourlyRate.priceCentavos * (duration / 60)
-      const guestFee = guestCount * data.guestFeeCentavos
       return base + guestFee
     }
     const tierRate = selectedResourceType.pricing.find(
       (p) => p.rateTier === rateTier && p.durationMinutes === duration,
     )
-    return tierRate ? tierRate.priceCentavos : null
+    return tierRate ? tierRate.priceCentavos + guestFee : null
   }, [selectedResourceType, durationMinutes, guestCount, isCourt, data, rateTier])
 
   const addOnsEstimateCentavos = useMemo(() => {
@@ -361,7 +361,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           resourceId,
           startTime: new Date(startTimeLocal).toISOString(),
           durationMinutes: Number(durationMinutes),
-          guestCount: isCourt && rateTier === 'non_member' ? guestCount : 0,
+          guestCount,
           ballBoy,
           coaching,
           ...(coaching && isCourt && coachingPaxCount !== null ? { coachingPaxCount } : {}),
@@ -547,7 +547,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPricing={coachingPricing}
           coachingPaxCount={coachingPaxCount}
           onCoachingPaxCountChange={setCoachingPaxCount}
-          hideGuestCount={rateTier === 'member'}
         />
       )}
 

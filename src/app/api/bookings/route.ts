@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     isMember = !!activeMembership
   }
 
-  const guestCount = isMember ? 0 : guestCountRaw
+  const guestCount = guestCountRaw
 
   const resource = await prisma.resource.findUnique({
     where: { id: resourceId },

@@ -79,15 +79,13 @@ export default function BookingSummary({
           </dt>
           <dd className="text-right font-medium text-brand-dark">{durationMinutes} minutes</dd>
         </div>
-        {isCourt && (
-          <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
-            <dt className="flex items-center gap-2 text-brand-dark/70">
-              <RowIcon icon={GuestsIcon} show={showIcons} />
-              Guests
-            </dt>
-            <dd className="text-right font-medium text-brand-dark">{guestCount}</dd>
-          </div>
-        )}
+        <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
+          <dt className="flex items-center gap-2 text-brand-dark/70">
+            <RowIcon icon={GuestsIcon} show={showIcons} />
+            Guests
+          </dt>
+          <dd className="text-right font-medium text-brand-dark">{guestCount}</dd>
+        </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
           <dt className="flex items-center gap-2 text-brand-dark/70">
             <RowIcon icon={BallBoyIcon} show={showIcons} />
