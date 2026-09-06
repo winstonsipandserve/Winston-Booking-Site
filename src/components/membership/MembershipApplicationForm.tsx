@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Modal from '@/components/ui/Modal'
 
 type MembershipTier = 'three_month' | 'six_month' | 'twelve_month'
 
@@ -38,6 +39,8 @@ export default function MembershipApplicationForm() {
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successResult, setSuccessResult] = useState<SuccessResult | null>(null)
+  const [showDuplicateEmailModal, setShowDuplicateEmailModal] = useState(false)
+  const [duplicateEmailMessage, setDuplicateEmailMessage] = useState('')
 
   function handleFileChange(label: string, setFile: (file: File | null) => void) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,8 +94,9 @@ export default function MembershipApplicationForm() {
         setSubmitState('success')
       } else if (res.status === 409) {
         const json = await res.json().catch(() => null)
-        setSubmitError(json?.error ?? 'An application is already pending for this email.')
-        setSubmitState('error')
+        setDuplicateEmailMessage(json?.error ?? 'An application is already pending for this email.')
+        setShowDuplicateEmailModal(true)
+        setSubmitState('idle')
       } else if (res.status === 400) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem with your application details.')
@@ -126,6 +130,7 @@ export default function MembershipApplicationForm() {
   const submitting = submitState === 'submitting'
 
   return (
+    <>
     <form
       onSubmit={handleSubmit}
       className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
@@ -284,5 +289,23 @@ export default function MembershipApplicationForm() {
         {submitting ? 'Submitting…' : 'Submit Application'}
       </button>
     </form>
+
+    <Modal
+      isOpen={showDuplicateEmailModal}
+      onClose={() => setShowDuplicateEmailModal(false)}
+      title="Application Not Submitted"
+    >
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-brand-dark/80">{duplicateEmailMessage}</p>
+        <button
+          type="button"
+          onClick={() => setShowDuplicateEmailModal(false)}
+          className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+        >
+          Okay
+        </button>
+      </div>
+    </Modal>
+    </>
   )
 }
