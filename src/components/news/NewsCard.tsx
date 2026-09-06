@@ -26,7 +26,7 @@ interface NewsCardProps {
 
 export default function NewsCard({ item, objectPosition = 'center' }: NewsCardProps) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-brand-dark/20 bg-brand-light shadow-card">
+    <div className="flex h-full flex-col overflow-hidden rounded-card border-2 border-brand-dark/20 bg-brand-light shadow-card">
       {item.image && (
         <div className="group relative aspect-[4/3] w-full overflow-hidden">
           <Image
