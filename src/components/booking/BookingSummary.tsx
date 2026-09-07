@@ -20,6 +20,7 @@ interface BookingSummaryProps {
   rateTier: RateTier
   hasSession: boolean
   showIcons?: boolean
+  bookingReference?: string | null
 }
 
 function RowIcon({ icon: Icon, show }: { icon: (props: { className?: string }) => React.JSX.Element; show?: boolean }) {
@@ -49,13 +50,26 @@ export default function BookingSummary({
   rateTier,
   hasSession,
   showIcons = false,
+  bookingReference,
 }: BookingSummaryProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
+  const baseEstimateCentavos =
+    estimateCentavos !== null ? estimateCentavos - guestCount * guestFeeCentavos : null
 
   return (
     <div className="flex flex-col rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
       <dl className="flex flex-col">
-        <div className="flex items-center justify-between gap-4 py-3">
+        {bookingReference && (
+          <div className="flex items-center justify-between gap-4 py-3">
+            <dt className="text-brand-dark/70">Booking Reference</dt>
+            <dd className="text-right font-medium text-brand-dark">{bookingReference}</dd>
+          </div>
+        )}
+        <div
+          className={`flex items-center justify-between gap-4 py-3 ${
+            bookingReference ? 'border-t border-brand-dark/10' : ''
+          }`}
+        >
           <dt className="flex items-center gap-2 text-brand-dark/70">
             <RowIcon icon={LocationIcon} show={showIcons} />
             Sport
@@ -82,7 +96,7 @@ export default function BookingSummary({
             Duration — {durationMinutes} minutes
           </dt>
           <dd className="text-right font-medium text-brand-dark">
-            {estimateCentavos !== null ? formatCentavos(estimateCentavos) : '—'}
+            {baseEstimateCentavos !== null ? formatCentavos(baseEstimateCentavos) : '—'}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">

@@ -98,9 +98,6 @@ export default function PaymentStep({
     <div className="flex w-full max-w-md flex-col gap-4">
       <div className="flex flex-col gap-1 text-center">
         <h2 className="font-serif text-2xl text-brand-dark">Payment</h2>
-        <p className="text-sm text-brand-dark/60">
-          Booking Reference: <span className="font-medium text-brand-dark">{bookingId}</span>
-        </p>
       </div>
 
       <BookingSummary
@@ -120,6 +117,7 @@ export default function PaymentStep({
         guestFeeCentavos={guestFeeCentavos}
         rateTier={rateTier}
         hasSession={hasSession}
+        bookingReference={bookingId}
       />
 
       {knownCustomer ? (
