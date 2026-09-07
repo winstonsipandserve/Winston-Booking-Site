@@ -13,6 +13,7 @@ export interface BookingDetail {
   startTime: string
   endTime: string
   totalAmountCentavos: number
+  guestFeeAmountCentavos: number
   addOns: BookingAddOn[]
   addOnsTotalCentavos: number
   resource: { typeName: string; label: string }
@@ -31,6 +32,8 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
   const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
   const ballBoyAddOn = booking.addOns.find((a) => a.service === 'ball_boy')
   const coachingAddOn = booking.addOns.find((a) => a.service === 'coaching_fee')
+  const baseAmountCentavos = booking.totalAmountCentavos - booking.guestFeeAmountCentavos
+  const hasAddOnsBreakdown = booking.guestCount > 0 || booking.addOns.length > 0
 
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -76,10 +79,10 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
           )}
           {coachingAddOn && (
             <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-              <dt className="text-brand-dark/70">Coaching</dt>
-              <dd className="text-right font-medium text-brand-dark">
-                Yes{coachingAddOn.paxCount !== null && ` — ${coachingAddOn.paxCount} Pax`}
-              </dd>
+              <dt className="text-brand-dark/70">
+                Coaching{coachingAddOn.paxCount !== null && ` — ${coachingAddOn.paxCount} Pax`}
+              </dt>
+              <dd className="text-right font-medium text-brand-dark">Yes</dd>
             </div>
           )}
         </dl>
@@ -90,16 +93,41 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
           <div className="flex justify-between gap-4 py-3">
             <dt className="text-brand-dark/70">Price</dt>
             <dd className="text-right font-medium text-brand-dark">
-              {formatCentavos(booking.totalAmountCentavos)}
+              {formatCentavos(baseAmountCentavos)}
             </dd>
           </div>
-          {booking.addOns.length > 0 && (
+          {hasAddOnsBreakdown && (
             <>
-              <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+              <div className="border-t border-brand-dark/10 py-3">
                 <dt className="text-brand-dark/70">Add-ons total</dt>
-                <dd className="text-right font-medium text-brand-dark">
-                  {formatCentavos(booking.addOnsTotalCentavos)}
-                </dd>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-brand-dark/10 py-3 pl-4">
+                {booking.guestCount > 0 && (
+                  <div className="flex justify-between gap-4 text-sm">
+                    <dt className="text-brand-dark/70">Guests — {booking.guestCount} Pax</dt>
+                    <dd className="text-right font-medium text-brand-dark">
+                      {formatCentavos(booking.guestFeeAmountCentavos)}
+                    </dd>
+                  </div>
+                )}
+                {ballBoyAddOn && (
+                  <div className="flex justify-between gap-4 text-sm">
+                    <dt className="text-brand-dark/70">Ball Boy</dt>
+                    <dd className="text-right font-medium text-brand-dark">
+                      {formatCentavos(ballBoyAddOn.amountCentavos)}
+                    </dd>
+                  </div>
+                )}
+                {coachingAddOn && (
+                  <div className="flex justify-between gap-4 text-sm">
+                    <dt className="text-brand-dark/70">
+                      Coaching{coachingAddOn.paxCount !== null && ` — ${coachingAddOn.paxCount} Pax`}
+                    </dt>
+                    <dd className="text-right font-medium text-brand-dark">
+                      {formatCentavos(coachingAddOn.amountCentavos)}
+                    </dd>
+                  </div>
+                )}
               </div>
               <div className="flex items-baseline justify-between gap-4 border-t border-brand-dark/10 pt-4 mt-1">
                 <dt className="font-serif text-brand-dark">Total</dt>

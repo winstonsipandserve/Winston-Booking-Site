@@ -22,6 +22,7 @@ export interface SelectedAddOn {
 
 export interface PriceBookingResult {
   totalAmountCentavos: number
+  guestFeeCentavos: number
   addOns: SelectedAddOn[]
   addOnsTotalCentavos: number
 }
@@ -134,5 +135,5 @@ export async function priceBooking(
 
   const addOnsTotalCentavos = selectedAddOns.reduce((sum, addOn) => sum + addOn.amountCentavos, 0)
 
-  return { totalAmountCentavos, addOns: selectedAddOns, addOnsTotalCentavos }
+  return { totalAmountCentavos, guestFeeCentavos, addOns: selectedAddOns, addOnsTotalCentavos }
 }

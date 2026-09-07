@@ -37,6 +37,7 @@ export async function GET(
       startTime: booking.startTime,
       endTime: booking.endTime,
       totalAmountCentavos: booking.totalAmountCentavos,
+      guestFeeAmountCentavos: booking.guestFeeAmountCentavos,
       addOns: booking.addOns.map((addOn) => ({
         service: addOn.addOnService.slug,
         paxCount: addOn.addOnPricingRule.paxCount,
@@ -135,7 +136,7 @@ export async function PATCH(
   if ('error' in priceResult) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })
   }
-  const { totalAmountCentavos, addOns: repricedAddOns, addOnsTotalCentavos } = priceResult
+  const { totalAmountCentavos, guestFeeCentavos, addOns: repricedAddOns, addOnsTotalCentavos } = priceResult
 
   await prisma.$transaction(async (tx) => {
     await tx.booking.update({
@@ -143,6 +144,7 @@ export async function PATCH(
       data: {
         customerId: customer.id,
         ...(totalAmountCentavos !== booking.totalAmountCentavos ? { totalAmountCentavos } : {}),
+        ...(guestFeeCentavos !== booking.guestFeeAmountCentavos ? { guestFeeAmountCentavos: guestFeeCentavos } : {}),
       },
     })
 

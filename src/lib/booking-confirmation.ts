@@ -40,18 +40,7 @@ export async function sendBookingConfirmationEmailForBooking(
   const addOnsTotalCentavos = booking.addOns.reduce((sum, a) => sum + a.amountCentavos, 0)
   const totalPaidCentavos = booking.totalAmountCentavos + addOnsTotalCentavos
 
-  let guestFeeCentavos = 0
-  if (booking.guestCount > 0) {
-    const guestFeeRule = await prisma.guestFeeRule.findFirst()
-    if (!guestFeeRule) {
-      console.error(
-        'GuestFeeRule table is empty — cannot compute guest fee for confirmation email',
-        booking.id,
-      )
-    } else {
-      guestFeeCentavos = booking.guestCount * guestFeeRule.amountCentavos
-    }
-  }
+  const guestFeeCentavos = booking.guestFeeAmountCentavos
 
   const addOns = booking.addOns.map((addOn) => {
     const label = ADD_ON_EMAIL_LABELS[addOn.addOnService.slug] ?? addOn.addOnService.slug

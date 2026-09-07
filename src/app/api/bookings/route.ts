@@ -139,7 +139,7 @@ export async function POST(request: Request) {
   if ('error' in priceResult) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })
   }
-  const { totalAmountCentavos, addOns: selectedAddOns, addOnsTotalCentavos } = priceResult
+  const { totalAmountCentavos, guestFeeCentavos, addOns: selectedAddOns, addOnsTotalCentavos } = priceResult
   const grandTotalCentavos = totalAmountCentavos + addOnsTotalCentavos
 
   let checkoutSessionIdsToExpire: string[] = []
@@ -202,6 +202,7 @@ export async function POST(request: Request) {
           status: creditCovered ? 'confirmed' : 'pending_payment',
           guestCount,
           totalAmountCentavos,
+          guestFeeAmountCentavos: guestFeeCentavos,
         },
       })
 

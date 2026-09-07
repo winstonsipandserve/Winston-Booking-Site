@@ -371,6 +371,10 @@ model Booking {
   guestCount Int           @default(0) @map("guest_count")
   /// Court/sim rate + guest fee only — excludes add-ons, which are priced separately on BookingAddOn.
   totalAmountCentavos Int  @map("total_amount_centavos")
+  /// Snapshot of the guest fee actually charged at booking time, already included inside
+  /// totalAmountCentavos above — this column exists only so the guest fee can be broken back
+  /// out for display (e.g. the confirmation receipt), independent of any later GuestFeeRule edit.
+  guestFeeAmountCentavos Int @default(0) @map("guest_fee_amount_centavos")
   reschedules BookingReschedule[]
   addOns      BookingAddOn[]
   payment     Payment?
