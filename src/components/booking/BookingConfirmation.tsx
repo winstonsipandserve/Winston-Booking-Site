@@ -21,11 +21,6 @@ export interface BookingDetail {
   payment: { status: string; amountCentavos: number; paidAt: string | null } | null
 }
 
-const ADD_ON_LABELS: Record<string, string> = {
-  ball_boy: 'Ball Boy',
-  coaching_fee: 'Coaching',
-}
-
 interface BookingConfirmationProps {
   booking: BookingDetail
 }
@@ -34,6 +29,8 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
   const start = new Date(booking.startTime)
   const end = new Date(booking.endTime)
   const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
+  const ballBoyAddOn = booking.addOns.find((a) => a.service === 'ball_boy')
+  const coachingAddOn = booking.addOns.find((a) => a.service === 'coaching_fee')
 
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -71,26 +68,31 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
               <dd className="text-right font-medium text-brand-dark">{booking.guestCount}</dd>
             </div>
           )}
-          <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+          {ballBoyAddOn && (
+            <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+              <dt className="text-brand-dark/70">Ball Boy</dt>
+              <dd className="text-right font-medium text-brand-dark">Yes</dd>
+            </div>
+          )}
+          {coachingAddOn && (
+            <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+              <dt className="text-brand-dark/70">Coaching</dt>
+              <dd className="text-right font-medium text-brand-dark">
+                Yes{coachingAddOn.paxCount !== null && ` — ${coachingAddOn.paxCount} Pax`}
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
+
+      <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+        <dl className="flex flex-col">
+          <div className="flex justify-between gap-4 py-3">
             <dt className="text-brand-dark/70">Price</dt>
             <dd className="text-right font-medium text-brand-dark">
               {formatCentavos(booking.totalAmountCentavos)}
             </dd>
           </div>
-          {booking.addOns.map((addOn, i) => (
-            <div
-              key={i}
-              className="flex justify-between gap-4 border-t border-brand-dark/10 py-3"
-            >
-              <dt className="text-brand-dark/70">
-                {ADD_ON_LABELS[addOn.service] ?? addOn.service}
-                {addOn.paxCount !== null && ` — ${addOn.paxCount} Pax`}
-              </dt>
-              <dd className="text-right font-medium text-brand-dark">
-                {formatCentavos(addOn.amountCentavos)}
-              </dd>
-            </div>
-          ))}
           {booking.addOns.length > 0 && (
             <>
               <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
@@ -99,9 +101,9 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
                   {formatCentavos(booking.addOnsTotalCentavos)}
                 </dd>
               </div>
-              <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-                <dt className="text-brand-dark/70">Total</dt>
-                <dd className="text-right font-medium text-brand-dark">
+              <div className="flex items-baseline justify-between gap-4 border-t border-brand-dark/10 pt-4 mt-1">
+                <dt className="font-serif text-brand-dark">Total</dt>
+                <dd className="text-2xl font-medium text-accent-primary">
                   {formatCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)}
                 </dd>
               </div>
