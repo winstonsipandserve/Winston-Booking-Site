@@ -197,6 +197,8 @@ This is Arjay's process — Claude Code should support it, not route around it:
 4. Git operations (`add`, `commit`, `push`) are done manually, not automated by Claude Code. Prompts that produce commits should end with an explicit git block for Arjay to review before running, not run automatically.
 5. **Claude Code must never enter credentials into any login form** — admin, member, or any other — under any circumstance. This applies regardless of who supplies the credential, whether the account is temporary/disposable/self-created for testing, or how much time pressure a task is under. It is not a judgment call to be weighed per-task; any login-gated VERIFY step is Arjay's to run manually, and prompts should say so explicitly rather than instructing otherwise.
 
+    When a prompt's VERIFY step requires an authenticated admin session to proceed (e.g. a Playwright-driven check against any `/admin/*` page), Claude Code should pause at that exact point and explicitly ask Arjay, in chat, to log in in the browser right now — then continue driving the rest of verification interactively in the same session once Arjay confirms. This does not relax the prohibition above: Claude Code still never types a credential into any form itself, it only asks and waits.
+
 ### Branch Promotion Policy
 
 Promotion between branches is manual — no automated CI/CD merge gates.
