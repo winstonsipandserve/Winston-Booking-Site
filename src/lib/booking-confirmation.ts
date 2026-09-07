@@ -52,7 +52,7 @@ export async function sendBookingConfirmationEmailForBooking(
 
   await sendBookingConfirmationEmail({
     to: booking.customer.email,
-    name: booking.customer.name,
+    name: booking.customerNameSnapshot ?? booking.customer.name,
     bookingReference: booking.id,
     resourceTypeName: booking.resource.resourceType.name,
     resourceLabel: booking.resource.label,
@@ -68,9 +68,9 @@ export async function sendBookingConfirmationEmailForBooking(
 
   await sendStaffBookingNotificationEmail({
     bookingReference: booking.id,
-    customerName: booking.customer.name,
+    customerName: booking.customerNameSnapshot ?? booking.customer.name,
     customerEmail: booking.customer.email,
-    customerPhone: booking.customer.phone,
+    customerPhone: booking.customerPhoneSnapshot ?? booking.customer.phone,
     resourceTypeName: booking.resource.resourceType.name,
     resourceLabel: booking.resource.label,
     startTime: booking.startTime,

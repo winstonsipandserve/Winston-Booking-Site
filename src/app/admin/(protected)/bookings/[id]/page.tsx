@@ -99,9 +99,9 @@ export default async function AdminBookingDetailPage({
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Customer</h2>
           {booking.customer ? (
             <>
-              <DetailRow label="Name" value={booking.customer.name} />
+              <DetailRow label="Name" value={booking.customerNameSnapshot ?? '—'} />
               <DetailRow label="Email" value={booking.customer.email} />
-              <DetailRow label="Phone" value={booking.customer.phone} />
+              <DetailRow label="Phone" value={booking.customerPhoneSnapshot ?? '—'} />
             </>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">No customer attached yet.</p>

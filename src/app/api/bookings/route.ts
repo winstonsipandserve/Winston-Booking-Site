@@ -75,10 +75,17 @@ export async function POST(request: Request) {
   let customerId: string | null = null
   let isMember = false
   let activeMembership: Membership | null = null
+  let customerNameSnapshot: string | null = null
+  let customerPhoneSnapshot: string | null = null
   if (isMemberSession) {
     customerId = session!.user.id
     activeMembership = await getActiveMembership(customerId)
     isMember = !!activeMembership
+    const sessionCustomer = await prisma.customer.findUnique({ where: { id: customerId } })
+    if (sessionCustomer) {
+      customerNameSnapshot = sessionCustomer.name
+      customerPhoneSnapshot = sessionCustomer.phone
+    }
   }
 
   const guestCount = guestCountRaw
@@ -203,6 +210,8 @@ export async function POST(request: Request) {
           guestCount,
           totalAmountCentavos,
           guestFeeAmountCentavos: guestFeeCentavos,
+          customerNameSnapshot,
+          customerPhoneSnapshot,
         },
       })
 

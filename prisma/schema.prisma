@@ -375,6 +375,10 @@ model Booking {
   /// totalAmountCentavos above — this column exists only so the guest fee can be broken back
   /// out for display (e.g. the confirmation receipt), independent of any later GuestFeeRule edit.
   guestFeeAmountCentavos Int @default(0) @map("guest_fee_amount_centavos")
+  /// Snapshot of the name/phone actually submitted for this specific booking at
+  /// customer-attach time, independent of any later change to the linked Customer row.
+  customerNameSnapshot  String? @map("customer_name_snapshot")
+  customerPhoneSnapshot String? @map("customer_phone_snapshot")
   reschedules BookingReschedule[]
   addOns      BookingAddOn[]
   payment     Payment?

@@ -59,7 +59,6 @@ export default async function AdminBookingsPage({
       where,
       include: {
         resource: { include: { resourceType: true } },
-        customer: true,
         addOns: { select: { amountCentavos: true } },
         payment: { select: { paymongoPaymentId: true } },
       },
@@ -156,7 +155,7 @@ export default async function AdminBookingsPage({
                     {booking.resource.resourceType.name} — {booking.resource.label}
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                    {booking.customer ? booking.customer.name : '—'}
+                    {booking.customerNameSnapshot ?? '—'}
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     <div>{date}</div>

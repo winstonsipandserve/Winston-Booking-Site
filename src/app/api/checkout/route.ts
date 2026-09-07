@@ -99,9 +99,9 @@ export async function POST(request: Request) {
       referenceNumber: booking.id,
       metadata: { bookingId: booking.id },
       billing: {
-        name: booking.customer.name,
+        name: booking.customerNameSnapshot ?? booking.customer.name,
         email: booking.customer.email,
-        phone: booking.customer.phone,
+        phone: booking.customerPhoneSnapshot ?? booking.customer.phone,
       },
       description: `${booking.resource.resourceType.name} booking — ${booking.resource.label}`,
       sendEmailReceipt: true,

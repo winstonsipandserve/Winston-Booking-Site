@@ -30,7 +30,15 @@ export async function resolveCustomer(
 
   let customerRecord = await prisma.customer.findUnique({ where: { email } })
   if (customerRecord) {
-    if (customerRecord.name !== name || customerRecord.phone !== phone) {
+    // Once a Customer has a real login account (passwordHash set via member activation),
+    // name/phone are frozen — no future mismatched booking can overwrite a real account's
+    // profile, regardless of that member's current membership status. Non-member rows (no
+    // account yet) keep updating freely on each new booking, unchanged from before. See
+    // CLAUDE.md → Architecture Decisions → "Customer & auth model".
+    if (
+      !customerRecord.passwordHash &&
+      (customerRecord.name !== name || customerRecord.phone !== phone)
+    ) {
       customerRecord = await prisma.customer.update({
         where: { id: customerRecord.id },
         data: { name, phone },

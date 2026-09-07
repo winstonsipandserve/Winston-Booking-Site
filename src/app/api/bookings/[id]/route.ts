@@ -17,7 +17,6 @@ export async function GET(
     where: { id },
     include: {
       resource: { include: { resourceType: true } },
-      customer: true,
       addOns: { include: { addOnService: true, addOnPricingRule: true } },
       payment: true,
     },
@@ -49,7 +48,7 @@ export async function GET(
         label: booking.resource.label,
       },
       guestCount: booking.guestCount,
-      customer: booking.customer ? { name: booking.customer.name } : null,
+      customer: booking.customerNameSnapshot ? { name: booking.customerNameSnapshot } : null,
       payment: booking.payment
         ? {
             status: booking.payment.status,
@@ -143,6 +142,8 @@ export async function PATCH(
       where: { id: booking.id },
       data: {
         customerId: customer.id,
+        customerNameSnapshot: name,
+        customerPhoneSnapshot: phone,
         ...(totalAmountCentavos !== booking.totalAmountCentavos ? { totalAmountCentavos } : {}),
         ...(guestFeeCentavos !== booking.guestFeeAmountCentavos ? { guestFeeAmountCentavos: guestFeeCentavos } : {}),
       },
