@@ -47,8 +47,6 @@ export default function RescheduleForm({ bookingId }: { bookingId: string }) {
   }
 
   return (
-    <section className="mt-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Reschedule</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
           New date
@@ -90,6 +88,5 @@ export default function RescheduleForm({ bookingId }: { bookingId: string }) {
           </button>
         </div>
       </form>
-    </section>
   )
 }

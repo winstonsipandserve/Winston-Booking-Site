@@ -1,9 +1,23 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import type { ReactNode } from 'react'
 import { prisma } from '@/lib/prisma'
 import { formatCentavos } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
-import RescheduleForm from '@/components/admin/RescheduleForm'
+import RescheduleSection from '@/components/admin/RescheduleSection'
+
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm last:border-0 dark:border-gray-800">
+      <span className="text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="text-right font-medium text-gray-900 dark:text-gray-100">{value}</span>
+    </div>
+  )
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
 
 export default async function AdminBookingDetailPage({
   params,
@@ -84,9 +98,11 @@ export default async function AdminBookingDetailPage({
         <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Customer</h2>
           {booking.customer ? (
-            <p className="text-sm text-gray-900 dark:text-gray-100">
-              {booking.customer.name} — {booking.customer.email} — {booking.customer.phone}
-            </p>
+            <>
+              <DetailRow label="Name" value={booking.customer.name} />
+              <DetailRow label="Email" value={booking.customer.email} />
+              <DetailRow label="Phone" value={booking.customer.phone} />
+            </>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">No customer attached yet.</p>
           )}
@@ -94,37 +110,32 @@ export default async function AdminBookingDetailPage({
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Add-ons</h2>
-          {booking.addOns.length > 0 ? (
-            <ul className="flex flex-col gap-2">
-              {booking.addOns.map((addOn) => (
-                <li key={addOn.id} className="text-sm text-gray-900 dark:text-gray-100">
-                  {addOn.addOnService.name}
-                  {addOn.addOnPricingRule.paxCount ? ` (${addOn.addOnPricingRule.paxCount} pax)` : ''} —{' '}
-                  {formatCentavos(addOn.amountCentavos)}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No add-ons.</p>
-          )}
-        </section>
+        {booking.addOns.length > 0 && (
+          <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+            <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Add-ons</h2>
+            {booking.addOns.map((addOn) => (
+              <DetailRow
+                key={addOn.id}
+                label={
+                  addOn.addOnService.name +
+                  (addOn.addOnPricingRule.paxCount ? ` (${addOn.addOnPricingRule.paxCount} Pax)` : '')
+                }
+                value={formatCentavos(addOn.amountCentavos)}
+              />
+            ))}
+          </section>
+        )}
 
         <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Payment</h2>
           {booking.payment ? (
             <>
-              <p className="text-sm text-gray-900 dark:text-gray-100">
-                {booking.payment.status} — {formatCentavos(booking.payment.amountCentavos)}
-                {booking.payment.paidAt ? ` — paid ${booking.payment.paidAt.toLocaleString('en-PH')}` : ''}
-              </p>
-              <div className="mt-3 flex items-center justify-between gap-4 border-t border-gray-100 pt-3 text-sm dark:border-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">PayMongo Payment ID</span>
-                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {booking.payment.paymongoPaymentId ?? '—'}
-                </span>
-              </div>
+              <DetailRow label="Status" value={capitalize(booking.payment.status)} />
+              <DetailRow
+                label="Paid At"
+                value={booking.payment.paidAt ? booking.payment.paidAt.toLocaleString('en-PH') : '—'}
+              />
+              <DetailRow label="PayMongo Payment ID" value={booking.payment.paymongoPaymentId ?? '—'} />
             </>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">No payment record.</p>
@@ -180,7 +191,7 @@ export default async function AdminBookingDetailPage({
         )}
       </section>
 
-      {booking.status === 'confirmed' && <RescheduleForm bookingId={booking.id} />}
+      {booking.status === 'confirmed' && <RescheduleSection bookingId={booking.id} />}
     </div>
   )
 }
