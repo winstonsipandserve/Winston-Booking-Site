@@ -79,17 +79,20 @@ export default function BookingSummary({
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
           <dt className="flex items-center gap-2 text-brand-dark/70">
             <RowIcon icon={ClockIcon} show={showIcons} />
-            Duration
+            Duration — {durationMinutes} minutes
           </dt>
-          <dd className="text-right font-medium text-brand-dark">{durationMinutes} minutes</dd>
+          <dd className="text-right font-medium text-brand-dark">
+            {estimateCentavos !== null ? formatCentavos(estimateCentavos) : '—'}
+          </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
           <dt className="flex items-center gap-2 text-brand-dark/70">
             <RowIcon icon={GuestsIcon} show={showIcons} />
             Guests
+            {guestCount > 0 && ` — ${guestCount}`}
           </dt>
           <dd className="text-right font-medium text-brand-dark">
-            {guestCount > 0 ? `${guestCount} x ${formatCentavos(guestFeeCentavos)}` : guestCount}
+            {guestCount > 0 ? formatCentavos(guestCount * guestFeeCentavos) : guestCount}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
@@ -123,17 +126,12 @@ export default function BookingSummary({
 
       <div className="mt-2 border-t border-brand-dark/10 pt-4">
         {estimateCentavos !== null ? (
-          <>
-            <div className="flex items-baseline justify-between gap-4">
-              <span className="font-serif text-brand-dark">Estimated price</span>
-              <span className="text-2xl font-medium text-accent-primary">
-                {formatCentavos(estimateCentavos + addOnsEstimateCentavos)}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-brand-dark/60">
-              Add-ons subtotal: {formatCentavos(addOnsEstimateCentavos)}
-            </p>
-          </>
+          <div className="flex items-baseline justify-between gap-4">
+            <span className="font-serif text-brand-dark">Estimated price</span>
+            <span className="text-2xl font-medium text-accent-primary">
+              {formatCentavos(estimateCentavos + addOnsEstimateCentavos)}
+            </span>
+          </div>
         ) : (
           <p className="text-sm text-brand-dark/60">
             No estimate available for this combination — your final price will be confirmed on
