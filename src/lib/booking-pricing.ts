@@ -137,3 +137,14 @@ export async function priceBooking(
 
   return { totalAmountCentavos, guestFeeCentavos, addOns: selectedAddOns, addOnsTotalCentavos }
 }
+
+// Single source of truth for a booking's actual grand total (base + guest fee + add-ons),
+// matching what's actually charged via PayMongo or credited via membership credit.
+export function bookingGrandTotalCentavos(booking: {
+  totalAmountCentavos: number
+  addOns: { amountCentavos: number }[]
+}): number {
+  return (
+    booking.totalAmountCentavos + booking.addOns.reduce((sum, a) => sum + a.amountCentavos, 0)
+  )
+}

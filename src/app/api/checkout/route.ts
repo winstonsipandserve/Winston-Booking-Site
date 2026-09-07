@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
+import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 
 interface CheckoutRequestBody {
   bookingId?: unknown
@@ -69,8 +70,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Booking is not ready for checkout' }, { status: 409 })
   }
 
-  const totalCentavos =
-    booking.totalAmountCentavos + booking.addOns.reduce((sum, a) => sum + a.amountCentavos, 0)
+  const totalCentavos = bookingGrandTotalCentavos(booking)
 
   const bookingDate = booking.startTime.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila' })
 

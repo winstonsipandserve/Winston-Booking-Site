@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { formatCentavos } from '@/lib/format'
+import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import RescheduleForm from '@/components/admin/RescheduleForm'
 
 export default async function AdminBookingDetailPage({
@@ -75,7 +76,7 @@ export default async function AdminBookingDetailPage({
           <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
             <span className="text-gray-500 dark:text-gray-400">Total</span>
             <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {formatCentavos(booking.totalAmountCentavos)}
+              {formatCentavos(bookingGrandTotalCentavos(booking))}
             </span>
           </div>
         </section>

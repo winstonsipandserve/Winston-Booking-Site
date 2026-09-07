@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import type { BookingStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { formatCentavos } from '@/lib/format'
+import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import { phDateToUtcWindow } from '@/lib/business-hours'
 import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
 import BookingsSearchBar from '@/components/admin/BookingsSearchBar'
@@ -59,6 +60,7 @@ export default async function AdminBookingsPage({
       include: {
         resource: { include: { resourceType: true } },
         customer: true,
+        addOns: { select: { amountCentavos: true } },
       },
       relationLoadStrategy: 'query',
       orderBy: { startTime: 'asc' },
@@ -158,7 +160,7 @@ export default async function AdminBookingsPage({
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.status}</td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                    {formatCentavos(booking.totalAmountCentavos)}
+                    {formatCentavos(bookingGrandTotalCentavos(booking))}
                   </td>
                   <td className="px-4 py-2.5">
                     <Link
