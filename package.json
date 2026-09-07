@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:studio": "dotenv -e .env.local -- prisma studio",
-    "db:seed": "dotenv -e .env.local -- prisma db seed"
+    "db:seed": "dotenv -e .env.local -- prisma db seed",
+    "db:reset-test": "dotenv -e .env.local -- tsx scripts/reset-all-test-data.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
