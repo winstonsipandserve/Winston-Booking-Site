@@ -1,6 +1,5 @@
 import BookingPageClient from '@/components/booking/BookingPageClient'
 import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
 import { getActiveMembership } from '@/lib/customer-resolution'
 import { prisma } from '@/lib/prisma'
 import { auth } from '../../../auth'
@@ -38,7 +37,6 @@ export default async function BookPage() {
       <Navbar />
 
       <BookingPageClient memberContext={memberContext} />
-      <Footer />
     </>
   )
 }

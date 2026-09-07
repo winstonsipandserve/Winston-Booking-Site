@@ -23,6 +23,7 @@ interface PaymentStepProps {
   ballBoyPriceCentavos: number | null
   coaching: boolean
   coachingPaxCount: number | null
+  coachingPriceCentavos: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
   guestFeeCentavos: number
@@ -57,6 +58,7 @@ export default function PaymentStep({
   ballBoyPriceCentavos,
   coaching,
   coachingPaxCount,
+  coachingPriceCentavos,
   estimateCentavos,
   addOnsEstimateCentavos,
   guestFeeCentavos,
@@ -112,6 +114,7 @@ export default function PaymentStep({
         ballBoyPriceCentavos={ballBoyPriceCentavos}
         coaching={coaching}
         coachingPaxCount={coachingPaxCount}
+        coachingPriceCentavos={coachingPriceCentavos}
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
         guestFeeCentavos={guestFeeCentavos}

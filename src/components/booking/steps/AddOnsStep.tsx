@@ -27,6 +27,7 @@ interface AddOnsStepProps {
   coachingPricing: CoachingPricing
   coachingPaxCount: number | null
   onCoachingPaxCountChange: (value: number) => void
+  coachingPriceCentavos: number | null
   guestFeeCentavos: number
 }
 
@@ -42,19 +43,9 @@ export default function AddOnsStep({
   coachingPricing,
   coachingPaxCount,
   onCoachingPaxCountChange,
+  coachingPriceCentavos,
   guestFeeCentavos,
 }: AddOnsStepProps) {
-  const coachingPriceCentavos =
-    coachingPricing.mode === 'flat'
-      ? coachingPricing.flatPriceCentavos
-      : coachingPricing.mode === 'paxTiered'
-        ? coachingPaxCount === 1
-          ? coachingPricing.pax1PriceCentavos
-          : coachingPaxCount === 2
-            ? coachingPricing.pax2PriceCentavos
-            : null
-        : null
-
   const coachingNeedsPax =
     coaching && coachingPricing.mode === 'paxTiered' && coachingPaxCount === null
 

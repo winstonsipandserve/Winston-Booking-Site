@@ -198,6 +198,18 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     [selectedResourceType, rateTier],
   )
 
+  const coachingPriceCentavos = useMemo(() => {
+    return coachingPricing.mode === 'flat'
+      ? coachingPricing.flatPriceCentavos
+      : coachingPricing.mode === 'paxTiered'
+        ? coachingPaxCount === 1
+          ? coachingPricing.pax1PriceCentavos
+          : coachingPaxCount === 2
+            ? coachingPricing.pax2PriceCentavos
+            : null
+        : null
+  }, [coachingPricing, coachingPaxCount])
+
   // Reset dependent fields whenever the chosen resource type changes.
   useEffect(() => {
     if (!selectedResourceType) return
@@ -547,6 +559,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPricing={coachingPricing}
           coachingPaxCount={coachingPaxCount}
           onCoachingPaxCountChange={setCoachingPaxCount}
+          coachingPriceCentavos={coachingPriceCentavos}
           guestFeeCentavos={data.guestFeeCentavos}
         />
       )}
@@ -565,6 +578,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}
+          coachingPriceCentavos={coachingPriceCentavos}
           estimateCentavos={estimateCentavos}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           guestFeeCentavos={data.guestFeeCentavos}
@@ -629,6 +643,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}
+          coachingPriceCentavos={coachingPriceCentavos}
           estimateCentavos={estimateCentavos}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           guestFeeCentavos={data.guestFeeCentavos}

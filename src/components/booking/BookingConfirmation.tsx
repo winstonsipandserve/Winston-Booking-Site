@@ -39,15 +39,17 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
     <div className="flex w-full max-w-md flex-col gap-4">
       <div className="flex flex-col gap-1 text-center">
         <h2 className="font-serif text-2xl text-brand-dark">Booking confirmed</h2>
-        <p className="text-sm text-brand-dark/60">
-          Booking Reference:{' '}
-          <span className="font-mono text-sm text-brand-dark">{booking.id}</span>
-        </p>
       </div>
 
       <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
         <dl className="flex flex-col">
           <div className="flex justify-between gap-4 py-3">
+            <dt className="text-brand-dark/70">Booking Reference</dt>
+            <dd className="text-right font-mono text-sm font-medium text-brand-dark">
+              {booking.id}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
             <dt className="text-brand-dark/70">Resource</dt>
             <dd className="text-right font-medium text-brand-dark">
               {booking.resource.typeName} — {booking.resource.label}

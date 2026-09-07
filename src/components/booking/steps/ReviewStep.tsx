@@ -12,6 +12,7 @@ interface ReviewStepProps {
   ballBoyPriceCentavos: number | null
   coaching: boolean
   coachingPaxCount: number | null
+  coachingPriceCentavos: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
   guestFeeCentavos: number
@@ -34,6 +35,7 @@ export default function ReviewStep({
   ballBoyPriceCentavos,
   coaching,
   coachingPaxCount,
+  coachingPriceCentavos,
   estimateCentavos,
   addOnsEstimateCentavos,
   guestFeeCentavos,
@@ -58,6 +60,7 @@ export default function ReviewStep({
         ballBoyPriceCentavos={ballBoyPriceCentavos}
         coaching={coaching}
         coachingPaxCount={coachingPaxCount}
+        coachingPriceCentavos={coachingPriceCentavos}
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
         guestFeeCentavos={guestFeeCentavos}

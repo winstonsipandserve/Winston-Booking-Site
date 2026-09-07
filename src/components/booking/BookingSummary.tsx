@@ -13,6 +13,7 @@ interface BookingSummaryProps {
   ballBoyPriceCentavos: number | null
   coaching: boolean
   coachingPaxCount: number | null
+  coachingPriceCentavos: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
   guestFeeCentavos: number
@@ -41,6 +42,7 @@ export default function BookingSummary({
   ballBoyPriceCentavos,
   coaching,
   coachingPaxCount,
+  coachingPriceCentavos,
   estimateCentavos,
   addOnsEstimateCentavos,
   guestFeeCentavos,
@@ -107,11 +109,12 @@ export default function BookingSummary({
           <dt className="flex items-center gap-2 text-brand-dark/70">
             <RowIcon icon={CoachingIcon} show={showIcons} />
             Coaching
+            {isCourt && coachingPaxCount !== null && ` — ${coachingPaxCount} Pax`}
           </dt>
           <dd className="text-right font-medium text-brand-dark">
             {coaching
-              ? isCourt && coachingPaxCount !== null
-                ? `${coachingPaxCount} Pax`
+              ? coachingPriceCentavos !== null
+                ? formatCentavos(coachingPriceCentavos)
                 : 'Selected'
               : 'Not selected'}
           </dd>
@@ -129,13 +132,6 @@ export default function BookingSummary({
             </div>
             <p className="mt-1 text-sm text-brand-dark/60">
               Add-ons subtotal: {formatCentavos(addOnsEstimateCentavos)}
-            </p>
-            <p className="text-sm text-brand-dark/60">
-              {rateTier === 'member'
-                ? 'Estimated at member rate.'
-                : hasSession
-                  ? "Estimated at non-member rate — your membership has expired. Renew your membership to restore member rate and F&B credit."
-                  : 'Estimated at non-member rate. Member rate and F&B credit are only available when signed in to a membership account.'}
             </p>
           </>
         ) : (
