@@ -27,6 +27,7 @@ interface AddOnsStepProps {
   coachingPricing: CoachingPricing
   coachingPaxCount: number | null
   onCoachingPaxCountChange: (value: number) => void
+  guestFeeCentavos: number
 }
 
 export default function AddOnsStep({
@@ -41,6 +42,7 @@ export default function AddOnsStep({
   coachingPricing,
   coachingPaxCount,
   onCoachingPaxCountChange,
+  guestFeeCentavos,
 }: AddOnsStepProps) {
   const coachingPriceCentavos =
     coachingPricing.mode === 'flat'
@@ -87,6 +89,9 @@ export default function AddOnsStep({
             +
           </button>
         </div>
+        <p className="text-sm text-brand-dark/60">
+          {formatCentavos(guestFeeCentavos)} fee applies per additional guest.
+        </p>
       </div>
 
       <div className="flex flex-col gap-3">

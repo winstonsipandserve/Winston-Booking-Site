@@ -14,6 +14,7 @@ interface ReviewStepProps {
   coachingPaxCount: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
+  guestFeeCentavos: number
   submitting: boolean
   submitError: string | null
   onBack: () => void
@@ -35,6 +36,7 @@ export default function ReviewStep({
   coachingPaxCount,
   estimateCentavos,
   addOnsEstimateCentavos,
+  guestFeeCentavos,
   submitting,
   submitError,
   onBack,
@@ -44,6 +46,7 @@ export default function ReviewStep({
 }: ReviewStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
+      <h2 className="font-serif text-2xl text-brand-dark">Summary</h2>
       <BookingSummary
         resourceTypeName={resourceTypeName}
         resourceLabel={resourceLabel}
@@ -57,6 +60,7 @@ export default function ReviewStep({
         coachingPaxCount={coachingPaxCount}
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
+        guestFeeCentavos={guestFeeCentavos}
         rateTier={rateTier}
         hasSession={hasSession}
         showIcons

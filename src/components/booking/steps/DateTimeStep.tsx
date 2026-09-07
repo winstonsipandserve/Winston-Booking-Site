@@ -37,6 +37,7 @@ export default function DateTimeStep({
 }: DateTimeStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
+      <h2 className="font-serif text-2xl text-brand-dark">Date & Time</h2>
       <div className="flex flex-col gap-1">
         <span className="text-sm font-medium text-brand-dark">Duration</span>
         <div role="group" aria-label="Duration" className="flex flex-wrap gap-2">

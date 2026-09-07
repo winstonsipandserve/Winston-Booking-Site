@@ -547,6 +547,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPricing={coachingPricing}
           coachingPaxCount={coachingPaxCount}
           onCoachingPaxCountChange={setCoachingPaxCount}
+          guestFeeCentavos={data.guestFeeCentavos}
         />
       )}
 
@@ -566,6 +567,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPaxCount={coachingPaxCount}
           estimateCentavos={estimateCentavos}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
+          guestFeeCentavos={data.guestFeeCentavos}
           submitting={submitting}
           submitError={submitError}
           onBack={() => setStep(4)}
@@ -629,6 +631,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPaxCount={coachingPaxCount}
           estimateCentavos={estimateCentavos}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
+          guestFeeCentavos={data.guestFeeCentavos}
           name={name}
           onNameChange={setName}
           phone={phone}

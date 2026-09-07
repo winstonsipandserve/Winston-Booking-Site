@@ -79,6 +79,7 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
 
   return (
     <>
+      <h2 className="font-serif text-2xl text-brand-dark">Sport</h2>
       <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
         {resourceTypes.map((rt) => {
           const isSelected = rt.id === resourceTypeId
@@ -141,11 +142,9 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-xs text-brand-dark/50">
-            {rateTier === 'member'
-              ? 'Member rates shown.'
-              : 'Non-member rates shown. Member pricing is applied automatically at checkout for active members.'}
-          </p>
+          {rateTier === 'member' && (
+            <p className="mt-3 text-xs text-brand-dark/50">Member rates shown.</p>
+          )}
         </Modal>
       )}
     </>

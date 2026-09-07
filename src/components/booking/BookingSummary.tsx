@@ -15,6 +15,7 @@ interface BookingSummaryProps {
   coachingPaxCount: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
+  guestFeeCentavos: number
   rateTier: RateTier
   hasSession: boolean
   showIcons?: boolean
@@ -42,6 +43,7 @@ export default function BookingSummary({
   coachingPaxCount,
   estimateCentavos,
   addOnsEstimateCentavos,
+  guestFeeCentavos,
   rateTier,
   hasSession,
   showIcons = false,
@@ -84,7 +86,9 @@ export default function BookingSummary({
             <RowIcon icon={GuestsIcon} show={showIcons} />
             Guests
           </dt>
-          <dd className="text-right font-medium text-brand-dark">{guestCount}</dd>
+          <dd className="text-right font-medium text-brand-dark">
+            {guestCount > 0 ? `${guestCount} x ${formatCentavos(guestFeeCentavos)}` : guestCount}
+          </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
           <dt className="flex items-center gap-2 text-brand-dark/70">

@@ -25,6 +25,7 @@ interface PaymentStepProps {
   coachingPaxCount: number | null
   estimateCentavos: number | null
   addOnsEstimateCentavos: number
+  guestFeeCentavos: number
   name: string
   onNameChange: (value: string) => void
   phone: string
@@ -58,6 +59,7 @@ export default function PaymentStep({
   coachingPaxCount,
   estimateCentavos,
   addOnsEstimateCentavos,
+  guestFeeCentavos,
   name,
   onNameChange,
   phone,
@@ -112,6 +114,7 @@ export default function PaymentStep({
         coachingPaxCount={coachingPaxCount}
         estimateCentavos={estimateCentavos}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
+        guestFeeCentavos={guestFeeCentavos}
         rateTier={rateTier}
         hasSession={hasSession}
       />

@@ -18,6 +18,7 @@ export default function CourtStep({
 }: CourtStepProps) {
   return (
     <div className="flex w-full flex-col gap-3">
+      <h2 className="font-serif text-2xl text-brand-dark">Court</h2>
       <p className="text-sm text-brand-dark/60">
         Choose a {resourceTypeName.toLowerCase()} to book.
       </p>
