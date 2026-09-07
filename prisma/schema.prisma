@@ -465,6 +465,8 @@ model Payment {
   method                  PaymentMethod @default(paymongo)
   paymongoCheckoutSessionId String?     @unique @map("paymongo_checkout_session_id")
   paymongoPaymentIntentId String?       @unique @map("paymongo_payment_intent_id")
+  /// PayMongo's own payment-resource id (pay_xxx) — distinct from paymongoPaymentIntentId (pi_xxx). Captured from the payment.paid webhook; existing rows stay null, not backfilled.
+  paymongoPaymentId       String?       @unique @map("paymongo_payment_id")
   paidAt                  DateTime?     @map("paid_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

@@ -61,6 +61,7 @@ export default async function AdminBookingsPage({
         resource: { include: { resourceType: true } },
         customer: true,
         addOns: { select: { amountCentavos: true } },
+        payment: { select: { paymongoPaymentId: true } },
       },
       relationLoadStrategy: 'query',
       orderBy: { startTime: 'asc' },
@@ -135,6 +136,9 @@ export default async function AdminBookingsPage({
                 Total
               </th>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                PayMongo Payment ID
+              </th>
+              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                 Action
               </th>
             </tr>
@@ -162,6 +166,9 @@ export default async function AdminBookingsPage({
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     {formatCentavos(bookingGrandTotalCentavos(booking))}
                   </td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">
+                    {booking.payment?.paymongoPaymentId ?? '—'}
+                  </td>
                   <td className="px-4 py-2.5">
                     <Link
                       href={`/admin/bookings/${booking.id}`}
@@ -175,7 +182,7 @@ export default async function AdminBookingsPage({
             })}
             {bookings.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={8} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                   No bookings found.
                 </td>
               </tr>

@@ -114,10 +114,18 @@ export default async function AdminBookingDetailPage({
         <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Payment</h2>
           {booking.payment ? (
-            <p className="text-sm text-gray-900 dark:text-gray-100">
-              {booking.payment.status} — {formatCentavos(booking.payment.amountCentavos)}
-              {booking.payment.paidAt ? ` — paid ${booking.payment.paidAt.toLocaleString('en-PH')}` : ''}
-            </p>
+            <>
+              <p className="text-sm text-gray-900 dark:text-gray-100">
+                {booking.payment.status} — {formatCentavos(booking.payment.amountCentavos)}
+                {booking.payment.paidAt ? ` — paid ${booking.payment.paidAt.toLocaleString('en-PH')}` : ''}
+              </p>
+              <div className="mt-3 flex items-center justify-between gap-4 border-t border-gray-100 pt-3 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">PayMongo Payment ID</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {booking.payment.paymongoPaymentId ?? '—'}
+                </span>
+              </div>
+            </>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">No payment record.</p>
           )}

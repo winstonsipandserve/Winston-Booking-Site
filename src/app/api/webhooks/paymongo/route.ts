@@ -16,6 +16,7 @@ interface PaymongoWebhookEvent {
     attributes?: {
       type?: string
       data?: {
+        id?: unknown
         attributes?: {
           status?: unknown
           payment_intent_id?: unknown
@@ -54,6 +55,8 @@ export async function POST(request: Request) {
   const paymentStatus = paymentAttributes?.status
   const paymentIntentIdRaw = paymentAttributes?.payment_intent_id
   const paymentIntentId = isNonEmptyString(paymentIntentIdRaw) ? paymentIntentIdRaw : null
+  const paymongoPaymentIdRaw = event?.data?.attributes?.data?.id
+  const paymongoPaymentId = isNonEmptyString(paymongoPaymentIdRaw) ? paymongoPaymentIdRaw : null
   const paidAtRaw = paymentAttributes?.paid_at
   const paidAt = typeof paidAtRaw === 'number' ? new Date(paidAtRaw * 1000) : new Date()
 
@@ -101,6 +104,7 @@ export async function POST(request: Request) {
           status: 'paid',
           paidAt,
           paymongoPaymentIntentId: paymentIntentId,
+          paymongoPaymentId,
         },
       })
 
