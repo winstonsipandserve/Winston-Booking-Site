@@ -17,7 +17,7 @@ export default function BookingConfirmationPage() {
         </div>
       </section>
 
-      <div className="flex flex-1 flex-col items-center gap-8 bg-brand-light px-6 py-16">
+      <div className="flex flex-1 flex-col items-center gap-8 bg-background px-6 py-16">
         <Suspense fallback={<p className="text-brand-dark/60">Loading your booking…</p>}>
           <ConfirmationContent />
         </Suspense>

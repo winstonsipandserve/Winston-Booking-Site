@@ -42,6 +42,9 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
       </div>
 
       <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+        <h3 className="mb-4 border-b border-brand-dark/10 pb-3 font-serif text-lg text-brand-dark">
+          Booking Details
+        </h3>
         <dl className="flex flex-col">
           <div className="flex justify-between gap-4 py-3">
             <dt className="text-brand-dark/70">Booking Reference</dt>
@@ -89,6 +92,9 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
       </div>
 
       <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+        <h3 className="mb-4 border-b border-brand-dark/10 pb-3 font-serif text-lg text-brand-dark">
+          Payment Summary
+        </h3>
         <dl className="flex flex-col">
           <div className="flex justify-between gap-4 py-3">
             <dt className="text-brand-dark/70">Price</dt>

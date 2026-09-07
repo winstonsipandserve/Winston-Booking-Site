@@ -515,6 +515,7 @@ interface SendBookingConfirmationEmailInput {
   endTime: Date
   guestCount: number
   guestFeeCentavos: number
+  basePriceCentavos: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
   creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
@@ -539,13 +540,22 @@ function formatManilaTime(date: Date): string {
   })
 }
 
-function ledgerRow(label: string, value: string, isTotal = false): string {
+function ledgerRow(label: string, value: string, isTotal = false, indent = false): string {
   const valueColor = isTotal ? ACCENT_PRIMARY : BRAND_DARK
   const topBorder = isTotal ? `border-top: 1px solid ${DIVIDER_COLOR}; padding-top: 12px;` : ''
+  const fontSize = indent ? '13px' : '14px'
+  const labelPadding = indent ? ' padding-left: 16px;' : ''
   return `
       <tr>
-        <td style="padding: 6px 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_MID}; ${topBorder}">${label}</td>
-        <td align="right" style="padding: 6px 0; font-family: ${BODY_FONT}; font-size: 14px; font-weight: ${isTotal ? 700 : 600}; color: ${valueColor}; ${topBorder}">${value}</td>
+        <td style="padding: 6px 0; font-family: ${BODY_FONT}; font-size: ${fontSize}; color: ${BRAND_MID}; ${topBorder}${labelPadding}">${label}</td>
+        <td align="right" style="padding: 6px 0; font-family: ${BODY_FONT}; font-size: ${fontSize}; font-weight: ${isTotal ? 700 : 600}; color: ${valueColor}; ${topBorder}">${value}</td>
+      </tr>`
+}
+
+function ledgerSectionHeader(label: string): string {
+  return `
+      <tr>
+        <td colspan="2" style="padding: 14px 0 4px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 700; color: ${BRAND_MID}; border-top: 1px solid ${DIVIDER_COLOR};">${label}</td>
       </tr>`
 }
 
@@ -559,6 +569,7 @@ export async function sendBookingConfirmationEmail({
   endTime,
   guestCount,
   guestFeeCentavos,
+  basePriceCentavos,
   addOns,
   totalPaidCentavos,
   creditRedemption,
@@ -569,15 +580,25 @@ export async function sendBookingConfirmationEmail({
       ? `${durationMinutes / 60} hr${durationMinutes / 60 === 1 ? '' : 's'}`
       : `${durationMinutes} min`
 
+  const hasAddOnsBreakdown = guestCount > 0 || addOns.length > 0
+
   const ledgerRows = [
     ledgerRow('Sport &amp; Court', `${resourceTypeName} &mdash; ${resourceLabel}`),
     ledgerRow('Date', formatManilaDate(startTime)),
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
-    ...(guestCount > 0
-      ? [ledgerRow(`Guest Fee (+${guestCount})`, formatCentavos(guestFeeCentavos))]
+    ledgerRow('Price', formatCentavos(basePriceCentavos)),
+    ...(hasAddOnsBreakdown
+      ? [
+          ledgerSectionHeader('Add-ons total'),
+          ...(guestCount > 0
+            ? [ledgerRow(`Guests — ${guestCount} Pax`, formatCentavos(guestFeeCentavos), false, true)]
+            : []),
+          ...addOns.map((addOn) =>
+            ledgerRow(addOn.name, formatCentavos(addOn.amountCentavos), false, true),
+          ),
+        ]
       : []),
-    ...addOns.map((addOn) => ledgerRow(addOn.name, formatCentavos(addOn.amountCentavos))),
     ledgerRow('Total Paid', formatCentavos(totalPaidCentavos), true),
   ].join('')
 
@@ -658,6 +679,7 @@ interface SendStaffBookingNotificationEmailInput {
   endTime: Date
   guestCount: number
   guestFeeCentavos: number
+  basePriceCentavos: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
   creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
@@ -674,6 +696,7 @@ export async function sendStaffBookingNotificationEmail({
   endTime,
   guestCount,
   guestFeeCentavos,
+  basePriceCentavos,
   addOns,
   totalPaidCentavos,
   creditRedemption,
@@ -684,15 +707,25 @@ export async function sendStaffBookingNotificationEmail({
       ? `${durationMinutes / 60} hr${durationMinutes / 60 === 1 ? '' : 's'}`
       : `${durationMinutes} min`
 
+  const hasAddOnsBreakdown = guestCount > 0 || addOns.length > 0
+
   const ledgerRows = [
     ledgerRow('Sport &amp; Court', `${resourceTypeName} &mdash; ${resourceLabel}`),
     ledgerRow('Date', formatManilaDate(startTime)),
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
-    ...(guestCount > 0
-      ? [ledgerRow(`Guest Fee (+${guestCount})`, formatCentavos(guestFeeCentavos))]
+    ledgerRow('Price', formatCentavos(basePriceCentavos)),
+    ...(hasAddOnsBreakdown
+      ? [
+          ledgerSectionHeader('Add-ons total'),
+          ...(guestCount > 0
+            ? [ledgerRow(`Guests — ${guestCount} Pax`, formatCentavos(guestFeeCentavos), false, true)]
+            : []),
+          ...addOns.map((addOn) =>
+            ledgerRow(addOn.name, formatCentavos(addOn.amountCentavos), false, true),
+          ),
+        ]
       : []),
-    ...addOns.map((addOn) => ledgerRow(addOn.name, formatCentavos(addOn.amountCentavos))),
     ledgerRow('Total Paid', formatCentavos(totalPaidCentavos), true),
   ].join('')
 

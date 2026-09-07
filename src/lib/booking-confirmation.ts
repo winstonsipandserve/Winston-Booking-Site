@@ -41,6 +41,7 @@ export async function sendBookingConfirmationEmailForBooking(
   const totalPaidCentavos = booking.totalAmountCentavos + addOnsTotalCentavos
 
   const guestFeeCentavos = booking.guestFeeAmountCentavos
+  const basePriceCentavos = booking.totalAmountCentavos - guestFeeCentavos
 
   const addOns = booking.addOns.map((addOn) => {
     const label = ADD_ON_EMAIL_LABELS[addOn.addOnService.slug] ?? addOn.addOnService.slug
@@ -59,6 +60,7 @@ export async function sendBookingConfirmationEmailForBooking(
     endTime: booking.endTime,
     guestCount: booking.guestCount,
     guestFeeCentavos,
+    basePriceCentavos,
     addOns,
     totalPaidCentavos,
     creditRedemption,
@@ -75,6 +77,7 @@ export async function sendBookingConfirmationEmailForBooking(
     endTime: booking.endTime,
     guestCount: booking.guestCount,
     guestFeeCentavos,
+    basePriceCentavos,
     addOns,
     totalPaidCentavos,
     creditRedemption,
