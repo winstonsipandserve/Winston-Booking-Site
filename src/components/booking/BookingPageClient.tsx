@@ -66,7 +66,7 @@ export default function BookingPageClient({ memberContext }: BookingPageClientPr
 
   return (
     <div
-      className={`flex flex-1 flex-col items-center gap-8 bg-brand-light px-6 py-16 ${
+      className={`flex flex-1 flex-col items-center gap-8 bg-background px-6 py-16 ${
         started ? '' : 'justify-center'
       }`}
     >
