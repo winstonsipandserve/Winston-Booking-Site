@@ -21,6 +21,15 @@ const CREDIT_TRANSACTION_REASON_LABELS: Record<CreditTransactionReason, string> 
   booking_redemption: 'Booking Redemption',
 }
 
+function formatDate(date: Date) {
+  return date.toLocaleDateString('en-PH', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Manila',
+  })
+}
+
 export default async function AdminMembershipApplicationDetailPage({
   params,
 }: {
@@ -62,11 +71,26 @@ export default async function AdminMembershipApplicationDetailPage({
       })
     : []
 
-  const [govIdFrontUrl, govIdBackUrl, govIdSelfieUrl] = await Promise.all([
+  const [govIdFrontUrl, govIdBackUrl, govIdSelfieUrl, totalBookingsCount, upcomingBookingsCount] = await Promise.all([
     getSignedUrl('membership-applications', application.govIdFrontUrl),
     getSignedUrl('membership-applications', application.govIdBackUrl),
     getSignedUrl('membership-applications', application.govIdSelfieUrl),
+    prisma.booking.count({ where: { customerId: application.customerId, status: 'confirmed' } }),
+    prisma.booking.count({
+      where: { customerId: application.customerId, status: 'confirmed', startTime: { gt: new Date() } },
+    }),
   ])
+
+  const daysRemaining = latestMembership
+    ? Math.max(0, Math.ceil((latestMembership.endDate.getTime() - Date.now()) / 86400000))
+    : 0
+
+  let runningBalance = latestMembership?.creditBalanceCentavos ?? 0
+  const transactionsWithBalance = creditTransactions.map((t) => {
+    const balanceAfter = runningBalance
+    runningBalance -= t.amountCentavos
+    return { ...t, balanceAfter }
+  })
 
   return (
     <div className="relative isolate flex flex-col">
@@ -84,8 +108,16 @@ export default async function AdminMembershipApplicationDetailPage({
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Membership Application</h1>
-          <p className="text-xs font-mono text-gray-400 dark:text-gray-500">{application.id}</p>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            {latestMembership ? application.customer.name : 'Membership Application'}
+          </h1>
+          {latestMembership ? (
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              Member since {formatDate(latestMembership.startDate)}
+            </p>
+          ) : (
+            <p className="text-xs font-mono text-gray-400 dark:text-gray-500">{application.id}</p>
+          )}
         </div>
         <span
           className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${MEMBERSHIP_DISPLAY_STATUS_CLASSES[displayStatus]}`}
@@ -94,45 +126,138 @@ export default async function AdminMembershipApplicationDetailPage({
         </span>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Applicant</h2>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Name</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.name}</span>
-          </div>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Email</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.email}</span>
-          </div>
-          <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
-            <span className="text-gray-500 dark:text-gray-400">Phone</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.phone}</span>
-          </div>
-        </section>
+      {!latestMembership && (
+        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+            <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Applicant</h2>
+            <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+              <span className="text-gray-500 dark:text-gray-400">Name</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.name}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+              <span className="text-gray-500 dark:text-gray-400">Email</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.email}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+              <span className="text-gray-500 dark:text-gray-400">Phone</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.phone}</span>
+            </div>
+          </section>
 
-        <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Application</h2>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Requested Tier</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{formatMembershipTier(application.requestedTier)}</span>
+          <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+            <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Application</h2>
+            <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+              <span className="text-gray-500 dark:text-gray-400">Requested Tier</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{formatMembershipTier(application.requestedTier)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+              <span className="text-gray-500 dark:text-gray-400">Address</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.address}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+              <span className="text-gray-500 dark:text-gray-400">Contact Number</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.contactNumber}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+              <span className="text-gray-500 dark:text-gray-400">Submitted</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                {application.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+              </span>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {latestMembership && (
+        <>
+          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Tier</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {formatMembershipTier(latestMembership.tier)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Credits</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {formatCentavos(latestMembership.creditBalanceCentavos)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Bookings</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {totalBookingsCount} Total &middot; {upcomingBookingsCount} Upcoming
+              </p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Expiry</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{daysRemaining} Days</p>
+            </div>
           </div>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Address</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.address}</span>
+
+          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Member Information</h2>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Name</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.name}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Email</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.email}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Phone</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.customer.phone}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Address</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.address}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+                <span className="text-gray-500 dark:text-gray-400">Joined</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {application.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                </span>
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+              <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Membership Details</h2>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Tier</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {formatMembershipTier(latestMembership.tier)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Status</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {MEMBERSHIP_DISPLAY_STATUS_LABELS[displayStatus]}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Activated</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {latestMembership.startDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Expires</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {latestMembership.endDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+                <span className="text-gray-500 dark:text-gray-400">Credit Balance</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {formatCentavos(latestMembership.creditBalanceCentavos)}
+                </span>
+              </div>
+            </section>
           </div>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Contact Number</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.contactNumber}</span>
-          </div>
-          <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
-            <span className="text-gray-500 dark:text-gray-400">Submitted</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {application.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
-            </span>
-          </div>
-        </section>
-      </div>
+        </>
+      )}
 
       {application.status === 'pending' && (
         <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -144,36 +269,6 @@ export default async function AdminMembershipApplicationDetailPage({
               { label: 'Selfie', url: govIdSelfieUrl },
             ]}
           />
-        </section>
-      )}
-
-      {latestMembership && (
-        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Membership</h2>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Tier</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {formatMembershipTier(latestMembership.tier)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Credit Balance</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {formatCentavos(latestMembership.creditBalanceCentavos)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Start / Activation Date</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {latestMembership.startDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
-            <span className="text-gray-500 dark:text-gray-400">Expiry Date</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {latestMembership.endDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
-            </span>
-          </div>
         </section>
       )}
 
@@ -214,47 +309,20 @@ export default async function AdminMembershipApplicationDetailPage({
       )}
 
       {application.status !== 'pending' && (
-        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Government ID</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Front</p>
-              <a href={govIdFrontUrl} target="_blank" rel="noopener noreferrer">
-                <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                  <img
-                    src={govIdFrontUrl}
-                    alt="Government ID — front"
-                    className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
-                  />
-                </div>
-              </a>
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Back</p>
-              <a href={govIdBackUrl} target="_blank" rel="noopener noreferrer">
-                <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                  <img
-                    src={govIdBackUrl}
-                    alt="Government ID — back"
-                    className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
-                  />
-                </div>
-              </a>
-            </div>
-            <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Selfie</p>
-              <a href={govIdSelfieUrl} target="_blank" rel="noopener noreferrer">
-                <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                  <img
-                    src={govIdSelfieUrl}
-                    alt="Government ID — selfie"
-                    className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
-                  />
-                </div>
-              </a>
-            </div>
+        <details className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <summary className="cursor-pointer text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Verification Documents
+          </summary>
+          <div className="mt-4">
+            <IdentityVerificationGallery
+              images={[
+                { label: 'Front', url: govIdFrontUrl },
+                { label: 'Back', url: govIdBackUrl },
+                { label: 'Selfie', url: govIdSelfieUrl },
+              ]}
+            />
           </div>
-        </section>
+        </details>
       )}
 
       {latestMembership && (
@@ -276,10 +344,13 @@ export default async function AdminMembershipApplicationDetailPage({
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Amount
                     </th>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Balance
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {creditTransactions.map((transaction) => (
+                  {transactionsWithBalance.map((transaction) => (
                     <tr
                       key={transaction.id}
                       className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
@@ -293,6 +364,9 @@ export default async function AdminMembershipApplicationDetailPage({
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {transaction.amountCentavos >= 0 ? '+' : '-'}
                         {formatCentavos(Math.abs(transaction.amountCentavos))}
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                        {formatCentavos(transaction.balanceAfter)}
                       </td>
                     </tr>
                   ))}
@@ -310,14 +384,20 @@ export default async function AdminMembershipApplicationDetailPage({
             <p className="text-sm italic text-gray-400 dark:text-gray-500">No bookings yet</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-sm">
+              <table className="w-full min-w-[840px] border-collapse text-sm">
                 <thead>
                   <tr>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Reference
+                    </th>
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Date & Time
                     </th>
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Resource
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Guests
                     </th>
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Status
@@ -336,12 +416,14 @@ export default async function AdminMembershipApplicationDetailPage({
                       key={booking.id}
                       className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
                     >
+                      <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{booking.id}</td>
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {booking.startTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
                       </td>
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {booking.resource.resourceType.name} — {booking.resource.label}
                       </td>
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.guestCount}</td>
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.status}</td>
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {formatCentavos(bookingGrandTotalCentavos(booking))}
