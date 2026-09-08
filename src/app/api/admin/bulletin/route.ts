@@ -89,6 +89,8 @@ export async function POST(request: Request) {
           affectedFacility: fields.affectedFacility,
           impact: fields.impact,
           action: fields.action,
+          bookingImpact: fields.bookingImpact,
+          customerActionType: fields.customerActionType,
           eventStartAt: fields.eventStartAt,
           eventEndAt: fields.eventEndAt,
           expiresAt: fields.expiresAt,

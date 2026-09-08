@@ -111,11 +111,13 @@ export async function PATCH(
         isPublished: existing.isPublished,
         autoDisableResources: existing.autoDisableResources,
         expiresAt: existing.expiresAt,
+        eventStartAt: existing.eventStartAt,
       })
       const newShouldDisable = bulletinShouldDisableResources({
         isPublished: fields.isPublished,
         autoDisableResources,
         expiresAt: fields.expiresAt,
+        eventStartAt: fields.eventStartAt,
       })
 
       const oldIdSet = new Set(oldResourceIds)
@@ -144,6 +146,8 @@ export async function PATCH(
           affectedFacility: fields.affectedFacility,
           impact: fields.impact,
           action: fields.action,
+          bookingImpact: fields.bookingImpact,
+          customerActionType: fields.customerActionType,
           eventStartAt: fields.eventStartAt,
           eventEndAt: fields.eventEndAt,
           expiresAt: fields.expiresAt,

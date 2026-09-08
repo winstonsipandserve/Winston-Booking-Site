@@ -2,19 +2,23 @@ import type { Prisma } from '@prisma/client'
 
 /**
  * True when a bulletin's own fields mean it should currently be claiming/holding its
- * linked resources disabled: published, the auto-disable toggle on, and not expired.
- * Pure field check — never queries the DB itself, so callers can evaluate it against
- * either a live row or a hypothetical old/new field combination (see the PATCH route).
+ * linked resources disabled: published, the auto-disable toggle on, not expired, and
+ * (if it has a future eventStartAt) that start time has already arrived — this lets a
+ * closure be announced in advance without disabling the resource immediately. Pure
+ * field check — never queries the DB itself, so callers can evaluate it against either
+ * a live row or a hypothetical old/new field combination (see the PATCH route).
  */
 export function bulletinShouldDisableResources(bulletin: {
   isPublished: boolean
   autoDisableResources: boolean
   expiresAt: Date | null
+  eventStartAt: Date | null
 }): boolean {
   return (
     bulletin.isPublished &&
     bulletin.autoDisableResources &&
-    (bulletin.expiresAt === null || bulletin.expiresAt > new Date())
+    (bulletin.expiresAt === null || bulletin.expiresAt > new Date()) &&
+    (bulletin.eventStartAt === null || bulletin.eventStartAt <= new Date())
   )
 }
 

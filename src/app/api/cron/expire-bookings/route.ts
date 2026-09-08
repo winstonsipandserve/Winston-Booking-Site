@@ -1,6 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
-import { releaseBulletinResourceDisable } from '@/lib/bulletin-resource-disable'
+import {
+  applyBulletinResourceDisable,
+  bulletinShouldDisableResources,
+  releaseBulletinResourceDisable,
+} from '@/lib/bulletin-resource-disable'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,6 +70,31 @@ export async function GET(request: Request) {
       const resourceIds = bulletin.resourceLinks.map((l) => l.resourceId)
       if (resourceIds.length > 0) {
         await releaseBulletinResourceDisable(tx, resourceIds, bulletin.id)
+      }
+    }
+  })
+
+  // Apply scheduled disables: a published, auto-disabling bulletin with a future eventStartAt
+  // doesn't disable its linked resources until that start time arrives (see
+  // bulletinShouldDisableResources). KNOWN LIMITATION: this cron runs once daily (Vercel
+  // Hobby plan cap), so a scheduled disable takes effect on the next daily cron run after
+  // eventStartAt passes, not at the exact time — same granularity as the expiry-release step
+  // above. A more frequent cron is a separate Vercel-plan change (see CLAUDE.md).
+  await prisma.$transaction(async (tx) => {
+    const dueBulletins = await tx.bulletin.findMany({
+      where: {
+        isPublished: true,
+        autoDisableResources: true,
+        eventStartAt: { not: null, lte: now },
+      },
+      include: { resourceLinks: { select: { resourceId: true } } },
+    })
+
+    for (const bulletin of dueBulletins) {
+      if (!bulletinShouldDisableResources(bulletin)) continue
+      const resourceIds = bulletin.resourceLinks.map((l) => l.resourceId)
+      if (resourceIds.length > 0) {
+        await applyBulletinResourceDisable(tx, resourceIds)
       }
     }
   })

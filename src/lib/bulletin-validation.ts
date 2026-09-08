@@ -24,6 +24,46 @@ export const CATEGORY_LABELS: Record<BulletinCategoryValue, string> = {
   FacilityMaintenance: 'Facility Maintenance',
 }
 
+export const VALID_BOOKING_IMPACTS = [
+  'NoImpact',
+  'LimitedAvailability',
+  'TemporarilyUnavailable',
+  'ScheduleChanges',
+] as const
+export type BulletinBookingImpactValue = (typeof VALID_BOOKING_IMPACTS)[number]
+
+export const BOOKING_IMPACT_LABELS: Record<BulletinBookingImpactValue, string> = {
+  NoImpact: 'No Impact',
+  LimitedAvailability: 'Limited Availability',
+  TemporarilyUnavailable: 'Temporarily Unavailable',
+  ScheduleChanges: 'Schedule Changes',
+}
+
+export const VALID_CUSTOMER_ACTIONS = [
+  'NoActionRequired',
+  'RescheduleBooking',
+  'ContactSupport',
+  'BookAnotherFacility',
+  'WaitForFurtherNotice',
+] as const
+export type BulletinCustomerActionValue = (typeof VALID_CUSTOMER_ACTIONS)[number]
+
+export const CUSTOMER_ACTION_LABELS: Record<BulletinCustomerActionValue, string> = {
+  NoActionRequired: 'No Action Required',
+  RescheduleBooking: 'Reschedule Booking',
+  ContactSupport: 'Contact Support',
+  BookAnotherFacility: 'Book Another Facility',
+  WaitForFurtherNotice: 'Wait for Further Notice',
+}
+
+export function isValidBookingImpact(value: unknown): value is BulletinBookingImpactValue {
+  return typeof value === 'string' && (VALID_BOOKING_IMPACTS as readonly string[]).includes(value)
+}
+
+export function isValidCustomerAction(value: unknown): value is BulletinCustomerActionValue {
+  return typeof value === 'string' && (VALID_CUSTOMER_ACTIONS as readonly string[]).includes(value)
+}
+
 export const VALID_SOCIAL_PLATFORMS = ['instagram', 'facebook'] as const
 
 /** Which fields a category requires, beyond the fields required for every category. */
@@ -89,6 +129,8 @@ export interface ParsedBulletinFields {
   affectedFacility: string
   impact: string
   action: string
+  bookingImpact: BulletinBookingImpactValue
+  customerActionType: BulletinCustomerActionValue
   eventStartAt: Date
   eventEndAt: Date | null
   expiresAt: Date | null
@@ -130,6 +172,14 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   if (impact === null) return { error: 'Impact is required' }
   const action = getOptionalString(formData, 'action')
   if (action === null) return { error: 'Action is required' }
+  const bookingImpact = formData.get('bookingImpact')
+  if (!isValidBookingImpact(bookingImpact)) {
+    return { error: 'Booking Impact is required' }
+  }
+  const customerActionType = formData.get('customerActionType')
+  if (!isValidCustomerAction(customerActionType)) {
+    return { error: 'Customer Action is required' }
+  }
 
   const ctaLabel = getOptionalString(formData, 'ctaLabel')
   const ctaUrl = getOptionalString(formData, 'ctaUrl')
@@ -168,6 +218,8 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
       affectedFacility,
       impact,
       action,
+      bookingImpact,
+      customerActionType,
       eventStartAt: eventStartAtResult.value,
       eventEndAt: eventEndAtResult.value,
       expiresAt: expiresAtResult.value,

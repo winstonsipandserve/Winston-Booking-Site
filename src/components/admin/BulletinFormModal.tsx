@@ -4,7 +4,14 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
 import type { Bulletin } from '@prisma/client'
-import { BULLETIN_CATEGORY_RULES, isValidCategory } from '@/lib/bulletin-validation'
+import {
+  BULLETIN_CATEGORY_RULES,
+  isValidCategory,
+  VALID_BOOKING_IMPACTS,
+  BOOKING_IMPACT_LABELS,
+  VALID_CUSTOMER_ACTIONS,
+  CUSTOMER_ACTION_LABELS,
+} from '@/lib/bulletin-validation'
 
 export interface ResourceOption {
   id: string
@@ -81,6 +88,8 @@ function BulletinForm({
   const [affectedFacility, setAffectedFacility] = useState(bulletin?.affectedFacility ?? '')
   const [impact, setImpact] = useState(bulletin?.impact ?? '')
   const [action, setAction] = useState(bulletin?.action ?? '')
+  const [bookingImpact, setBookingImpact] = useState<string>(bulletin?.bookingImpact ?? '')
+  const [customerActionType, setCustomerActionType] = useState<string>(bulletin?.customerActionType ?? '')
   const [eventStartAt, setEventStartAt] = useState(toDateTimeLocalValue(bulletin?.eventStartAt))
   const [eventEndAt, setEventEndAt] = useState(toDateTimeLocalValue(bulletin?.eventEndAt))
   const [expiresAt, setExpiresAt] = useState(toDateInputValue(bulletin?.expiresAt))
@@ -145,6 +154,14 @@ function BulletinForm({
       setError('Action is required')
       return
     }
+    if (!bookingImpact) {
+      setError('Booking Impact is required')
+      return
+    }
+    if (!customerActionType) {
+      setError('Customer Action is required')
+      return
+    }
     if (!eventStartAt) {
       setError('Event Start is required')
       return
@@ -195,6 +212,8 @@ function BulletinForm({
     if (affectedFacility.trim()) formData.set('affectedFacility', affectedFacility.trim())
     if (impact.trim()) formData.set('impact', impact.trim())
     if (action.trim()) formData.set('action', action.trim())
+    if (bookingImpact) formData.set('bookingImpact', bookingImpact)
+    if (customerActionType) formData.set('customerActionType', customerActionType)
     if (eventStartAt) formData.set('eventStartAt', eventStartAt)
     if (eventEndAt) formData.set('eventEndAt', eventEndAt)
     if (expiresAt) formData.set('expiresAt', expiresAt)
@@ -317,6 +336,44 @@ function BulletinForm({
             className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
         </label>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+            Booking Impact *
+            <select
+              value={bookingImpact}
+              onChange={(e) => setBookingImpact(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >
+              <option value="" disabled>
+                Select booking impact
+              </option>
+              {VALID_BOOKING_IMPACTS.map((value) => (
+                <option key={value} value={value}>
+                  {BOOKING_IMPACT_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+            Customer Action *
+            <select
+              value={customerActionType}
+              onChange={(e) => setCustomerActionType(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >
+              <option value="" disabled>
+                Select customer action
+              </option>
+              {VALID_CUSTOMER_ACTIONS.map((value) => (
+                <option key={value} value={value}>
+                  {CUSTOMER_ACTION_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </FormSection>
 
       <FormSection title="Scheduling">

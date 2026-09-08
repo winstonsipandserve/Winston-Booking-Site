@@ -92,6 +92,21 @@ enum ResourceDisabledReason {
   bulletin
 }
 
+enum BulletinBookingImpact {
+  NoImpact
+  LimitedAvailability
+  TemporarilyUnavailable
+  ScheduleChanges
+}
+
+enum BulletinCustomerAction {
+  NoActionRequired
+  RescheduleBooking
+  ContactSupport
+  BookAnotherFacility
+  WaitForFurtherNotice
+}
+
 // ── Resource model (Decision: Resource model) ─────────
 
 model ResourceType {
@@ -513,6 +528,8 @@ model Bulletin {
   affectedFacility String?         @map("affected_facility")
   impact           String?
   action           String?
+  bookingImpact       BulletinBookingImpact?  @map("booking_impact")
+  customerActionType  BulletinCustomerAction? @map("customer_action_type")
   eventStartAt     DateTime?       @map("event_start_at")
   eventEndAt       DateTime?       @map("event_end_at")
   expiresAt        DateTime?       @map("expires_at")
