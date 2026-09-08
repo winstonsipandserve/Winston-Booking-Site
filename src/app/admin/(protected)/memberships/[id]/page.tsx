@@ -1,16 +1,24 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import type { CreditTransactionReason } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getSignedUrl } from '@/lib/supabase-storage'
 import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
 import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
-import { formatMembershipTier } from '@/lib/format'
+import { formatMembershipTier, formatCentavos } from '@/lib/format'
+import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import {
   getMembershipDisplayStatus,
   MEMBERSHIP_DISPLAY_STATUS_LABELS,
   MEMBERSHIP_DISPLAY_STATUS_CLASSES,
 } from '@/lib/membership-display-status'
 import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
+
+const CREDIT_TRANSACTION_REASON_LABELS: Record<CreditTransactionReason, string> = {
+  activation: 'Activation',
+  renewal: 'Renewal',
+  booking_redemption: 'Booking Redemption',
+}
 
 export default async function AdminMembershipApplicationDetailPage({
   params,
@@ -31,6 +39,27 @@ export default async function AdminMembershipApplicationDetailPage({
 
   const latestMembership = await getLatestMembershipByCustomerId(application.customerId)
   const displayStatus = getMembershipDisplayStatus({ status: application.status, latestMembership })
+
+  const creditTransactions = latestMembership
+    ? await prisma.membershipCreditTransaction.findMany({
+        where: { membershipId: latestMembership.id },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      })
+    : []
+
+  const recentBookings = latestMembership
+    ? await prisma.booking.findMany({
+        where: { customerId: application.customerId },
+        orderBy: { startTime: 'desc' },
+        take: 10,
+        include: {
+          resource: { include: { resourceType: true } },
+          addOns: { select: { amountCentavos: true } },
+        },
+        relationLoadStrategy: 'query',
+      })
+    : []
 
   const [govIdFrontUrl, govIdBackUrl, govIdSelfieUrl] = await Promise.all([
     getSignedUrl('membership-applications', application.govIdFrontUrl),
@@ -103,6 +132,36 @@ export default async function AdminMembershipApplicationDetailPage({
           </div>
         </section>
       </div>
+
+      {latestMembership && (
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Membership</h2>
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400">Tier</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {formatMembershipTier(latestMembership.tier)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400">Credit Balance</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {formatCentavos(latestMembership.creditBalanceCentavos)}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+            <span className="text-gray-500 dark:text-gray-400">Start / Activation Date</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {latestMembership.startDate.toLocaleString('en-PH')}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+            <span className="text-gray-500 dark:text-gray-400">Expiry Date</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {latestMembership.endDate.toLocaleString('en-PH')}
+            </span>
+          </div>
+        </section>
+      )}
 
       <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Review</h2>
@@ -177,6 +236,112 @@ export default async function AdminMembershipApplicationDetailPage({
           </div>
         </div>
       </section>
+
+      {latestMembership && (
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Credit Transaction History</h2>
+          {creditTransactions.length === 0 ? (
+            <p className="text-sm italic text-gray-400 dark:text-gray-500">No credit activity yet</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[480px] border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Date
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Reason
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Amount
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {creditTransactions.map((transaction) => (
+                    <tr
+                      key={transaction.id}
+                      className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
+                    >
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                        {transaction.createdAt.toLocaleString('en-PH')}
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                        {CREDIT_TRANSACTION_REASON_LABELS[transaction.reason]}
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                        {transaction.amountCentavos >= 0 ? '+' : '-'}
+                        {formatCentavos(Math.abs(transaction.amountCentavos))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {latestMembership && (
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Booking History</h2>
+          {recentBookings.length === 0 ? (
+            <p className="text-sm italic text-gray-400 dark:text-gray-500">No bookings yet</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] border-collapse text-sm">
+                <thead>
+                  <tr>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Date & Time
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Resource
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Status
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Total
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentBookings.map((booking) => (
+                    <tr
+                      key={booking.id}
+                      className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
+                    >
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                        {booking.startTime.toLocaleString('en-PH')}
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                        {booking.resource.resourceType.name} — {booking.resource.label}
+                      </td>
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.status}</td>
+                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                        {formatCentavos(bookingGrandTotalCentavos(booking))}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <Link
+                          href={`/admin/bookings/${booking.id}`}
+                          className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                        >
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       {application.status === 'pending' && (
         <section>
