@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import MyAccountTab from '@/components/admin/MyAccountTab'
 import AdminUsersTab from '@/components/admin/AdminUsersTab'
+import ActivityLogTab from '@/components/admin/ActivityLogTab'
 
-type Tab = 'account' | 'adminUsers'
+type Tab = 'account' | 'adminUsers' | 'activityLog'
 
 interface SettingsTabsProps {
   name: string
@@ -17,6 +18,7 @@ export default function SettingsTabs({ name, email }: SettingsTabsProps) {
   const TAB_ITEMS: { key: Tab; label: string }[] = [
     { key: 'account', label: 'My Account' },
     { key: 'adminUsers', label: 'Admin Users' },
+    { key: 'activityLog', label: 'Activity Log' },
   ]
 
   return (
@@ -41,6 +43,7 @@ export default function SettingsTabs({ name, email }: SettingsTabsProps) {
       <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
         {activeTab === 'account' && <MyAccountTab name={name} email={email} />}
         {activeTab === 'adminUsers' && <AdminUsersTab />}
+        {activeTab === 'activityLog' && <ActivityLogTab />}
       </div>
     </div>
   )
