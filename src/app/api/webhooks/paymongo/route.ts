@@ -21,6 +21,9 @@ interface PaymongoWebhookEvent {
           status?: unknown
           payment_intent_id?: unknown
           paid_at?: unknown
+          fee?: number | null
+          foreign_fee?: number | null
+          net_amount?: number | null
           metadata?: { bookingId?: unknown; membershipPaymentId?: unknown }
         }
       }
@@ -59,6 +62,10 @@ export async function POST(request: Request) {
   const paymongoPaymentId = isNonEmptyString(paymongoPaymentIdRaw) ? paymongoPaymentIdRaw : null
   const paidAtRaw = paymentAttributes?.paid_at
   const paidAt = typeof paidAtRaw === 'number' ? new Date(paidAtRaw * 1000) : new Date()
+  const rawFee = paymentAttributes?.fee
+  const rawForeignFee = paymentAttributes?.foreign_fee ?? 0
+  const feeCentavos = typeof rawFee === 'number' ? rawFee + rawForeignFee : null
+  const netAmountCentavos = paymentAttributes?.net_amount ?? null
 
   if (paymentStatus !== 'paid') {
     console.error('Webhook type payment.paid but nested payment status is not paid', bookingId, paymentStatus)
@@ -105,6 +112,8 @@ export async function POST(request: Request) {
           paidAt,
           paymongoPaymentIntentId: paymentIntentId,
           paymongoPaymentId,
+          paymongoFeeCentavos: feeCentavos,
+          paymongoNetAmountCentavos: netAmountCentavos,
         },
       })
 

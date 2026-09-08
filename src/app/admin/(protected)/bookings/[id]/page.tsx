@@ -136,6 +136,22 @@ export default async function AdminBookingDetailPage({
                 value={booking.payment.paidAt ? booking.payment.paidAt.toLocaleString('en-PH') : '—'}
               />
               <DetailRow label="PayMongo Payment ID" value={booking.payment.paymongoPaymentId ?? '—'} />
+              <DetailRow
+                label="PayMongo Fee"
+                value={
+                  booking.payment.paymongoFeeCentavos != null
+                    ? `-${formatCentavos(booking.payment.paymongoFeeCentavos)}`
+                    : '—'
+                }
+              />
+              <DetailRow
+                label="Net Amount"
+                value={
+                  booking.payment.paymongoNetAmountCentavos != null
+                    ? formatCentavos(booking.payment.paymongoNetAmountCentavos)
+                    : '—'
+                }
+              />
             </>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">No payment record.</p>

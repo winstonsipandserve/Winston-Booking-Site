@@ -471,6 +471,13 @@ model Payment {
   paymongoPaymentIntentId String?       @unique @map("paymongo_payment_intent_id")
   /// PayMongo's own payment-resource id (pay_xxx) — distinct from paymongoPaymentIntentId (pi_xxx). Captured from the payment.paid webhook; existing rows stay null, not backfilled.
   paymongoPaymentId       String?       @unique @map("paymongo_payment_id")
+  /// PayMongo's fee + foreign_fee combined, captured from the payment.paid
+  /// webhook. Null for credit-covered bookings (no PayMongo transaction)
+  /// and for bookings confirmed before this column existed — not backfilled.
+  paymongoFeeCentavos       Int? @map("paymongo_fee_centavos")
+  /// PayMongo's net_amount (what actually settles to the merchant account),
+  /// captured from the same webhook. Same null cases as the fee column above.
+  paymongoNetAmountCentavos Int? @map("paymongo_net_amount_centavos")
   paidAt                  DateTime?     @map("paid_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
