@@ -56,11 +56,14 @@ enum CreditTransactionReason {
   activation
   renewal
   booking_redemption
+  top_up
 }
 
 enum PaymentMethod {
   paymongo
   membership_credit
+  cash
+  manual_online
 }
 
 enum AdminRole {
@@ -121,11 +124,13 @@ enum AdminActivityAction {
   membership_application_rejected
   membership_renewal_link_sent
   booking_rescheduled
+  membership_credit_topup_added
 }
 
 enum AdminActivityEntityType {
   membership_application
   booking
+  membership
 }
 
 // ── Resource model (Decision: Resource model) ─────────
@@ -265,6 +270,7 @@ model AdminUser {
   reviewedApplications MembershipApplication[] @relation("ApplicationReviewedBy")
   performedReschedules BookingReschedule[]     @relation("ReschedulePerformedBy")
   initiatedRenewalPayments MembershipPayment[] @relation("MembershipPaymentInitiatedByAdmin")
+  initiatedTopUpPayments Payment[] @relation("PaymentInitiatedByAdmin")
   checkInLookupAttempts CheckInLookupAttempt[]
   passwordResetTokens AdminPasswordResetToken[]
   activityLogs AdminActivityLog[]
@@ -377,6 +383,8 @@ model Membership {
   /// Cached running total — MembershipCreditTransaction is the source of truth.
   creditBalanceCentavos Int                   @map("credit_balance_centavos")
   creditTransactions    MembershipCreditTransaction[]
+  /// Top-up Payments only (membershipId set) — activation/renewal payments stay on MembershipPayment.
+  payments              Payment[]
   /// Reminder/expiry-email tracking — each nullable timestamp is set once its email fires,
   /// so the membership-reminders cron can never send the same email twice to a row.
   reminder14SentAt      DateTime?             @map("reminder_14_sent_at")
@@ -515,6 +523,11 @@ model Payment {
   /// Nullable + unique: one Payment per Booking today; null bookingId reserved for future POS transactions.
   bookingId String?       @unique @map("booking_id")
   booking   Booking?      @relation(fields: [bookingId], references: [id])
+  /// Nullable, NOT unique (unlike bookingId) — a Membership can have many top-up
+  /// Payments over its lifetime. Set only for membership-credit-top-up rows;
+  /// null for booking payments. See CLAUDE.md → Membership credit ledger.
+  membershipId String?     @map("membership_id")
+  membership   Membership? @relation(fields: [membershipId], references: [id])
   amountCentavos          Int           @map("amount_centavos")
   status                  PaymentStatus @default(pending)
   method                  PaymentMethod @default(paymongo)
@@ -529,10 +542,19 @@ model Payment {
   /// PayMongo's net_amount (what actually settles to the merchant account),
   /// captured from the same webhook. Same null cases as the fee column above.
   paymongoNetAmountCentavos Int? @map("paymongo_net_amount_centavos")
+  /// Admin-entered reference for manual_online top-ups (GCash ref, bank transfer ref, etc).
+  externalReference String? @map("external_reference")
+  /// Required (enforced at the API layer, not the DB) for cash top-ups; optional for manual_online.
+  adminNote String? @map("admin_note")
+  /// Set only on admin-logged top-ups (cash/manual_online) — mirrors MembershipPayment.initiatedByAdminId.
+  initiatedByAdminId String?    @map("initiated_by_admin_id")
+  initiatedByAdmin   AdminUser? @relation("PaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
   paidAt                  DateTime?     @map("paid_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([membershipId])
+  @@index([initiatedByAdminId])
   @@map("payments")
 }
 

@@ -6,6 +6,7 @@ import { getSignedUrl } from '@/lib/supabase-storage'
 import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
 import IdentityVerificationGallery from '@/components/admin/IdentityVerificationGallery'
 import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
+import AddCreditButton from '@/components/admin/AddCreditButton'
 import { formatMembershipTier, formatCentavos } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import {
@@ -19,6 +20,7 @@ const CREDIT_TRANSACTION_REASON_LABELS: Record<CreditTransactionReason, string> 
   activation: 'Activation',
   renewal: 'Renewal',
   booking_redemption: 'Booking Redemption',
+  top_up: 'Top-Up',
 }
 
 function formatDate(date: Date) {
@@ -178,7 +180,10 @@ export default async function AdminMembershipApplicationDetailPage({
               </p>
             </div>
             <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Credits</p>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Credits</p>
+                {displayStatus === 'active' && <AddCreditButton membershipId={latestMembership.id} />}
+              </div>
               <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {formatCentavos(latestMembership.creditBalanceCentavos)}
               </p>

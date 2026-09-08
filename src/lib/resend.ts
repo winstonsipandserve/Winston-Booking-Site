@@ -1016,6 +1016,71 @@ export async function sendStaffMembershipRenewalEmail({
   }
 }
 
+interface SendCreditTopUpConfirmationEmailInput {
+  to: string
+  name: string
+  amountCentavos: number
+  newBalanceCentavos: number
+}
+
+export async function sendCreditTopUpConfirmationEmail({
+  to,
+  name,
+  amountCentavos,
+  newBalanceCentavos,
+}: SendCreditTopUpConfirmationEmailInput): Promise<void> {
+  const receiptHtml = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRow('Amount Added', formatCentavos(amountCentavos))}
+            ${ledgerRow('New Credit Balance', formatCentavos(newBalanceCentavos), true)}
+          </table>
+        </td>
+      </tr>
+    </table>`
+
+  const bodyHtml = `
+    <p>Hi ${name},</p>
+    <p>Your Winston Sip &amp; Serve F&amp;B credit has been topped up.</p>${receiptHtml}
+    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you on the court,<br />— The Winston Sip &amp; Serve Team</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `${formatCentavos(amountCentavos)} added to your F&B credit balance.`,
+    eyebrowText: 'CREDIT TOP-UP',
+    headingText: `Credit Added, ${name}!`,
+    bodyHtml,
+    ctaText: 'View My Account',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Your Winston Sip & Serve Credit Top-Up Is Confirmed',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendCreditTopUpConfirmationEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendCreditTopUpConfirmationEmail threw', err)
+  }
+}
+
 interface ReminderCustomer {
   name: string
   email: string

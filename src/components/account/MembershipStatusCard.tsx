@@ -7,6 +7,7 @@ import { formatCentavos } from '@/lib/format'
 import { CheckIcon } from '@/components/ui/Icons'
 import Modal from '@/components/ui/Modal'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
+import MembershipTopUpButtons from '@/components/account/MembershipTopUpButtons'
 
 // Perks copied verbatim from PROJECT_CONTEXT.md's Membership Tiers → Perks line.
 const PERKS = ['Priority bookings', 'Facility use', 'Complimentary F&B (via credit)', 'Exclusive event access']
@@ -178,6 +179,8 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
           </div>
         </div>
       </div>
+
+      {!membership.isExpired && <MembershipTopUpButtons />}
 
       {membership.isExpired && (
         <Link
