@@ -4,6 +4,7 @@ import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
 import { sendRenewalPaymentLinkEmail } from '@/lib/resend'
+import { logAdminActivity } from '@/lib/admin-activity-log'
 import type { MembershipTier } from '@prisma/client'
 
 interface SendRenewalLinkRequestBody {
@@ -69,6 +70,15 @@ export async function POST(
       })
 
   const tierName = formatMembershipTier(membershipPayment.tier)
+
+  await logAdminActivity({
+    adminId: activeSession.adminUser.id,
+    action: 'membership_renewal_link_sent',
+    entityType: 'membership_application',
+    entityId: application.id,
+    description: `Sent renewal link to ${application.customer.name} (${tierName}, ${existingPending ? 're-sent' : 'new link'})`,
+    metadata: { membershipPaymentId: membershipPayment.id, tier },
+  })
   const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/renew/${membershipPayment.id}`
   await sendRenewalPaymentLinkEmail({
     to: application.customer.email,
