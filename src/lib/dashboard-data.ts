@@ -27,6 +27,13 @@ export interface RevenueTrendPoint {
   golfCentavos: number
 }
 
+export interface MembershipTierTrendPoint {
+  month: string
+  threeMonthCentavos: number
+  sixMonthCentavos: number
+  twelveMonthCentavos: number
+}
+
 type Sport = 'tennis' | 'pickleball' | 'golf'
 
 function sportForResourceType(slug: string): Sport | null {
@@ -66,6 +73,7 @@ export interface RecentApplication {
 export interface DashboardData {
   stats: DashboardStats
   revenueTrend: RevenueTrendPoint[]
+  membershipTierTrend: MembershipTierTrendPoint[]
   resourceBreakdown: ResourceBreakdownEntry[]
   recentBookings: RecentBooking[]
   recentApplications: RecentApplication[]
@@ -94,6 +102,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     weekBookings,
     activeResourceCount,
     paymentsForRevenue,
+    membershipPaymentsForRevenue,
     resourceGroupBy,
     recentBookingsRaw,
     recentApplicationsRaw,
@@ -123,6 +132,10 @@ export async function getDashboardData(): Promise<DashboardData> {
         paidAt: true,
         booking: { select: { resource: { select: { resourceType: { select: { slug: true } } } } } },
       },
+    }),
+    prisma.membershipPayment.findMany({
+      where: { status: 'paid', paidAt: { gte: twelveMonthsAgoStart } },
+      select: { amountCentavos: true, paidAt: true, tier: true },
     }),
     prisma.booking.groupBy({
       by: ['resourceId'],
@@ -192,6 +205,35 @@ export async function getDashboardData(): Promise<DashboardData> {
     golfCentavos: b.golfCentavos,
   }))
 
+  const membershipTierBuckets = new Map<
+    string,
+    { label: string; threeMonthCentavos: number; sixMonthCentavos: number; twelveMonthCentavos: number }
+  >()
+  for (let i = 11; i >= 0; i--) {
+    const monthStart = phMonthStartUtc(i)
+    const label = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'Asia/Manila' }).format(monthStart)
+    membershipTierBuckets.set(toPhMonthKey(monthStart), {
+      label,
+      threeMonthCentavos: 0,
+      sixMonthCentavos: 0,
+      twelveMonthCentavos: 0,
+    })
+  }
+  for (const p of membershipPaymentsForRevenue) {
+    if (!p.paidAt) continue
+    const bucket = membershipTierBuckets.get(toPhMonthKey(p.paidAt))
+    if (!bucket) continue
+    if (p.tier === 'three_month') bucket.threeMonthCentavos += p.amountCentavos
+    else if (p.tier === 'six_month') bucket.sixMonthCentavos += p.amountCentavos
+    else if (p.tier === 'twelve_month') bucket.twelveMonthCentavos += p.amountCentavos
+  }
+  const membershipTierTrend: MembershipTierTrendPoint[] = Array.from(membershipTierBuckets.values()).map((b) => ({
+    month: b.label,
+    threeMonthCentavos: b.threeMonthCentavos,
+    sixMonthCentavos: b.sixMonthCentavos,
+    twelveMonthCentavos: b.twelveMonthCentavos,
+  }))
+
   const resourceIds = resourceGroupBy.map((g) => g.resourceId)
   const resources = resourceIds.length
     ? await prisma.resource.findMany({
@@ -225,5 +267,5 @@ export async function getDashboardData(): Promise<DashboardData> {
     submitted: formatShortDate(a.createdAt),
   }))
 
-  return { stats, revenueTrend, resourceBreakdown, recentBookings, recentApplications }
+  return { stats, revenueTrend, membershipTierTrend, resourceBreakdown, recentBookings, recentApplications }
 }

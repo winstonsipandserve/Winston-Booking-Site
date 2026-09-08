@@ -16,7 +16,7 @@ import {
 } from 'recharts'
 import { formatCentavos } from '@/lib/format'
 import { useIsDarkMode } from '@/hooks/useIsDarkMode'
-import type { RevenueTrendPoint, ResourceBreakdownEntry } from '@/lib/dashboard-data'
+import type { RevenueTrendPoint, MembershipTierTrendPoint, ResourceBreakdownEntry } from '@/lib/dashboard-data'
 
 const LIGHT_PALETTE = {
   grid: '#e5e7eb',
@@ -28,6 +28,7 @@ const LIGHT_PALETTE = {
   revenueLine: '#111827',
   resourceColors: ['#111827', '#374151', '#6b7280', '#9ca3af', '#d1d5db'],
   sportColors: { tennis: '#111827', pickleball: '#6b7280', golf: '#cd1818' },
+  membershipTierColors: { threeMonth: '#2563eb', sixMonth: '#d97706', twelveMonth: '#7c3aed' },
 }
 
 const DARK_PALETTE = {
@@ -40,10 +41,11 @@ const DARK_PALETTE = {
   revenueLine: '#f3f4f6',
   resourceColors: ['#f3f4f6', '#d1d5db', '#9ca3af', '#6b7280', '#4b5563'],
   sportColors: { tennis: '#f3f4f6', pickleball: '#9ca3af', golf: '#f87171' },
+  membershipTierColors: { threeMonth: '#60a5fa', sixMonth: '#fbbf24', twelveMonth: '#a78bfa' },
 }
 
 type RangeOption = '3mo' | '6mo' | '12mo' | 'ytd'
-type BreakdownOption = 'total' | 'by-resource-type'
+type BreakdownOption = 'total' | 'by-resource-type' | 'by-membership-tier'
 
 const RANGE_OPTIONS: { value: RangeOption; label: string }[] = [
   { value: '3mo', label: '3mo' },
@@ -55,9 +57,10 @@ const RANGE_OPTIONS: { value: RangeOption; label: string }[] = [
 const BREAKDOWN_OPTIONS: { value: BreakdownOption; label: string }[] = [
   { value: 'total', label: 'Total' },
   { value: 'by-resource-type', label: 'By Resource Type' },
+  { value: 'by-membership-tier', label: 'By Membership Tier' },
 ]
 
-function filterByRange(data: RevenueTrendPoint[], range: RangeOption): RevenueTrendPoint[] {
+function filterByRange<T extends { month: string }>(data: T[], range: RangeOption): T[] {
   if (range === '3mo') return data.slice(-3)
   if (range === '6mo') return data.slice(-6)
   if (range === '12mo') return data
@@ -73,16 +76,21 @@ function filterByRange(data: RevenueTrendPoint[], range: RangeOption): RevenueTr
 
 interface DashboardChartsProps {
   revenueTrend: RevenueTrendPoint[]
+  membershipTierTrend: MembershipTierTrendPoint[]
   resourceBreakdown: ResourceBreakdownEntry[]
 }
 
-export default function DashboardCharts({ revenueTrend, resourceBreakdown }: DashboardChartsProps) {
+export default function DashboardCharts({ revenueTrend, membershipTierTrend, resourceBreakdown }: DashboardChartsProps) {
   const isDark = useIsDarkMode()
   const palette = isDark ? DARK_PALETTE : LIGHT_PALETTE
   const [range, setRange] = useState<RangeOption>('6mo')
   const [breakdown, setBreakdown] = useState<BreakdownOption>('total')
 
   const filteredRevenueTrend = useMemo(() => filterByRange(revenueTrend, range), [revenueTrend, range])
+  const filteredMembershipTierTrend = useMemo(
+    () => filterByRange(membershipTierTrend, range),
+    [membershipTierTrend, range],
+  )
 
   const tooltipStyle = {
     backgroundColor: palette.tooltipBg,
@@ -133,73 +141,124 @@ export default function DashboardCharts({ revenueTrend, resourceBreakdown }: Das
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={filteredRevenueTrend}>
-              <defs>
-                <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={palette.revenueLine} stopOpacity={0.8} />
-                  <stop offset="100%" stopColor={palette.revenueLine} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke={palette.grid} vertical={false} />
-              <XAxis
-                dataKey="month"
-                tick={{ fill: palette.axisTick, fontSize: 11 }}
-                axisLine={{ stroke: palette.axisLine }}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: palette.axisTick, fontSize: 11 }}
-                axisLine={{ stroke: palette.axisLine }}
-                tickLine={false}
-                tickFormatter={(value: number) => formatCentavos(value)}
-                width={90}
-              />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                formatter={(value, name) => [formatCentavos(Number(value)), name]}
-              />
-              {breakdown === 'total' ? (
+            {breakdown === 'by-membership-tier' ? (
+              <AreaChart data={filteredMembershipTierTrend}>
+                <CartesianGrid stroke={palette.grid} vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: palette.axisTick, fontSize: 11 }}
+                  axisLine={{ stroke: palette.axisLine }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: palette.axisTick, fontSize: 11 }}
+                  axisLine={{ stroke: palette.axisLine }}
+                  tickLine={false}
+                  tickFormatter={(value: number) => formatCentavos(value)}
+                  width={90}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value, name) => [formatCentavos(Number(value)), name]}
+                />
+                <Legend wrapperStyle={{ fontSize: '0.75rem', color: palette.legendText }} />
                 <Area
                   type="monotone"
-                  dataKey="totalCentavos"
-                  stroke={palette.revenueLine}
-                  strokeWidth={2}
-                  fill="url(#revenueFill)"
-                  name="Revenue"
+                  dataKey="threeMonthCentavos"
+                  stackId="tier"
+                  stroke={palette.membershipTierColors.threeMonth}
+                  fill={palette.membershipTierColors.threeMonth}
+                  fillOpacity={0.7}
+                  name="3-Month"
                 />
-              ) : (
-                <>
-                  <Legend wrapperStyle={{ fontSize: '0.75rem', color: palette.legendText }} />
+                <Area
+                  type="monotone"
+                  dataKey="sixMonthCentavos"
+                  stackId="tier"
+                  stroke={palette.membershipTierColors.sixMonth}
+                  fill={palette.membershipTierColors.sixMonth}
+                  fillOpacity={0.7}
+                  name="6-Month"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="twelveMonthCentavos"
+                  stackId="tier"
+                  stroke={palette.membershipTierColors.twelveMonth}
+                  fill={palette.membershipTierColors.twelveMonth}
+                  fillOpacity={0.7}
+                  name="12-Month"
+                />
+              </AreaChart>
+            ) : (
+              <AreaChart data={filteredRevenueTrend}>
+                <defs>
+                  <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={palette.revenueLine} stopOpacity={0.8} />
+                    <stop offset="100%" stopColor={palette.revenueLine} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke={palette.grid} vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: palette.axisTick, fontSize: 11 }}
+                  axisLine={{ stroke: palette.axisLine }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fill: palette.axisTick, fontSize: 11 }}
+                  axisLine={{ stroke: palette.axisLine }}
+                  tickLine={false}
+                  tickFormatter={(value: number) => formatCentavos(value)}
+                  width={90}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value, name) => [formatCentavos(Number(value)), name]}
+                />
+                {breakdown === 'total' ? (
                   <Area
                     type="monotone"
-                    dataKey="tennisCentavos"
-                    stackId="sport"
-                    stroke={palette.sportColors.tennis}
-                    fill={palette.sportColors.tennis}
-                    fillOpacity={0.7}
-                    name="Tennis"
+                    dataKey="totalCentavos"
+                    stroke={palette.revenueLine}
+                    strokeWidth={2}
+                    fill="url(#revenueFill)"
+                    name="Revenue"
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="pickleballCentavos"
-                    stackId="sport"
-                    stroke={palette.sportColors.pickleball}
-                    fill={palette.sportColors.pickleball}
-                    fillOpacity={0.7}
-                    name="Pickleball"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="golfCentavos"
-                    stackId="sport"
-                    stroke={palette.sportColors.golf}
-                    fill={palette.sportColors.golf}
-                    fillOpacity={0.7}
-                    name="Golf"
-                  />
-                </>
-              )}
-            </AreaChart>
+                ) : (
+                  <>
+                    <Legend wrapperStyle={{ fontSize: '0.75rem', color: palette.legendText }} />
+                    <Area
+                      type="monotone"
+                      dataKey="tennisCentavos"
+                      stackId="sport"
+                      stroke={palette.sportColors.tennis}
+                      fill={palette.sportColors.tennis}
+                      fillOpacity={0.7}
+                      name="Tennis"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="pickleballCentavos"
+                      stackId="sport"
+                      stroke={palette.sportColors.pickleball}
+                      fill={palette.sportColors.pickleball}
+                      fillOpacity={0.7}
+                      name="Pickleball"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="golfCentavos"
+                      stackId="sport"
+                      stroke={palette.sportColors.golf}
+                      fill={palette.sportColors.golf}
+                      fillOpacity={0.7}
+                      name="Golf"
+                    />
+                  </>
+                )}
+              </AreaChart>
+            )}
           </ResponsiveContainer>
         </div>
       </div>
