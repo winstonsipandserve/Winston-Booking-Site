@@ -104,7 +104,7 @@ export default function DashboardCharts({ revenueTrend, membershipTierTrend, res
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Revenue Trend</h2>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
             <div className="flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
               {RANGE_OPTIONS.map((opt) => (
                 <button
