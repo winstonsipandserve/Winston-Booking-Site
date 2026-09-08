@@ -1,18 +1,14 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import type { BookingStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { formatCentavos } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
-import { phDateToUtcWindow } from '@/lib/business-hours'
+import { isBookingStatus, buildBookingsWhere } from '@/lib/bookings-query'
 import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
 import BookingsSearchBar from '@/components/admin/BookingsSearchBar'
+import BookingsExportButton from '@/components/admin/BookingsExportButton'
 
 const PAGE_SIZE = 25
-
-function isBookingStatus(value: string): value is BookingStatus {
-  return value === 'pending_payment' || value === 'confirmed' || value === 'cancelled'
-}
 
 function formatSubmittedAt(createdAt: Date) {
   const date = createdAt.toLocaleDateString('en-PH', {
@@ -38,26 +34,9 @@ export default async function AdminBookingsPage({
 
   const status = statusParam && isBookingStatus(statusParam) ? statusParam : undefined
   const page = Math.max(1, Number(pageParam) || 1)
-
-  const where: Prisma.BookingWhereInput = {}
-  if (status) {
-    where.status = status
-  }
-  if (startDate || endDate) {
-    where.startTime = {
-      ...(startDate ? { gte: phDateToUtcWindow(startDate).start } : {}),
-      ...(endDate ? { lt: phDateToUtcWindow(endDate).end } : {}),
-    }
-  }
   const trimmedSearch = search?.trim()
-  if (trimmedSearch) {
-    where.OR = [
-      { id: { contains: trimmedSearch, mode: 'insensitive' } },
-      { customer: { name: { contains: trimmedSearch, mode: 'insensitive' } } },
-      { resource: { label: { contains: trimmedSearch, mode: 'insensitive' } } },
-      { resource: { resourceType: { name: { contains: trimmedSearch, mode: 'insensitive' } } } },
-    ]
-  }
+
+  const where = buildBookingsWhere({ status, startDate, endDate, search: trimmedSearch })
 
   const [bookings, totalCount] = await Promise.all([
     prisma.booking.findMany({
@@ -104,12 +83,13 @@ export default async function AdminBookingsPage({
             startDate={startDate ?? ''}
             endDate={endDate ?? ''}
           />
-          <button
-            type="button"
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            Export
-          </button>
+          <BookingsExportButton
+            status={status ?? 'all'}
+            startDate={startDate ?? ''}
+            endDate={endDate ?? ''}
+            search={trimmedSearch ?? ''}
+            totalCount={totalCount}
+          />
         </div>
 
         <Suspense fallback={null}>
