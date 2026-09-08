@@ -6,6 +6,15 @@ import Modal from '@/components/ui/Modal'
 import type { Bulletin } from '@prisma/client'
 import { BULLETIN_CATEGORY_RULES, isValidCategory } from '@/lib/bulletin-validation'
 
+export interface ResourceOption {
+  id: string
+  displayName: string
+}
+
+type BulletinWithOptionalResourceLinks = Bulletin & {
+  resourceLinks?: { resourceId: string }[]
+}
+
 const CATEGORIES = [
   { value: 'Renovation', label: 'Renovation' },
   { value: 'Closure', label: 'Facility Closure' },
@@ -31,10 +40,11 @@ interface BulletinFormModalProps {
   isOpen: boolean
   onClose: () => void
   mode: 'add' | 'edit'
-  bulletin?: Bulletin
+  bulletin?: BulletinWithOptionalResourceLinks
+  resourceOptions: ResourceOption[]
 }
 
-export default function BulletinFormModal({ isOpen, onClose, mode, bulletin }: BulletinFormModalProps) {
+export default function BulletinFormModal({ isOpen, onClose, mode, bulletin, resourceOptions }: BulletinFormModalProps) {
   return (
     <Modal
       isOpen={isOpen}
@@ -43,7 +53,9 @@ export default function BulletinFormModal({ isOpen, onClose, mode, bulletin }: B
       maxWidthClassName="max-w-3xl"
       variant="neutral"
     >
-      {isOpen && <BulletinForm mode={mode} bulletin={bulletin} onClose={onClose} />}
+      {isOpen && (
+        <BulletinForm mode={mode} bulletin={bulletin} resourceOptions={resourceOptions} onClose={onClose} />
+      )}
     </Modal>
   )
 }
@@ -51,10 +63,12 @@ export default function BulletinFormModal({ isOpen, onClose, mode, bulletin }: B
 function BulletinForm({
   mode,
   bulletin,
+  resourceOptions,
   onClose,
 }: {
   mode: 'add' | 'edit'
-  bulletin?: Bulletin
+  bulletin?: BulletinWithOptionalResourceLinks
+  resourceOptions: ResourceOption[]
   onClose: () => void
 }) {
   const router = useRouter()
@@ -73,6 +87,10 @@ function BulletinForm({
   const [ctaLabel, setCtaLabel] = useState(bulletin?.ctaLabel ?? '')
   const [ctaUrl, setCtaUrl] = useState(bulletin?.ctaUrl ?? '')
   const [isPublished, setIsPublished] = useState(bulletin?.isPublished ?? false)
+  const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>(
+    bulletin?.resourceLinks?.map((l) => l.resourceId) ?? [],
+  )
+  const [autoDisableResources, setAutoDisableResources] = useState(bulletin?.autoDisableResources ?? false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(bulletin?.imageUrl ?? null)
   const [error, setError] = useState<string | null>(null)
@@ -84,6 +102,16 @@ function BulletinForm({
     const file = e.target.files?.[0] ?? null
     setImageFile(file)
     setImagePreview(file ? URL.createObjectURL(file) : (bulletin?.imageUrl ?? null))
+  }
+
+  function toggleResource(resourceId: string) {
+    setSelectedResourceIds((prev) => {
+      const next = prev.includes(resourceId)
+        ? prev.filter((id) => id !== resourceId)
+        : [...prev, resourceId]
+      if (next.length === 0) setAutoDisableResources(false)
+      return next
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -158,6 +186,8 @@ function BulletinForm({
     formData.set('body', body.trim())
     formData.set('category', category)
     formData.set('isPublished', String(isPublished))
+    formData.set('resourceIds', JSON.stringify(selectedResourceIds))
+    formData.set('autoDisableResources', String(autoDisableResources))
     if (socialPlatform) {
       formData.set('socialPlatform', socialPlatform)
       formData.set('socialUrl', socialUrl.trim())
@@ -390,6 +420,44 @@ function BulletinForm({
             </label>
           )}
         </div>
+      </FormSection>
+
+      <FormSection title="Affected Resources (optional)">
+        <div className="scrollbar-thin flex max-h-40 flex-col gap-1.5 overflow-y-auto rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+          {resourceOptions.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No resources found.</p>
+          ) : (
+            resourceOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedResourceIds.includes(option.id)}
+                  onChange={() => toggleResource(option.id)}
+                />
+                {option.displayName}
+              </label>
+            ))
+          )}
+        </div>
+
+        <label
+          className={`flex items-center gap-2 text-sm ${
+            selectedResourceIds.length === 0
+              ? 'text-gray-400 dark:text-gray-600'
+              : 'text-gray-900 dark:text-gray-100'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={autoDisableResources}
+            disabled={selectedResourceIds.length === 0}
+            onChange={(e) => setAutoDisableResources(e.target.checked)}
+          />
+          Automatically disable selected resources while this bulletin is published.
+        </label>
       </FormSection>
 
       <FormSection title="Publish">

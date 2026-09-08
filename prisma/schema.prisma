@@ -87,6 +87,11 @@ enum BulletinCategory {
   FacilityMaintenance
 }
 
+enum ResourceDisabledReason {
+  manual
+  bulletin
+}
+
 // ── Resource model (Decision: Resource model) ─────────
 
 model ResourceType {
@@ -109,8 +114,17 @@ model Resource {
   resourceType   ResourceType @relation(fields: [resourceTypeId], references: [id])
   label          String
   isActive       Boolean      @default(true) @map("is_active")
-  disabledReason String?      @map("disabled_reason")
+  /// Free-text admin note entered on manual disable (e.g. "Under renovation") — renamed
+  /// from the original `disabledReason` column (2026-08-27) to make room for the new
+  /// structured `disabledReason` enum below. See CLAUDE.md → Bulletin-triggered resource
+  /// auto-disable.
+  disabledNote   String?      @map("disabled_note")
+  /// Which mechanism most recently disabled this resource — null whenever isActive is
+  /// true; meaningful only when isActive is false. A manual disable/enable always wins
+  /// immediately regardless of any bulletin's claim (see CLAUDE.md).
+  disabledReason ResourceDisabledReason? @map("disabled_reason")
   bookings       Booking[]
+  bulletinLinks  BulletinResource[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -506,8 +520,27 @@ model Bulletin {
   ctaUrl           String?         @map("cta_url")
   isPublished Boolean   @default(false) @map("is_published")
   publishedAt DateTime? @map("published_at")
+  /// Admin toggle: while true and this bulletin is published (and not expired), its
+  /// linked resources (via BulletinResource) are auto-disabled. See CLAUDE.md.
+  autoDisableResources Boolean @default(false) @map("auto_disable_resources")
+  resourceLinks BulletinResource[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("bulletins")
+}
+
+// ── Bulletin-triggered resource auto-disable (Decision: Bulletin-triggered resource auto-disable) ─
+
+model BulletinResource {
+  id         String   @id @default(cuid())
+  bulletinId String   @map("bulletin_id")
+  resourceId String   @map("resource_id")
+  bulletin   Bulletin @relation(fields: [bulletinId], references: [id], onDelete: Cascade)
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  // No updatedAt — a link either exists or doesn't; edits replace the row set, never mutate a row.
+
+  @@unique([bulletinId, resourceId])
+  @@map("bulletin_resources")
 }

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
+import { releaseBulletinResourceDisable } from '@/lib/bulletin-resource-disable'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +48,27 @@ export async function GET(request: Request) {
   for (const checkoutSessionId of checkoutSessionIdsToExpire) {
     await expirePaymongoCheckoutSession(checkoutSessionId)
   }
+
+  // Release resources whose disabling bulletin has expired — never touches isPublished
+  // or any other Bulletin field. See CLAUDE.md → Bulletin-triggered resource auto-disable.
+  const now = new Date()
+  await prisma.$transaction(async (tx) => {
+    const expiredBulletins = await tx.bulletin.findMany({
+      where: {
+        isPublished: true,
+        autoDisableResources: true,
+        expiresAt: { not: null, lte: now },
+      },
+      include: { resourceLinks: { select: { resourceId: true } } },
+    })
+
+    for (const bulletin of expiredBulletins) {
+      const resourceIds = bulletin.resourceLinks.map((l) => l.resourceId)
+      if (resourceIds.length > 0) {
+        await releaseBulletinResourceDisable(tx, resourceIds, bulletin.id)
+      }
+    }
+  })
 
   return Response.json({ cancelledCount: staleBookings.length }, { status: 200 })
 }

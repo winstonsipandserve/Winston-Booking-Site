@@ -176,3 +176,35 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
     },
   }
 }
+
+export interface ParsedBulletinResourceFields {
+  resourceIds: string[]
+  autoDisableResources: boolean
+}
+
+/** Parses the optional resource-linking fields (Affected Resources picker + auto-disable toggle). */
+export function parseResourceFields(
+  formData: FormData,
+): { error: string } | { fields: ParsedBulletinResourceFields } {
+  const autoDisableRaw = formData.get('autoDisableResources')
+  if (autoDisableRaw !== 'true' && autoDisableRaw !== 'false') {
+    return { error: 'autoDisableResources must be a boolean' }
+  }
+
+  const resourceIdsRaw = formData.get('resourceIds')
+  let resourceIds: string[] = []
+  if (typeof resourceIdsRaw === 'string' && resourceIdsRaw.trim() !== '') {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(resourceIdsRaw)
+    } catch {
+      return { error: 'resourceIds must be a valid JSON array' }
+    }
+    if (!Array.isArray(parsed) || !parsed.every((v) => typeof v === 'string')) {
+      return { error: 'resourceIds must be an array of strings' }
+    }
+    resourceIds = Array.from(new Set(parsed))
+  }
+
+  return { fields: { resourceIds, autoDisableResources: autoDisableRaw === 'true' } }
+}
