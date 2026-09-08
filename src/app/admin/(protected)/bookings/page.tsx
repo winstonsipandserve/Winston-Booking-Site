@@ -19,8 +19,13 @@ function formatSubmittedAt(createdAt: Date) {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'Asia/Manila',
   })
-  const time = createdAt.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+  const time = createdAt.toLocaleTimeString('en-PH', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'Asia/Manila',
+  })
   return { date, time }
 }
 
@@ -158,7 +163,9 @@ export default async function AdminBookingsPage({
                     {booking.resource.resourceType.name} — {booking.resource.label}
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                    {booking.customerNameSnapshot ?? '—'}
+                    <div className="max-w-[180px] truncate" title={booking.customerNameSnapshot ?? undefined}>
+                      {booking.customerNameSnapshot ?? '—'}
+                    </div>
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     <div>{date}</div>

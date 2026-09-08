@@ -127,7 +127,7 @@ export default async function AdminMembershipApplicationDetailPage({
           <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
             <span className="text-gray-500 dark:text-gray-400">Submitted</span>
             <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {application.createdAt.toLocaleString('en-PH')}
+              {application.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
             </span>
           </div>
         </section>
@@ -151,13 +151,13 @@ export default async function AdminMembershipApplicationDetailPage({
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
             <span className="text-gray-500 dark:text-gray-400">Start / Activation Date</span>
             <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {latestMembership.startDate.toLocaleString('en-PH')}
+              {latestMembership.startDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
             <span className="text-gray-500 dark:text-gray-400">Expiry Date</span>
             <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {latestMembership.endDate.toLocaleString('en-PH')}
+              {latestMembership.endDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
             </span>
           </div>
         </section>
@@ -182,7 +182,9 @@ export default async function AdminMembershipApplicationDetailPage({
             >
               <span className="text-gray-500 dark:text-gray-400">Reviewed At</span>
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                {application.reviewedAt ? application.reviewedAt.toLocaleString('en-PH') : '—'}
+                {application.reviewedAt
+                  ? application.reviewedAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
+                  : '—'}
               </span>
             </div>
             {application.status === 'rejected' && application.rejectionReason && (
@@ -265,7 +267,7 @@ export default async function AdminMembershipApplicationDetailPage({
                       className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
                     >
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                        {transaction.createdAt.toLocaleString('en-PH')}
+                        {transaction.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
                       </td>
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {CREDIT_TRANSACTION_REASON_LABELS[transaction.reason]}
@@ -317,7 +319,7 @@ export default async function AdminMembershipApplicationDetailPage({
                       className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
                     >
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                        {booking.startTime.toLocaleString('en-PH')}
+                        {booking.startTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
                       </td>
                       <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {booking.resource.resourceType.name} — {booking.resource.label}

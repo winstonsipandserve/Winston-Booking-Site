@@ -138,6 +138,7 @@ export default function BulletinList({ bulletins, resourceOptions }: BulletinLis
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
+                      timeZone: 'Asia/Manila',
                     })}
                   </p>
                 ) : (
