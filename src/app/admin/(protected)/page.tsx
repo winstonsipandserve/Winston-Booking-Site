@@ -22,7 +22,7 @@ export default async function AdminPage() {
           <DashboardStats stats={data.stats} />
           <DashboardCharts
             revenueTrend={data.revenueTrend}
-            membershipTierTrend={data.membershipTierTrend}
+            membershipRevenueTrend={data.membershipRevenueTrend}
             resourceBreakdown={data.resourceBreakdown}
           />
           <DashboardActivity

@@ -13,7 +13,8 @@ import { formatMembershipTier, formatShortDate } from '@/lib/format'
 
 export interface DashboardStats {
   bookingsToday: number
-  revenueThisMonthCentavos: number
+  bookingRevenueThisMonthCentavos: number
+  membershipRevenueThisMonthCentavos: number
   pendingApplications: number
   activeMemberships: number
   resourceUtilizationPct: number
@@ -27,11 +28,13 @@ export interface RevenueTrendPoint {
   golfCentavos: number
 }
 
-export interface MembershipTierTrendPoint {
+export interface MembershipRevenueTrendPoint {
   month: string
   threeMonthCentavos: number
   sixMonthCentavos: number
   twelveMonthCentavos: number
+  topUpCentavos: number
+  totalCentavos: number
 }
 
 type Sport = 'tennis' | 'pickleball' | 'golf'
@@ -73,7 +76,7 @@ export interface RecentApplication {
 export interface DashboardData {
   stats: DashboardStats
   revenueTrend: RevenueTrendPoint[]
-  membershipTierTrend: MembershipTierTrendPoint[]
+  membershipRevenueTrend: MembershipRevenueTrendPoint[]
   resourceBreakdown: ResourceBreakdownEntry[]
   recentBookings: RecentBooking[]
   recentApplications: RecentApplication[]
@@ -96,13 +99,16 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const [
     bookingsToday,
-    revenueAgg,
+    bookingRevenueAgg,
+    membershipPaymentRevenueAgg,
+    membershipTopUpRevenueAgg,
     pendingApplications,
     activeMemberships,
     weekBookings,
     activeResourceCount,
     paymentsForRevenue,
     membershipPaymentsForRevenue,
+    membershipTopUpPaymentsForRevenue,
     resourceGroupBy,
     recentBookingsRaw,
     recentApplicationsRaw,
@@ -112,7 +118,15 @@ export async function getDashboardData(): Promise<DashboardData> {
     }),
     prisma.payment.aggregate({
       _sum: { amountCentavos: true },
+      where: { status: 'paid', bookingId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
+    }),
+    prisma.membershipPayment.aggregate({
+      _sum: { amountCentavos: true },
       where: { status: 'paid', paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
+    }),
+    prisma.payment.aggregate({
+      _sum: { amountCentavos: true },
+      where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
     }),
     prisma.membershipApplication.count({ where: { status: 'pending' } }),
     prisma.membership.count({ where: { endDate: { gte: new Date() } } }),
@@ -126,7 +140,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     }),
     prisma.resource.count({ where: { isActive: true } }),
     prisma.payment.findMany({
-      where: { status: 'paid', paidAt: { gte: twelveMonthsAgoStart } },
+      where: { status: 'paid', bookingId: { not: null }, paidAt: { gte: twelveMonthsAgoStart } },
       select: {
         amountCentavos: true,
         paidAt: true,
@@ -136,6 +150,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     prisma.membershipPayment.findMany({
       where: { status: 'paid', paidAt: { gte: twelveMonthsAgoStart } },
       select: { amountCentavos: true, paidAt: true, tier: true },
+    }),
+    prisma.payment.findMany({
+      where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: twelveMonthsAgoStart } },
+      select: { amountCentavos: true, paidAt: true },
     }),
     prisma.booking.groupBy({
       by: ['resourceId'],
@@ -166,7 +184,10 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const stats: DashboardStats = {
     bookingsToday,
-    revenueThisMonthCentavos: revenueAgg._sum.amountCentavos ?? 0,
+    bookingRevenueThisMonthCentavos: bookingRevenueAgg._sum.amountCentavos ?? 0,
+    membershipRevenueThisMonthCentavos:
+      (membershipPaymentRevenueAgg._sum.amountCentavos ?? 0) +
+      (membershipTopUpRevenueAgg._sum.amountCentavos ?? 0),
     pendingApplications,
     activeMemberships,
     resourceUtilizationPct,
@@ -205,34 +226,51 @@ export async function getDashboardData(): Promise<DashboardData> {
     golfCentavos: b.golfCentavos,
   }))
 
-  const membershipTierBuckets = new Map<
+  const membershipRevenueBuckets = new Map<
     string,
-    { label: string; threeMonthCentavos: number; sixMonthCentavos: number; twelveMonthCentavos: number }
+    {
+      label: string
+      threeMonthCentavos: number
+      sixMonthCentavos: number
+      twelveMonthCentavos: number
+      topUpCentavos: number
+    }
   >()
   for (let i = 11; i >= 0; i--) {
     const monthStart = phMonthStartUtc(i)
     const label = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'Asia/Manila' }).format(monthStart)
-    membershipTierBuckets.set(toPhMonthKey(monthStart), {
+    membershipRevenueBuckets.set(toPhMonthKey(monthStart), {
       label,
       threeMonthCentavos: 0,
       sixMonthCentavos: 0,
       twelveMonthCentavos: 0,
+      topUpCentavos: 0,
     })
   }
   for (const p of membershipPaymentsForRevenue) {
     if (!p.paidAt) continue
-    const bucket = membershipTierBuckets.get(toPhMonthKey(p.paidAt))
+    const bucket = membershipRevenueBuckets.get(toPhMonthKey(p.paidAt))
     if (!bucket) continue
     if (p.tier === 'three_month') bucket.threeMonthCentavos += p.amountCentavos
     else if (p.tier === 'six_month') bucket.sixMonthCentavos += p.amountCentavos
     else if (p.tier === 'twelve_month') bucket.twelveMonthCentavos += p.amountCentavos
   }
-  const membershipTierTrend: MembershipTierTrendPoint[] = Array.from(membershipTierBuckets.values()).map((b) => ({
-    month: b.label,
-    threeMonthCentavos: b.threeMonthCentavos,
-    sixMonthCentavos: b.sixMonthCentavos,
-    twelveMonthCentavos: b.twelveMonthCentavos,
-  }))
+  for (const p of membershipTopUpPaymentsForRevenue) {
+    if (!p.paidAt) continue
+    const bucket = membershipRevenueBuckets.get(toPhMonthKey(p.paidAt))
+    if (!bucket) continue
+    bucket.topUpCentavos += p.amountCentavos
+  }
+  const membershipRevenueTrend: MembershipRevenueTrendPoint[] = Array.from(membershipRevenueBuckets.values()).map(
+    (b) => ({
+      month: b.label,
+      threeMonthCentavos: b.threeMonthCentavos,
+      sixMonthCentavos: b.sixMonthCentavos,
+      twelveMonthCentavos: b.twelveMonthCentavos,
+      topUpCentavos: b.topUpCentavos,
+      totalCentavos: b.threeMonthCentavos + b.sixMonthCentavos + b.twelveMonthCentavos + b.topUpCentavos,
+    }),
+  )
 
   const resourceIds = resourceGroupBy.map((g) => g.resourceId)
   const resources = resourceIds.length
@@ -267,5 +305,5 @@ export async function getDashboardData(): Promise<DashboardData> {
     submitted: formatShortDate(a.createdAt),
   }))
 
-  return { stats, revenueTrend, membershipTierTrend, resourceBreakdown, recentBookings, recentApplications }
+  return { stats, revenueTrend, membershipRevenueTrend, resourceBreakdown, recentBookings, recentApplications }
 }

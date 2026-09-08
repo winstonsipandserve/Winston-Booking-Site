@@ -10,7 +10,7 @@ import type { DashboardStats as DashboardStatsData } from '@/lib/dashboard-data'
 
 export default function DashboardStats({ stats }: { stats: DashboardStatsData }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
       <DashboardStatCard
         icon={<BookingsIcon className="h-5 w-5" />}
         label="Bookings Today"
@@ -18,8 +18,13 @@ export default function DashboardStats({ stats }: { stats: DashboardStatsData })
       />
       <DashboardStatCard
         icon={<RevenueIcon className="h-5 w-5" />}
-        label="Revenue This Month"
-        value={formatCentavos(stats.revenueThisMonthCentavos)}
+        label="Booking Revenue This Month"
+        value={formatCentavos(stats.bookingRevenueThisMonthCentavos)}
+      />
+      <DashboardStatCard
+        icon={<MembershipsIcon className="h-5 w-5" />}
+        label="Membership Revenue This Month"
+        value={formatCentavos(stats.membershipRevenueThisMonthCentavos)}
       />
       <DashboardStatCard
         icon={<MembershipsIcon className="h-5 w-5" />}
