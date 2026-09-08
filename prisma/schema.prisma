@@ -116,6 +116,18 @@ enum BulletinCustomerAction {
   WaitForFurtherNotice
 }
 
+enum AdminActivityAction {
+  membership_application_approved
+  membership_application_rejected
+  membership_renewal_link_sent
+  booking_rescheduled
+}
+
+enum AdminActivityEntityType {
+  membership_application
+  booking
+}
+
 // ── Resource model (Decision: Resource model) ─────────
 
 model ResourceType {
@@ -255,6 +267,7 @@ model AdminUser {
   initiatedRenewalPayments MembershipPayment[] @relation("MembershipPaymentInitiatedByAdmin")
   checkInLookupAttempts CheckInLookupAttempt[]
   passwordResetTokens AdminPasswordResetToken[]
+  activityLogs AdminActivityLog[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -575,4 +588,27 @@ model BulletinResource {
 
   @@unique([bulletinId, resourceId])
   @@map("bulletin_resources")
+}
+
+// ── Admin activity log (Decision: audit trail for admin-initiated actions) ─
+// Immutable audit row, same shape as BookingReschedule/MembershipCreditTransaction —
+// no updatedAt, corrections are new rows, never edits to the original.
+
+model AdminActivityLog {
+  id         String                   @id @default(cuid())
+  adminId    String                   @map("admin_id")
+  admin      AdminUser                @relation(fields: [adminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  action     AdminActivityAction
+  entityType AdminActivityEntityType  @map("entity_type")
+  /// Loose reference, deliberately not a real FK — this one table logs against
+  /// multiple entity types (membership_application, booking).
+  entityId    String   @map("entity_id")
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  // No updatedAt — immutable audit row, corrections are new rows, never edits.
+
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("admin_activity_logs")
 }
