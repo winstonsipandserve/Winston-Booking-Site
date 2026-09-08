@@ -4,6 +4,7 @@ import type { CreditTransactionReason } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getSignedUrl } from '@/lib/supabase-storage'
 import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
+import IdentityVerificationGallery from '@/components/admin/IdentityVerificationGallery'
 import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
 import { formatMembershipTier, formatCentavos } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
@@ -133,6 +134,19 @@ export default async function AdminMembershipApplicationDetailPage({
         </section>
       </div>
 
+      {application.status === 'pending' && (
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Identity Verification</h2>
+          <IdentityVerificationGallery
+            images={[
+              { label: 'Front', url: govIdFrontUrl },
+              { label: 'Back', url: govIdBackUrl },
+              { label: 'Selfie', url: govIdSelfieUrl },
+            ]}
+          />
+        </section>
+      )}
+
       {latestMembership && (
         <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Membership</h2>
@@ -163,81 +177,85 @@ export default async function AdminMembershipApplicationDetailPage({
         </section>
       )}
 
-      <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Review</h2>
-        {!application.reviewedById ? (
-          <p className="text-sm italic text-gray-400 dark:text-gray-500">Not yet reviewed</p>
-        ) : (
-          <>
-            <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-              <span className="text-gray-500 dark:text-gray-400">Reviewed By</span>
-              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.reviewedBy?.name}</span>
-            </div>
-            <div
-              className={`flex items-center justify-between gap-4 py-2 text-sm ${
-                application.status === 'rejected' && application.rejectionReason
-                  ? 'border-b border-gray-100 dark:border-gray-800'
-                  : 'last:border-0'
-              }`}
-            >
-              <span className="text-gray-500 dark:text-gray-400">Reviewed At</span>
-              <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                {application.reviewedAt
-                  ? application.reviewedAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
-                  : '—'}
-              </span>
-            </div>
-            {application.status === 'rejected' && application.rejectionReason && (
-              <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
-                <span className="text-gray-500 dark:text-gray-400">Rejection Reason</span>
-                <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.rejectionReason}</span>
+      {application.status !== 'pending' && (
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Review</h2>
+          {!application.reviewedById ? (
+            <p className="text-sm italic text-gray-400 dark:text-gray-500">Not yet reviewed</p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Reviewed By</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.reviewedBy?.name}</span>
               </div>
-            )}
-          </>
-        )}
-      </section>
+              <div
+                className={`flex items-center justify-between gap-4 py-2 text-sm ${
+                  application.status === 'rejected' && application.rejectionReason
+                    ? 'border-b border-gray-100 dark:border-gray-800'
+                    : 'last:border-0'
+                }`}
+              >
+                <span className="text-gray-500 dark:text-gray-400">Reviewed At</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {application.reviewedAt
+                    ? application.reviewedAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
+                    : '—'}
+                </span>
+              </div>
+              {application.status === 'rejected' && application.rejectionReason && (
+                <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+                  <span className="text-gray-500 dark:text-gray-400">Rejection Reason</span>
+                  <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.rejectionReason}</span>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
 
-      <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Government ID</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Front</p>
-            <a href={govIdFrontUrl} target="_blank" rel="noopener noreferrer">
-              <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                <img
-                  src={govIdFrontUrl}
-                  alt="Government ID — front"
-                  className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
-                />
-              </div>
-            </a>
+      {application.status !== 'pending' && (
+        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Government ID</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Front</p>
+              <a href={govIdFrontUrl} target="_blank" rel="noopener noreferrer">
+                <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
+                  <img
+                    src={govIdFrontUrl}
+                    alt="Government ID — front"
+                    className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
+                  />
+                </div>
+              </a>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Back</p>
+              <a href={govIdBackUrl} target="_blank" rel="noopener noreferrer">
+                <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
+                  <img
+                    src={govIdBackUrl}
+                    alt="Government ID — back"
+                    className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
+                  />
+                </div>
+              </a>
+            </div>
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Selfie</p>
+              <a href={govIdSelfieUrl} target="_blank" rel="noopener noreferrer">
+                <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
+                  <img
+                    src={govIdSelfieUrl}
+                    alt="Government ID — selfie"
+                    className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
+                  />
+                </div>
+              </a>
+            </div>
           </div>
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Back</p>
-            <a href={govIdBackUrl} target="_blank" rel="noopener noreferrer">
-              <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                <img
-                  src={govIdBackUrl}
-                  alt="Government ID — back"
-                  className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
-                />
-              </div>
-            </a>
-          </div>
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Selfie</p>
-            <a href={govIdSelfieUrl} target="_blank" rel="noopener noreferrer">
-              <div className="aspect-[4/3] overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
-                <img
-                  src={govIdSelfieUrl}
-                  alt="Government ID — selfie"
-                  className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
-                />
-              </div>
-            </a>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {latestMembership && (
         <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
@@ -345,12 +363,7 @@ export default async function AdminMembershipApplicationDetailPage({
         </section>
       )}
 
-      {application.status === 'pending' && (
-        <section>
-          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Review Actions</h2>
-          <MembershipReviewActions applicationId={application.id} />
-        </section>
-      )}
+      {application.status === 'pending' && <MembershipReviewActions applicationId={application.id} />}
 
       {displayStatus === 'expired' && (
         <section className="mt-6">

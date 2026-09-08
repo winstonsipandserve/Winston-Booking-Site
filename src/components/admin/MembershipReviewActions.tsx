@@ -36,25 +36,28 @@ export default function MembershipReviewActions({ applicationId }: { application
 
   return (
     <div>
-      <div className="mt-2 flex gap-3">
-        <button
-          type="button"
-          onClick={() => setIsApproveModalOpen(true)}
-          disabled={isApproving}
-          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-green-700 dark:hover:bg-green-600"
-        >
-          Approve
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsRejectModalOpen(true)}
-          disabled={isApproving}
-          className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40"
-        >
-          Reject
-        </button>
+      <div className="sticky bottom-0 z-20 -mx-6 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-white px-6 py-4 dark:border-gray-800 dark:bg-gray-900">
+        {error && <p className="w-full text-sm text-red-600 dark:text-red-400">{error}</p>}
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Review this application</p>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setIsApproveModalOpen(true)}
+            disabled={isApproving}
+            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-green-700 dark:hover:bg-green-600"
+          >
+            Approve
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsRejectModalOpen(true)}
+            disabled={isApproving}
+            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40"
+          >
+            Reject
+          </button>
+        </div>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
       <ConfirmModal
         isOpen={isApproveModalOpen}
