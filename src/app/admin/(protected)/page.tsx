@@ -21,7 +21,6 @@ export default async function AdminPage() {
         <div className="flex flex-col gap-6">
           <DashboardStats stats={data.stats} />
           <DashboardCharts
-            bookingsTrend={data.bookingsTrend}
             revenueTrend={data.revenueTrend}
             resourceBreakdown={data.resourceBreakdown}
           />
