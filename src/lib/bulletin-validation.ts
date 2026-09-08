@@ -12,6 +12,7 @@ export const VALID_CATEGORIES = [
   'Community',
   'General',
   'FacilityMaintenance',
+  'Promotion',
 ] as const
 export type BulletinCategoryValue = (typeof VALID_CATEGORIES)[number]
 
@@ -22,6 +23,28 @@ export const CATEGORY_LABELS: Record<BulletinCategoryValue, string> = {
   Community: 'Community Event',
   General: 'General Announcement',
   FacilityMaintenance: 'Facility Maintenance',
+  Promotion: 'Promotion',
+}
+
+export const VALID_CUSTOMER_ELIGIBILITIES = [
+  'Everyone',
+  'MembersOnly',
+  'NewCustomers',
+  'ReturningCustomers',
+  'SpecificMembershipTier',
+] as const
+export type BulletinCustomerEligibilityValue = (typeof VALID_CUSTOMER_ELIGIBILITIES)[number]
+
+export const CUSTOMER_ELIGIBILITY_LABELS: Record<BulletinCustomerEligibilityValue, string> = {
+  Everyone: 'Everyone',
+  MembersOnly: 'Members Only',
+  NewCustomers: 'New Customers',
+  ReturningCustomers: 'Returning Customers',
+  SpecificMembershipTier: 'Specific Membership Tier',
+}
+
+export function isValidCustomerEligibility(value: unknown): value is BulletinCustomerEligibilityValue {
+  return typeof value === 'string' && (VALID_CUSTOMER_ELIGIBILITIES as readonly string[]).includes(value)
 }
 
 export const VALID_BOOKING_IMPACTS = [
@@ -74,14 +97,71 @@ export const BULLETIN_CATEGORY_RULES: Record<
     requireEventEndAt: boolean
     requireExpiresAt: boolean
     requireCta: boolean
+    /** affectedFacility/impact/action — required for every category except Promotion. */
+    requireImpactFields: boolean
+    /** discountSummary — required for Promotion only. */
+    requireDiscountSummary: boolean
   }
 > = {
-  Renovation: { requireImage: true, requireEventEndAt: true, requireExpiresAt: true, requireCta: false },
-  Closure: { requireImage: false, requireEventEndAt: true, requireExpiresAt: true, requireCta: false },
-  Tournament: { requireImage: true, requireEventEndAt: true, requireExpiresAt: true, requireCta: true },
-  Community: { requireImage: true, requireEventEndAt: true, requireExpiresAt: true, requireCta: true },
-  General: { requireImage: false, requireEventEndAt: false, requireExpiresAt: false, requireCta: false },
-  FacilityMaintenance: { requireImage: false, requireEventEndAt: true, requireExpiresAt: true, requireCta: false },
+  Renovation: {
+    requireImage: true,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: false,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  Closure: {
+    requireImage: false,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: false,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  Tournament: {
+    requireImage: true,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: true,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  Community: {
+    requireImage: true,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: true,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  General: {
+    requireImage: false,
+    requireEventEndAt: false,
+    requireExpiresAt: false,
+    requireCta: false,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  FacilityMaintenance: {
+    requireImage: false,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: false,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  // A promotion doesn't have a facility/impact/action the way a closure/maintenance
+  // notice does, and never needs an expiry beyond its own eventEndAt (the validity
+  // window). It always needs an end date — an open-ended promotion doesn't make sense.
+  Promotion: {
+    requireImage: false,
+    requireEventEndAt: true,
+    requireExpiresAt: false,
+    requireCta: false,
+    requireImpactFields: false,
+    requireDiscountSummary: true,
+  },
 }
 
 export function isNonEmptyString(value: unknown): value is string {
@@ -126,11 +206,14 @@ export interface ParsedBulletinFields {
   isPublished: boolean
   socialPlatform: string | null
   socialUrl: string | null
-  affectedFacility: string
-  impact: string
-  action: string
+  affectedFacility: string | null
+  impact: string | null
+  action: string | null
   bookingImpact: BulletinBookingImpactValue
   customerActionType: BulletinCustomerActionValue
+  promoCode: string | null
+  discountSummary: string | null
+  customerEligibility: BulletinCustomerEligibilityValue | null
   eventStartAt: Date
   eventEndAt: Date | null
   expiresAt: Date | null
@@ -150,12 +233,15 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   if (!isNonEmptyString(body)) return { error: 'Body is required' }
   if (!isValidCategory(category)) {
     return {
-      error: 'category must be one of Renovation, Closure, Tournament, Community, General, FacilityMaintenance',
+      error:
+        'category must be one of Renovation, Closure, Tournament, Community, General, FacilityMaintenance, Promotion',
     }
   }
   if (isPublishedRaw !== 'true' && isPublishedRaw !== 'false') {
     return { error: 'isPublished must be a boolean' }
   }
+
+  const rules = BULLETIN_CATEGORY_RULES[category]
 
   const socialPlatform = getOptionalString(formData, 'socialPlatform')
   const socialUrl = getOptionalString(formData, 'socialUrl')
@@ -167,11 +253,13 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   }
 
   const affectedFacility = getOptionalString(formData, 'affectedFacility')
-  if (affectedFacility === null) return { error: 'Affected Facility is required' }
+  if (rules.requireImpactFields && affectedFacility === null) {
+    return { error: 'Affected Facility is required' }
+  }
   const impact = getOptionalString(formData, 'impact')
-  if (impact === null) return { error: 'Impact is required' }
+  if (rules.requireImpactFields && impact === null) return { error: 'Impact is required' }
   const action = getOptionalString(formData, 'action')
-  if (action === null) return { error: 'Action is required' }
+  if (rules.requireImpactFields && action === null) return { error: 'Action is required' }
   const bookingImpact = formData.get('bookingImpact')
   if (!isValidBookingImpact(bookingImpact)) {
     return { error: 'Booking Impact is required' }
@@ -179,6 +267,20 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   const customerActionType = formData.get('customerActionType')
   if (!isValidCustomerAction(customerActionType)) {
     return { error: 'Customer Action is required' }
+  }
+
+  const promoCode = getOptionalString(formData, 'promoCode')
+  const discountSummary = getOptionalString(formData, 'discountSummary')
+  if (rules.requireDiscountSummary && discountSummary === null) {
+    return { error: 'Discount Summary is required for this category' }
+  }
+  const customerEligibilityRaw = formData.get('customerEligibility')
+  let customerEligibility: BulletinCustomerEligibilityValue | null = null
+  if (customerEligibilityRaw !== null && customerEligibilityRaw !== '') {
+    if (!isValidCustomerEligibility(customerEligibilityRaw)) {
+      return { error: 'customerEligibility must be a valid value' }
+    }
+    customerEligibility = customerEligibilityRaw
   }
 
   const ctaLabel = getOptionalString(formData, 'ctaLabel')
@@ -195,7 +297,6 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   const expiresAtResult = parseOptionalDate(formData, 'expiresAt')
   if ('error' in expiresAtResult) return { error: expiresAtResult.error }
 
-  const rules = BULLETIN_CATEGORY_RULES[category]
   if (rules.requireEventEndAt && eventEndAtResult.value === null) {
     return { error: 'Event End is required for this category' }
   }
@@ -220,6 +321,9 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
       action,
       bookingImpact,
       customerActionType,
+      promoCode,
+      discountSummary,
+      customerEligibility,
       eventStartAt: eventStartAtResult.value,
       eventEndAt: eventEndAtResult.value,
       expiresAt: expiresAtResult.value,

@@ -11,6 +11,8 @@ import {
   BOOKING_IMPACT_LABELS,
   VALID_CUSTOMER_ACTIONS,
   CUSTOMER_ACTION_LABELS,
+  VALID_CUSTOMER_ELIGIBILITIES,
+  CUSTOMER_ELIGIBILITY_LABELS,
 } from '@/lib/bulletin-validation'
 
 export interface ResourceOption {
@@ -29,6 +31,7 @@ const CATEGORIES = [
   { value: 'Community', label: 'Community Event' },
   { value: 'General', label: 'General Announcement' },
   { value: 'FacilityMaintenance', label: 'Facility Maintenance' },
+  { value: 'Promotion', label: 'Promotion' },
 ] as const
 
 function toDateTimeLocalValue(date: Date | null | undefined): string {
@@ -90,6 +93,9 @@ function BulletinForm({
   const [action, setAction] = useState(bulletin?.action ?? '')
   const [bookingImpact, setBookingImpact] = useState<string>(bulletin?.bookingImpact ?? '')
   const [customerActionType, setCustomerActionType] = useState<string>(bulletin?.customerActionType ?? '')
+  const [promoCode, setPromoCode] = useState(bulletin?.promoCode ?? '')
+  const [discountSummary, setDiscountSummary] = useState(bulletin?.discountSummary ?? '')
+  const [customerEligibility, setCustomerEligibility] = useState<string>(bulletin?.customerEligibility ?? '')
   const [eventStartAt, setEventStartAt] = useState(toDateTimeLocalValue(bulletin?.eventStartAt))
   const [eventEndAt, setEventEndAt] = useState(toDateTimeLocalValue(bulletin?.eventEndAt))
   const [expiresAt, setExpiresAt] = useState(toDateInputValue(bulletin?.expiresAt))
@@ -106,6 +112,17 @@ function BulletinForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const rules = category && isValidCategory(category) ? BULLETIN_CATEGORY_RULES[category] : null
+  const isPromotion = category === 'Promotion'
+
+  function handleCategoryChange(value: string) {
+    setCategory(value)
+    // A promotion doesn't disrupt bookings, so don't make the admin pick a Booking
+    // Impact/Customer Action — default them instead of showing blank required selects.
+    if (value === 'Promotion') {
+      if (!bookingImpact) setBookingImpact('NoImpact')
+      if (!customerActionType) setCustomerActionType('NoActionRequired')
+    }
+  }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
@@ -142,15 +159,15 @@ function BulletinForm({
       setError('Category is required')
       return
     }
-    if (!affectedFacility.trim()) {
+    if (rules?.requireImpactFields && !affectedFacility.trim()) {
       setError('Affected Facility is required')
       return
     }
-    if (!impact.trim()) {
+    if (rules?.requireImpactFields && !impact.trim()) {
       setError('Impact is required')
       return
     }
-    if (!action.trim()) {
+    if (rules?.requireImpactFields && !action.trim()) {
       setError('Action is required')
       return
     }
@@ -160,6 +177,10 @@ function BulletinForm({
     }
     if (!customerActionType) {
       setError('Customer Action is required')
+      return
+    }
+    if (rules?.requireDiscountSummary && !discountSummary.trim()) {
+      setError('Discount Summary is required for this category')
       return
     }
     if (!eventStartAt) {
@@ -214,6 +235,9 @@ function BulletinForm({
     if (action.trim()) formData.set('action', action.trim())
     if (bookingImpact) formData.set('bookingImpact', bookingImpact)
     if (customerActionType) formData.set('customerActionType', customerActionType)
+    if (promoCode.trim()) formData.set('promoCode', promoCode.trim())
+    if (discountSummary.trim()) formData.set('discountSummary', discountSummary.trim())
+    if (customerEligibility) formData.set('customerEligibility', customerEligibility)
     if (eventStartAt) formData.set('eventStartAt', eventStartAt)
     if (eventEndAt) formData.set('eventEndAt', eventEndAt)
     if (expiresAt) formData.set('expiresAt', expiresAt)
@@ -257,7 +281,7 @@ function BulletinForm({
             Category *
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               autoFocus
               className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             >
@@ -306,9 +330,52 @@ function BulletinForm({
         </label>
       </FormSection>
 
+      {isPromotion && (
+        <FormSection title="Promotion Details">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+              Promo Code
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+              Discount Summary *
+              <input
+                type="text"
+                value={discountSummary}
+                onChange={(e) => setDiscountSummary(e.target.value)}
+                placeholder="e.g. 20% off"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              />
+            </label>
+          </div>
+
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+            Customer Eligibility
+            <select
+              value={customerEligibility}
+              onChange={(e) => setCustomerEligibility(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >
+              <option value="">None specified</option>
+              {VALID_CUSTOMER_ELIGIBILITIES.map((value) => (
+                <option key={value} value={value}>
+                  {CUSTOMER_ELIGIBILITY_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </FormSection>
+      )}
+
       <FormSection title="Impact Details">
         <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-          Affected Facility *
+          Affected Facility{rules?.requireImpactFields ? ' *' : ''}
           <input
             type="text"
             value={affectedFacility}
@@ -318,7 +385,7 @@ function BulletinForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-          Impact *
+          Impact{rules?.requireImpactFields ? ' *' : ''}
           <textarea
             value={impact}
             onChange={(e) => setImpact(e.target.value)}
@@ -328,7 +395,7 @@ function BulletinForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-          Action *
+          Action{rules?.requireImpactFields ? ' *' : ''}
           <textarea
             value={action}
             onChange={(e) => setAction(e.target.value)}
@@ -337,43 +404,45 @@ function BulletinForm({
           />
         </label>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-            Booking Impact *
-            <select
-              value={bookingImpact}
-              onChange={(e) => setBookingImpact(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-            >
-              <option value="" disabled>
-                Select booking impact
-              </option>
-              {VALID_BOOKING_IMPACTS.map((value) => (
-                <option key={value} value={value}>
-                  {BOOKING_IMPACT_LABELS[value]}
+        {!isPromotion && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+              Booking Impact *
+              <select
+                value={bookingImpact}
+                onChange={(e) => setBookingImpact(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              >
+                <option value="" disabled>
+                  Select booking impact
                 </option>
-              ))}
-            </select>
-          </label>
+                {VALID_BOOKING_IMPACTS.map((value) => (
+                  <option key={value} value={value}>
+                    {BOOKING_IMPACT_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-            Customer Action *
-            <select
-              value={customerActionType}
-              onChange={(e) => setCustomerActionType(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-            >
-              <option value="" disabled>
-                Select customer action
-              </option>
-              {VALID_CUSTOMER_ACTIONS.map((value) => (
-                <option key={value} value={value}>
-                  {CUSTOMER_ACTION_LABELS[value]}
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+              Customer Action *
+              <select
+                value={customerActionType}
+                onChange={(e) => setCustomerActionType(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              >
+                <option value="" disabled>
+                  Select customer action
                 </option>
-              ))}
-            </select>
-          </label>
-        </div>
+                {VALID_CUSTOMER_ACTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {CUSTOMER_ACTION_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
       </FormSection>
 
       <FormSection title="Scheduling">

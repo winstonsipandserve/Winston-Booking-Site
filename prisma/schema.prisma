@@ -85,6 +85,15 @@ enum BulletinCategory {
   Community
   General
   FacilityMaintenance
+  Promotion
+}
+
+enum BulletinCustomerEligibility {
+  Everyone
+  MembersOnly
+  NewCustomers
+  ReturningCustomers
+  SpecificMembershipTier
 }
 
 enum ResourceDisabledReason {
@@ -530,6 +539,12 @@ model Bulletin {
   action           String?
   bookingImpact       BulletinBookingImpact?  @map("booking_impact")
   customerActionType  BulletinCustomerAction? @map("customer_action_type")
+  /// Display-only Promotion-category fields — never validated/redeemed against a real
+  /// price; the discount itself is applied manually by an admin via PricingRule. See
+  /// CLAUDE.md's Bulletin / Promotion category decision.
+  promoCode           String?                       @map("promo_code")
+  discountSummary     String?                       @map("discount_summary")
+  customerEligibility BulletinCustomerEligibility?  @map("customer_eligibility")
   eventStartAt     DateTime?       @map("event_start_at")
   eventEndAt       DateTime?       @map("event_end_at")
   expiresAt        DateTime?       @map("expires_at")
