@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -43,6 +44,7 @@ export default function ForgotPasswordForm() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+      <LoadingOverlay isOpen={submitting} label="Sending…" />
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="email" className="text-sm font-medium text-brand-dark">
@@ -69,7 +71,7 @@ export default function ForgotPasswordForm() {
           disabled={submitting}
           className="mt-2 rounded-none bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
         >
-          {submitting ? 'Sending…' : 'Send Reset Link'}
+          Send Reset Link
         </button>
       </form>
     </div>

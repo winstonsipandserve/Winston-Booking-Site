@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { MembershipTier } from '@prisma/client'
 import { formatMembershipTier } from '@/lib/format'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 interface RenewMembershipButtonProps {
   tier: MembershipTier
@@ -40,6 +41,7 @@ export default function RenewMembershipButton({ tier }: RenewMembershipButtonPro
 
   return (
     <div className="flex flex-col gap-2">
+      <LoadingOverlay isOpen={submitting} label="Redirecting to payment…" />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="button"
@@ -47,7 +49,7 @@ export default function RenewMembershipButton({ tier }: RenewMembershipButtonPro
         disabled={submitting}
         className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50"
       >
-        {submitting ? 'Redirecting to payment…' : `Renew — ${formatMembershipTier(tier)}`}
+        {`Renew — ${formatMembershipTier(tier)}`}
       </button>
     </div>
   )

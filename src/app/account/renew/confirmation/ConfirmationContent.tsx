@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import MembershipRenewalConfirmation from '@/components/membership/MembershipRenewalConfirmation'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 const POLL_INTERVAL_MS = 2000
 const MAX_POLLS = 15
@@ -130,6 +131,7 @@ export default function ConfirmationContent() {
     if (stalled) {
       return (
         <div className="flex flex-col items-center gap-3 text-center">
+          <LoadingOverlay isOpen={checkingAgain} label="Checking…" />
           <p className="text-brand-dark/60">
             We&apos;re having trouble reaching the server. Please check again.
           </p>
@@ -139,7 +141,7 @@ export default function ConfirmationContent() {
             disabled={checkingAgain}
             className={CHECK_AGAIN_BUTTON_CLASSES}
           >
-            {checkingAgain ? 'Checking…' : 'Check Again'}
+            Check Again
           </button>
         </div>
       )
@@ -153,6 +155,7 @@ export default function ConfirmationContent() {
 
   return (
     <div className="flex flex-col items-center gap-3 text-center">
+      <LoadingOverlay isOpen={checkingAgain} label="Checking…" />
       <p className="text-brand-dark/60">
         {stalled
           ? 'This is taking longer than expected. You can check again, or contact us if this persists.'
@@ -165,7 +168,7 @@ export default function ConfirmationContent() {
           disabled={checkingAgain}
           className={CHECK_AGAIN_BUTTON_CLASSES}
         >
-          {checkingAgain ? 'Checking…' : 'Check Again'}
+          Check Again
         </button>
       )}
     </div>

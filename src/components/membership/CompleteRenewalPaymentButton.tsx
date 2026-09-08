@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 interface CompleteRenewalPaymentButtonProps {
   membershipPaymentId: string
@@ -38,6 +39,7 @@ export default function CompleteRenewalPaymentButton({
 
   return (
     <div className="flex flex-col gap-2">
+      <LoadingOverlay isOpen={submitting} label="Redirecting to payment…" />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="button"
@@ -45,7 +47,7 @@ export default function CompleteRenewalPaymentButton({
         disabled={submitting}
         className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50"
       >
-        {submitting ? 'Redirecting to payment…' : 'Complete Renewal Payment'}
+        Complete Renewal Payment
       </button>
     </div>
   )

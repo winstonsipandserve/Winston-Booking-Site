@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { getInitials } from '@/components/account/AccountProfile'
 import Modal from '@/components/ui/Modal'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -236,6 +237,7 @@ export default function Navbar() {
       )}
 
       <Modal isOpen={signOutModalOpen} onClose={() => setSignOutModalOpen(false)} title="Sign Out">
+        <LoadingOverlay isOpen={isPending} label="Signing Out…" />
         <p className="text-sm text-brand-dark/70">
           You&apos;ll need to sign in again to access your account. Continue?
         </p>
@@ -254,7 +256,7 @@ export default function Navbar() {
             disabled={isPending}
             className="rounded-none bg-accent-primary px-4 py-1.5 text-sm font-semibold text-brand-light hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? 'Signing Out…' : 'Sign Out'}
+            Sign Out
           </button>
         </div>
       </Modal>

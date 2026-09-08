@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { formatCentavos } from '@/lib/format'
 import { CheckIcon } from '@/components/ui/Icons'
 import Modal from '@/components/ui/Modal'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 // Perks copied verbatim from PROJECT_CONTEXT.md's Membership Tiers → Perks line.
 const PERKS = ['Priority bookings', 'Facility use', 'Complimentary F&B (via credit)', 'Exclusive event access']
@@ -223,6 +224,7 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
         }}
         title="Regenerate QR Code"
       >
+        <LoadingOverlay isOpen={isPending} label="Regenerating…" />
         <p className="text-sm text-brand-dark/70">
           Your current QR code will stop working immediately. Continue?
         </p>
@@ -245,7 +247,7 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
             disabled={isPending}
             className="rounded-lg bg-accent-primary px-4 py-1.5 text-sm font-semibold text-brand-light hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? 'Regenerating…' : 'Regenerate'}
+            Regenerate
           </button>
         </div>
       </Modal>
