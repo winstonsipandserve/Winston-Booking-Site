@@ -130,7 +130,7 @@ These are locked in. Don't deviate without discussing first.
 
 - **Prisma schema**: PascalCase model names, snake_case DB columns via `@map`, `cuid()` IDs, money fields as `Int` (centavos), required `createdAt`/`updatedAt` timestamps on all models — **except `BookingReschedule`**, which is `createdAt`-only by design (see "Architecture Decisions" for why).
 - **New tables**: every new table must enable RLS with explicit deny-all policies for `anon` and `authenticated` in the same migration that creates it — see Architecture Decisions → Row Level Security. Don't defer this to a follow-up migration.
-- **Test/cleanup script safety**: Any disposable script under `scripts/` that deletes data as part of a testing pass must scope every delete to explicitly recorded test-created row IDs (captured at creation time, passed directly to the delete call) — never to a resource-ID, date-range, or time-window query, even one that looks safe. A range-based delete can silently match pre-existing real data alongside the intended test rows. This rule exists because of a real incident — see PROGRESS.md's 2026-09-04 admin business-logic testing pass entry for the concrete case.
+- **Throwaway-script data safety**: Any disposable script that deletes data as part of a testing or verification pass must scope every delete to explicitly recorded row IDs — captured at creation time and passed directly to the delete call — never to a resource-ID, date-range, or time-window query, even one that looks safe. A range-based delete can silently match pre-existing data alongside the intended test rows. This rule exists because of a real incident where exactly that happened.
 - **API routes**: Route handlers live under `src/app/api/`, return `Response.json(...)` with explicit status codes (400 validation, 401 auth, 409 conflict, 500 unexpected). Member status for pricing is always derived server-side (`Customer` → active `Membership` check), never trusted from the request body or a client session — this holds even once real Auth.js wiring for member login is built. A shared Prisma client singleton lives at `src/lib/prisma.ts`; future routes should import it rather than instantiating `new PrismaClient()` per-route.
 - **Components**: Folder-per-feature under `src/components/` (e.g. `src/components/booking/`), PascalCase filenames matching the exported component (`BookingForm.tsx`, `BookingConfirmation.tsx`). Add `'use client'` at the top of any component that uses state, effects, or browser APIs; leave server components (e.g. page files that don't need interactivity) without it. Shared, non-component helpers (formatting, etc.) live under `src/lib/`.
 - **Multi-step wizards**: Individual steps live in a `steps/` subfolder under the owning feature (e.g. `src/components/booking/steps/`), one component per step plus a `StepIndicator`. All wizard state (including the current step) is lifted to the top-level orchestrator component and passed down as props — steps themselves hold no state — so navigating Back and forward again never resets a previously entered value.
@@ -151,6 +151,8 @@ Use these when the task matches — don't reinvent what they already encode.
 
 **Deliberately not built as skills**: git commit workflow and browser verification are handled manually (see Workflow section below) — an ambient skill here would conflict with that gate.
 
+**Where they live**: `.claude/skills/` holds the 3 project-specific skills above as real directories (tracked), plus symlinks to the 11 general design/animation skills whose actual content lives in `.agents/skills/` (also tracked, manifest in `skills-lock.json`, installed via `npx skills`). Those 11 symlinks are gitignored by name so they aren't committed twice; a new project-specific skill added under `.claude/skills/` is tracked normally with no `.gitignore` change needed.
+
 ---
 
 ## MCP Servers
@@ -158,7 +160,7 @@ Use these when the task matches — don't reinvent what they already encode.
 - **Supabase** — official, OAuth-authenticated, **read-only**, scoped to `project_ref=vsmjybtidvmzvicdpkdo`. Docs/database/debugging/development features only. Safe to commit config (no secrets in it).
 - **Playwright** — official `@playwright/mcp`, project-scoped, for browser-based verification.
 - **Context7** — for current Next.js/Prisma/PayMongo/Auth.js documentation lookups.
-- **Resend** — official hosted MCP (`https://mcp.resend.com/mcp`), OAuth-authenticated, connected in both this planning chat and Claude Code CLI. Gives direct tool access to Resend's platform (send/list/cancel emails, delivery logs, domain verification, contacts, webhooks) — useful for VERIFY steps that previously required manually checking the Resend dashboard (e.g. the 2026-08-26 activation-email delivery confirmation).
+- **Resend** — official hosted MCP (`https://mcp.resend.com/mcp`), OAuth-authenticated. Gives direct tool access to Resend's platform (send/list/cancel emails, delivery logs, domain verification, contacts, webhooks) — use it to confirm email delivery instead of manually checking the Resend dashboard.
 
 ---
 
@@ -191,17 +193,16 @@ Names and purpose only — actual values live in `.env.local` (never committed) 
 
 This is Arjay's process — Claude Code should support it, not route around it:
 
-1. Planning and prompt drafting happens in a dedicated Claude Project (this repo's context is attached there).
-2. Finalized prompts are pasted into Claude Code, run against this local repo.
-3. Output is manually reviewed and validated (including browser verification where relevant) — not auto-approved.
-4. Git operations (`add`, `commit`, `push`) are done manually, not automated by Claude Code. Prompts that produce commits should end with an explicit git block for Arjay to review before running, not run automatically.
+1. Tasks are discussed and planned **directly in Claude Code**. There is no external prompt-drafting step: Arjay describes the task in conversation, and planning happens here against the live repo. (This replaces an earlier workflow that drafted prompts in a separate Claude Project — if you find docs or conventions written around "the originating prompt," they are stale.)
+2. Output is manually reviewed and validated (including browser verification where relevant) — not auto-approved.
+3. Git operations (`add`, `commit`, `push`) are done manually, not automated by Claude Code. Work that produces a commit should end with an explicit git block for Arjay to review before running, not run automatically.
 
 ### Branch Promotion Policy
 
 Promotion between branches is manual — no automated CI/CD merge gates.
 
 - **`dev` → `staging`**: Merge once a change has passed local
-  verification (per the VERIFY steps in its originating prompt). Push
+  verification (per the verification agreed for that change). Push
   to `staging` manually.
 - **`staging` → `main`**: Only after verifying against the deployed
   `staging` environment itself (not just local) — this is the last
@@ -220,6 +221,7 @@ Promotion between branches is manual — no automated CI/CD merge gates.
 - Dev server: `npm run dev`
 - Prisma migrate: `npm run db:migrate`
 - Prisma studio: `npm run db:studio`
+- Prisma seed: `npm run db:seed`
 - Tests: TBD
 
 Note: Prisma CLI commands are wrapped with `dotenv-cli` (`dotenv -e .env.local --`) because Prisma's CLI only auto-reads a file literally named `.env` — it does not read `.env.local` the way Next.js does at runtime. `.env.local` remains the single source of truth; do not create a second `.env` file.
