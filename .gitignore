@@ -36,14 +36,9 @@ pnpm-debug.log*
 # and skills-lock.json is the manifest). Regenerate with `npx skills`.
 # Listed by name so the project's own skills under .claude/skills/ stay tracked.
 /.claude/skills/animate
-/.claude/skills/animation-vocabulary
-/.claude/skills/apple-design
-/.claude/skills/ask-sonner
 /.claude/skills/emil-design-eng
-/.claude/skills/find-animation-opportunities
 /.claude/skills/impeccable
 /.claude/skills/improve-animations
-/.claude/skills/pick-ui-library
 /.claude/skills/prototype
 /.claude/skills/review-animations
 
