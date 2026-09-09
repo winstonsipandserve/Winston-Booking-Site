@@ -1,0 +1,38 @@
+- generic [active] [ref=f10e1]:
+  - generic [ref=f10e2]:
+    - banner [ref=f10e3]:
+      - generic [ref=f10e4]:
+        - img "Winston Sip & Serve" [ref=f10e5]
+        - generic [ref=f10e6]: Winston Admin
+      - generic [ref=f10e7]:
+        - generic "winstonsipandserve@gmail.com" [ref=f10e8]: WI
+        - button "Sign Out" [ref=f10e9]
+    - generic [ref=f10e13]:
+      - complementary [ref=f10e14]:
+        - generic [ref=f10e15]:
+          - generic [ref=f10e16]: Menu
+          - button "Collapse sidebar" [ref=f10e17]
+        - navigation [ref=f10e21]:
+          - link "Dashboard" [ref=f10e22] [cursor=pointer]:
+            - /url: /admin
+          - link "Bookings" [ref=f10e29] [cursor=pointer]:
+            - /url: /admin/bookings
+          - link "Resources & Pricing" [ref=f10e35] [cursor=pointer]:
+            - /url: /admin/resources
+          - link "Memberships" [ref=f10e40] [cursor=pointer]:
+            - /url: /admin/memberships
+          - link "Bulletin" [ref=f10e47] [cursor=pointer]:
+            - /url: /admin/bulletin
+          - link "Check-In" [ref=f10e52] [cursor=pointer]:
+            - /url: /admin/check-in
+          - link "Settings" [ref=f10e60] [cursor=pointer]:
+            - /url: /admin/settings
+      - main [ref=f10e65]:
+        - generic [ref=f10e66]:
+          - heading "Check-In" [level=1] [ref=f10e68]
+          - generic [ref=f10e70]:
+            - generic [ref=f10e71]:
+              - button "Scan" [ref=f10e72]
+              - button "Enter Code" [ref=f10e73]
+            - paragraph [ref=f10e74]: Choose Scan or Enter Code to check in a member.
+  - button "Open Next.js Dev Tools" [ref=f10e80] [cursor=pointer]

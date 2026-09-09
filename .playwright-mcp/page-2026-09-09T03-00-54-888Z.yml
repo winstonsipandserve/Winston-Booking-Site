@@ -1,0 +1,14 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e6] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=f2e7]
+    - generic [ref=f2e11]:
+      - button "Open issues overlay" [ref=f2e12]:
+        - generic [ref=f2e13]:
+          - generic [aria-hidden] [ref=f2e14]: "-1"
+          - generic [ref=f2e15]: "0"
+      - button "Collapse issues badge" [ref=f2e16]
+  - generic [ref=f2e20]:
+    - heading "This page couldn’t load" [level=1] [ref=f2e23]
+    - paragraph [ref=f2e24]: A server error occurred. Reload to try again.
+    - button "Reload" [ref=f2e27] [cursor=pointer]
+  - paragraph [ref=f2e28]: ERROR 4216388008

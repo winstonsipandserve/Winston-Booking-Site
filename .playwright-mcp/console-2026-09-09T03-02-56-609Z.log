@@ -1,0 +1,14 @@
+[     330ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
+[     390ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
+[   90841ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
+[   90971ms] [LOG] [Fast Refresh] done in 238ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_1e8vcs8._.js:776
+[  156827ms] Error: Minified React error #418; visit https://react.dev/errors/418?args[]=text&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at rD (https://checkout.paymongo.com/_next/static/chunks/12cd7020-d99c82c1d356df45.js:1:35056)
+    at rO (https://checkout.paymongo.com/_next/static/chunks/12cd7020-d99c82c1d356df45.js:1:36089)
+    at https://checkout.paymongo.com/_next/static/chunks/12cd7020-d99c82c1d356df45.js:1:118077
+    at ix (https://checkout.paymongo.com/_next/static/chunks/12cd7020-d99c82c1d356df45.js:1:122949)
+    at ik (https://checkout.paymongo.com/_next/static/chunks/12cd7020-d99c82c1d356df45.js:1:114737)
+    at https://checkout.paymongo.com/_next/static/chunks/12cd7020-d99c82c1d356df45.js:1:110724
+    at iu (https://checkout.paymongo.com/_next/static/chunks/12cd7020-d99c82c1d356df45.js:1:110825)
+    at iX (https://checkout.paymongo.com/_next/static/chunks/12cd7020-d99c82c1d356df45.js:1:132928)
+    at MessagePort.w (https://checkout.paymongo.com/_next/static/chunks/340-9793654b712bff05.js:1:76969)

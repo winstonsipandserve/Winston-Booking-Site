@@ -1,0 +1,56 @@
+- generic [active] [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - banner [ref=f7e3]:
+      - generic [ref=f7e4]:
+        - img "Winston Sip & Serve" [ref=f7e5]
+        - generic [ref=f7e6]: Winston Admin
+      - generic [ref=f7e7]:
+        - generic "winstonsipandserve@gmail.com" [ref=f7e8]: WI
+        - button "Sign Out" [ref=f7e9]
+    - generic [ref=f7e13]:
+      - complementary [ref=f7e14]:
+        - generic [ref=f7e15]:
+          - generic [ref=f7e16]: Menu
+          - button "Collapse sidebar" [ref=f7e17]
+        - navigation [ref=f7e21]:
+          - link "Dashboard" [ref=f7e22] [cursor=pointer]:
+            - /url: /admin
+          - link "Bookings" [ref=f7e29] [cursor=pointer]:
+            - /url: /admin/bookings
+          - link "Resources & Pricing" [ref=f7e35] [cursor=pointer]:
+            - /url: /admin/resources
+          - link "Memberships" [ref=f7e40] [cursor=pointer]:
+            - /url: /admin/memberships
+          - link "Bulletin" [ref=f7e47] [cursor=pointer]:
+            - /url: /admin/bulletin
+          - link "Check-In" [ref=f7e52] [cursor=pointer]:
+            - /url: /admin/check-in
+          - link "Settings" [ref=f7e60] [cursor=pointer]:
+            - /url: /admin/settings
+      - main [ref=f7e65]:
+        - generic [ref=f7e66]:
+          - heading "Bookings" [level=1] [ref=f7e67]
+          - generic [ref=f7e68]:
+            - generic [ref=f7e69]:
+              - button "Filter" [ref=f7e70]
+              - button "Export" [ref=f7e71]
+            - generic [ref=f7e72]:
+              - searchbox "Search bookings…" [ref=f7e73]
+              - button "Search" [ref=f7e74]
+          - table [ref=f7e76]:
+            - rowgroup [ref=f7e77]:
+              - row [ref=f7e78]:
+                - columnheader "Reference" [ref=f7e79]
+                - columnheader "Resource" [ref=f7e80]
+                - columnheader "Customer" [ref=f7e81]
+                - columnheader "Submitted" [ref=f7e82]
+                - columnheader "Status" [ref=f7e83]
+                - columnheader "Total" [ref=f7e84]
+                - columnheader "Net" [ref=f7e85]
+                - columnheader "PayMongo Payment ID" [ref=f7e86]
+                - columnheader "Action" [ref=f7e87]
+            - rowgroup [ref=f7e88]:
+              - row [ref=f7e89]:
+                - cell "No bookings found." [ref=f7e90]
+          - generic [ref=f7e91]: Page 1 of 1
+  - button "Open Next.js Dev Tools" [ref=f7e98] [cursor=pointer]

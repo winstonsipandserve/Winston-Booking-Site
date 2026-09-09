@@ -1,0 +1,83 @@
+- generic [active] [ref=f6e1]:
+  - generic [ref=f6e2]:
+    - banner [ref=f6e3]:
+      - generic [ref=f6e4]:
+        - img "Winston Sip & Serve" [ref=f6e5]
+        - generic [ref=f6e6]: Winston Admin
+      - generic [ref=f6e7]:
+        - generic "winstonsipandserve@gmail.com" [ref=f6e8]: WI
+        - button "Sign Out" [ref=f6e9]
+    - generic [ref=f6e13]:
+      - complementary [ref=f6e14]:
+        - generic [ref=f6e15]:
+          - generic [ref=f6e16]: Menu
+          - button "Collapse sidebar" [ref=f6e17]
+        - navigation [ref=f6e21]:
+          - link "Dashboard" [ref=f6e22] [cursor=pointer]:
+            - /url: /admin
+          - link "Bookings" [ref=f6e29] [cursor=pointer]:
+            - /url: /admin/bookings
+          - link "Resources & Pricing" [ref=f6e35] [cursor=pointer]:
+            - /url: /admin/resources
+          - link "Memberships" [ref=f6e40] [cursor=pointer]:
+            - /url: /admin/memberships
+          - link "Bulletin" [ref=f6e47] [cursor=pointer]:
+            - /url: /admin/bulletin
+          - link "Check-In" [ref=f6e52] [cursor=pointer]:
+            - /url: /admin/check-in
+          - link "Settings" [ref=f6e60] [cursor=pointer]:
+            - /url: /admin/settings
+      - main [ref=f6e65]:
+        - generic [ref=f6e66]:
+          - generic [ref=f6e67]:
+            - heading "Dashboard" [level=1] [ref=f6e68]
+            - paragraph [ref=f6e69]: Overview of bookings, revenue, and membership activity
+          - generic [ref=f6e71]:
+            - generic [ref=f6e72]:
+              - generic [ref=f6e73]:
+                - paragraph [ref=f6e79]: Bookings Today
+                - paragraph [ref=f6e80]: "0"
+              - generic [ref=f6e81]:
+                - paragraph [ref=f6e86]: Booking Revenue This Month
+                - paragraph [ref=f6e87]: ₱0.00
+              - generic [ref=f6e88]:
+                - paragraph [ref=f6e95]: Membership Revenue This Month
+                - paragraph [ref=f6e96]: ₱0.00
+              - generic [ref=f6e97]:
+                - paragraph [ref=f6e104]: Pending Applications
+                - paragraph [ref=f6e105]: "0"
+              - generic [ref=f6e106]:
+                - paragraph [ref=f6e113]: Active Memberships
+                - paragraph [ref=f6e114]: "0"
+              - generic [ref=f6e115]:
+                - paragraph [ref=f6e120]: Resource Utilization
+                - paragraph [ref=f6e121]: 0%
+            - generic [ref=f6e122]:
+              - generic [ref=f6e124]:
+                - heading "Booking Revenue Trend" [level=2] [ref=f6e125]
+                - generic [ref=f6e126]:
+                  - generic [ref=f6e127]:
+                    - button "Booking" [ref=f6e128]
+                    - button "Membership" [ref=f6e129]
+                  - generic [ref=f6e130]:
+                    - button "3mo" [ref=f6e131]
+                    - button "6mo" [ref=f6e132]
+                    - button "12mo" [ref=f6e133]
+                    - button "YTD" [ref=f6e134]
+                  - generic [ref=f6e135]:
+                    - button "Total" [ref=f6e136]
+                    - button "By Resource Type" [ref=f6e137]
+              - generic [ref=f6e140]:
+                - heading "Bookings by Resource Type" [level=2] [ref=f6e141]
+                - generic [ref=f6e142]:
+                  - list
+            - generic [ref=f6e145]:
+              - generic [ref=f6e146]:
+                - heading "Recent Bookings" [level=2] [ref=f6e147]
+                - paragraph [ref=f6e148]: No bookings yet.
+              - generic [ref=f6e149]:
+                - generic [ref=f6e150]:
+                  - heading "Pending Membership Applications" [level=2] [ref=f6e151]
+                  - generic [ref=f6e152]: "0"
+                - paragraph [ref=f6e153]: No pending applications.
+  - button "Open Next.js Dev Tools" [ref=f6e159] [cursor=pointer]

@@ -1,0 +1,109 @@
+- generic [active] [ref=f14e1]:
+  - banner [ref=f14e2]:
+    - navigation [ref=f14e3]:
+      - link [ref=f14e4] [cursor=pointer]:
+        - /url: /
+        - img "Winston Sip & Serve" [ref=f14e5]
+      - list [ref=f14e6]:
+        - listitem [ref=f14e7]:
+          - link "Home" [ref=f14e8] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=f14e9]:
+          - link "Book Now" [ref=f14e10] [cursor=pointer]:
+            - /url: /book
+        - listitem [ref=f14e11]:
+          - link "News" [ref=f14e12] [cursor=pointer]:
+            - /url: /news
+        - listitem [ref=f14e13]:
+          - link "Cafe & Bar" [ref=f14e14] [cursor=pointer]:
+            - /url: /cafe-bar
+        - listitem [ref=f14e15]:
+          - link "Membership" [ref=f14e16] [cursor=pointer]:
+            - /url: /membership
+        - listitem [ref=f14e17]:
+          - link "About" [ref=f14e18] [cursor=pointer]:
+            - /url: /about
+      - generic [ref=f14e19]:
+        - link "Book a Court" [ref=f14e20] [cursor=pointer]:
+          - /url: /book
+          - text: Book a Court
+          - generic [aria-hidden] [ref=f14e21]: →
+        - link "Sign In" [ref=f14e22] [cursor=pointer]:
+          - /url: /login
+  - generic [ref=f14e39]:
+    - list [ref=f14e40]:
+      - listitem [ref=f14e41]:
+        - generic [ref=f14e42]: "1"
+        - generic [ref=f14e43]: SPORT
+      - listitem [ref=f14e44]:
+        - generic [ref=f14e45]: "2"
+        - generic [ref=f14e46]: COURT
+      - listitem [ref=f14e47]:
+        - generic [ref=f14e48]: "3"
+        - generic [ref=f14e49]: DATE & TIME
+      - listitem [ref=f14e50]:
+        - generic [ref=f14e51]: "4"
+        - generic [ref=f14e52]: ADD-ONS
+      - listitem [ref=f14e53]:
+        - generic [ref=f14e54]: "5"
+        - generic [ref=f14e55]: SUMMARY
+    - generic [ref=f14e109]:
+      - heading "Date & Time" [level=2] [ref=f14e110]
+      - generic [ref=f14e111]:
+        - generic [ref=f14e112]: Duration
+        - group "Duration" [ref=f14e113]:
+          - button "60 minutes" [pressed] [ref=f14e114]
+          - button "120 minutes" [ref=f14e115]
+          - button "180 minutes" [ref=f14e116]
+          - button "240 minutes" [ref=f14e117]
+      - generic [ref=f14e118]:
+        - generic [ref=f14e119]: Date
+        - generic [ref=f14e120]:
+          - generic [ref=f14e121]:
+            - button "← Prev" [disabled] [ref=f14e122]
+            - generic [ref=f14e123]: September 2026
+            - button "Next →" [ref=f14e124]
+          - generic [ref=f14e125]:
+            - generic [ref=f14e126]: Sun
+            - generic [ref=f14e127]: Mon
+            - generic [ref=f14e128]: Tue
+            - generic [ref=f14e129]: Wed
+            - generic [ref=f14e130]: Thu
+            - generic [ref=f14e131]: Fri
+            - generic [ref=f14e132]: Sat
+          - generic [ref=f14e133]:
+            - button "1" [disabled] [ref=f14e136]
+            - button "2" [disabled] [ref=f14e137]
+            - button "3" [disabled] [ref=f14e138]
+            - button "4" [disabled] [ref=f14e139]
+            - button "5" [disabled] [ref=f14e140]
+            - button "6" [disabled] [ref=f14e141]
+            - button "7" [disabled] [ref=f14e142]
+            - button "8" [disabled] [ref=f14e143]
+            - button "9" [ref=f14e144]
+            - button "10" [ref=f14e145]
+            - button "11" [ref=f14e146]
+            - button "12" [ref=f14e147]
+            - button "13" [ref=f14e148]
+            - button "14" [ref=f14e149]
+            - button "15" [ref=f14e150]
+            - button "16" [ref=f14e151]
+            - button "17" [ref=f14e152]
+            - button "18" [ref=f14e153]
+            - button "19" [ref=f14e154]
+            - button "20" [ref=f14e155]
+            - button "21" [ref=f14e156]
+            - button "22" [ref=f14e157]
+            - button "23" [ref=f14e158]
+            - button "24" [ref=f14e159]
+            - button "25" [ref=f14e160]
+            - button "26" [ref=f14e161]
+            - button "27" [ref=f14e162]
+            - button "28" [ref=f14e163]
+            - button "29" [ref=f14e164]
+            - button "30" [ref=f14e165]
+    - generic [ref=f14e101]:
+      - button "Back" [ref=f14e108]
+      - button "Continue" [disabled] [ref=f14e102]
+  - button "Open Next.js Dev Tools" [ref=f14e34] [cursor=pointer]
+  - alert [ref=f14e38]

@@ -1,0 +1,50 @@
+- generic [active] [ref=f8e1]:
+  - generic [ref=f8e2]:
+    - banner [ref=f8e3]:
+      - generic [ref=f8e4]:
+        - img "Winston Sip & Serve" [ref=f8e5]
+        - generic [ref=f8e6]: Winston Admin
+      - generic [ref=f8e7]:
+        - generic "winstonsipandserve@gmail.com" [ref=f8e8]: WI
+        - button "Sign Out" [ref=f8e9]
+    - generic [ref=f8e13]:
+      - complementary [ref=f8e14]:
+        - generic [ref=f8e15]:
+          - generic [ref=f8e16]: Menu
+          - button "Collapse sidebar" [ref=f8e17]
+        - navigation [ref=f8e21]:
+          - link "Dashboard" [ref=f8e22] [cursor=pointer]:
+            - /url: /admin
+          - link "Bookings" [ref=f8e29] [cursor=pointer]:
+            - /url: /admin/bookings
+          - link "Resources & Pricing" [ref=f8e35] [cursor=pointer]:
+            - /url: /admin/resources
+          - link "Memberships" [ref=f8e40] [cursor=pointer]:
+            - /url: /admin/memberships
+          - link "Bulletin" [ref=f8e47] [cursor=pointer]:
+            - /url: /admin/bulletin
+          - link "Check-In" [ref=f8e52] [cursor=pointer]:
+            - /url: /admin/check-in
+          - link "Settings" [ref=f8e60] [cursor=pointer]:
+            - /url: /admin/settings
+      - main [ref=f8e65]:
+        - generic [ref=f8e66]:
+          - heading "Memberships" [level=1] [ref=f8e67]
+          - generic [ref=f8e68]:
+            - button "Filter" [ref=f8e69]
+            - button "Export" [ref=f8e70]
+          - table [ref=f8e72]:
+            - rowgroup [ref=f8e73]:
+              - row [ref=f8e74]:
+                - columnheader "Applicant" [ref=f8e75]
+                - columnheader "Email" [ref=f8e76]
+                - columnheader "Requested Tier" [ref=f8e77]
+                - columnheader "Status" [ref=f8e78]
+                - columnheader "Submitted" [ref=f8e79]
+                - columnheader "Reviewed By" [ref=f8e80]
+                - columnheader "Action" [ref=f8e81]
+            - rowgroup [ref=f8e82]:
+              - row [ref=f8e83]:
+                - cell "No applications found." [ref=f8e84]
+          - generic [ref=f8e85]: Page 1 of 1
+  - button "Open Next.js Dev Tools" [ref=f8e92] [cursor=pointer]
