@@ -43,18 +43,17 @@ export default function MembershipTopUpButtons() {
   }
 
   return (
-    <div className="mt-4 border-t border-brand-light/15 pt-4">
+    <div>
       <LoadingOverlay isOpen={submittingAmount !== null} label="Redirecting to payment…" />
-      <span className="text-accent-light/70">Top Up F&amp;B Credit</span>
-      {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+      <div className="grid grid-cols-2 gap-2">
         {TOPUP_PRESETS_CENTAVOS.map((amount) => (
           <button
             key={amount}
             type="button"
             onClick={() => handleClick(amount)}
             disabled={submittingAmount !== null}
-            className="rounded-none border border-brand-light/20 px-4 py-2.5 text-sm font-medium text-neutral-100 transition-colors hover:bg-brand-light/10 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-none border border-brand-dark/15 px-4 py-2.5 text-sm font-medium text-brand-dark transition-colors hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {formatCentavos(amount)}
           </button>

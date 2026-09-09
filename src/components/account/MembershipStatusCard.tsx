@@ -35,6 +35,7 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
   const { membership } = props
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const [regenerateModalOpen, setRegenerateModalOpen] = useState(false)
+  const [topUpModalOpen, setTopUpModalOpen] = useState(false)
   const [currentQrDataUrl, setCurrentQrDataUrl] = useState(
     membership ? props.qrCodeDataUrl : '',
   )
@@ -81,8 +82,6 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
     )
   }
 
-  const creditPct = Math.round((membership.remainingCreditCentavos / membership.creditCentavos) * 100)
-
   return (
     <div className="flex flex-col rounded-2xl bg-brand-dark px-6 py-6 shadow-card">
       <div className="flex items-center justify-between gap-4">
@@ -117,14 +116,10 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
         <div className="flex flex-1 flex-col">
           <div className="border-t border-brand-light/15 pt-4">
             <div className="flex items-baseline justify-between gap-4">
-              <span className="text-accent-light/70">Remaining credit</span>
+              <span className="text-accent-light/70">Credit Balance</span>
               <span className="text-lg font-medium text-neutral-100">
-                {formatCentavos(membership.remainingCreditCentavos)} of{' '}
-                {formatCentavos(membership.creditCentavos)}
+                {formatCentavos(membership.remainingCreditCentavos)}
               </span>
-            </div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-brand-light/20">
-              <div className="h-full rounded bg-accent-primary" style={{ width: `${creditPct}%` }} />
             </div>
           </div>
 
@@ -180,26 +175,40 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
         </div>
       </div>
 
-      {!membership.isExpired && <MembershipTopUpButtons />}
-
       {membership.isExpired && (
-        <Link
-          href="/account/renew"
-          className="mt-6 flex flex-col items-center gap-1.5 rounded-none bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
-        >
-          Renew Membership
-        </Link>
+        <>
+          <Link
+            href="/account/renew"
+            className="mt-6 flex items-center justify-center rounded-none bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+          >
+            Renew Membership
+          </Link>
+          <Link
+            href="/book"
+            className="mt-3 flex items-center justify-center rounded-none bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+          >
+            Book a Court
+          </Link>
+        </>
       )}
 
-      <Link
-        href="/book"
-        className={`flex flex-col items-center gap-1.5 rounded-none bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark ${membership.isExpired ? 'mt-3' : 'mt-6'}`}
-      >
-        Book a Court
-        <span className="text-xs font-normal normal-case tracking-normal text-brand-light/70">
-          Member pricing applied automatically.
-        </span>
-      </Link>
+      {!membership.isExpired && (
+        <div className="mt-6 flex gap-3">
+          <button
+            type="button"
+            onClick={() => setTopUpModalOpen(true)}
+            className="flex flex-1 items-center justify-center rounded-none border border-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-accent-primary transition-colors hover:bg-accent-primary hover:text-brand-light"
+          >
+            Top Up
+          </button>
+          <Link
+            href="/book"
+            className="flex flex-1 items-center justify-center rounded-none bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+          >
+            Book a Court
+          </Link>
+        </div>
+      )}
 
       <Modal isOpen={qrModalOpen} onClose={() => setQrModalOpen(false)} title="Member QR Code">
         <div className="flex flex-col items-center gap-3">
@@ -253,6 +262,10 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
             Regenerate
           </button>
         </div>
+      </Modal>
+
+      <Modal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} title="Top Up F&B Credit">
+        {topUpModalOpen && <MembershipTopUpButtons />}
       </Modal>
     </div>
   )
