@@ -265,4 +265,4 @@ The certificate PDF registers a real font rather than using the built-in Helveti
 
 ## Deliberately Not Automated
 
-Git commit workflow and browser verification are handled manually. See CLAUDE.md — an ambient automation here would conflict with that gate.
+Git commit workflow and browser verification are handled manually. See [development.md](development.md) — ambient automation here would conflict with that gate.

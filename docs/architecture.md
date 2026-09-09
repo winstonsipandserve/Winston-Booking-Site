@@ -2,7 +2,7 @@
 
 How the software is built: the stack, the code layout, the external services, and the environment it runs in.
 
-**See also:** [database.md](database.md) (how data is shaped) · [workflows.md](workflows.md) (how processes run) · [decisions.md](decisions.md) (why these choices) · [features.md](features.md) (what is built)
+**See also:** [database.md](database.md) (how data is shaped) · [workflows.md](workflows.md) (how processes run) · [decisions.md](decisions.md) (why these choices) · [development.md](development.md) (how changes are made) · [features.md](features.md) (what is built)
 
 ---
 
@@ -37,7 +37,7 @@ How the software is built: the stack, the code layout, the external services, an
 | `staging` | Pre-production testing |
 | `dev` | Day-to-day development work |
 
-Promotion between branches is manual. See CLAUDE.md for the promotion policy.
+Promotion between branches is manual. See [development.md](development.md) for the promotion policy.
 
 ---
 
@@ -65,7 +65,7 @@ prisma/
   seed.ts           Reference data seed
 ```
 
-Conventions for adding to this structure — component naming, `'use client'` placement, wizard step layout, shared helper placement — live in CLAUDE.md's Coding Conventions.
+Conventions for adding to this structure — component naming, `'use client'` placement, wizard step layout, shared helper placement — live in [development.md](development.md).
 
 ---
 

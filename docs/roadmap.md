@@ -72,7 +72,7 @@ Genuinely undecided, needing a business or client answer.
 ## Test Data Gaps
 
 - **No expired-membership fixture exists** in the dev dataset. The expired branch of the display-status logic, the admin detail layout for it, and its reapplication-blocking message have never been exercised against a real row. Supabase MCP access is read-only, so creating one needs a script or the admin UI.
-- **No test-data reset script exists.** The previous one was deleted. Write a fresh, ID-scoped one when a reset is next needed — read the throwaway-script data-safety convention in CLAUDE.md first.
+- **No test-data reset script exists.** The previous one was deleted. Write a fresh, ID-scoped one when a reset is next needed — read the throwaway-script data-safety convention in [development.md](development.md) first.
 - **No reproducible admin bootstrap.** The seed creates reference data only and no admin user, so admin accounts exist only in the live dev database. A fresh environment currently has no way to create the first admin.
 
 ---

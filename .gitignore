@@ -32,6 +32,17 @@ pnpm-debug.log*
 # playwright mcp session artifacts
 .playwright-mcp/
 
+# local Claude Code overrides
+/.claude/settings.local.json
+
+# local Codex overrides and runtime state
+/AGENTS.override.md
+/.codex/auth.json
+/.codex/history.jsonl
+/.codex/log/
+/.codex/sessions/
+/.codex/tmp/
+
 # npx-skills symlinks into .agents/skills/ (the real content there is tracked,
 # and skills-lock.json is the manifest). Regenerate with `npx skills`.
 # Listed by name so the project's own skills under .claude/skills/ stay tracked.
