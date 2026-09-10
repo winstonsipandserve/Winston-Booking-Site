@@ -8,12 +8,14 @@ type AdminActivityAction =
   | 'membership_application_rejected'
   | 'membership_renewal_link_sent'
   | 'booking_rescheduled'
+  | 'membership_credit_topup_added'
 
 const ADMIN_ACTIVITY_ACTION_LABELS: Record<AdminActivityAction, string> = {
   membership_application_approved: 'Membership Approved',
   membership_application_rejected: 'Membership Rejected',
   membership_renewal_link_sent: 'Renewal Link Sent',
   booking_rescheduled: 'Booking Rescheduled',
+  membership_credit_topup_added: 'Credit Top-Up',
 }
 
 interface ActivityLogItem {

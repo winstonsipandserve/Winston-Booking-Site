@@ -116,7 +116,7 @@ Either way the webhook creates a fresh membership with a `renewal` ledger entry.
 ## Credit top-up
 
 - **Self-service** — an active member uses "Top Up F&B Credit" on `/account`, choosing one of four fixed presets (₱1,000 / ₱2,500 / ₱5,000 / ₱10,000), and pays through PayMongo. The webhook's top-up branch credits the balance and emails a confirmation. Shown **only** for an active, unexpired membership — the mirror image of the Renew call to action.
-- **Admin / front desk** — an admin uses "Add Credit" on an active member's detail page, choosing Cash or Online mode (a note is required for cash; a reference is required for online). This records an **already-paid** payment row, a ledger entry, and an activity log row in one transaction. Gated to a currently-active membership.
+- **Admin / front desk** — an admin uses "Add Credit" on an active member's detail page, choosing Cash or Online mode (a note is required for cash; a reference is required for online). The amount must be at least ₱1,000, and the admin must type the displayed member-and-amount confirmation before the top-up can be recorded. This records an **already-paid** payment row, a ledger entry, and an activity log row in one transaction. Gated to a currently-active membership.
 
 > The admin path sends **no** confirmation email; only the self-service path does. See [roadmap.md](roadmap.md).
 

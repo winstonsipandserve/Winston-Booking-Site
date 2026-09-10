@@ -2,13 +2,14 @@ import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { logAdminActivity } from '@/lib/admin-activity-log'
 import { formatCentavos } from '@/lib/format'
-import { ADMIN_TOPUP_MIN_CENTAVOS } from '@/lib/membership-topup'
+import { adminTopUpConfirmationText, ADMIN_TOPUP_MIN_CENTAVOS } from '@/lib/membership-topup'
 
 interface AdminCreditTopUpRequestBody {
   mode?: unknown
   amountCentavos?: unknown
   note?: unknown
   externalReference?: unknown
+  confirmationText?: unknown
 }
 
 function isTopUpMode(value: unknown): value is 'cash' | 'manual_online' {
@@ -37,7 +38,7 @@ export async function POST(
     return Response.json({ error: 'Malformed JSON body' }, { status: 400 })
   }
 
-  const { mode, amountCentavos, note, externalReference } = body
+  const { mode, amountCentavos, note, externalReference, confirmationText } = body
 
   if (!isTopUpMode(mode)) {
     return Response.json({ error: "mode must be 'cash' or 'manual_online'" }, { status: 400 })
@@ -73,6 +74,11 @@ export async function POST(
   }
   if (membership.status !== 'active' || membership.endDate < new Date()) {
     return Response.json({ error: 'This membership is not currently active' }, { status: 400 })
+  }
+
+  const expectedConfirmationText = adminTopUpConfirmationText(amountCentavos, membership.customer.name)
+  if (confirmationText !== expectedConfirmationText) {
+    return Response.json({ error: 'Type the displayed confirmation exactly to add credit' }, { status: 400 })
   }
 
   const paidAt = new Date()
@@ -111,7 +117,7 @@ export async function POST(
         entityType: 'membership',
         entityId: membership.id,
         description: `Added ${formatCentavos(amountCentavos)} credit to ${membership.customer.name} (${mode === 'cash' ? 'cash' : 'online'})`,
-        metadata: { mode, amountCentavos },
+        metadata: { mode, amountCentavos, confirmationText: expectedConfirmationText },
       },
       tx,
     )

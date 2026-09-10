@@ -29,7 +29,6 @@ Never yet run under real conditions:
 
 ### Display and reporting
 
-- The admin Activity Log's action-label map has no entry for the credit top-up action (nor any action added since the map was written), so those rows render a blank Action cell.
 - The membership approve/reject route reports its email as sent unconditionally. The underlying senders swallow send failures internally and the route never checks their result, so a real delivery failure is invisible to the admin. No fix scoped yet.
 - Several date-formatting calls in the email, webhook, and membership-lookup modules use a Philippine locale with no explicit time zone, and so fall back to the server runtime's zone. Flagged as likely correctness bugs, not yet confirmed.
 

@@ -267,7 +267,9 @@ export default async function AdminMembershipApplicationDetailPage({
             <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
               <div className="mb-1 flex items-center justify-between gap-2">
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Credits</p>
-                {displayStatus === 'active' && <AddCreditButton membershipId={latestMembership.id} />}
+                {displayStatus === 'active' && (
+                  <AddCreditButton membershipId={latestMembership.id} memberName={application.customer.name} />
+                )}
               </div>
               <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {formatCentavos(latestMembership.creditBalanceCentavos)}
