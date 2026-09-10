@@ -100,7 +100,7 @@ Route handlers live under `src/app/api/`, return `Response.json(...)` with expli
 | `/api/account/check-in-token/regenerate` | POST | Rotate the check-in token and code, return a fresh QR |
 | `/api/account/membership-renewal` | POST | Self-service renewal checkout |
 | `/api/account/membership-topup` | POST | Credit top-up checkout against a fixed preset |
-| `/api/account/membership-topup/[id]` | GET | Top-up status poller — **note: this route performs no session or ownership check**, see [roadmap.md](roadmap.md) |
+| `/api/account/membership-topup/[id]` | GET | Top-up status poller, restricted to the owning member session |
 
 ### Admin-gated (`/api/admin/*`)
 
@@ -140,6 +140,10 @@ Auth.js v5 with two Credentials providers — `credentials` for admins, `member-
 `middleware.ts` runs on the Edge Runtime, which cannot load Prisma or Node's `crypto` (used for password hashing). Anything touching those must live only in `auth.ts`. **`middleware.ts` must never import `auth.ts`** — that would pull Prisma and `crypto` into the Edge bundle.
 
 Admin gating goes through one shared helper, `getActiveAdminSession()` (`src/lib/admin-session.ts`), used by the protected layout and every admin API route. It re-checks the admin's active flag against the database on every request, so deactivating an admin rejects their already-open session on its next request rather than only at next login.
+
+Credential sign-in and password-reset requests are rate-limited for both the normalized account identifier and client IP in a rolling 15-minute window. The database stores only HMAC hashes of those identifiers, and old rows are deleted opportunistically on later requests.
+
+Anonymous booking holds use a separate, random, short-lived browser capability stored only in an HttpOnly, SameSite cookie. The database stores its SHA-256 hash. Follow-up booking reads, contact attachment, checkout, and confirmation polling require that capability; member bookings instead require the owning member session.
 
 ---
 

@@ -187,15 +187,37 @@ export function parseOptionalDate(formData: FormData, key: string): { error: str
   return { value: date }
 }
 
-/** MIME/size checks for an image that IS provided. Whether an image is required at all is decided by the caller. */
-export function validateImageFile(value: File): { error: string } | { file: File } {
+/**
+ * Validates the declared MIME type, size, and binary file signature. Whether an image is
+ * required at all is decided by the caller.
+ */
+export async function validateImageFile(value: File): Promise<{ error: string } | { file: File }> {
   if (!ALLOWED_MIME_TYPES.includes(value.type)) {
     return { error: 'Image must be a JPEG or PNG image' }
   }
   if (value.size > MAX_FILE_SIZE_BYTES) {
     return { error: 'Image must be 5MB or smaller' }
   }
+  if (!(await hasExpectedImageSignature(value))) {
+    return { error: 'Image content does not match its declared file type' }
+  }
   return { file: value }
+}
+
+function isValidExternalHttpsUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && url.username === '' && url.password === ''
+  } catch {
+    return false
+  }
+}
+
+function isValidSocialUrl(value: string, platform: string): boolean {
+  if (!isValidExternalHttpsUrl(value)) return false
+  const host = new URL(value).hostname.toLowerCase()
+  const baseDomain = platform === 'instagram' ? 'instagram.com' : 'facebook.com'
+  return host === baseDomain || host.endsWith(`.${baseDomain}`)
 }
 
 export interface ParsedBulletinFields {
@@ -251,6 +273,9 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   if (socialPlatform !== null && !(VALID_SOCIAL_PLATFORMS as readonly string[]).includes(socialPlatform)) {
     return { error: 'socialPlatform must be instagram or facebook' }
   }
+  if (socialPlatform !== null && socialUrl !== null && !isValidSocialUrl(socialUrl, socialPlatform)) {
+    return { error: 'socialUrl must be an HTTPS URL for the selected platform' }
+  }
 
   const affectedFacility = getOptionalString(formData, 'affectedFacility')
   if (rules.requireImpactFields && affectedFacility === null) {
@@ -287,6 +312,9 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   const ctaUrl = getOptionalString(formData, 'ctaUrl')
   if ((ctaLabel === null) !== (ctaUrl === null)) {
     return { error: 'ctaLabel and ctaUrl must be provided together' }
+  }
+  if (ctaUrl !== null && !isValidExternalHttpsUrl(ctaUrl)) {
+    return { error: 'ctaUrl must be an HTTPS URL' }
   }
 
   const eventStartAtResult = parseOptionalDate(formData, 'eventStartAt')
@@ -364,3 +392,4 @@ export function parseResourceFields(
 
   return { fields: { resourceIds, autoDisableResources: autoDisableRaw === 'true' } }
 }
+import { hasExpectedImageSignature } from '@/lib/image-validation'

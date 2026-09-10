@@ -514,9 +514,10 @@ function BulletinForm({
             <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
               Social URL
               <input
-                type="text"
+                type="url"
                 value={socialUrl}
                 onChange={(e) => setSocialUrl(e.target.value)}
+                placeholder="https://www.instagram.com/..."
                 className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </label>
@@ -536,11 +537,12 @@ function BulletinForm({
 
           {ctaLabel && (
             <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-              CTA URL{rules?.requireCta ? ' *' : ''}
-              <input
-                type="text"
-                value={ctaUrl}
-                onChange={(e) => setCtaUrl(e.target.value)}
+            CTA URL{rules?.requireCta ? ' *' : ''}
+            <input
+              type="url"
+              value={ctaUrl}
+              onChange={(e) => setCtaUrl(e.target.value)}
+              placeholder="https://example.com/..."
                 className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </label>

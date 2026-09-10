@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   let imageUrl: string | null = null
 
   if (hasImageFile) {
-    const imageResult = validateImageFile(imageValue as File)
+    const imageResult = await validateImageFile(imageValue as File)
     if ('error' in imageResult) {
       return Response.json({ error: imageResult.error }, { status: 400 })
     }

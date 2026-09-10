@@ -20,10 +20,6 @@ Never yet run under real conditions:
 
 ## Known Bugs
 
-### Access control
-
-- **`GET /api/account/membership-topup/[id]` performs no session or ownership check.** It sits under the member-gated `/api/account/*` prefix but looks the payment up by id directly, so anyone who knows a payment id can read its status, amount, and the membership's resulting credit balance. Every sibling route under that prefix gates properly.
-
 ### Correctness
 
 - **Business hours cannot reject a midnight-crossing booking.** The check compares minutes-of-day independently for start and end, so a 23:00 → 01:00 range satisfies both bounds and passes. The documented 6 AM–10 PM rule is enforced only for same-day ranges.

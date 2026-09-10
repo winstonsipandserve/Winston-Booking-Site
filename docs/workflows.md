@@ -13,7 +13,7 @@ The default path. The customer is not logged in and may not exist in the system 
 1. **Announcement gate.** `/book` loads published, non-expired bulletins (excluding Promotions) and shows them as an interstitial notice. The customer continues past it into the wizard.
 2. **Five-step wizard** — Sport → Court → Date & Time → Add-Ons → Summary. All state, including the current step, lives in the top-level orchestrator, so navigating Back and forward again never loses an entered value.
    - The Date & Time step calls `/api/availability` to grey out occupied slots before submit.
-3. **Hold created.** On Confirm, `POST /api/bookings` creates the booking with `status: pending_payment` and `customerId: null`. Pricing here is **provisional and always at the non-member rate**, because no customer or email exists yet.
+3. **Hold created.** On Confirm, `POST /api/bookings` creates the booking with `status: pending_payment` and `customerId: null`. Pricing here is **provisional and always at the non-member rate**, because no customer or email exists yet. The response also establishes a random 24-hour, HttpOnly, SameSite browser capability; only that browser can read the hold, attach contact details, start checkout, or poll its confirmation.
 4. **Payment page.** The booking reference is shown immediately. The customer enters name, phone, and email.
 5. **Customer attached and re-priced.** `PATCH /api/bookings/[id]` resolves the customer by look-up-or-create on email, attaches them, stores the name/phone snapshots, and recomputes the price — **still always at the non-member rate**, regardless of whether that email belongs to a real member.
    - The only thing that can change the total between steps 3 and 5 is an admin editing a rate in that window. The wizard surfaces any change as a confirmation-required "final price is X (was Y)" notice before checkout.
@@ -91,7 +91,7 @@ In both cases the linked PayMongo checkout session is **actively expired** throu
 
 ## Membership: application → approval → activation
 
-1. **Submit.** The applicant completes the form at `/membership/apply` with name, address, contact number, email, and three government ID images. Images are validated (type and size) and uploaded to the private bucket. A customer record is resolved or created. Staff receive a notification email.
+1. **Submit.** The applicant completes the form at `/membership/apply` with name, address, contact number, email, and three government ID images. Images are validated by declared type, size, and JPEG/PNG file signature before upload to the private bucket. A customer record is resolved or created. Staff receive a notification email.
    - **Reapplication is blocked** unless the most recent application for that email was rejected. Each blocked case returns its own distinct message, derived from the same display-status logic the admin list uses.
 2. **Review.** An admin opens the application, views the ID images through signed URLs in an admin-only lightbox, and approves or rejects. Rejection requires a non-empty reason. Either way an activity log row is written in the same transaction as the mutation.
 3. **On rejection** — a branded email is sent carrying the admin's reason. No membership is created. The customer record stays, with no membership attached.

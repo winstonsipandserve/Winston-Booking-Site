@@ -79,7 +79,7 @@ export async function PATCH(
   let newImageUrl: string | null = null
 
   if (hasNewImageFile) {
-    const imageResult = validateImageFile(imageValue as File)
+    const imageResult = await validateImageFile(imageValue as File)
     if ('error' in imageResult) {
       return Response.json({ error: imageResult.error }, { status: 400 })
     }

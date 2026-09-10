@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
+import { hasValidBookingAccessToken } from '@/lib/booking-access'
+import { auth } from '../../../../auth'
 
 interface CheckoutRequestBody {
   bookingId?: unknown
@@ -13,6 +15,23 @@ function isNonEmptyString(value: unknown): value is string {
 
 function formatAddOnName(serviceName: string, paxCount: number | null): string {
   return paxCount != null ? `${serviceName} (${paxCount} pax)` : serviceName
+}
+
+async function canAccessBooking(request: Request, booking: {
+  id: string
+  customerId: string | null
+  accessTokenHash: string | null
+  accessTokenExpiresAt: Date | null
+}): Promise<boolean> {
+  const session = await auth()
+  if (
+    session?.user?.role === 'member' &&
+    session.user.id &&
+    booking.customerId === session.user.id
+  ) {
+    return true
+  }
+  return hasValidBookingAccessToken(request, booking)
 }
 
 export async function POST(request: Request) {
@@ -40,6 +59,9 @@ export async function POST(request: Request) {
   })
 
   if (!booking) {
+    return Response.json({ error: 'Booking not found' }, { status: 404 })
+  }
+  if (!(await canAccessBooking(request, booking))) {
     return Response.json({ error: 'Booking not found' }, { status: 404 })
   }
 

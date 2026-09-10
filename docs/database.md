@@ -10,7 +10,7 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 ## Ground Rules
 
-- **23 models.** PascalCase model names, snake_case database columns via `@map`, `cuid()` primary keys.
+- **24 models.** PascalCase model names, snake_case database columns via `@map`, `cuid()` primary keys.
 - **Money is always `Int` in centavos.** ₱100.00 is stored as `10000`. Never a float, anywhere.
 - **`createdAt` / `updatedAt` on every model — except the immutable audit models**, which are `createdAt`-only by design (listed below).
 - **Every new table must enable RLS with explicit deny-all policies** for the `anon` and `authenticated` roles, in the same migration that creates it. Never deferred to a follow-up.
@@ -91,6 +91,8 @@ Any query, export, or report that reads `totalAmountCentavos` as "what the custo
 
 > **The raw token is never stored.** Only its SHA-256 hex digest goes in `tokenHash`.
 
+**`AuthRateLimitAttempt`** — a short-lived, write-once abuse-control counter for member/admin login and password-reset requests. `scope` distinguishes the flow; `identifierHash` is an HMAC of either the normalized account identifier or client IP, never the raw value. It is indexed by `(scope, identifierHash, createdAt)` and cleaned up expire-on-write, so it is not an audit ledger.
+
 **`CheckInLookupAttempt`** — a soft abuse counter for failed code lookups, indexed on `(adminUserId, createdAt)`, cascade-deleted with the admin. Write-once rows, cleared opportunistically once outside the rate-limit window. Not a financial or audit ledger, so it needs no locking guarantees.
 
 ---
@@ -104,6 +106,7 @@ Any query, export, or report that reads `totalAmountCentavos` as "what the custo
 - `totalAmountCentavos` — base rate + guest fee, **excluding add-ons** (see the warning above).
 - `guestFeeAmountCentavos` — a snapshot of the guest fee actually charged, already *inside* `totalAmountCentavos`. It exists only so the fee can be broken back out for display, independent of any later rate edit.
 - `customerNameSnapshot` / `customerPhoneSnapshot` — the name and phone actually submitted for *this specific booking*, independent of any later change to the shared customer row.
+- `accessTokenHash` / `accessTokenExpiresAt` — the SHA-256 hash and expiry of the short-lived, anonymous-browser booking capability. The raw token is sent only as an HttpOnly, SameSite cookie and is never stored in the database or URL. Member bookings use the member session instead.
 
 **Snapshot columns matter.** Every booking display surface — admin list and detail, the booking API, the confirmation page, both confirmation emails, and PayMongo billing — reads these snapshots rather than joining live to `Customer`. Membership application and approval displays deliberately still read the live customer record.
 

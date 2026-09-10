@@ -133,6 +133,13 @@ enum AdminActivityEntityType {
   membership
 }
 
+enum AuthRateLimitScope {
+  admin_login
+  member_login
+  admin_password_reset
+  member_password_reset
+}
+
 // ── Resource model (Decision: Resource model) ─────────
 
 model ResourceType {
@@ -438,6 +445,10 @@ model Booking {
   /// customer-attach time, independent of any later change to the linked Customer row.
   customerNameSnapshot  String? @map("customer_name_snapshot")
   customerPhoneSnapshot String? @map("customer_phone_snapshot")
+  /// Hash of the short-lived, HttpOnly browser capability used only by an anonymous
+  /// booker to complete and confirm their own booking. Never store the raw token.
+  accessTokenHash       String? @map("access_token_hash")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
   reschedules BookingReschedule[]
   addOns      BookingAddOn[]
   payment     Payment?
@@ -446,6 +457,23 @@ model Booking {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("bookings")
+}
+
+// â”€â”€ Authentication abuse controls â”€â”€
+// A short-lived, write-once rate-limit counter for credential and reset-email abuse.
+// identifierHash is an HMAC of an email address or client IP, so raw identifiers never
+// enter this table. Retention is expire-on-write in src/lib/auth-rate-limit.ts.
+
+model AuthRateLimitAttempt {
+  id             String             @id @default(cuid())
+  scope          AuthRateLimitScope
+  identifierHash String             @map("identifier_hash")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  // No updatedAt â€” attempts are immutable and deleted once outside their rate window.
+
+  @@index([scope, identifierHash, createdAt])
+  @@index([createdAt])
+  @@map("auth_rate_limit_attempts")
 }
 
 // ── Reschedule audit trail (Decision: BookingReschedule immutability) ─

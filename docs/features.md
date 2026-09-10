@@ -39,7 +39,7 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 - **Add-ons**: ball boy (courts only) and coaching (with pax selection on courts).
 - **Full-coverage credit redemption** for members whose balance covers the whole total — confirms instantly with no payment redirect.
 - **PayMongo Checkout** for everything else, with automatic redirect.
-- **Confirmation page** showing a booking-details card (reference, resource, date and time, duration, guests, ball boy, coaching) and a separate pricing card (base price, itemized add-ons, total).
+- **Confirmation page** showing a booking-details card (reference, resource, date and time, duration, guests, ball boy, coaching) and a separate pricing card (base price, itemized add-ons, total). Anonymous booking follow-up is bound to a short-lived HttpOnly browser capability; member booking follow-up is bound to the member session.
 
 ---
 
@@ -63,9 +63,9 @@ Gated on a member session; anything else redirects to login.
 |---|---|
 | Member login (`/login`) | Live — client-side sign-in so the navbar updates immediately, with a password show/hide toggle |
 | Member activation (`/activate`) | Live — sets the first password from an emailed token |
-| Member forgot/reset password | Live end-to-end, enumeration-safe |
-| Admin login (`/admin/login`) | Live, with an error modal |
-| Admin forgot/reset password | Live end-to-end |
+| Member forgot/reset password | Live end-to-end, enumeration-safe and rate-limited |
+| Admin login (`/admin/login`) | Live, rate-limited, with an error modal |
+| Admin forgot/reset password | Live end-to-end and rate-limited |
 | Sign out | Confirmation modal required on the public navbar |
 
 Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surface re-checks the admin's active flag against the database on each request.

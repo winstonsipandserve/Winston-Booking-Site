@@ -2,6 +2,7 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword } from '@/lib/admin-auth'
+import { consumeAuthRateLimitAttempt } from '@/lib/auth-rate-limit'
 import { authConfig } from './auth.config'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -12,15 +13,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: {},
         password: {},
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, request) => {
         const email = credentials?.email
         const password = credentials?.password
         if (typeof email !== 'string' || typeof password !== 'string') {
           return null
         }
 
+        if (!(await consumeAuthRateLimitAttempt('admin_login', request, email))) {
+          return null
+        }
+
         const adminUser = await prisma.adminUser.findUnique({ where: { email } })
-        if (!adminUser) {
+        if (!adminUser || !adminUser.isActive) {
           return null
         }
 
@@ -44,10 +49,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: {},
         password: {},
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, request) => {
         const email = credentials?.email
         const password = credentials?.password
         if (typeof email !== 'string' || typeof password !== 'string') {
+          return null
+        }
+
+        if (!(await consumeAuthRateLimitAttempt('member_login', request, email))) {
           return null
         }
 

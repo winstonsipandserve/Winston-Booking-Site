@@ -3,6 +3,7 @@ import { resolveCustomer } from '@/lib/customer-resolution'
 import { uploadToStorage, deleteFromStorage } from '@/lib/supabase-storage'
 import { sendStaffMembershipApplicationEmail } from '@/lib/resend'
 import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
+import { hasExpectedImageSignature } from '@/lib/image-validation'
 
 const BUCKET = 'membership-applications'
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
@@ -23,7 +24,7 @@ function isValidTier(value: unknown): value is MembershipTier {
   return typeof value === 'string' && (VALID_TIERS as readonly string[]).includes(value)
 }
 
-function validateFile(value: unknown, label: string): { error: string } | { file: File } {
+async function validateFile(value: unknown, label: string): Promise<{ error: string } | { file: File }> {
   if (!(value instanceof File) || value.size === 0) {
     return { error: `${label} is required` }
   }
@@ -32,6 +33,9 @@ function validateFile(value: unknown, label: string): { error: string } | { file
   }
   if (value.size > MAX_FILE_SIZE_BYTES) {
     return { error: `${label} must be 5MB or smaller` }
+  }
+  if (!(await hasExpectedImageSignature(value))) {
+    return { error: `${label} content does not match its declared file type` }
   }
   return { file: value }
 }
@@ -69,15 +73,15 @@ export async function POST(request: Request) {
     )
   }
 
-  const govIdFrontResult = validateFile(formData.get('govIdFront'), 'Government ID (front)')
+  const govIdFrontResult = await validateFile(formData.get('govIdFront'), 'Government ID (front)')
   if ('error' in govIdFrontResult) {
     return Response.json({ error: govIdFrontResult.error }, { status: 400 })
   }
-  const govIdBackResult = validateFile(formData.get('govIdBack'), 'Government ID (back)')
+  const govIdBackResult = await validateFile(formData.get('govIdBack'), 'Government ID (back)')
   if ('error' in govIdBackResult) {
     return Response.json({ error: govIdBackResult.error }, { status: 400 })
   }
-  const govIdSelfieResult = validateFile(formData.get('govIdSelfie'), 'Selfie with ID')
+  const govIdSelfieResult = await validateFile(formData.get('govIdSelfie'), 'Selfie with ID')
   if ('error' in govIdSelfieResult) {
     return Response.json({ error: govIdSelfieResult.error }, { status: 400 })
   }
