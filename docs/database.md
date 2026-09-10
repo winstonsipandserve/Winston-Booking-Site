@@ -25,6 +25,25 @@ The amount actually charged or redeemed is `bookingGrandTotalCentavos()` (`src/l
 
 Any query, export, or report that reads `totalAmountCentavos` as "what the customer paid" is **wrong for every booking with a ball boy or coaching**. This has already caused one staff-facing display bug.
 
+### Reporting semantics
+
+The payment method determines what a number means. Do not substitute a PayMongo settlement figure for a sale value, or assume that every paid record passed through PayMongo.
+
+| Reporting measure | Include | Exclude / interpretation |
+|---|---|---|
+| **Booking revenue** | Every paid `Payment` with a `bookingId`, using `amountCentavos`, including `membership_credit` redemptions | This is the value of paid bookings. A credit redemption is included because the booking was paid, but it is not new cash received on that booking date. |
+| **Membership revenue** | Paid `MembershipPayment` rows and paid `Payment` rows with a `membershipId` (credit top-ups), regardless of whether the method is PayMongo, cash, or manual online | A credit top-up is recorded as membership revenue when the credit is issued, not again as a new cash receipt when that credit pays for a booking. |
+| **PayMongo net settlement** | `paymongoNetAmountCentavos` only for a paid `Payment` whose method is `paymongo` | This is the amount expected to settle after PayMongo fees, not the booking or top-up's gross value. `null` means not applicable or unavailable; display it as `N/A`/an em dash, never as zero. |
+| **Counter cash / manual online** | Paid top-ups with method `cash` or `manual_online`, using `amountCentavos` | These have no PayMongo ID, fee, or net amount. They are internal records of payment received, not processor-settlement records. |
+
+**Never add Booking Revenue and Membership Revenue to create a cash-collected total.** A member can first buy or receive credit through a membership payment or top-up, then redeem that same credit on a booking. Adding both amounts would count the same cash receipt twice. Keep booking/service value, membership/top-up receipts, credit redemptions, and PayMongo settlements as separate measures unless a reporting definition explicitly states how they are reconciled.
+
+### Credit top-up evidence and reconciliation
+
+- **Self-service top-ups** use PayMongo. The payment starts pending and becomes paid only through the verified webhook, which records the PayMongo identifiers, fee, and net amount, then writes the credit-ledger entry.
+- **Admin-recorded cash top-ups** are recorded as paid immediately and require a staff note. **Admin-recorded manual-online top-ups** are likewise recorded as paid immediately and require an external payment reference. Both write a `top_up` credit-ledger entry and an immutable admin activity-log entry with the responsible admin and method.
+- These admin records create an auditable system trail, but they do not independently verify a physical cash-drawer count or an external transfer. Counter-cash and manual-online totals must be reconciled against the cash drawer and bank/e-wallet evidence outside the system.
+
 ---
 
 ## Enums
