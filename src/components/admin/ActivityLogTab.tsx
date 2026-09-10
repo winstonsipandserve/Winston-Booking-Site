@@ -75,8 +75,8 @@ export default function ActivityLogTab() {
   const totalPages = Math.ceil(data.totalCount / data.pageSize)
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-gray-200 dark:border-gray-800">
         <table className="w-full min-w-[700px] border-collapse text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
@@ -99,26 +99,28 @@ export default function ActivityLogTab() {
         </table>
       </div>
 
-      <div className="flex items-center justify-end gap-3">
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          Page {data.page} of {totalPages}
-        </span>
-        <button
-          type="button"
-          onClick={() => setPage((p) => p - 1)}
-          disabled={page <= 1}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          Previous
-        </button>
-        <button
-          type="button"
-          onClick={() => setPage((p) => p + 1)}
-          disabled={page * data.pageSize >= data.totalCount}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-        >
-          Next
-        </button>
+      <div className="flex shrink-0 justify-end">
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-gray-500 dark:text-gray-400">
+            Page {data.page} of {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page <= 1}
+            className="rounded-lg border border-gray-200 px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page * data.pageSize >= data.totalCount}
+            className="rounded-lg border border-gray-200 px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   )

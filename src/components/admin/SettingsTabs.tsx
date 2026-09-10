@@ -40,7 +40,7 @@ export default function SettingsTabs({ name, email }: SettingsTabsProps) {
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto scrollbar-thin">
         {activeTab === 'account' && <MyAccountTab name={name} email={email} />}
         {activeTab === 'adminUsers' && <AdminUsersTab />}
         {activeTab === 'activityLog' && <ActivityLogTab />}

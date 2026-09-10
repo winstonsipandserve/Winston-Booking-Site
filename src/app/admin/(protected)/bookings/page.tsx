@@ -7,6 +7,7 @@ import { isBookingStatus, buildBookingsWhere } from '@/lib/bookings-query'
 import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
 import BookingsSearchBar from '@/components/admin/BookingsSearchBar'
 import BookingsExportButton from '@/components/admin/BookingsExportButton'
+import AdminPagination from '@/components/admin/AdminPagination'
 
 const PAGE_SIZE = 25
 
@@ -185,21 +186,12 @@ export default async function AdminBookingsPage({
         </table>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
-        {page > 1 && (
-          <Link href={pageHref(page - 1)} className="font-medium text-gray-900 hover:underline dark:text-gray-100">
-            Prev
-          </Link>
-        )}
-        <span>
-          Page {page} of {totalPages}
-        </span>
-        {page < totalPages && (
-          <Link href={pageHref(page + 1)} className="font-medium text-gray-900 hover:underline dark:text-gray-100">
-            Next
-          </Link>
-        )}
-      </div>
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        previousHref={pageHref(Math.max(1, page - 1))}
+        nextHref={pageHref(Math.min(totalPages, page + 1))}
+      />
     </div>
   )
 }
