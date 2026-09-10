@@ -183,10 +183,16 @@ export default async function AdminBookingDetailPage({
         </section>
       </div>
 
-      <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Reschedule history</h2>
-        {booking.reschedules.length > 0 ? (
-          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+      <div className="mb-6 grid grid-cols-1 items-start gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+        <section className="h-full rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reschedule History</h2>
+            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+              {booking.reschedules.length} {booking.reschedules.length === 1 ? 'change' : 'changes'}
+            </span>
+          </div>
+          {booking.reschedules.length > 0 ? (
+            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
             <table className="w-full min-w-[640px] border-collapse text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
@@ -228,12 +234,16 @@ export default async function AdminBookingDetailPage({
               </tbody>
             </table>
           </div>
-        ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No reschedules yet.</p>
-        )}
-      </section>
+          ) : (
+            <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/70 px-4 py-8 text-center dark:border-gray-700 dark:bg-gray-800/50">
+              <p className="text-sm text-gray-500 dark:text-gray-400">No reschedules yet.</p>
+              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Changes to this booking will appear here.</p>
+            </div>
+          )}
+        </section>
 
-      {booking.status === 'confirmed' && <RescheduleSection bookingId={booking.id} />}
+        {booking.status === 'confirmed' && <RescheduleSection bookingId={booking.id} />}
+      </div>
     </div>
   )
 }

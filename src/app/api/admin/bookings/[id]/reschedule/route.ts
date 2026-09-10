@@ -3,6 +3,7 @@ import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { logAdminActivity } from '@/lib/admin-activity-log'
+import { sendBookingRescheduleEmailForBooking } from '@/lib/booking-confirmation'
 import { formatBookingDateTime } from '@/lib/format'
 
 function isNonEmptyString(value: unknown): value is string {
@@ -127,6 +128,13 @@ export async function PATCH(
     }
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
+
+  await sendBookingRescheduleEmailForBooking(booking.id, {
+    originalStartTime: booking.startTime,
+    originalEndTime: booking.endTime,
+    reason,
+    performedByName: activeSession.adminUser.name,
+  })
 
   return Response.json({ id: booking.id, startTime: newStart, endTime: newEnd }, { status: 200 })
 }

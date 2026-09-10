@@ -146,7 +146,7 @@ The only way a booking's time changes. See [business.md](business.md) for the po
 1. An admin opens the booking and expands the Reschedule section (collapsed by default).
 2. They enter the new slot and a reason. The new slot is validated against business hours and against the same overlap constraint as any other booking.
 3. In one transaction: the booking is updated, an immutable `BookingReschedule` audit row is written, and an activity log row is recorded.
-4. Coordinating the new time with the customer happens outside the system.
+4. After the transaction commits, the customer and `winstonsipandserve@gmail.com` receive a reschedule email with the previous slot, new slot, and recorded reason. The staff copy also identifies the admin who performed the reschedule. Any follow-up coordination still happens outside the system by replying to the customer email.
 
 ---
 

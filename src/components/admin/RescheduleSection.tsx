@@ -16,7 +16,7 @@ export default function RescheduleSection({ bookingId }: { bookingId: string }) 
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/50 dark:bg-amber-950/40">
+    <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/50 dark:bg-amber-950/40">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -25,7 +25,10 @@ export default function RescheduleSection({ bookingId }: { bookingId: string }) 
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-amber-700 dark:text-amber-400">
           <AlertTriangleIcon className="h-4 w-4 shrink-0" />
-          Reschedule
+          <span>
+            <span className="block">Reschedule</span>
+            {!isOpen && <span className="mt-0.5 block text-xs font-normal text-amber-700/70 dark:text-amber-400/70">Choose a new slot</span>}
+          </span>
         </span>
         <ChevronIcon
           className={`h-4 w-4 shrink-0 text-amber-700 transition-transform duration-200 dark:text-amber-400 ${

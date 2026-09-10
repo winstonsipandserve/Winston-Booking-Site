@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/prisma'
-import { sendBookingConfirmationEmail, sendStaffBookingNotificationEmail } from '@/lib/resend'
+import {
+  sendBookingConfirmationEmail,
+  sendBookingRescheduleEmail,
+  sendStaffBookingNotificationEmail,
+  sendStaffBookingRescheduleNotificationEmail,
+} from '@/lib/resend'
 
 export const ADD_ON_EMAIL_LABELS: Record<string, string> = {
   ball_boy: 'Ball Boy',
@@ -81,5 +86,56 @@ export async function sendBookingConfirmationEmailForBooking(
     addOns,
     totalPaidCentavos,
     creditRedemption,
+  })
+}
+
+export async function sendBookingRescheduleEmailForBooking(
+  bookingId: string,
+  details: { originalStartTime: Date; originalEndTime: Date; reason: string; performedByName: string },
+): Promise<void> {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      customer: true,
+      resource: { include: { resourceType: true } },
+    },
+    relationLoadStrategy: 'query',
+  })
+
+  if (!booking) {
+    console.error('sendBookingRescheduleEmailForBooking: booking not found', bookingId)
+    return
+  }
+  if (!booking.customer) {
+    console.error('sendBookingRescheduleEmailForBooking: booking has no customer attached', bookingId)
+    return
+  }
+
+  await sendBookingRescheduleEmail({
+    to: booking.customer.email,
+    name: booking.customerNameSnapshot ?? booking.customer.name,
+    bookingReference: booking.id,
+    resourceTypeName: booking.resource.resourceType.name,
+    resourceLabel: booking.resource.label,
+    originalStartTime: details.originalStartTime,
+    originalEndTime: details.originalEndTime,
+    newStartTime: booking.startTime,
+    newEndTime: booking.endTime,
+    reason: details.reason,
+  })
+
+  await sendStaffBookingRescheduleNotificationEmail({
+    bookingReference: booking.id,
+    customerName: booking.customerNameSnapshot ?? booking.customer.name,
+    customerEmail: booking.customer.email,
+    customerPhone: booking.customerPhoneSnapshot ?? booking.customer.phone,
+    performedByName: details.performedByName,
+    resourceTypeName: booking.resource.resourceType.name,
+    resourceLabel: booking.resource.label,
+    originalStartTime: details.originalStartTime,
+    originalEndTime: details.originalEndTime,
+    newStartTime: booking.startTime,
+    newEndTime: booking.endTime,
+    reason: details.reason,
   })
 }

@@ -668,6 +668,190 @@ export async function sendBookingConfirmationEmail({
   }
 }
 
+interface SendBookingRescheduleEmailInput {
+  to: string
+  name: string
+  bookingReference: string
+  resourceTypeName: string
+  resourceLabel: string
+  originalStartTime: Date
+  originalEndTime: Date
+  newStartTime: Date
+  newEndTime: Date
+  reason: string
+}
+
+export async function sendBookingRescheduleEmail({
+  to,
+  name,
+  bookingReference,
+  resourceTypeName,
+  resourceLabel,
+  originalStartTime,
+  originalEndTime,
+  newStartTime,
+  newEndTime,
+  reason,
+}: SendBookingRescheduleEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>Hi ${escapeHtml(name)},</p>
+    <p>Your booking at Winston Sip &amp; Serve has been rescheduled. Please find your updated booking details below.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 16px 20px; background-color: ${ACCENT_LIGHT};">
+          <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Booking Reference</p>
+          <p style="margin: 4px 0 0; font-family: ${HEADING_FONT}; font-size: 20px; font-weight: 700; color: ${BRAND_DARK};">${escapeHtml(bookingReference)}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`)}
+            ${ledgerSectionHeader('Previous slot')}
+            ${ledgerRow('Date', formatManilaDate(originalStartTime))}
+            ${ledgerRow('Time', `${formatManilaTime(originalStartTime)} &ndash; ${formatManilaTime(originalEndTime)}`)}
+            ${ledgerSectionHeader('New slot')}
+            ${ledgerRow('Date', formatManilaDate(newStartTime))}
+            ${ledgerRow('Time', `${formatManilaTime(newStartTime)} &ndash; ${formatManilaTime(newEndTime)}`)}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin: 20px 0; padding: 14px 18px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
+      <p style="margin: 0 0 6px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 600; color: ${BRAND_DARK};">Reason for the change</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK}; white-space: pre-line;">${escapeHtml(reason)}</p>
+    </div>
+    <p>If you have any questions about this change, simply reply to this email and our team will be happy to help.</p>
+    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you soon,<br />&mdash; The Winston Sip &amp; Serve Team</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Your booking has moved to ${formatManilaDate(newStartTime)} at ${formatManilaTime(newStartTime)}.`,
+    eyebrowText: 'BOOKING RESCHEDULED',
+    headingText: `Your Booking Has Been Rescheduled, ${name}`,
+    bodyHtml,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `Booking Rescheduled | ${resourceLabel} | ${formatManilaDate(newStartTime)}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendBookingRescheduleEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendBookingRescheduleEmail threw', err)
+  }
+}
+
+interface SendStaffBookingRescheduleNotificationEmailInput {
+  bookingReference: string
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+  performedByName: string
+  resourceTypeName: string
+  resourceLabel: string
+  originalStartTime: Date
+  originalEndTime: Date
+  newStartTime: Date
+  newEndTime: Date
+  reason: string
+}
+
+export async function sendStaffBookingRescheduleNotificationEmail({
+  bookingReference,
+  customerName,
+  customerEmail,
+  customerPhone,
+  performedByName,
+  resourceTypeName,
+  resourceLabel,
+  originalStartTime,
+  originalEndTime,
+  newStartTime,
+  newEndTime,
+  reason,
+}: SendStaffBookingRescheduleNotificationEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>A booking has been rescheduled by <strong>${escapeHtml(performedByName)}</strong>.</p>
+    <p style="margin: 20px 0 4px;"><strong>${escapeHtml(customerName)}</strong></p>
+    <p style="margin: 0 0 2px;"><a href="mailto:${escapeHtml(customerEmail)}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${escapeHtml(customerEmail)}</a></p>
+    <p style="margin: 0 0 20px;">${escapeHtml(customerPhone)}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 16px 20px; background-color: ${ACCENT_LIGHT};">
+          <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Booking Reference</p>
+          <p style="margin: 4px 0 0; font-family: ${HEADING_FONT}; font-size: 20px; font-weight: 700; color: ${BRAND_DARK};">${escapeHtml(bookingReference)}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`)}
+            ${ledgerSectionHeader('Previous slot')}
+            ${ledgerRow('Date', formatManilaDate(originalStartTime))}
+            ${ledgerRow('Time', `${formatManilaTime(originalStartTime)} &ndash; ${formatManilaTime(originalEndTime)}`)}
+            ${ledgerSectionHeader('New slot')}
+            ${ledgerRow('Date', formatManilaDate(newStartTime))}
+            ${ledgerRow('Time', `${formatManilaTime(newStartTime)} &ndash; ${formatManilaTime(newEndTime)}`)}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin: 20px 0; padding: 14px 18px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
+      <p style="margin: 0 0 6px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 600; color: ${BRAND_DARK};">Reason for the change</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK}; white-space: pre-line;">${escapeHtml(reason)}</p>
+    </div>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `${customerName}'s booking was moved to ${formatManilaDate(newStartTime)} at ${formatManilaTime(newStartTime)}.`,
+    eyebrowText: 'BOOKING RESCHEDULED',
+    headingText: `Booking Rescheduled — ${resourceLabel}`,
+    bodyHtml,
+    ctaText: 'View in Admin',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/admin/bookings/${bookingReference}`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: REPLY_TO_ADDRESS,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `Booking | Rescheduled | ${resourceLabel} | ${formatManilaDate(newStartTime)}, ${formatManilaTime(newStartTime)} | ${bookingReference}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendStaffBookingRescheduleNotificationEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendStaffBookingRescheduleNotificationEmail threw', err)
+  }
+}
+
 interface SendStaffBookingNotificationEmailInput {
   bookingReference: string
   customerName: string

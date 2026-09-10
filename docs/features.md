@@ -144,7 +144,7 @@ All email shares one branded layout. **Fifteen senders** are live, sending from 
 |---|---|
 | Member lifecycle | Activation (with certificate PDF), membership payment link, renewal, renewal payment link, expiry reminder, expired notice, rejection |
 | Auth | Member password reset, admin password reset |
-| Booking | Booking confirmation |
+| Booking | Booking confirmation, reschedule notice |
 | Credit | Top-up confirmation |
 | Staff notifications | New booking, new application, membership activation, membership renewal |
 

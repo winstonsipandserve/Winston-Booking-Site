@@ -186,9 +186,9 @@ PostgreSQL, Storage, and row-level security.
 
 Transactional email, sending from `no-reply@winstonsipandserve.club` (SPF/DKIM verified; DMARC is monitor-only `p=none`) with reply-to `winstonsipandserve@gmail.com`.
 
-All transactional email shares one branded layout via `buildBrandedEmail(...)` in `src/lib/email-templates.ts` rather than each call site building its own HTML. **There are 15 senders** in `src/lib/resend.ts`: activation, membership renewal, membership payment link, renewal payment link, member password reset, admin password reset, rejection, booking confirmation, four staff notifications (booking, application, activation, renewal), credit top-up confirmation, membership expiry reminder, and membership expired.
+All transactional email shares one branded layout via `buildBrandedEmail(...)` in `src/lib/email-templates.ts` rather than each call site building its own HTML. **There are 17 senders** in `src/lib/resend.ts`: activation, membership renewal, membership payment link, renewal payment link, member password reset, admin password reset, rejection, booking confirmation, booking reschedule, five staff notifications (booking, booking reschedule, application, activation, renewal), credit top-up confirmation, membership expiry reminder, and membership expired.
 
-The four staff notifications are addressed directly to `winstonsipandserve@gmail.com` and use pipe-delimited subjects for mailbox scanning: `Booking | Confirmed | {resource} | {Manila date and time} | {booking reference}` and `Membership | {action} | {customer name} | {tier}`.
+The five staff notifications are addressed directly to `winstonsipandserve@gmail.com` and use pipe-delimited subjects for mailbox scanning: `Booking | Confirmed | {resource} | {Manila date and time} | {booking reference}`, `Booking | Rescheduled | {resource} | {Manila date and time} | {booking reference}`, and `Membership | {action} | {customer name} | {tier}`.
 
 The first-time activation email carries a generated PDF membership certificate. It is attached only on first activation — never on renewal, and never on the plain activation-link case.
 
