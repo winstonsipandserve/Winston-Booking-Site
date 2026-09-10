@@ -105,7 +105,12 @@ export default async function AccountPage() {
         <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-[320px_1fr] md:px-10">
           <div className="flex flex-col gap-8">
             <Reveal className="h-full">
-              <AccountProfile name={customer.name} email={customer.email} phone={customer.phone} />
+              <AccountProfile
+                name={customer.name}
+                email={customer.email}
+                phone={customer.phone}
+                memberSince={membership?.startDate ?? null}
+              />
             </Reveal>
           </div>
 
