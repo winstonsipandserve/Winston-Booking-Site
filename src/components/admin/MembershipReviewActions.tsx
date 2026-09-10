@@ -3,9 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
-import ConfirmModal from '@/components/admin/ConfirmModal'
 
-export default function MembershipReviewActions({ applicationId }: { applicationId: string }) {
+export default function MembershipReviewActions({
+  applicationId,
+  applicantName,
+}: {
+  applicationId: string
+  applicantName: string
+}) {
   const router = useRouter()
   const [isApproving, setIsApproving] = useState(false)
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false)
@@ -59,16 +64,15 @@ export default function MembershipReviewActions({ applicationId }: { application
         </div>
       </div>
 
-      <ConfirmModal
+      <ApproveModal
         isOpen={isApproveModalOpen}
         onClose={() => setIsApproveModalOpen(false)}
+        applicantName={applicantName}
+        isSubmitting={isApproving}
         onConfirm={() => {
           setIsApproveModalOpen(false)
           void doApprove()
         }}
-        title="Approve Application?"
-        message="Approve this membership application? The applicant will be emailed a payment link — membership activates once payment is confirmed."
-        confirmLabel="Approve"
       />
 
       <RejectModal
@@ -77,6 +81,86 @@ export default function MembershipReviewActions({ applicationId }: { application
         onClose={() => setIsRejectModalOpen(false)}
       />
     </div>
+  )
+}
+
+function ApproveModal({
+  applicantName,
+  isOpen,
+  isSubmitting,
+  onClose,
+  onConfirm,
+}: {
+  applicantName: string
+  isOpen: boolean
+  isSubmitting: boolean
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  const [confirmation, setConfirmation] = useState('')
+  const expectedConfirmation = `${applicantName.trim()} approve`
+  const normalizedConfirmation = confirmation.trim().replace(/\s+/g, ' ').toLowerCase()
+  const normalizedExpectedConfirmation = expectedConfirmation.replace(/\s+/g, ' ').toLowerCase()
+  const canConfirm = normalizedConfirmation === normalizedExpectedConfirmation
+
+  function handleClose() {
+    if (isSubmitting) return
+    setConfirmation('')
+    onClose()
+  }
+
+  function handleConfirm() {
+    if (!canConfirm || isSubmitting) return
+    onConfirm()
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={handleClose} title="Approve Application?" variant="neutral">
+      {isOpen && (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm leading-6 text-gray-600 dark:text-gray-300">
+            The applicant will be emailed a payment link. Membership activates once payment is confirmed.
+          </p>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="approval-confirmation" className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Type <span className="font-semibold">{expectedConfirmation}</span> to confirm
+            </label>
+            <input
+              id="approval-confirmation"
+              type="text"
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+              autoFocus
+              autoComplete="off"
+              spellCheck={false}
+              required
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-gray-400 focus:ring-2 focus:ring-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-500 dark:focus:ring-gray-700"
+              placeholder={expectedConfirmation}
+            />
+          </div>
+
+          <div className="mt-2 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={!canConfirm || isSubmitting}
+              className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+            >
+              {isSubmitting ? 'Working…' : 'Approve'}
+            </button>
+          </div>
+        </div>
+      )}
+    </Modal>
   )
 }
 
@@ -122,33 +206,49 @@ function RejectModal({
     }
   }
 
+  const hasReason = reason.trim().length > 0
+
+  function handleClose() {
+    if (isSubmitting) return
+    setReason('')
+    setError(null)
+    onClose()
+  }
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Reject Membership Application" variant="neutral">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Reject Membership Application" variant="neutral">
       {isOpen && (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+          <label htmlFor="rejection-reason" className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
             Rejection reason
             <textarea
+              id="rejection-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
+              required
               className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               placeholder="Explain why this application is being rejected"
             />
-            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+            {error && (
+              <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+                {error}
+              </p>
+            )}
           </label>
 
           <div className="mt-2 flex items-center justify-end gap-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
+              disabled={isSubmitting}
               className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={!hasReason || isSubmitting}
               className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-700 dark:hover:bg-red-600"
             >
               Reject

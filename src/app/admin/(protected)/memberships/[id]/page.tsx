@@ -450,7 +450,9 @@ export default async function AdminMembershipApplicationDetailPage({
         </section>
       )}
 
-      {application.status === 'pending' && <MembershipReviewActions applicationId={application.id} />}
+      {application.status === 'pending' && (
+        <MembershipReviewActions applicationId={application.id} applicantName={application.customer.name} />
+      )}
 
       {displayStatus === 'expired' && (
         <section className="mt-6">
