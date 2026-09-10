@@ -1,7 +1,5 @@
 import { redirect } from 'next/navigation'
 import { getActiveAdminSession } from '@/lib/admin-session'
-import { ADMIN_THEME_INIT_SCRIPT } from '@/lib/admin-theme-init-script'
-import InlineScript from '@/components/ui/InlineScript'
 import AdminThemeInit from '@/components/admin/AdminThemeInit'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminTopbar from '@/components/admin/AdminTopbar'
@@ -19,7 +17,6 @@ export default async function AdminProtectedLayout({
 
   return (
     <div className="flex h-screen flex-col gap-4 overflow-hidden bg-gray-50 p-4 font-sans text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      <InlineScript html={ADMIN_THEME_INIT_SCRIPT} />
       <AdminThemeInit />
       <AdminTopbar email={activeSession.adminUser.email} />
       <div className="flex min-h-0 flex-1 gap-4">

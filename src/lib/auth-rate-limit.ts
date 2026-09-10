@@ -70,7 +70,7 @@ export async function consumeAuthRateLimitAttempt(
       .map((key) => `${scope}:${key.identifierHash}`)
       .sort()
     for (const lockId of lockIds) {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${lockId}))`
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockId}))`
     }
 
     const counts = await Promise.all(
