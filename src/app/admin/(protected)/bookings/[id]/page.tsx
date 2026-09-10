@@ -19,6 +19,19 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+function paymentMethodLabel(method: string): string {
+  switch (method) {
+    case 'paymongo':
+      return 'PayMongo'
+    case 'membership_credit':
+      return 'Member credit'
+    case 'manual_online':
+      return 'Manual online payment'
+    default:
+      return capitalize(method)
+  }
+}
+
 export default async function AdminBookingDetailPage({
   params,
 }: {
@@ -131,6 +144,13 @@ export default async function AdminBookingDetailPage({
           {booking.payment ? (
             <>
               <DetailRow label="Status" value={capitalize(booking.payment.status)} />
+              <DetailRow label="Payment Method" value={paymentMethodLabel(booking.payment.method)} />
+              {booking.payment.method === 'membership_credit' && (
+                <DetailRow
+                  label="Member Credit Deducted"
+                  value={formatCentavos(booking.payment.amountCentavos)}
+                />
+              )}
               <DetailRow
                 label="Paid At"
                 value={
