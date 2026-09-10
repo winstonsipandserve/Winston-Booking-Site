@@ -47,7 +47,6 @@ Each of these is a conscious scope limit, not an oversight.
 - **Member Actions panel** — Extend, Suspend, and Cancel Membership, pending business-rule decisions on suspend/cancel semantics and credit forfeiture. Add Credit already shipped.
 - **Admin-panel loading indicators** — the shared loading overlay is wired across all customer-facing buttons but not the admin panel: roughly 8 text-swap buttons and 6 currently-silent buttons remain.
 - **Create-new-admin UI** — the Admin Users tab is read plus deactivate/reactivate only.
-- **Pagination on the membership detail histories** — credit transactions and bookings are capped at the last 10 rows each.
 - **Member-versus-non-member revenue breakdown** — bookings do not capture which rate tier applied at the time, so historical rows cannot be reclassified. This would need a new forward-only column.
 - **Reconciling dashboard revenue against net-of-fee amounts** — the PayMongo fee is captured but surfaced only on the booking detail page.
 - **A `www` variant/redirect and a staging subdomain** — revisit if either becomes useful.

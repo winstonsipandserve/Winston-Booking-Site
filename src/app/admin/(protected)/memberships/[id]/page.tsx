@@ -7,6 +7,7 @@ import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
 import IdentityVerificationGallery from '@/components/admin/IdentityVerificationGallery'
 import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
 import AddCreditButton from '@/components/admin/AddCreditButton'
+import AdminPagination from '@/components/admin/AdminPagination'
 import { formatMembershipTier, formatCentavos } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import {
@@ -23,6 +24,13 @@ const CREDIT_TRANSACTION_REASON_LABELS: Record<CreditTransactionReason, string> 
   top_up: 'Top-Up',
 }
 
+const HISTORY_PAGE_SIZE = 10
+
+function parsePage(value: string | undefined) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.max(1, Math.floor(parsed)) : 1
+}
+
 function formatDate(date: Date) {
   return date.toLocaleDateString('en-PH', {
     month: 'short',
@@ -34,10 +42,13 @@ function formatDate(date: Date) {
 
 export default async function AdminMembershipApplicationDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ creditPage?: string; bookingPage?: string }>
 }) {
   const { id } = await params
+  const { creditPage: creditPageParam, bookingPage: bookingPageParam } = await searchParams
 
   const application = await prisma.membershipApplication.findUnique({
     where: { id },
@@ -52,26 +63,85 @@ export default async function AdminMembershipApplicationDetailPage({
   const latestMembership = await getLatestMembershipByCustomerId(application.customerId)
   const displayStatus = getMembershipDisplayStatus({ status: application.status, latestMembership })
 
-  const creditTransactions = latestMembership
-    ? await prisma.membershipCreditTransaction.findMany({
-        where: { membershipId: latestMembership.id },
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      })
-    : []
+  const requestedCreditPage = parsePage(creditPageParam)
+  const requestedBookingPage = parsePage(bookingPageParam)
 
-  const recentBookings = latestMembership
-    ? await prisma.booking.findMany({
-        where: { customerId: application.customerId },
-        orderBy: { startTime: 'desc' },
-        take: 10,
-        include: {
-          resource: { include: { resourceType: true } },
-          addOns: { select: { amountCentavos: true } },
-        },
-        relationLoadStrategy: 'query',
-      })
-    : []
+  const history = latestMembership
+    ? await (async () => {
+        const [creditTransactionCount, bookingCount] = await Promise.all([
+          prisma.membershipCreditTransaction.count({ where: { membershipId: latestMembership.id } }),
+          prisma.booking.count({ where: { customerId: application.customerId } }),
+        ])
+
+        const creditTotalPages = Math.max(1, Math.ceil(creditTransactionCount / HISTORY_PAGE_SIZE))
+        const bookingTotalPages = Math.max(1, Math.ceil(bookingCount / HISTORY_PAGE_SIZE))
+        const creditPage = Math.min(requestedCreditPage, creditTotalPages)
+        const bookingPage = Math.min(requestedBookingPage, bookingTotalPages)
+
+        const [creditTransactions, recentBookings] = await Promise.all([
+          prisma.membershipCreditTransaction.findMany({
+            where: { membershipId: latestMembership.id },
+            orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+            skip: (creditPage - 1) * HISTORY_PAGE_SIZE,
+            take: HISTORY_PAGE_SIZE,
+          }),
+          prisma.booking.findMany({
+            where: { customerId: application.customerId },
+            orderBy: [{ startTime: 'desc' }, { id: 'desc' }],
+            skip: (bookingPage - 1) * HISTORY_PAGE_SIZE,
+            take: HISTORY_PAGE_SIZE,
+            include: {
+              resource: { include: { resourceType: true } },
+              addOns: { select: { amountCentavos: true } },
+            },
+            relationLoadStrategy: 'query',
+          }),
+        ])
+
+        const newerTransactionAmount = creditTransactions[0]
+          ? await prisma.membershipCreditTransaction.aggregate({
+              where: {
+                membershipId: latestMembership.id,
+                OR: [
+                  { createdAt: { gt: creditTransactions[0].createdAt } },
+                  {
+                    createdAt: creditTransactions[0].createdAt,
+                    id: { gt: creditTransactions[0].id },
+                  },
+                ],
+              },
+              _sum: { amountCentavos: true },
+            })
+          : null
+
+        return {
+          creditTransactions,
+          recentBookings,
+          creditPage,
+          creditTotalPages,
+          bookingPage,
+          bookingTotalPages,
+          newerTransactionAmount: newerTransactionAmount?._sum.amountCentavos ?? 0,
+        }
+      })()
+    : {
+        creditTransactions: [],
+        recentBookings: [],
+        creditPage: 1,
+        creditTotalPages: 1,
+        bookingPage: 1,
+        bookingTotalPages: 1,
+        newerTransactionAmount: 0,
+      }
+
+  const {
+    creditTransactions,
+    recentBookings,
+    creditPage,
+    creditTotalPages,
+    bookingPage,
+    bookingTotalPages,
+  } = history
 
   const [govIdFrontUrl, govIdBackUrl, govIdSelfieUrl, totalBookingsCount, upcomingBookingsCount] = await Promise.all([
     getSignedUrl('membership-applications', application.govIdFrontUrl),
@@ -87,12 +157,27 @@ export default async function AdminMembershipApplicationDetailPage({
     ? Math.max(0, Math.ceil((latestMembership.endDate.getTime() - Date.now()) / 86400000))
     : 0
 
-  let runningBalance = latestMembership?.creditBalanceCentavos ?? 0
+  let runningBalance = (latestMembership?.creditBalanceCentavos ?? 0) - history.newerTransactionAmount
   const transactionsWithBalance = creditTransactions.map((t) => {
     const balanceAfter = runningBalance
     runningBalance -= t.amountCentavos
     return { ...t, balanceAfter }
   })
+
+  const historyParams = new URLSearchParams()
+  if (creditPage > 1) historyParams.set('creditPage', String(creditPage))
+  if (bookingPage > 1) historyParams.set('bookingPage', String(bookingPage))
+
+  function historyPageHref(key: 'creditPage' | 'bookingPage', targetPage: number) {
+    const params = new URLSearchParams(historyParams)
+    if (targetPage <= 1) {
+      params.delete(key)
+    } else {
+      params.set(key, String(targetPage))
+    }
+    const query = params.toString()
+    return `/admin/memberships/${id}${query ? `?${query}` : ''}`
+  }
 
   return (
     <div className="relative isolate flex flex-col">
@@ -331,15 +416,12 @@ export default async function AdminMembershipApplicationDetailPage({
       )}
 
       {latestMembership && (
-        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <section className="mb-6 flex flex-col rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Credit Transaction History</h2>
-          {creditTransactions.length === 0 ? (
-            <p className="text-sm italic text-gray-400 dark:text-gray-500">No credit activity yet</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[480px] border-collapse text-sm">
-                <thead>
-                  <tr>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] table-fixed border-collapse text-sm">
+              <thead>
+                  <tr className="h-[42px]">
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Date
                     </th>
@@ -353,45 +435,63 @@ export default async function AdminMembershipApplicationDetailPage({
                       Balance
                     </th>
                   </tr>
-                </thead>
-                <tbody>
+              </thead>
+              <tbody>
                   {transactionsWithBalance.map((transaction) => (
                     <tr
                       key={transaction.id}
-                      className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
+                      className="h-[46px] border-b border-gray-100 last:border-b-0 dark:border-gray-800"
                     >
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {transaction.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
                       </td>
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {CREDIT_TRANSACTION_REASON_LABELS[transaction.reason]}
                       </td>
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {transaction.amountCentavos >= 0 ? '+' : '-'}
                         {formatCentavos(Math.abs(transaction.amountCentavos))}
                       </td>
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {formatCentavos(transaction.balanceAfter)}
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  {creditTransactions.length === 0 && (
+                    <tr className="h-[46px] border-b border-gray-100 dark:border-gray-800">
+                      <td colSpan={4} className="px-4 py-2.5 text-sm italic text-gray-400 dark:text-gray-500">
+                        No credit activity yet
+                      </td>
+                    </tr>
+                  )}
+                  {Array.from({ length: HISTORY_PAGE_SIZE - Math.max(transactionsWithBalance.length, 1) }).map((_, index) => (
+                    <tr
+                      key={`credit-placeholder-${index}`}
+                      aria-hidden="true"
+                      className="h-[46px] border-b border-gray-100 last:border-b-0 dark:border-gray-800"
+                    >
+                      <td colSpan={4} className="px-4 py-2.5">&nbsp;</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+          <AdminPagination
+            page={creditPage}
+            totalPages={creditTotalPages}
+            previousHref={historyPageHref('creditPage', Math.max(1, creditPage - 1))}
+            nextHref={historyPageHref('creditPage', Math.min(creditTotalPages, creditPage + 1))}
+          />
         </section>
       )}
 
       {latestMembership && (
-        <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
+        <section className="mb-6 flex flex-col rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Booking History</h2>
-          {recentBookings.length === 0 ? (
-            <p className="text-sm italic text-gray-400 dark:text-gray-500">No bookings yet</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[840px] border-collapse text-sm">
-                <thead>
-                  <tr>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[840px] border-collapse text-sm">
+              <thead>
+                  <tr className="h-[42px]">
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Reference
                     </th>
@@ -414,26 +514,23 @@ export default async function AdminMembershipApplicationDetailPage({
                       Action
                     </th>
                   </tr>
-                </thead>
-                <tbody>
+              </thead>
+              <tbody>
                   {recentBookings.map((booking) => (
-                    <tr
-                      key={booking.id}
-                      className="border-b border-gray-100 last:border-b-0 dark:border-gray-800"
-                    >
-                      <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{booking.id}</td>
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                    <tr key={booking.id} className="h-[46px] border-b border-gray-100 last:border-b-0 dark:border-gray-800">
+                      <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{booking.id}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {booking.startTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
                       </td>
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {booking.resource.resourceType.name} — {booking.resource.label}
                       </td>
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.guestCount}</td>
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.status}</td>
-                      <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.guestCount}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.status}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {formatCentavos(bookingGrandTotalCentavos(booking))}
                       </td>
-                      <td className="px-4 py-2.5">
+                      <td className="whitespace-nowrap px-4 py-2.5">
                         <Link
                           href={`/admin/bookings/${booking.id}`}
                           className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
@@ -443,10 +540,31 @@ export default async function AdminMembershipApplicationDetailPage({
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  {recentBookings.length === 0 && (
+                    <tr className="h-[46px] border-b border-gray-100 dark:border-gray-800">
+                      <td colSpan={7} className="px-4 py-2.5 text-sm italic text-gray-400 dark:text-gray-500">
+                        No bookings yet
+                      </td>
+                    </tr>
+                  )}
+                  {Array.from({ length: HISTORY_PAGE_SIZE - Math.max(recentBookings.length, 1) }).map((_, index) => (
+                    <tr
+                      key={`booking-placeholder-${index}`}
+                      aria-hidden="true"
+                      className="h-[46px] border-b border-gray-100 last:border-b-0 dark:border-gray-800"
+                    >
+                      <td colSpan={7} className="px-4 py-2.5">&nbsp;</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+          <AdminPagination
+            page={bookingPage}
+            totalPages={bookingTotalPages}
+            previousHref={historyPageHref('bookingPage', Math.max(1, bookingPage - 1))}
+            nextHref={historyPageHref('bookingPage', Math.min(bookingTotalPages, bookingPage + 1))}
+          />
         </section>
       )}
 
