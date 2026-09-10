@@ -45,7 +45,7 @@ export default function CompletePaymentButton({ applicationId }: CompletePayment
         type="button"
         onClick={handleClick}
         disabled={submitting}
-        className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50"
+        className="w-full rounded-none bg-accent-primary px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.08em] text-brand-light transition-[background-color,box-shadow] duration-200 hover:bg-accent-dark hover:shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
       >
         Complete Payment
       </button>

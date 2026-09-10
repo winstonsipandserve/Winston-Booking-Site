@@ -61,33 +61,35 @@ export default async function MembershipPaymentPage({
           </p>
         ) : (
           <div className="flex w-full max-w-md flex-col gap-4">
-            <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+            <div className="rounded-card border border-brand-dark/10 bg-brand-light px-5 py-6 shadow-card sm:px-6">
               <dl className="flex flex-col">
-                <div className="flex justify-between gap-4 py-3">
-                  <dt className="text-brand-dark/70">Tier</dt>
+                <div className="flex justify-between gap-4 pb-3">
+                  <dt className="text-sm text-brand-dark/65">Tier</dt>
                   <dd className="text-right font-medium text-brand-dark">
                     {formatMembershipTier(application.requestedTier)}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-                  <dt className="text-brand-dark/70">Activation Fee</dt>
-                  <dd className="text-right font-medium text-brand-dark">
+                  <dt className="text-sm text-brand-dark/65">Activation Fee</dt>
+                  <dd className="text-right font-medium text-brand-dark/85">
                     {formatCentavos(
                       MEMBERSHIP_TIER_PLANS[application.requestedTier].activationFeeCentavos,
                     )}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-                  <dt className="text-brand-dark/70">F&amp;B Credit</dt>
-                  <dd className="text-right font-medium text-brand-dark">
+                  <dt className="text-sm text-brand-dark/65">F&amp;B Credit</dt>
+                  <dd className="text-right font-medium text-brand-dark/85">
                     {formatCentavos(
                       MEMBERSHIP_TIER_PLANS[application.requestedTier].creditCentavos,
                     )}
                   </dd>
                 </div>
-                <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-                  <dt className="text-brand-dark/70">Total Due</dt>
-                  <dd className="text-right font-medium text-brand-dark">
+                <div className="mt-4 flex items-center justify-between gap-4 rounded-card-inline bg-brand-dark px-4 py-4 text-brand-light">
+                  <dt className="text-sm font-medium uppercase tracking-[0.16em] text-brand-light/75">
+                    Total Due
+                  </dt>
+                  <dd className="text-right text-2xl font-semibold tracking-tight text-brand-light">
                     {formatCentavos(
                       MEMBERSHIP_TIER_PLANS[application.requestedTier].totalCentavos,
                     )}
