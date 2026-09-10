@@ -1,7 +1,7 @@
 import type { MembershipTier } from '@prisma/client'
 import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
 import { ADMIN_PASSWORD_RESET_TOKEN_HOURS } from './admin-password-reset'
-import { buildBrandedEmail } from './email-templates'
+import { buildBrandedEmail, escapeHtml } from './email-templates'
 import { formatCentavos, formatMembershipTier } from './format'
 import { renderMembershipCertificatePdf } from './membership-certificate-pdf'
 
@@ -87,7 +87,7 @@ export async function sendActivationEmail({
     </div>`
 
   const bodyHtml = `
-    <p>Hi ${name},</p>
+    <p>Hi ${escapeHtml(name)},</p>
     <p>Congratulations — you're officially a Winston Sip &amp; Serve member! ${membershipPhrase}</p>${perksHtml}${receiptHtml}
     <p>Set your password below to activate your account and lock in these perks.</p>
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 28px auto 0;">
@@ -190,7 +190,7 @@ export async function sendMembershipRenewalEmail({
     </table>`
 
   const bodyHtml = `
-    <p>Hi ${name},</p>
+    <p>Hi ${escapeHtml(name)},</p>
     <p>Your ${tierName} membership at Winston Sip &amp; Serve has been renewed — your member rates, priority booking, and Speakeasy Lounge access are all still yours.</p>${receiptHtml}
     <p>Your membership is now active through <strong>${expiryDateLabel}</strong>.</p>
     <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you on the court,<br />— The Winston Sip &amp; Serve Team</p>
@@ -246,7 +246,7 @@ export async function sendMembershipPaymentEmail({
   paymentUrl,
 }: SendMembershipPaymentEmailInput): Promise<void> {
   const bodyHtml = `
-    <p>Hi ${name},</p>
+    <p>Hi ${escapeHtml(name)},</p>
     <p>Great news — your ${tierName} membership application has been approved! There's just one step left before your membership is active.</p>
     <div style="margin: 24px 0; padding: 20px 24px; background-color: ${ACCENT_LIGHT}; border-radius: 12px;">
       <p style="margin: 0 0 4px; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Amount Due</p>
@@ -306,7 +306,7 @@ export async function sendRenewalPaymentLinkEmail({
   paymentUrl,
 }: SendRenewalPaymentLinkEmailInput): Promise<void> {
   const bodyHtml = `
-    <p>Hi ${name},</p>
+    <p>Hi ${escapeHtml(name)},</p>
     <p>A member of our team has prepared your membership renewal at the ${tierName} tier. Completing payment below reactivates your membership right away.</p>
     <div style="margin: 24px 0; padding: 20px 24px; background-color: ${ACCENT_LIGHT}; border-radius: 12px;">
       <p style="margin: 0 0 4px; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Amount Due</p>
@@ -462,7 +462,7 @@ export async function sendRejectionEmail({
     <p>After careful review, we're unable to offer you membership at this time.</p>
     <div style="margin: 24px 0; padding: 20px 24px; background-color: rgba(140, 90, 60, 0.08); border-left: 4px solid ${ACCENT_PRIMARY}; border-radius: 8px;">
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; font-weight: 600; color: ${BRAND_DARK};">Here's a bit more context from our team:</p>
-      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">${reason}</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">${escapeHtml(reason)}</p>
     </div>
     <p>You're always welcome at Winston as our guest — feel free to <a href="${process.env.NEXT_PUBLIC_APP_URL}/book" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">book a court</a>, simulator bay, or table at the café any time. And if your circumstances change, we'd be glad to have you apply again in the future.</p>
     <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">Warmly,<br />The Winston Sip &amp; Serve Team</p>
@@ -583,7 +583,7 @@ export async function sendBookingConfirmationEmail({
   const hasAddOnsBreakdown = guestCount > 0 || addOns.length > 0
 
   const ledgerRows = [
-    ledgerRow('Sport &amp; Court', `${resourceTypeName} &mdash; ${resourceLabel}`),
+    ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`),
     ledgerRow('Date', formatManilaDate(startTime)),
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
@@ -595,7 +595,7 @@ export async function sendBookingConfirmationEmail({
             ? [ledgerRow(`Guests — ${guestCount} Pax`, formatCentavos(guestFeeCentavos), false, true)]
             : []),
           ...addOns.map((addOn) =>
-            ledgerRow(addOn.name, formatCentavos(addOn.amountCentavos), false, true),
+            ledgerRow(escapeHtml(addOn.name), formatCentavos(addOn.amountCentavos), false, true),
           ),
         ]
       : []),
@@ -603,7 +603,7 @@ export async function sendBookingConfirmationEmail({
   ].join('')
 
   const bodyHtml = `
-    <p>Hi ${name},</p>
+    <p>Hi ${escapeHtml(name)},</p>
     <p>Your spot at Winston Sip &amp; Serve is locked in. Here's everything you need before you arrive.</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
       <tr>
@@ -710,7 +710,7 @@ export async function sendStaffBookingNotificationEmail({
   const hasAddOnsBreakdown = guestCount > 0 || addOns.length > 0
 
   const ledgerRows = [
-    ledgerRow('Sport &amp; Court', `${resourceTypeName} &mdash; ${resourceLabel}`),
+    ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`),
     ledgerRow('Date', formatManilaDate(startTime)),
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
@@ -722,7 +722,7 @@ export async function sendStaffBookingNotificationEmail({
             ? [ledgerRow(`Guests — ${guestCount} Pax`, formatCentavos(guestFeeCentavos), false, true)]
             : []),
           ...addOns.map((addOn) =>
-            ledgerRow(addOn.name, formatCentavos(addOn.amountCentavos), false, true),
+            ledgerRow(escapeHtml(addOn.name), formatCentavos(addOn.amountCentavos), false, true),
           ),
         ]
       : []),
@@ -735,9 +735,9 @@ export async function sendStaffBookingNotificationEmail({
 
   const bodyHtml = `
     <p>A new booking has been confirmed.</p>
-    <p style="margin: 20px 0 4px;"><strong>${customerName}</strong></p>
-    <p style="margin: 0 0 2px;"><a href="mailto:${customerEmail}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${customerEmail}</a></p>
-    <p style="margin: 0 0 20px;">${customerPhone}</p>
+    <p style="margin: 20px 0 4px;"><strong>${escapeHtml(customerName)}</strong></p>
+    <p style="margin: 0 0 2px;"><a href="mailto:${escapeHtml(customerEmail)}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${escapeHtml(customerEmail)}</a></p>
+    <p style="margin: 0 0 20px;">${escapeHtml(customerPhone)}</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
       <tr>
         <td style="padding: 16px 20px; background-color: ${ACCENT_LIGHT};">
@@ -782,7 +782,7 @@ export async function sendStaffBookingNotificationEmail({
         from: FROM_ADDRESS,
         to: REPLY_TO_ADDRESS,
         reply_to: REPLY_TO_ADDRESS,
-        subject: `[Booking] New booking — ${resourceLabel} — ${subjectDateLabel}, ${formatManilaTime(startTime)}`,
+        subject: `Booking | Confirmed | ${resourceLabel} | ${subjectDateLabel}, ${formatManilaTime(startTime)} | ${bookingReference}`,
         html,
         text,
       }),
@@ -819,10 +819,10 @@ export async function sendStaffMembershipApplicationEmail({
 
   const bodyHtml = `
     <p>A new membership application has been submitted.</p>
-    <p style="margin: 20px 0 4px;"><strong>${customerName}</strong></p>
-    <p style="margin: 0 0 2px;"><a href="mailto:${customerEmail}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${customerEmail}</a></p>
-    <p style="margin: 0 0 2px;">${contactNumber}</p>
-    <p style="margin: 0 0 20px;">${address}</p>
+    <p style="margin: 20px 0 4px;"><strong>${escapeHtml(customerName)}</strong></p>
+    <p style="margin: 0 0 2px;"><a href="mailto:${escapeHtml(customerEmail)}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${escapeHtml(customerEmail)}</a></p>
+    <p style="margin: 0 0 2px;">${escapeHtml(contactNumber)}</p>
+    <p style="margin: 0 0 20px;">${escapeHtml(address)}</p>
     <p style="margin: 0 0 4px;"><strong>Requested Tier:</strong> ${tierName}</p>
     <p style="margin: 0;"><strong>Submitted Date:</strong> ${formatManilaDate(submittedAt)}</p>
   `
@@ -847,7 +847,7 @@ export async function sendStaffMembershipApplicationEmail({
         from: FROM_ADDRESS,
         to: REPLY_TO_ADDRESS,
         reply_to: REPLY_TO_ADDRESS,
-        subject: `[Membership Application] New application — ${customerName} — ${tierName}`,
+        subject: `Membership | Application Submitted | ${customerName} | ${tierName}`,
         html,
         text,
       }),
@@ -894,8 +894,8 @@ export async function sendStaffMembershipActivationEmail({
 
   const bodyHtml = `
     <p>A membership payment has been received and a new member activated.</p>
-    <p style="margin: 20px 0 4px;"><strong>${customerName}</strong></p>
-    <p style="margin: 0 0 20px;"><a href="mailto:${customerEmail}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${customerEmail}</a></p>
+    <p style="margin: 20px 0 4px;"><strong>${escapeHtml(customerName)}</strong></p>
+    <p style="margin: 0 0 20px;"><a href="mailto:${escapeHtml(customerEmail)}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${escapeHtml(customerEmail)}</a></p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
       <tr>
         <td style="padding: 20px 20px 4px;">
@@ -928,7 +928,7 @@ export async function sendStaffMembershipActivationEmail({
         from: FROM_ADDRESS,
         to: REPLY_TO_ADDRESS,
         reply_to: REPLY_TO_ADDRESS,
-        subject: `[Membership Payment] New member activated — ${customerName} — ${tierName}`,
+        subject: `Membership | Activated | ${customerName} | ${tierName}`,
         html,
         text,
       }),
@@ -970,8 +970,8 @@ export async function sendStaffMembershipRenewalEmail({
 
   const bodyHtml = `
     <p>A membership renewal payment has been received.</p>
-    <p style="margin: 20px 0 4px;"><strong>${customerName}</strong></p>
-    <p style="margin: 0 0 20px;"><a href="mailto:${customerEmail}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${customerEmail}</a></p>
+    <p style="margin: 20px 0 4px;"><strong>${escapeHtml(customerName)}</strong></p>
+    <p style="margin: 0 0 20px;"><a href="mailto:${escapeHtml(customerEmail)}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${escapeHtml(customerEmail)}</a></p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
       <tr>
         <td style="padding: 20px 20px 4px;">
@@ -1002,7 +1002,7 @@ export async function sendStaffMembershipRenewalEmail({
         from: FROM_ADDRESS,
         to: REPLY_TO_ADDRESS,
         reply_to: REPLY_TO_ADDRESS,
-        subject: `[Membership Renewal] Membership renewed — ${customerName} — ${tierName}`,
+        subject: `Membership | Renewed | ${customerName} | ${tierName}`,
         html,
         text,
       }),
@@ -1013,6 +1013,71 @@ export async function sendStaffMembershipRenewalEmail({
     }
   } catch (err) {
     console.error('Resend sendStaffMembershipRenewalEmail threw', err)
+  }
+}
+
+interface SendCreditTopUpConfirmationEmailInput {
+  to: string
+  name: string
+  amountCentavos: number
+  newBalanceCentavos: number
+}
+
+export async function sendCreditTopUpConfirmationEmail({
+  to,
+  name,
+  amountCentavos,
+  newBalanceCentavos,
+}: SendCreditTopUpConfirmationEmailInput): Promise<void> {
+  const receiptHtml = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRow('Amount Added', formatCentavos(amountCentavos))}
+            ${ledgerRow('New Credit Balance', formatCentavos(newBalanceCentavos), true)}
+          </table>
+        </td>
+      </tr>
+    </table>`
+
+  const bodyHtml = `
+    <p>Hi ${escapeHtml(name)},</p>
+    <p>Your Winston Sip &amp; Serve F&amp;B credit has been topped up.</p>${receiptHtml}
+    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you on the court,<br />— The Winston Sip &amp; Serve Team</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `${formatCentavos(amountCentavos)} added to your F&B credit balance.`,
+    eyebrowText: 'CREDIT TOP-UP',
+    headingText: `Credit Added, ${name}!`,
+    bodyHtml,
+    ctaText: 'View My Account',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Your Winston Sip & Serve Credit Top-Up Is Confirmed',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendCreditTopUpConfirmationEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendCreditTopUpConfirmationEmail threw', err)
   }
 }
 
@@ -1043,11 +1108,11 @@ export async function sendMembershipExpiryReminderEmail(
 
   const bodyHtml = urgent
     ? `
-    <p>Hi ${customer.name},</p>
+    <p>Hi ${escapeHtml(customer.name)},</p>
     <p>Your ${tierName} membership expires in just ${daysRemaining} days, on <strong>${endDateLabel}</strong>. Renew now to keep your member rates and perks going without a gap.</p>${creditLine}
   `
     : `
-    <p>Hi ${customer.name},</p>
+    <p>Hi ${escapeHtml(customer.name)},</p>
     <p>Just a heads-up &mdash; your ${tierName} membership is set to expire on <strong>${endDateLabel}</strong>, ${daysRemaining} days from now. Renew any time before then to keep your priority booking, member rates, and Speakeasy Lounge access going.</p>${creditLine}
   `
 
@@ -1102,7 +1167,7 @@ export async function sendMembershipExpiredEmail(
       : ''
 
   const bodyHtml = `
-    <p>Hi ${customer.name},</p>
+    <p>Hi ${escapeHtml(customer.name)},</p>
     <p>Your ${tierName} membership expired on ${endDateLabel}.${creditNote}</p>
     <div style="margin: 24px 0; padding: 20px 24px; background-color: rgba(140, 90, 60, 0.08); border-left: 4px solid ${ACCENT_PRIMARY}; border-radius: 8px;">
       <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">You're still always welcome at Winston as a guest &mdash; book a court, simulator bay, or table at the café any time. Reapply below whenever you're ready to pick your member rates and perks back up.</p>

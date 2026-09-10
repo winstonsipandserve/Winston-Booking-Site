@@ -26,6 +26,8 @@ export default async function NewsPage() {
     affectedFacility: bulletin.affectedFacility ?? undefined,
     impact: bulletin.impact ?? undefined,
     action: bulletin.action ?? undefined,
+    discountSummary: bulletin.discountSummary ?? undefined,
+    promoCode: bulletin.promoCode ?? undefined,
     eventStartAt: bulletin.eventStartAt ? formatBookingDateTime(bulletin.eventStartAt) : undefined,
     eventEndAt: bulletin.eventEndAt ? formatBookingDateTime(bulletin.eventEndAt) : undefined,
     ctaLabel: bulletin.ctaLabel ?? undefined,

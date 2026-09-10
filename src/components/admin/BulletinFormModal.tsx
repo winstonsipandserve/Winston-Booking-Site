@@ -4,7 +4,25 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
 import type { Bulletin } from '@prisma/client'
-import { BULLETIN_CATEGORY_RULES, isValidCategory } from '@/lib/bulletin-validation'
+import {
+  BULLETIN_CATEGORY_RULES,
+  isValidCategory,
+  VALID_BOOKING_IMPACTS,
+  BOOKING_IMPACT_LABELS,
+  VALID_CUSTOMER_ACTIONS,
+  CUSTOMER_ACTION_LABELS,
+  VALID_CUSTOMER_ELIGIBILITIES,
+  CUSTOMER_ELIGIBILITY_LABELS,
+} from '@/lib/bulletin-validation'
+
+export interface ResourceOption {
+  id: string
+  displayName: string
+}
+
+type BulletinWithOptionalResourceLinks = Bulletin & {
+  resourceLinks?: { resourceId: string }[]
+}
 
 const CATEGORIES = [
   { value: 'Renovation', label: 'Renovation' },
@@ -13,6 +31,7 @@ const CATEGORIES = [
   { value: 'Community', label: 'Community Event' },
   { value: 'General', label: 'General Announcement' },
   { value: 'FacilityMaintenance', label: 'Facility Maintenance' },
+  { value: 'Promotion', label: 'Promotion' },
 ] as const
 
 function toDateTimeLocalValue(date: Date | null | undefined): string {
@@ -31,10 +50,11 @@ interface BulletinFormModalProps {
   isOpen: boolean
   onClose: () => void
   mode: 'add' | 'edit'
-  bulletin?: Bulletin
+  bulletin?: BulletinWithOptionalResourceLinks
+  resourceOptions: ResourceOption[]
 }
 
-export default function BulletinFormModal({ isOpen, onClose, mode, bulletin }: BulletinFormModalProps) {
+export default function BulletinFormModal({ isOpen, onClose, mode, bulletin, resourceOptions }: BulletinFormModalProps) {
   return (
     <Modal
       isOpen={isOpen}
@@ -43,7 +63,9 @@ export default function BulletinFormModal({ isOpen, onClose, mode, bulletin }: B
       maxWidthClassName="max-w-3xl"
       variant="neutral"
     >
-      {isOpen && <BulletinForm mode={mode} bulletin={bulletin} onClose={onClose} />}
+      {isOpen && (
+        <BulletinForm mode={mode} bulletin={bulletin} resourceOptions={resourceOptions} onClose={onClose} />
+      )}
     </Modal>
   )
 }
@@ -51,10 +73,12 @@ export default function BulletinFormModal({ isOpen, onClose, mode, bulletin }: B
 function BulletinForm({
   mode,
   bulletin,
+  resourceOptions,
   onClose,
 }: {
   mode: 'add' | 'edit'
-  bulletin?: Bulletin
+  bulletin?: BulletinWithOptionalResourceLinks
+  resourceOptions: ResourceOption[]
   onClose: () => void
 }) {
   const router = useRouter()
@@ -67,23 +91,53 @@ function BulletinForm({
   const [affectedFacility, setAffectedFacility] = useState(bulletin?.affectedFacility ?? '')
   const [impact, setImpact] = useState(bulletin?.impact ?? '')
   const [action, setAction] = useState(bulletin?.action ?? '')
+  const [bookingImpact, setBookingImpact] = useState<string>(bulletin?.bookingImpact ?? '')
+  const [customerActionType, setCustomerActionType] = useState<string>(bulletin?.customerActionType ?? '')
+  const [promoCode, setPromoCode] = useState(bulletin?.promoCode ?? '')
+  const [discountSummary, setDiscountSummary] = useState(bulletin?.discountSummary ?? '')
+  const [customerEligibility, setCustomerEligibility] = useState<string>(bulletin?.customerEligibility ?? '')
   const [eventStartAt, setEventStartAt] = useState(toDateTimeLocalValue(bulletin?.eventStartAt))
   const [eventEndAt, setEventEndAt] = useState(toDateTimeLocalValue(bulletin?.eventEndAt))
   const [expiresAt, setExpiresAt] = useState(toDateInputValue(bulletin?.expiresAt))
   const [ctaLabel, setCtaLabel] = useState(bulletin?.ctaLabel ?? '')
   const [ctaUrl, setCtaUrl] = useState(bulletin?.ctaUrl ?? '')
   const [isPublished, setIsPublished] = useState(bulletin?.isPublished ?? false)
+  const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>(
+    bulletin?.resourceLinks?.map((l) => l.resourceId) ?? [],
+  )
+  const [autoDisableResources, setAutoDisableResources] = useState(bulletin?.autoDisableResources ?? false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(bulletin?.imageUrl ?? null)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const rules = category && isValidCategory(category) ? BULLETIN_CATEGORY_RULES[category] : null
+  const isPromotion = category === 'Promotion'
+
+  function handleCategoryChange(value: string) {
+    setCategory(value)
+    // A promotion doesn't disrupt bookings, so don't make the admin pick a Booking
+    // Impact/Customer Action — default them instead of showing blank required selects.
+    if (value === 'Promotion') {
+      if (!bookingImpact) setBookingImpact('NoImpact')
+      if (!customerActionType) setCustomerActionType('NoActionRequired')
+    }
+  }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
     setImageFile(file)
     setImagePreview(file ? URL.createObjectURL(file) : (bulletin?.imageUrl ?? null))
+  }
+
+  function toggleResource(resourceId: string) {
+    setSelectedResourceIds((prev) => {
+      const next = prev.includes(resourceId)
+        ? prev.filter((id) => id !== resourceId)
+        : [...prev, resourceId]
+      if (next.length === 0) setAutoDisableResources(false)
+      return next
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -105,16 +159,28 @@ function BulletinForm({
       setError('Category is required')
       return
     }
-    if (!affectedFacility.trim()) {
+    if (rules?.requireImpactFields && !affectedFacility.trim()) {
       setError('Affected Facility is required')
       return
     }
-    if (!impact.trim()) {
+    if (rules?.requireImpactFields && !impact.trim()) {
       setError('Impact is required')
       return
     }
-    if (!action.trim()) {
+    if (rules?.requireImpactFields && !action.trim()) {
       setError('Action is required')
+      return
+    }
+    if (!bookingImpact) {
+      setError('Booking Impact is required')
+      return
+    }
+    if (!customerActionType) {
+      setError('Customer Action is required')
+      return
+    }
+    if (rules?.requireDiscountSummary && !discountSummary.trim()) {
+      setError('Discount Summary is required for this category')
       return
     }
     if (!eventStartAt) {
@@ -158,6 +224,8 @@ function BulletinForm({
     formData.set('body', body.trim())
     formData.set('category', category)
     formData.set('isPublished', String(isPublished))
+    formData.set('resourceIds', JSON.stringify(selectedResourceIds))
+    formData.set('autoDisableResources', String(autoDisableResources))
     if (socialPlatform) {
       formData.set('socialPlatform', socialPlatform)
       formData.set('socialUrl', socialUrl.trim())
@@ -165,6 +233,11 @@ function BulletinForm({
     if (affectedFacility.trim()) formData.set('affectedFacility', affectedFacility.trim())
     if (impact.trim()) formData.set('impact', impact.trim())
     if (action.trim()) formData.set('action', action.trim())
+    if (bookingImpact) formData.set('bookingImpact', bookingImpact)
+    if (customerActionType) formData.set('customerActionType', customerActionType)
+    if (promoCode.trim()) formData.set('promoCode', promoCode.trim())
+    if (discountSummary.trim()) formData.set('discountSummary', discountSummary.trim())
+    if (customerEligibility) formData.set('customerEligibility', customerEligibility)
     if (eventStartAt) formData.set('eventStartAt', eventStartAt)
     if (eventEndAt) formData.set('eventEndAt', eventEndAt)
     if (expiresAt) formData.set('expiresAt', expiresAt)
@@ -208,7 +281,7 @@ function BulletinForm({
             Category *
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               autoFocus
               className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             >
@@ -257,9 +330,52 @@ function BulletinForm({
         </label>
       </FormSection>
 
+      {isPromotion && (
+        <FormSection title="Promotion Details">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+              Promo Code
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+              Discount Summary *
+              <input
+                type="text"
+                value={discountSummary}
+                onChange={(e) => setDiscountSummary(e.target.value)}
+                placeholder="e.g. 20% off"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              />
+            </label>
+          </div>
+
+          <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+            Customer Eligibility
+            <select
+              value={customerEligibility}
+              onChange={(e) => setCustomerEligibility(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >
+              <option value="">None specified</option>
+              {VALID_CUSTOMER_ELIGIBILITIES.map((value) => (
+                <option key={value} value={value}>
+                  {CUSTOMER_ELIGIBILITY_LABELS[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </FormSection>
+      )}
+
       <FormSection title="Impact Details">
         <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-          Affected Facility *
+          Affected Facility{rules?.requireImpactFields ? ' *' : ''}
           <input
             type="text"
             value={affectedFacility}
@@ -269,7 +385,7 @@ function BulletinForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-          Impact *
+          Impact{rules?.requireImpactFields ? ' *' : ''}
           <textarea
             value={impact}
             onChange={(e) => setImpact(e.target.value)}
@@ -279,7 +395,7 @@ function BulletinForm({
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-          Action *
+          Action{rules?.requireImpactFields ? ' *' : ''}
           <textarea
             value={action}
             onChange={(e) => setAction(e.target.value)}
@@ -287,6 +403,46 @@ function BulletinForm({
             className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           />
         </label>
+
+        {!isPromotion && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+              Booking Impact *
+              <select
+                value={bookingImpact}
+                onChange={(e) => setBookingImpact(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              >
+                <option value="" disabled>
+                  Select booking impact
+                </option>
+                {VALID_BOOKING_IMPACTS.map((value) => (
+                  <option key={value} value={value}>
+                    {BOOKING_IMPACT_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
+              Customer Action *
+              <select
+                value={customerActionType}
+                onChange={(e) => setCustomerActionType(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              >
+                <option value="" disabled>
+                  Select customer action
+                </option>
+                {VALID_CUSTOMER_ACTIONS.map((value) => (
+                  <option key={value} value={value}>
+                    {CUSTOMER_ACTION_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
       </FormSection>
 
       <FormSection title="Scheduling">
@@ -358,9 +514,10 @@ function BulletinForm({
             <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
               Social URL
               <input
-                type="text"
+                type="url"
                 value={socialUrl}
                 onChange={(e) => setSocialUrl(e.target.value)}
+                placeholder="https://www.instagram.com/..."
                 className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </label>
@@ -380,16 +537,55 @@ function BulletinForm({
 
           {ctaLabel && (
             <label className="flex flex-col gap-1 text-sm text-gray-900 dark:text-gray-100">
-              CTA URL{rules?.requireCta ? ' *' : ''}
-              <input
-                type="text"
-                value={ctaUrl}
-                onChange={(e) => setCtaUrl(e.target.value)}
+            CTA URL{rules?.requireCta ? ' *' : ''}
+            <input
+              type="url"
+              value={ctaUrl}
+              onChange={(e) => setCtaUrl(e.target.value)}
+              placeholder="https://example.com/..."
                 className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               />
             </label>
           )}
         </div>
+      </FormSection>
+
+      <FormSection title="Affected Resources (optional)">
+        <div className="scrollbar-thin flex max-h-40 flex-col gap-1.5 overflow-y-auto rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+          {resourceOptions.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No resources found.</p>
+          ) : (
+            resourceOptions.map((option) => (
+              <label
+                key={option.id}
+                className="flex items-center gap-2 text-sm text-gray-900 dark:text-gray-100"
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedResourceIds.includes(option.id)}
+                  onChange={() => toggleResource(option.id)}
+                />
+                {option.displayName}
+              </label>
+            ))
+          )}
+        </div>
+
+        <label
+          className={`flex items-center gap-2 text-sm ${
+            selectedResourceIds.length === 0
+              ? 'text-gray-400 dark:text-gray-600'
+              : 'text-gray-900 dark:text-gray-100'
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={autoDisableResources}
+            disabled={selectedResourceIds.length === 0}
+            onChange={(e) => setAutoDisableResources(e.target.checked)}
+          />
+          Automatically disable selected resources while this bulletin is published.
+        </label>
       </FormSection>
 
       <FormSection title="Publish">

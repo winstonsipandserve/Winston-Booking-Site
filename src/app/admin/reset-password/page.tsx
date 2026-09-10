@@ -1,16 +1,10 @@
 import { Suspense } from 'react'
 import AdminResetPasswordForm from '@/components/admin/AdminResetPasswordForm'
 import AdminThemeInit from '@/components/admin/AdminThemeInit'
-import { ADMIN_THEME_INIT_SCRIPT } from '@/lib/admin-theme-init-script'
 
 export default function AdminResetPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 font-sans dark:bg-gray-950">
-      <script
-        dangerouslySetInnerHTML={{
-          __html: ADMIN_THEME_INIT_SCRIPT,
-        }}
-      />
       <AdminThemeInit />
       <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Winston Sip &amp; Serve</p>

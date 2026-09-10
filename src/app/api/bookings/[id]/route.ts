@@ -2,9 +2,28 @@ import { prisma } from '@/lib/prisma'
 import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { resolveCustomer } from '@/lib/customer-resolution'
 import { priceBooking } from '@/lib/booking-pricing'
+import { hasValidBookingAccessToken } from '@/lib/booking-access'
+import { auth } from '../../../../../auth'
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
+}
+
+async function canAccessBooking(request: Request, booking: {
+  id: string
+  customerId: string | null
+  accessTokenHash: string | null
+  accessTokenExpiresAt: Date | null
+}): Promise<boolean> {
+  const session = await auth()
+  if (
+    session?.user?.role === 'member' &&
+    session.user.id &&
+    booking.customerId === session.user.id
+  ) {
+    return true
+  }
+  return hasValidBookingAccessToken(request, booking)
 }
 
 export async function GET(
@@ -24,6 +43,9 @@ export async function GET(
   })
 
   if (!booking) {
+    return Response.json({ error: 'Booking not found' }, { status: 404 })
+  }
+  if (!(await canAccessBooking(request, booking))) {
     return Response.json({ error: 'Booking not found' }, { status: 404 })
   }
 
@@ -95,6 +117,9 @@ export async function PATCH(
   })
 
   if (!booking) {
+    return Response.json({ error: 'Booking not found' }, { status: 404 })
+  }
+  if (!(await canAccessBooking(request, booking))) {
     return Response.json({ error: 'Booking not found' }, { status: 404 })
   }
 

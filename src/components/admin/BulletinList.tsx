@@ -2,9 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import BulletinFormModal from '@/components/admin/BulletinFormModal'
+import BulletinFormModal, { type ResourceOption } from '@/components/admin/BulletinFormModal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
-import type { Bulletin } from '@prisma/client'
+import type { Bulletin, Prisma } from '@prisma/client'
+
+type BulletinWithResourceLinks = Bulletin & {
+  resourceLinks: Prisma.BulletinResourceGetPayload<{
+    include: { resource: { include: { resourceType: true } } }
+  }>[]
+}
 
 function PencilIcon({ className = '' }: { className?: string }) {
   return (
@@ -61,15 +67,16 @@ function ActionIconButton({
 }
 
 interface BulletinListProps {
-  bulletins: Bulletin[]
+  bulletins: BulletinWithResourceLinks[]
+  resourceOptions: ResourceOption[]
 }
 
-export default function BulletinList({ bulletins }: BulletinListProps) {
+export default function BulletinList({ bulletins, resourceOptions }: BulletinListProps) {
   const router = useRouter()
-  const [editingBulletin, setEditingBulletin] = useState<Bulletin | null>(null)
-  const [pendingDelete, setPendingDelete] = useState<Bulletin | null>(null)
+  const [editingBulletin, setEditingBulletin] = useState<BulletinWithResourceLinks | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<BulletinWithResourceLinks | null>(null)
 
-  async function handleDelete(bulletin: Bulletin) {
+  async function handleDelete(bulletin: BulletinWithResourceLinks) {
     try {
       const res = await fetch(`/api/admin/bulletin/${bulletin.id}`, { method: 'DELETE' })
       if (!res.ok) {
@@ -131,10 +138,20 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
+                      timeZone: 'Asia/Manila',
                     })}
                   </p>
                 ) : (
                   <p className="text-xs italic text-gray-400 dark:text-gray-500">Not yet published</p>
+                )}
+
+                {bulletin.autoDisableResources && bulletin.resourceLinks.length > 0 && (
+                  <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    Holding offline:{' '}
+                    {bulletin.resourceLinks
+                      .map((link) => `${link.resource.resourceType.name} — ${link.resource.label}`)
+                      .join(', ')}
+                  </p>
                 )}
               </div>
 
@@ -160,6 +177,7 @@ export default function BulletinList({ bulletins }: BulletinListProps) {
         onClose={() => setEditingBulletin(null)}
         mode="edit"
         bulletin={editingBulletin ?? undefined}
+        resourceOptions={resourceOptions}
       />
       <ConfirmModal
         isOpen={pendingDelete !== null}

@@ -1,6 +1,7 @@
 import { RateTier } from '@prisma/client'
 import { formatCentavos } from '@/lib/format'
 import BookingSummary from '../BookingSummary'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 interface PriceUpdate {
   originalCentavos: number
@@ -86,16 +87,12 @@ export default function PaymentStep({
     : name.trim().length > 0 && phone.trim().length > 0 && email.trim().length > 0
   const disabled = checkingOut || attachingCustomer || (!customerAttached && !isValid)
 
-  const buttonLabel = checkingOut
-    ? 'Redirecting to payment…'
-    : attachingCustomer
-      ? 'Confirming your details…'
-      : customerAttached && priceUpdate
-        ? 'Continue to Payment'
-        : 'Pay Now'
+  const buttonLabel = customerAttached && priceUpdate ? 'Continue to Payment' : 'Pay Now'
+  const loadingLabel = checkingOut ? 'Redirecting to payment…' : 'Confirming your details…'
 
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
+      <LoadingOverlay isOpen={checkingOut || attachingCustomer} label={loadingLabel} />
       <div className="flex flex-col gap-1 text-center">
         <h2 className="font-serif text-2xl text-brand-dark">Payment</h2>
       </div>

@@ -2,6 +2,8 @@ import { Prisma } from '@prisma/client'
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { isWithinBusinessHours } from '@/lib/business-hours'
+import { logAdminActivity } from '@/lib/admin-activity-log'
+import { formatBookingDateTime } from '@/lib/format'
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -99,6 +101,24 @@ export async function PATCH(
           performedById: activeSession.adminUser.id,
         },
       })
+
+      await logAdminActivity(
+        {
+          adminId: activeSession.adminUser.id,
+          action: 'booking_rescheduled',
+          entityType: 'booking',
+          entityId: booking.id,
+          description: `Rescheduled booking #${booking.id} from ${formatBookingDateTime(originalStart)} to ${formatBookingDateTime(newStart)}`,
+          metadata: {
+            originalStart: originalStart.toISOString(),
+            originalEnd: originalEnd.toISOString(),
+            newStart: newStart.toISOString(),
+            newEnd: newEnd.toISOString(),
+            reason,
+          },
+        },
+        tx,
+      )
     })
   } catch (err) {
     console.error('Booking reschedule failed', err)

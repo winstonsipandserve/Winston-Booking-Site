@@ -1,5 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
+import {
+  applyBulletinResourceDisable,
+  bulletinShouldDisableResources,
+  releaseBulletinResourceDisable,
+} from '@/lib/bulletin-resource-disable'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,6 +52,52 @@ export async function GET(request: Request) {
   for (const checkoutSessionId of checkoutSessionIdsToExpire) {
     await expirePaymongoCheckoutSession(checkoutSessionId)
   }
+
+  // Release resources whose disabling bulletin has expired — never touches isPublished
+  // or any other Bulletin field. See CLAUDE.md → Bulletin-triggered resource auto-disable.
+  const now = new Date()
+  await prisma.$transaction(async (tx) => {
+    const expiredBulletins = await tx.bulletin.findMany({
+      where: {
+        isPublished: true,
+        autoDisableResources: true,
+        expiresAt: { not: null, lte: now },
+      },
+      include: { resourceLinks: { select: { resourceId: true } } },
+    })
+
+    for (const bulletin of expiredBulletins) {
+      const resourceIds = bulletin.resourceLinks.map((l) => l.resourceId)
+      if (resourceIds.length > 0) {
+        await releaseBulletinResourceDisable(tx, resourceIds, bulletin.id)
+      }
+    }
+  })
+
+  // Apply scheduled disables: a published, auto-disabling bulletin with a future eventStartAt
+  // doesn't disable its linked resources until that start time arrives (see
+  // bulletinShouldDisableResources). KNOWN LIMITATION: this cron runs once daily (Vercel
+  // Hobby plan cap), so a scheduled disable takes effect on the next daily cron run after
+  // eventStartAt passes, not at the exact time — same granularity as the expiry-release step
+  // above. A more frequent cron is a separate Vercel-plan change (see CLAUDE.md).
+  await prisma.$transaction(async (tx) => {
+    const dueBulletins = await tx.bulletin.findMany({
+      where: {
+        isPublished: true,
+        autoDisableResources: true,
+        eventStartAt: { not: null, lte: now },
+      },
+      include: { resourceLinks: { select: { resourceId: true } } },
+    })
+
+    for (const bulletin of dueBulletins) {
+      if (!bulletinShouldDisableResources(bulletin)) continue
+      const resourceIds = bulletin.resourceLinks.map((l) => l.resourceId)
+      if (resourceIds.length > 0) {
+        await applyBulletinResourceDisable(tx, resourceIds)
+      }
+    }
+  })
 
   return Response.json({ cancelledCount: staleBookings.length }, { status: 200 })
 }

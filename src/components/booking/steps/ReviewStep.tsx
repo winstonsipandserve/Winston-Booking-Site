@@ -1,5 +1,6 @@
 import { RateTier } from '@prisma/client'
 import BookingSummary from '../BookingSummary'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 interface ReviewStepProps {
   resourceTypeName: string
@@ -48,6 +49,7 @@ export default function ReviewStep({
 }: ReviewStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
+      <LoadingOverlay isOpen={submitting} label="Creating your booking…" />
       <h2 className="font-serif text-2xl text-brand-dark">Summary</h2>
       <BookingSummary
         resourceTypeName={resourceTypeName}
@@ -86,7 +88,7 @@ export default function ReviewStep({
           disabled={submitting}
           className="flex-1 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
         >
-          {submitting ? 'Creating your booking…' : 'Confirm Booking'}
+          Confirm Booking
         </button>
       </div>
     </div>

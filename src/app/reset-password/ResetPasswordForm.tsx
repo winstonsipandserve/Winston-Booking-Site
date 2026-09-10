@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -82,6 +83,7 @@ export default function ResetPasswordForm() {
       onSubmit={handleSubmit}
       className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
     >
+      <LoadingOverlay isOpen={submitting} label="Resetting…" />
       <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-brand-dark">
           New Password
@@ -121,7 +123,7 @@ export default function ResetPasswordForm() {
         disabled={!isValid || submitting}
         className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
       >
-        {submitting ? 'Resetting…' : 'Reset Password'}
+        Reset Password
       </button>
     </form>
   )

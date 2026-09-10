@@ -1,7 +1,18 @@
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { uploadToStorage, deleteFromStorage, getPublicUrl } from '@/lib/supabase-storage'
-import { MIME_TO_EXTENSION, BULLETIN_CATEGORY_RULES, parseCommonFields, validateImageFile } from '@/lib/bulletin-validation'
+import {
+  MIME_TO_EXTENSION,
+  BULLETIN_CATEGORY_RULES,
+  parseCommonFields,
+  parseResourceFields,
+  validateImageFile,
+} from '@/lib/bulletin-validation'
+import {
+  applyBulletinResourceDisable,
+  bulletinShouldDisableResources,
+  releaseBulletinResourceDisable,
+} from '@/lib/bulletin-resource-disable'
 
 const BUCKET = 'bulletin-images'
 
@@ -38,7 +49,21 @@ export async function PATCH(
     return Response.json({ error: parsed.error }, { status: 400 })
   }
 
+  const resourceParsed = parseResourceFields(formData)
+  if ('error' in resourceParsed) {
+    return Response.json({ error: resourceParsed.error }, { status: 400 })
+  }
+
   const { fields } = parsed
+  const { resourceIds: newResourceIds, autoDisableResources } = resourceParsed.fields
+
+  if (newResourceIds.length > 0) {
+    const matchCount = await prisma.resource.count({ where: { id: { in: newResourceIds } } })
+    if (matchCount !== newResourceIds.length) {
+      return Response.json({ error: 'One or more selected resources do not exist' }, { status: 400 })
+    }
+  }
+
   const imageValue = formData.get('image')
   const hasNewImageFile = imageValue instanceof File && imageValue.size > 0
 
@@ -54,7 +79,7 @@ export async function PATCH(
   let newImageUrl: string | null = null
 
   if (hasNewImageFile) {
-    const imageResult = validateImageFile(imageValue as File)
+    const imageResult = await validateImageFile(imageValue as File)
     if ('error' in imageResult) {
       return Response.json({ error: imageResult.error }, { status: 400 })
     }
@@ -72,27 +97,93 @@ export async function PATCH(
     fields.isPublished && existing.publishedAt === null ? new Date() : existing.publishedAt
 
   try {
-    const bulletin = await prisma.bulletin.update({
-      where: { id },
-      data: {
-        title: fields.title,
-        excerpt: fields.excerpt,
-        body: fields.body,
-        category: fields.category,
-        ...(newImageUrl ? { imageUrl: newImageUrl } : {}),
-        socialPlatform: fields.socialPlatform,
-        socialUrl: fields.socialUrl,
-        affectedFacility: fields.affectedFacility,
-        impact: fields.impact,
-        action: fields.action,
-        eventStartAt: fields.eventStartAt,
-        eventEndAt: fields.eventEndAt,
-        expiresAt: fields.expiresAt,
-        ctaLabel: fields.ctaLabel,
-        ctaUrl: fields.ctaUrl,
+    const bulletin = await prisma.$transaction(async (tx) => {
+      const existingLinks = await tx.bulletinResource.findMany({
+        where: { bulletinId: id },
+        select: { resourceId: true },
+      })
+      const oldResourceIds = existingLinks.map((l) => l.resourceId)
+
+      // Whether each linked resourceId "should be disabled by this bulletin" under the
+      // OLD field values vs. the NEW field values — evaluated per-id (only resources
+      // actually linked in that state contribute), then diffed to find transitions.
+      const oldShouldDisable = bulletinShouldDisableResources({
+        isPublished: existing.isPublished,
+        autoDisableResources: existing.autoDisableResources,
+        expiresAt: existing.expiresAt,
+        eventStartAt: existing.eventStartAt,
+      })
+      const newShouldDisable = bulletinShouldDisableResources({
         isPublished: fields.isPublished,
-        publishedAt,
-      },
+        autoDisableResources,
+        expiresAt: fields.expiresAt,
+        eventStartAt: fields.eventStartAt,
+      })
+
+      const oldIdSet = new Set(oldResourceIds)
+      const newIdSet = new Set(newResourceIds)
+      const unionIds = new Set([...oldResourceIds, ...newResourceIds])
+
+      const toApply: string[] = []
+      const toRelease: string[] = []
+      for (const resourceId of unionIds) {
+        const oldVal = oldIdSet.has(resourceId) && oldShouldDisable
+        const newVal = newIdSet.has(resourceId) && newShouldDisable
+        if (!oldVal && newVal) toApply.push(resourceId)
+        if (oldVal && !newVal) toRelease.push(resourceId)
+      }
+
+      const updated = await tx.bulletin.update({
+        where: { id },
+        data: {
+          title: fields.title,
+          excerpt: fields.excerpt,
+          body: fields.body,
+          category: fields.category,
+          ...(newImageUrl ? { imageUrl: newImageUrl } : {}),
+          socialPlatform: fields.socialPlatform,
+          socialUrl: fields.socialUrl,
+          affectedFacility: fields.affectedFacility,
+          impact: fields.impact,
+          action: fields.action,
+          bookingImpact: fields.bookingImpact,
+          customerActionType: fields.customerActionType,
+          promoCode: fields.promoCode,
+          discountSummary: fields.discountSummary,
+          customerEligibility: fields.customerEligibility,
+          eventStartAt: fields.eventStartAt,
+          eventEndAt: fields.eventEndAt,
+          expiresAt: fields.expiresAt,
+          ctaLabel: fields.ctaLabel,
+          ctaUrl: fields.ctaUrl,
+          isPublished: fields.isPublished,
+          publishedAt,
+          autoDisableResources,
+        },
+      })
+
+      // Sync BulletinResource rows to the new linked set.
+      const idsToUnlink = oldResourceIds.filter((rid) => !newIdSet.has(rid))
+      const idsToLink = newResourceIds.filter((rid) => !oldIdSet.has(rid))
+      if (idsToUnlink.length > 0) {
+        await tx.bulletinResource.deleteMany({
+          where: { bulletinId: id, resourceId: { in: idsToUnlink } },
+        })
+      }
+      if (idsToLink.length > 0) {
+        await tx.bulletinResource.createMany({
+          data: idsToLink.map((resourceId) => ({ bulletinId: id, resourceId })),
+        })
+      }
+
+      if (toApply.length > 0) {
+        await applyBulletinResourceDisable(tx, toApply)
+      }
+      if (toRelease.length > 0) {
+        await releaseBulletinResourceDisable(tx, toRelease, id)
+      }
+
+      return updated
     })
 
     if (newImagePath && existing.imageUrl) {
@@ -128,7 +219,17 @@ export async function DELETE(
     return Response.json({ error: 'Bulletin not found' }, { status: 404 })
   }
 
-  await prisma.bulletin.delete({ where: { id } })
+  await prisma.$transaction(async (tx) => {
+    const links = await tx.bulletinResource.findMany({
+      where: { bulletinId: id },
+      select: { resourceId: true },
+    })
+    if (links.length > 0) {
+      await releaseBulletinResourceDisable(tx, links.map((l) => l.resourceId), id)
+    }
+    // BulletinResource rows cascade-delete with the bulletin.
+    await tx.bulletin.delete({ where: { id } })
+  })
 
   const path = existing.imageUrl ? extractStoragePath(existing.imageUrl) : null
   if (path) {

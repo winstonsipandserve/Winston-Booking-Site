@@ -1,26 +1,28 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import type { BookingStatus, Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { formatCentavos } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
-import { phDateToUtcWindow } from '@/lib/business-hours'
+import { isBookingStatus, buildBookingsWhere } from '@/lib/bookings-query'
 import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
 import BookingsSearchBar from '@/components/admin/BookingsSearchBar'
+import BookingsExportButton from '@/components/admin/BookingsExportButton'
+import AdminPagination from '@/components/admin/AdminPagination'
 
 const PAGE_SIZE = 25
-
-function isBookingStatus(value: string): value is BookingStatus {
-  return value === 'pending_payment' || value === 'confirmed' || value === 'cancelled'
-}
 
 function formatSubmittedAt(createdAt: Date) {
   const date = createdAt.toLocaleDateString('en-PH', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    timeZone: 'Asia/Manila',
   })
-  const time = createdAt.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' })
+  const time = createdAt.toLocaleTimeString('en-PH', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'Asia/Manila',
+  })
   return { date, time }
 }
 
@@ -33,26 +35,9 @@ export default async function AdminBookingsPage({
 
   const status = statusParam && isBookingStatus(statusParam) ? statusParam : undefined
   const page = Math.max(1, Number(pageParam) || 1)
-
-  const where: Prisma.BookingWhereInput = {}
-  if (status) {
-    where.status = status
-  }
-  if (startDate || endDate) {
-    where.startTime = {
-      ...(startDate ? { gte: phDateToUtcWindow(startDate).start } : {}),
-      ...(endDate ? { lt: phDateToUtcWindow(endDate).end } : {}),
-    }
-  }
   const trimmedSearch = search?.trim()
-  if (trimmedSearch) {
-    where.OR = [
-      { id: { contains: trimmedSearch, mode: 'insensitive' } },
-      { customer: { name: { contains: trimmedSearch, mode: 'insensitive' } } },
-      { resource: { label: { contains: trimmedSearch, mode: 'insensitive' } } },
-      { resource: { resourceType: { name: { contains: trimmedSearch, mode: 'insensitive' } } } },
-    ]
-  }
+
+  const where = buildBookingsWhere({ status, startDate, endDate, search: trimmedSearch })
 
   const [bookings, totalCount] = await Promise.all([
     prisma.booking.findMany({
@@ -60,7 +45,7 @@ export default async function AdminBookingsPage({
       include: {
         resource: { include: { resourceType: true } },
         addOns: { select: { amountCentavos: true } },
-        payment: { select: { paymongoPaymentId: true } },
+        payment: { select: { paymongoPaymentId: true, paymongoNetAmountCentavos: true } },
       },
       relationLoadStrategy: 'query',
       orderBy: { startTime: 'asc' },
@@ -99,12 +84,13 @@ export default async function AdminBookingsPage({
             startDate={startDate ?? ''}
             endDate={endDate ?? ''}
           />
-          <button
-            type="button"
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            Export
-          </button>
+          <BookingsExportButton
+            status={status ?? 'all'}
+            startDate={startDate ?? ''}
+            endDate={endDate ?? ''}
+            search={trimmedSearch ?? ''}
+            totalCount={totalCount}
+          />
         </div>
 
         <Suspense fallback={null}>
@@ -135,6 +121,9 @@ export default async function AdminBookingsPage({
                 Total
               </th>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                Net
+              </th>
+              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                 PayMongo Payment ID
               </th>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
@@ -148,14 +137,16 @@ export default async function AdminBookingsPage({
               return (
                 <tr
                   key={booking.id}
-                  className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                  className="border-b border-gray-100 last:border-b-0 even:bg-gray-50/70 hover:bg-gray-100 dark:border-gray-800 dark:even:bg-gray-800/50 dark:hover:bg-gray-800"
                 >
                   <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{booking.id}</td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     {booking.resource.resourceType.name} — {booking.resource.label}
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                    {booking.customerNameSnapshot ?? '—'}
+                    <div className="max-w-[180px] truncate" title={booking.customerNameSnapshot ?? undefined}>
+                      {booking.customerNameSnapshot ?? '—'}
+                    </div>
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     <div>{date}</div>
@@ -164,6 +155,11 @@ export default async function AdminBookingsPage({
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.status}</td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     {formatCentavos(bookingGrandTotalCentavos(booking))}
+                  </td>
+                  <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                    {booking.payment?.paymongoNetAmountCentavos != null
+                      ? formatCentavos(booking.payment.paymongoNetAmountCentavos)
+                      : '—'}
                   </td>
                   <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">
                     {booking.payment?.paymongoPaymentId ?? '—'}
@@ -181,7 +177,7 @@ export default async function AdminBookingsPage({
             })}
             {bookings.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={9} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
                   No bookings found.
                 </td>
               </tr>
@@ -190,21 +186,12 @@ export default async function AdminBookingsPage({
         </table>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
-        {page > 1 && (
-          <Link href={pageHref(page - 1)} className="font-medium text-gray-900 hover:underline dark:text-gray-100">
-            Prev
-          </Link>
-        )}
-        <span>
-          Page {page} of {totalPages}
-        </span>
-        {page < totalPages && (
-          <Link href={pageHref(page + 1)} className="font-medium text-gray-900 hover:underline dark:text-gray-100">
-            Next
-          </Link>
-        )}
-      </div>
+      <AdminPagination
+        page={page}
+        totalPages={totalPages}
+        previousHref={pageHref(Math.max(1, page - 1))}
+        nextHref={pageHref(Math.min(totalPages, page + 1))}
+      />
     </div>
   )
 }

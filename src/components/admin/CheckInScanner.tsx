@@ -16,6 +16,45 @@ export default function CheckInScanner() {
   const [isVerifying, setIsVerifying] = useState(false)
   const [result, setResult] = useState<ScanResult | null>(null)
 
+  async function handleDecode(token: string) {
+    if (isHandlingScanRef.current) return
+    isHandlingScanRef.current = true
+
+    const scanner = scannerRef.current
+    if (scanner?.isScanning) {
+      scanner.pause(true)
+    }
+
+    setIsVerifying(true)
+    try {
+      const res = await fetch(`/api/admin/check-in/${encodeURIComponent(token)}`)
+      const json = await res.json().catch(() => null)
+
+      if (res.status === 404) {
+        setResult({ status: 'not_found' })
+      } else if (res.ok && json?.hasMembership === false) {
+        setResult({ status: 'no_membership', name: json.name })
+      } else if (res.ok && json?.hasMembership === true) {
+        setResult({
+          status: json.isExpired ? 'expired' : 'active',
+          name: json.name,
+          email: json.email,
+          tierName: json.tierName,
+          expiryDateLabel: json.expiryDateLabel,
+          remainingCreditCentavos: json.remainingCreditCentavos,
+          creditCentavos: json.creditCentavos,
+        })
+      } else {
+        setResult({ status: 'not_found' })
+      }
+    } catch (err) {
+      console.error('Failed to verify scanned code', err)
+      setResult({ status: 'not_found' })
+    } finally {
+      setIsVerifying(false)
+    }
+  }
+
   useEffect(() => {
     const scanner = new Html5Qrcode(SCANNER_ELEMENT_ID)
     scannerRef.current = scanner
@@ -63,47 +102,7 @@ export default function CheckInScanner() {
         })
         .catch(() => {})
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  async function handleDecode(token: string) {
-    if (isHandlingScanRef.current) return
-    isHandlingScanRef.current = true
-
-    const scanner = scannerRef.current
-    if (scanner?.isScanning) {
-      scanner.pause(true)
-    }
-
-    setIsVerifying(true)
-    try {
-      const res = await fetch(`/api/admin/check-in/${encodeURIComponent(token)}`)
-      const json = await res.json().catch(() => null)
-
-      if (res.status === 404) {
-        setResult({ status: 'not_found' })
-      } else if (res.ok && json?.hasMembership === false) {
-        setResult({ status: 'no_membership', name: json.name })
-      } else if (res.ok && json?.hasMembership === true) {
-        setResult({
-          status: json.isExpired ? 'expired' : 'active',
-          name: json.name,
-          email: json.email,
-          tierName: json.tierName,
-          expiryDateLabel: json.expiryDateLabel,
-          remainingCreditCentavos: json.remainingCreditCentavos,
-          creditCentavos: json.creditCentavos,
-        })
-      } else {
-        setResult({ status: 'not_found' })
-      }
-    } catch (err) {
-      console.error('Failed to verify scanned code', err)
-      setResult({ status: 'not_found' })
-    } finally {
-      setIsVerifying(false)
-    }
-  }
 
   function handleScanNext() {
     isHandlingScanRef.current = false

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { generateAdminPasswordResetToken } from '@/lib/admin-password-reset'
 import { sendAdminPasswordResetEmail } from '@/lib/resend'
+import { consumeAuthRateLimitAttempt } from '@/lib/auth-rate-limit'
 
 interface ForgotPasswordRequestBody {
   email?: unknown
@@ -22,6 +23,10 @@ export async function POST(request: Request) {
 
   if (typeof email !== 'string' || email.length === 0 || !email.includes('@')) {
     return Response.json({ error: 'A valid email is required' }, { status: 400 })
+  }
+
+  if (!(await consumeAuthRateLimitAttempt('admin_password_reset', request, email))) {
+    return Response.json(GENERIC_RESPONSE, { status: 200 })
   }
 
   const adminUser = await prisma.adminUser.findUnique({ where: { email } })

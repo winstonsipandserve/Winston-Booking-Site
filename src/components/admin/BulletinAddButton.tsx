@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import BulletinFormModal from '@/components/admin/BulletinFormModal'
+import BulletinFormModal, { type ResourceOption } from '@/components/admin/BulletinFormModal'
 
-export default function BulletinAddButton() {
+export default function BulletinAddButton({ resourceOptions }: { resourceOptions: ResourceOption[] }) {
   const [addModalOpen, setAddModalOpen] = useState(false)
 
   return (
@@ -16,7 +16,12 @@ export default function BulletinAddButton() {
         + Add Bulletin
       </button>
 
-      <BulletinFormModal isOpen={addModalOpen} onClose={() => setAddModalOpen(false)} mode="add" />
+      <BulletinFormModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        mode="add"
+        resourceOptions={resourceOptions}
+      />
     </>
   )
 }

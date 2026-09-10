@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import { sendMembershipPaymentEmail, sendRejectionEmail } from '@/lib/resend'
+import { logAdminActivity } from '@/lib/admin-activity-log'
 
 interface ReviewRequestBody {
   action?: unknown
@@ -49,14 +50,29 @@ export async function PATCH(
   const reviewedAt = new Date()
 
   if (action === 'reject') {
-    const updated = await prisma.membershipApplication.update({
-      where: { id },
-      data: {
-        status: 'rejected',
-        rejectionReason: (reason as string).trim(),
-        reviewedById: activeSession.adminUser.id,
-        reviewedAt,
-      },
+    const trimmedReason = (reason as string).trim()
+    const updated = await prisma.$transaction(async (tx) => {
+      const updated = await tx.membershipApplication.update({
+        where: { id },
+        data: {
+          status: 'rejected',
+          rejectionReason: trimmedReason,
+          reviewedById: activeSession.adminUser.id,
+          reviewedAt,
+        },
+      })
+      await logAdminActivity(
+        {
+          adminId: activeSession.adminUser.id,
+          action: 'membership_application_rejected',
+          entityType: 'membership_application',
+          entityId: application.id,
+          description: `Rejected membership application for ${application.customer.name}: ${trimmedReason}`,
+          metadata: { reason: trimmedReason },
+        },
+        tx,
+      )
+      return updated
     })
     await sendRejectionEmail({
       to: application.customer.email,
@@ -67,13 +83,27 @@ export async function PATCH(
     return Response.json({ ...updated, rejectionEmailSent }, { status: 200 })
   }
 
-  const updatedApplication = await prisma.membershipApplication.update({
-    where: { id },
-    data: {
-      status: 'approved',
-      reviewedById: activeSession.adminUser.id,
-      reviewedAt,
-    },
+  const updatedApplication = await prisma.$transaction(async (tx) => {
+    const updatedApplication = await tx.membershipApplication.update({
+      where: { id },
+      data: {
+        status: 'approved',
+        reviewedById: activeSession.adminUser.id,
+        reviewedAt,
+      },
+    })
+    await logAdminActivity(
+      {
+        adminId: activeSession.adminUser.id,
+        action: 'membership_application_approved',
+        entityType: 'membership_application',
+        entityId: application.id,
+        description: `Approved membership application for ${application.customer.name} (${formatMembershipTier(application.requestedTier)})`,
+        metadata: { tier: application.requestedTier },
+      },
+      tx,
+    )
+    return updatedApplication
   })
 
   const tierName = formatMembershipTier(application.requestedTier)

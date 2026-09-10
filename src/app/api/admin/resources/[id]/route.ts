@@ -8,7 +8,8 @@ function isNonEmptyString(value: unknown): value is string {
 interface UpdateResourceBody {
   label?: unknown
   isActive?: unknown
-  disabledReason?: unknown
+  /** Free-text admin note (e.g. "Under renovation") — not the structured disabledReason enum. */
+  disabledNote?: unknown
 }
 
 export async function PATCH(
@@ -34,26 +35,36 @@ export async function PATCH(
     return Response.json({ error: 'Malformed JSON body' }, { status: 400 })
   }
 
-  const { label, isActive, disabledReason } = body
+  const { label, isActive, disabledNote } = body
   if (label !== undefined && !isNonEmptyString(label)) {
     return Response.json({ error: 'label must be a non-empty string' }, { status: 400 })
   }
   if (isActive !== undefined && typeof isActive !== 'boolean') {
     return Response.json({ error: 'isActive must be a boolean' }, { status: 400 })
   }
-  if (disabledReason !== undefined && disabledReason !== null && typeof disabledReason !== 'string') {
-    return Response.json({ error: 'disabledReason must be a string or null' }, { status: 400 })
+  if (disabledNote !== undefined && disabledNote !== null && typeof disabledNote !== 'string') {
+    return Response.json({ error: 'disabledNote must be a string or null' }, { status: 400 })
   }
-  if (label === undefined && isActive === undefined && disabledReason === undefined) {
+  if (label === undefined && isActive === undefined && disabledNote === undefined) {
     return Response.json({ error: 'No fields to update' }, { status: 400 })
   }
 
-  // Re-enabling always clears any prior disabled reason, regardless of what's in the body.
-  let disabledReasonToSet: string | null | undefined
+  // Re-enabling always clears any prior disabled note, regardless of what's in the body.
+  let disabledNoteToSet: string | null | undefined
+  if (isActive === true) {
+    disabledNoteToSet = null
+  } else if (disabledNote !== undefined) {
+    disabledNoteToSet = disabledNote === null ? null : (disabledNote as string).trim() || null
+  }
+
+  // A manual toggle always wins immediately, regardless of any bulletin's claim — see
+  // CLAUDE.md → Bulletin-triggered resource auto-disable. Setting isActive:false stamps
+  // disabledReason: 'manual'; setting isActive:true clears it, same as disabledNote.
+  let disabledReasonToSet: 'manual' | null | undefined
   if (isActive === true) {
     disabledReasonToSet = null
-  } else if (disabledReason !== undefined) {
-    disabledReasonToSet = disabledReason === null ? null : (disabledReason as string).trim() || null
+  } else if (isActive === false) {
+    disabledReasonToSet = 'manual'
   }
 
   const resource = await prisma.resource.update({
@@ -61,6 +72,7 @@ export async function PATCH(
     data: {
       ...(label !== undefined ? { label: (label as string).trim() } : {}),
       ...(isActive !== undefined ? { isActive: isActive as boolean } : {}),
+      ...(disabledNoteToSet !== undefined ? { disabledNote: disabledNoteToSet } : {}),
       ...(disabledReasonToSet !== undefined ? { disabledReason: disabledReasonToSet } : {}),
     },
   })

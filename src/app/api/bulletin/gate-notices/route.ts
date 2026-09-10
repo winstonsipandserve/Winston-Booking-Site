@@ -4,7 +4,10 @@ import { bulletinNotExpiredWhere, bulletinOrderBy } from '@/lib/bulletin'
 
 export async function GET() {
   const bulletins = await prisma.bulletin.findMany({
-    where: { isPublished: true, ...bulletinNotExpiredWhere() },
+    // A promotion doesn't disrupt the booking flow the way a closure/maintenance notice
+    // does, so it's excluded from the pre-booking announcement gate — see CLAUDE.md's
+    // Bulletin / Promotion category decision. It still appears on /news.
+    where: { isPublished: true, category: { not: 'Promotion' }, ...bulletinNotExpiredWhere() },
     orderBy: bulletinOrderBy,
     take: 3,
   })

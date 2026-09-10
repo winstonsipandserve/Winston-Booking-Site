@@ -12,6 +12,7 @@ export const VALID_CATEGORIES = [
   'Community',
   'General',
   'FacilityMaintenance',
+  'Promotion',
 ] as const
 export type BulletinCategoryValue = (typeof VALID_CATEGORIES)[number]
 
@@ -22,6 +23,68 @@ export const CATEGORY_LABELS: Record<BulletinCategoryValue, string> = {
   Community: 'Community Event',
   General: 'General Announcement',
   FacilityMaintenance: 'Facility Maintenance',
+  Promotion: 'Promotion',
+}
+
+export const VALID_CUSTOMER_ELIGIBILITIES = [
+  'Everyone',
+  'MembersOnly',
+  'NewCustomers',
+  'ReturningCustomers',
+  'SpecificMembershipTier',
+] as const
+export type BulletinCustomerEligibilityValue = (typeof VALID_CUSTOMER_ELIGIBILITIES)[number]
+
+export const CUSTOMER_ELIGIBILITY_LABELS: Record<BulletinCustomerEligibilityValue, string> = {
+  Everyone: 'Everyone',
+  MembersOnly: 'Members Only',
+  NewCustomers: 'New Customers',
+  ReturningCustomers: 'Returning Customers',
+  SpecificMembershipTier: 'Specific Membership Tier',
+}
+
+export function isValidCustomerEligibility(value: unknown): value is BulletinCustomerEligibilityValue {
+  return typeof value === 'string' && (VALID_CUSTOMER_ELIGIBILITIES as readonly string[]).includes(value)
+}
+
+export const VALID_BOOKING_IMPACTS = [
+  'NoImpact',
+  'LimitedAvailability',
+  'TemporarilyUnavailable',
+  'ScheduleChanges',
+] as const
+export type BulletinBookingImpactValue = (typeof VALID_BOOKING_IMPACTS)[number]
+
+export const BOOKING_IMPACT_LABELS: Record<BulletinBookingImpactValue, string> = {
+  NoImpact: 'No Impact',
+  LimitedAvailability: 'Limited Availability',
+  TemporarilyUnavailable: 'Temporarily Unavailable',
+  ScheduleChanges: 'Schedule Changes',
+}
+
+export const VALID_CUSTOMER_ACTIONS = [
+  'NoActionRequired',
+  'RescheduleBooking',
+  'ContactSupport',
+  'BookAnotherFacility',
+  'WaitForFurtherNotice',
+] as const
+export type BulletinCustomerActionValue = (typeof VALID_CUSTOMER_ACTIONS)[number]
+
+export const CUSTOMER_ACTION_LABELS: Record<BulletinCustomerActionValue, string> = {
+  NoActionRequired: 'No Action Required',
+  RescheduleBooking: 'Reschedule Booking',
+  ContactSupport: 'Contact Support',
+  BookAnotherFacility: 'Book Another Facility',
+  WaitForFurtherNotice: 'Wait for Further Notice',
+}
+
+export function isValidBookingImpact(value: unknown): value is BulletinBookingImpactValue {
+  return typeof value === 'string' && (VALID_BOOKING_IMPACTS as readonly string[]).includes(value)
+}
+
+export function isValidCustomerAction(value: unknown): value is BulletinCustomerActionValue {
+  return typeof value === 'string' && (VALID_CUSTOMER_ACTIONS as readonly string[]).includes(value)
 }
 
 export const VALID_SOCIAL_PLATFORMS = ['instagram', 'facebook'] as const
@@ -34,14 +97,71 @@ export const BULLETIN_CATEGORY_RULES: Record<
     requireEventEndAt: boolean
     requireExpiresAt: boolean
     requireCta: boolean
+    /** affectedFacility/impact/action — required for every category except Promotion. */
+    requireImpactFields: boolean
+    /** discountSummary — required for Promotion only. */
+    requireDiscountSummary: boolean
   }
 > = {
-  Renovation: { requireImage: true, requireEventEndAt: true, requireExpiresAt: true, requireCta: false },
-  Closure: { requireImage: false, requireEventEndAt: true, requireExpiresAt: true, requireCta: false },
-  Tournament: { requireImage: true, requireEventEndAt: true, requireExpiresAt: true, requireCta: true },
-  Community: { requireImage: true, requireEventEndAt: true, requireExpiresAt: true, requireCta: true },
-  General: { requireImage: false, requireEventEndAt: false, requireExpiresAt: false, requireCta: false },
-  FacilityMaintenance: { requireImage: false, requireEventEndAt: true, requireExpiresAt: true, requireCta: false },
+  Renovation: {
+    requireImage: true,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: false,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  Closure: {
+    requireImage: false,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: false,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  Tournament: {
+    requireImage: true,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: true,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  Community: {
+    requireImage: true,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: true,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  General: {
+    requireImage: false,
+    requireEventEndAt: false,
+    requireExpiresAt: false,
+    requireCta: false,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  FacilityMaintenance: {
+    requireImage: false,
+    requireEventEndAt: true,
+    requireExpiresAt: true,
+    requireCta: false,
+    requireImpactFields: true,
+    requireDiscountSummary: false,
+  },
+  // A promotion doesn't have a facility/impact/action the way a closure/maintenance
+  // notice does, and never needs an expiry beyond its own eventEndAt (the validity
+  // window). It always needs an end date — an open-ended promotion doesn't make sense.
+  Promotion: {
+    requireImage: false,
+    requireEventEndAt: true,
+    requireExpiresAt: false,
+    requireCta: false,
+    requireImpactFields: false,
+    requireDiscountSummary: true,
+  },
 }
 
 export function isNonEmptyString(value: unknown): value is string {
@@ -67,15 +187,37 @@ export function parseOptionalDate(formData: FormData, key: string): { error: str
   return { value: date }
 }
 
-/** MIME/size checks for an image that IS provided. Whether an image is required at all is decided by the caller. */
-export function validateImageFile(value: File): { error: string } | { file: File } {
+/**
+ * Validates the declared MIME type, size, and binary file signature. Whether an image is
+ * required at all is decided by the caller.
+ */
+export async function validateImageFile(value: File): Promise<{ error: string } | { file: File }> {
   if (!ALLOWED_MIME_TYPES.includes(value.type)) {
     return { error: 'Image must be a JPEG or PNG image' }
   }
   if (value.size > MAX_FILE_SIZE_BYTES) {
     return { error: 'Image must be 5MB or smaller' }
   }
+  if (!(await hasExpectedImageSignature(value))) {
+    return { error: 'Image content does not match its declared file type' }
+  }
   return { file: value }
+}
+
+function isValidExternalHttpsUrl(value: string): boolean {
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && url.username === '' && url.password === ''
+  } catch {
+    return false
+  }
+}
+
+function isValidSocialUrl(value: string, platform: string): boolean {
+  if (!isValidExternalHttpsUrl(value)) return false
+  const host = new URL(value).hostname.toLowerCase()
+  const baseDomain = platform === 'instagram' ? 'instagram.com' : 'facebook.com'
+  return host === baseDomain || host.endsWith(`.${baseDomain}`)
 }
 
 export interface ParsedBulletinFields {
@@ -86,9 +228,14 @@ export interface ParsedBulletinFields {
   isPublished: boolean
   socialPlatform: string | null
   socialUrl: string | null
-  affectedFacility: string
-  impact: string
-  action: string
+  affectedFacility: string | null
+  impact: string | null
+  action: string | null
+  bookingImpact: BulletinBookingImpactValue
+  customerActionType: BulletinCustomerActionValue
+  promoCode: string | null
+  discountSummary: string | null
+  customerEligibility: BulletinCustomerEligibilityValue | null
   eventStartAt: Date
   eventEndAt: Date | null
   expiresAt: Date | null
@@ -108,12 +255,15 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   if (!isNonEmptyString(body)) return { error: 'Body is required' }
   if (!isValidCategory(category)) {
     return {
-      error: 'category must be one of Renovation, Closure, Tournament, Community, General, FacilityMaintenance',
+      error:
+        'category must be one of Renovation, Closure, Tournament, Community, General, FacilityMaintenance, Promotion',
     }
   }
   if (isPublishedRaw !== 'true' && isPublishedRaw !== 'false') {
     return { error: 'isPublished must be a boolean' }
   }
+
+  const rules = BULLETIN_CATEGORY_RULES[category]
 
   const socialPlatform = getOptionalString(formData, 'socialPlatform')
   const socialUrl = getOptionalString(formData, 'socialUrl')
@@ -123,18 +273,48 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   if (socialPlatform !== null && !(VALID_SOCIAL_PLATFORMS as readonly string[]).includes(socialPlatform)) {
     return { error: 'socialPlatform must be instagram or facebook' }
   }
+  if (socialPlatform !== null && socialUrl !== null && !isValidSocialUrl(socialUrl, socialPlatform)) {
+    return { error: 'socialUrl must be an HTTPS URL for the selected platform' }
+  }
 
   const affectedFacility = getOptionalString(formData, 'affectedFacility')
-  if (affectedFacility === null) return { error: 'Affected Facility is required' }
+  if (rules.requireImpactFields && affectedFacility === null) {
+    return { error: 'Affected Facility is required' }
+  }
   const impact = getOptionalString(formData, 'impact')
-  if (impact === null) return { error: 'Impact is required' }
+  if (rules.requireImpactFields && impact === null) return { error: 'Impact is required' }
   const action = getOptionalString(formData, 'action')
-  if (action === null) return { error: 'Action is required' }
+  if (rules.requireImpactFields && action === null) return { error: 'Action is required' }
+  const bookingImpact = formData.get('bookingImpact')
+  if (!isValidBookingImpact(bookingImpact)) {
+    return { error: 'Booking Impact is required' }
+  }
+  const customerActionType = formData.get('customerActionType')
+  if (!isValidCustomerAction(customerActionType)) {
+    return { error: 'Customer Action is required' }
+  }
+
+  const promoCode = getOptionalString(formData, 'promoCode')
+  const discountSummary = getOptionalString(formData, 'discountSummary')
+  if (rules.requireDiscountSummary && discountSummary === null) {
+    return { error: 'Discount Summary is required for this category' }
+  }
+  const customerEligibilityRaw = formData.get('customerEligibility')
+  let customerEligibility: BulletinCustomerEligibilityValue | null = null
+  if (customerEligibilityRaw !== null && customerEligibilityRaw !== '') {
+    if (!isValidCustomerEligibility(customerEligibilityRaw)) {
+      return { error: 'customerEligibility must be a valid value' }
+    }
+    customerEligibility = customerEligibilityRaw
+  }
 
   const ctaLabel = getOptionalString(formData, 'ctaLabel')
   const ctaUrl = getOptionalString(formData, 'ctaUrl')
   if ((ctaLabel === null) !== (ctaUrl === null)) {
     return { error: 'ctaLabel and ctaUrl must be provided together' }
+  }
+  if (ctaUrl !== null && !isValidExternalHttpsUrl(ctaUrl)) {
+    return { error: 'ctaUrl must be an HTTPS URL' }
   }
 
   const eventStartAtResult = parseOptionalDate(formData, 'eventStartAt')
@@ -145,7 +325,6 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
   const expiresAtResult = parseOptionalDate(formData, 'expiresAt')
   if ('error' in expiresAtResult) return { error: expiresAtResult.error }
 
-  const rules = BULLETIN_CATEGORY_RULES[category]
   if (rules.requireEventEndAt && eventEndAtResult.value === null) {
     return { error: 'Event End is required for this category' }
   }
@@ -168,6 +347,11 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
       affectedFacility,
       impact,
       action,
+      bookingImpact,
+      customerActionType,
+      promoCode,
+      discountSummary,
+      customerEligibility,
       eventStartAt: eventStartAtResult.value,
       eventEndAt: eventEndAtResult.value,
       expiresAt: expiresAtResult.value,
@@ -176,3 +360,36 @@ export function parseCommonFields(formData: FormData): { error: string } | { fie
     },
   }
 }
+
+export interface ParsedBulletinResourceFields {
+  resourceIds: string[]
+  autoDisableResources: boolean
+}
+
+/** Parses the optional resource-linking fields (Affected Resources picker + auto-disable toggle). */
+export function parseResourceFields(
+  formData: FormData,
+): { error: string } | { fields: ParsedBulletinResourceFields } {
+  const autoDisableRaw = formData.get('autoDisableResources')
+  if (autoDisableRaw !== 'true' && autoDisableRaw !== 'false') {
+    return { error: 'autoDisableResources must be a boolean' }
+  }
+
+  const resourceIdsRaw = formData.get('resourceIds')
+  let resourceIds: string[] = []
+  if (typeof resourceIdsRaw === 'string' && resourceIdsRaw.trim() !== '') {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(resourceIdsRaw)
+    } catch {
+      return { error: 'resourceIds must be a valid JSON array' }
+    }
+    if (!Array.isArray(parsed) || !parsed.every((v) => typeof v === 'string')) {
+      return { error: 'resourceIds must be an array of strings' }
+    }
+    resourceIds = Array.from(new Set(parsed))
+  }
+
+  return { fields: { resourceIds, autoDisableResources: autoDisableRaw === 'true' } }
+}
+import { hasExpectedImageSignature } from '@/lib/image-validation'

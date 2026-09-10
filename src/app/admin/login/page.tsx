@@ -5,7 +5,6 @@ import { signIn } from '../../../../auth'
 import PasswordInput from '@/components/ui/PasswordInput'
 import AdminLoginErrorModal from '@/components/admin/AdminLoginErrorModal'
 import AdminThemeInit from '@/components/admin/AdminThemeInit'
-import { ADMIN_THEME_INIT_SCRIPT } from '@/lib/admin-theme-init-script'
 
 async function authenticate(formData: FormData) {
   'use server'
@@ -32,11 +31,6 @@ export default async function AdminLoginPage({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 font-sans dark:bg-gray-950">
-      <script
-        dangerouslySetInnerHTML={{
-          __html: ADMIN_THEME_INIT_SCRIPT,
-        }}
-      />
       <AdminThemeInit />
       <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-800 dark:bg-gray-900">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Winston Sip &amp; Serve</p>

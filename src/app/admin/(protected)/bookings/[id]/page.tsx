@@ -19,6 +19,19 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+function paymentMethodLabel(method: string): string {
+  switch (method) {
+    case 'paymongo':
+      return 'PayMongo'
+    case 'membership_credit':
+      return 'Member credit'
+    case 'manual_online':
+      return 'Manual online payment'
+    default:
+      return capitalize(method)
+  }
+}
+
 export default async function AdminBookingDetailPage({
   params,
 }: {
@@ -70,13 +83,13 @@ export default async function AdminBookingDetailPage({
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
             <span className="text-gray-500 dark:text-gray-400">Start</span>
             <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {booking.startTime.toLocaleString('en-PH')}
+              {booking.startTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
             <span className="text-gray-500 dark:text-gray-400">End</span>
             <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {booking.endTime.toLocaleString('en-PH')}
+              {booking.endTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
@@ -131,11 +144,38 @@ export default async function AdminBookingDetailPage({
           {booking.payment ? (
             <>
               <DetailRow label="Status" value={capitalize(booking.payment.status)} />
+              <DetailRow label="Payment Method" value={paymentMethodLabel(booking.payment.method)} />
+              {booking.payment.method === 'membership_credit' && (
+                <DetailRow
+                  label="Member Credit Deducted"
+                  value={formatCentavos(booking.payment.amountCentavos)}
+                />
+              )}
               <DetailRow
                 label="Paid At"
-                value={booking.payment.paidAt ? booking.payment.paidAt.toLocaleString('en-PH') : '—'}
+                value={
+                  booking.payment.paidAt
+                    ? booking.payment.paidAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
+                    : '—'
+                }
               />
               <DetailRow label="PayMongo Payment ID" value={booking.payment.paymongoPaymentId ?? '—'} />
+              <DetailRow
+                label="PayMongo Fee"
+                value={
+                  booking.payment.paymongoFeeCentavos != null
+                    ? `-${formatCentavos(booking.payment.paymongoFeeCentavos)}`
+                    : '—'
+                }
+              />
+              <DetailRow
+                label="Net Amount"
+                value={
+                  booking.payment.paymongoNetAmountCentavos != null
+                    ? formatCentavos(booking.payment.paymongoNetAmountCentavos)
+                    : '—'
+                }
+              />
             </>
           ) : (
             <p className="text-sm text-gray-500 dark:text-gray-400">No payment record.</p>
@@ -171,15 +211,17 @@ export default async function AdminBookingDetailPage({
                 {booking.reschedules.map((r) => (
                   <tr key={r.id} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                      {r.originalStart.toLocaleString('en-PH')} &ndash; {r.originalEnd.toLocaleString('en-PH')}
+                      {r.originalStart.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} &ndash;{' '}
+                      {r.originalEnd.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
                     </td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                      {r.newStart.toLocaleString('en-PH')} &ndash; {r.newEnd.toLocaleString('en-PH')}
+                      {r.newStart.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} &ndash;{' '}
+                      {r.newEnd.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
                     </td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{r.reason}</td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{r.performedBy.name}</td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                      {r.createdAt.toLocaleString('en-PH')}
+                      {r.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
                     </td>
                   </tr>
                 ))}

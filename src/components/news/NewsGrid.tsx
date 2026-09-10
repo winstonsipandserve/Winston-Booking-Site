@@ -12,6 +12,7 @@ export type NewsCategory =
   | 'Community'
   | 'General'
   | 'FacilityMaintenance'
+  | 'Promotion'
 
 export interface NewsItem {
   id: string
@@ -26,6 +27,8 @@ export interface NewsItem {
   affectedFacility?: string
   impact?: string
   action?: string
+  discountSummary?: string // Promotion only — display only, never validated against a real price
+  promoCode?: string // Promotion only — display only
   eventStartAt?: string // pre-formatted display string
   eventEndAt?: string // pre-formatted display string
   ctaLabel?: string

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { BookingStatus } from '@prisma/client'
 import Modal from '@/components/ui/Modal'
 
-const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
+export const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'pending_payment', label: 'Pending' },
   { value: 'confirmed', label: 'Confirmed' },

@@ -10,10 +10,12 @@ export default function AccountProfile({
   name,
   email,
   phone,
+  memberSince,
 }: {
   name: string
   email: string
   phone: string
+  memberSince: Date | null
 }) {
   return (
     <div className="flex h-full flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-card">
@@ -36,6 +38,19 @@ export default function AccountProfile({
           <dt className="text-brand-dark/70">Phone</dt>
           <dd className="font-medium text-brand-dark">{phone}</dd>
         </div>
+        {memberSince && (
+          <div className="flex flex-col gap-1 border-t border-brand-dark/10 py-3">
+            <dt className="text-brand-dark/70">Member since</dt>
+            <dd className="font-medium text-brand-dark">
+              {memberSince.toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+                timeZone: 'Asia/Manila',
+              })}
+            </dd>
+          </div>
+        )}
       </dl>
     </div>
   )

@@ -13,22 +13,45 @@ import { formatMembershipTier, formatShortDate } from '@/lib/format'
 
 export interface DashboardStats {
   bookingsToday: number
-  revenueThisMonthCentavos: number
+  bookingRevenueThisMonthCentavos: number
+  membershipRevenueThisMonthCentavos: number
   pendingApplications: number
   activeMemberships: number
   resourceUtilizationPct: number
 }
 
-export interface BookingsTrendPoint {
-  date: string
-  confirmed: number
-  pending: number
-  cancelled: number
-}
-
 export interface RevenueTrendPoint {
   month: string
-  revenueCentavos: number
+  totalCentavos: number
+  tennisCentavos: number
+  pickleballCentavos: number
+  golfCentavos: number
+}
+
+export interface MembershipRevenueTrendPoint {
+  month: string
+  threeMonthCentavos: number
+  sixMonthCentavos: number
+  twelveMonthCentavos: number
+  topUpCentavos: number
+  totalCentavos: number
+}
+
+type Sport = 'tennis' | 'pickleball' | 'golf'
+
+function sportForResourceType(slug: string): Sport | null {
+  switch (slug) {
+    case 'tennis_court':
+    case 'tennis_sim':
+      return 'tennis'
+    case 'pickleball_court':
+    case 'pickleball_sim':
+      return 'pickleball'
+    case 'golf_sim':
+      return 'golf'
+    default:
+      return null
+  }
 }
 
 export interface ResourceBreakdownEntry {
@@ -52,8 +75,8 @@ export interface RecentApplication {
 
 export interface DashboardData {
   stats: DashboardStats
-  bookingsTrend: BookingsTrendPoint[]
   revenueTrend: RevenueTrendPoint[]
+  membershipRevenueTrend: MembershipRevenueTrendPoint[]
   resourceBreakdown: ResourceBreakdownEntry[]
   recentBookings: RecentBooking[]
   recentApplications: RecentApplication[]
@@ -72,18 +95,20 @@ export async function getDashboardData(): Promise<DashboardData> {
   const todayWindow = phDateToUtcWindow(toPhDateString(new Date()))
   const monthWindow = currentPhMonthWindow()
   const weekWindow = currentPhWeekWindow()
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-  const sixMonthsAgoStart = phMonthStartUtc(5)
+  const twelveMonthsAgoStart = phMonthStartUtc(11)
 
   const [
     bookingsToday,
-    revenueAgg,
+    bookingRevenueAgg,
+    membershipPaymentRevenueAgg,
+    membershipTopUpRevenueAgg,
     pendingApplications,
     activeMemberships,
     weekBookings,
     activeResourceCount,
-    bookingsForTrend,
     paymentsForRevenue,
+    membershipPaymentsForRevenue,
+    membershipTopUpPaymentsForRevenue,
     resourceGroupBy,
     recentBookingsRaw,
     recentApplicationsRaw,
@@ -93,7 +118,15 @@ export async function getDashboardData(): Promise<DashboardData> {
     }),
     prisma.payment.aggregate({
       _sum: { amountCentavos: true },
+      where: { status: 'paid', bookingId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
+    }),
+    prisma.membershipPayment.aggregate({
+      _sum: { amountCentavos: true },
       where: { status: 'paid', paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
+    }),
+    prisma.payment.aggregate({
+      _sum: { amountCentavos: true },
+      where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
     }),
     prisma.membershipApplication.count({ where: { status: 'pending' } }),
     prisma.membership.count({ where: { endDate: { gte: new Date() } } }),
@@ -106,12 +139,20 @@ export async function getDashboardData(): Promise<DashboardData> {
       select: { startTime: true, endTime: true },
     }),
     prisma.resource.count({ where: { isActive: true } }),
-    prisma.booking.findMany({
-      where: { createdAt: { gte: fourteenDaysAgo } },
-      select: { createdAt: true, status: true },
+    prisma.payment.findMany({
+      where: { status: 'paid', bookingId: { not: null }, paidAt: { gte: twelveMonthsAgoStart } },
+      select: {
+        amountCentavos: true,
+        paidAt: true,
+        booking: { select: { resource: { select: { resourceType: { select: { slug: true } } } } } },
+      },
+    }),
+    prisma.membershipPayment.findMany({
+      where: { status: 'paid', paidAt: { gte: twelveMonthsAgoStart } },
+      select: { amountCentavos: true, paidAt: true, tier: true },
     }),
     prisma.payment.findMany({
-      where: { status: 'paid', paidAt: { gte: sixMonthsAgoStart } },
+      where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: twelveMonthsAgoStart } },
       select: { amountCentavos: true, paidAt: true },
     }),
     prisma.booking.groupBy({
@@ -143,41 +184,93 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const stats: DashboardStats = {
     bookingsToday,
-    revenueThisMonthCentavos: revenueAgg._sum.amountCentavos ?? 0,
+    bookingRevenueThisMonthCentavos: bookingRevenueAgg._sum.amountCentavos ?? 0,
+    membershipRevenueThisMonthCentavos:
+      (membershipPaymentRevenueAgg._sum.amountCentavos ?? 0) +
+      (membershipTopUpRevenueAgg._sum.amountCentavos ?? 0),
     pendingApplications,
     activeMemberships,
     resourceUtilizationPct,
   }
 
-  const trendBuckets = new Map<string, BookingsTrendPoint>()
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    trendBuckets.set(toPhDateString(d), { date: formatShortDate(d), confirmed: 0, pending: 0, cancelled: 0 })
-  }
-  for (const b of bookingsForTrend) {
-    const bucket = trendBuckets.get(toPhDateString(b.createdAt))
-    if (!bucket) continue
-    if (b.status === 'confirmed') bucket.confirmed++
-    else if (b.status === 'pending_payment') bucket.pending++
-    else if (b.status === 'cancelled') bucket.cancelled++
-  }
-  const bookingsTrend = Array.from(trendBuckets.values())
-
-  const revenueBuckets = new Map<string, { label: string; revenueCentavos: number }>()
-  for (let i = 5; i >= 0; i--) {
+  const revenueBuckets = new Map<
+    string,
+    { label: string; totalCentavos: number; tennisCentavos: number; pickleballCentavos: number; golfCentavos: number }
+  >()
+  for (let i = 11; i >= 0; i--) {
     const monthStart = phMonthStartUtc(i)
     const label = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'Asia/Manila' }).format(monthStart)
-    revenueBuckets.set(toPhMonthKey(monthStart), { label, revenueCentavos: 0 })
+    revenueBuckets.set(toPhMonthKey(monthStart), {
+      label,
+      totalCentavos: 0,
+      tennisCentavos: 0,
+      pickleballCentavos: 0,
+      golfCentavos: 0,
+    })
   }
   for (const p of paymentsForRevenue) {
     if (!p.paidAt) continue
     const bucket = revenueBuckets.get(toPhMonthKey(p.paidAt))
-    if (bucket) bucket.revenueCentavos += p.amountCentavos
+    if (!bucket) continue
+    bucket.totalCentavos += p.amountCentavos
+    const sport = p.booking ? sportForResourceType(p.booking.resource.resourceType.slug) : null
+    if (sport === 'tennis') bucket.tennisCentavos += p.amountCentavos
+    else if (sport === 'pickleball') bucket.pickleballCentavos += p.amountCentavos
+    else if (sport === 'golf') bucket.golfCentavos += p.amountCentavos
   }
   const revenueTrend: RevenueTrendPoint[] = Array.from(revenueBuckets.values()).map((b) => ({
     month: b.label,
-    revenueCentavos: b.revenueCentavos,
+    totalCentavos: b.totalCentavos,
+    tennisCentavos: b.tennisCentavos,
+    pickleballCentavos: b.pickleballCentavos,
+    golfCentavos: b.golfCentavos,
   }))
+
+  const membershipRevenueBuckets = new Map<
+    string,
+    {
+      label: string
+      threeMonthCentavos: number
+      sixMonthCentavos: number
+      twelveMonthCentavos: number
+      topUpCentavos: number
+    }
+  >()
+  for (let i = 11; i >= 0; i--) {
+    const monthStart = phMonthStartUtc(i)
+    const label = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'Asia/Manila' }).format(monthStart)
+    membershipRevenueBuckets.set(toPhMonthKey(monthStart), {
+      label,
+      threeMonthCentavos: 0,
+      sixMonthCentavos: 0,
+      twelveMonthCentavos: 0,
+      topUpCentavos: 0,
+    })
+  }
+  for (const p of membershipPaymentsForRevenue) {
+    if (!p.paidAt) continue
+    const bucket = membershipRevenueBuckets.get(toPhMonthKey(p.paidAt))
+    if (!bucket) continue
+    if (p.tier === 'three_month') bucket.threeMonthCentavos += p.amountCentavos
+    else if (p.tier === 'six_month') bucket.sixMonthCentavos += p.amountCentavos
+    else if (p.tier === 'twelve_month') bucket.twelveMonthCentavos += p.amountCentavos
+  }
+  for (const p of membershipTopUpPaymentsForRevenue) {
+    if (!p.paidAt) continue
+    const bucket = membershipRevenueBuckets.get(toPhMonthKey(p.paidAt))
+    if (!bucket) continue
+    bucket.topUpCentavos += p.amountCentavos
+  }
+  const membershipRevenueTrend: MembershipRevenueTrendPoint[] = Array.from(membershipRevenueBuckets.values()).map(
+    (b) => ({
+      month: b.label,
+      threeMonthCentavos: b.threeMonthCentavos,
+      sixMonthCentavos: b.sixMonthCentavos,
+      twelveMonthCentavos: b.twelveMonthCentavos,
+      topUpCentavos: b.topUpCentavos,
+      totalCentavos: b.threeMonthCentavos + b.sixMonthCentavos + b.twelveMonthCentavos + b.topUpCentavos,
+    }),
+  )
 
   const resourceIds = resourceGroupBy.map((g) => g.resourceId)
   const resources = resourceIds.length
@@ -212,5 +305,5 @@ export async function getDashboardData(): Promise<DashboardData> {
     submitted: formatShortDate(a.createdAt),
   }))
 
-  return { stats, bookingsTrend, revenueTrend, resourceBreakdown, recentBookings, recentApplications }
+  return { stats, revenueTrend, membershipRevenueTrend, resourceBreakdown, recentBookings, recentApplications }
 }

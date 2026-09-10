@@ -6,6 +6,7 @@ import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 import { priceBooking } from '@/lib/booking-pricing'
 import { getActiveMembership } from '@/lib/customer-resolution'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
+import { appendBookingAccessCookie, createBookingAccessToken } from '@/lib/booking-access'
 import { auth } from '../../../../auth'
 
 interface BookingRequestBody {
@@ -148,6 +149,7 @@ export async function POST(request: Request) {
   }
   const { totalAmountCentavos, guestFeeCentavos, addOns: selectedAddOns, addOnsTotalCentavos } = priceResult
   const grandTotalCentavos = totalAmountCentavos + addOnsTotalCentavos
+  const bookingAccessToken = isMemberSession ? null : createBookingAccessToken()
 
   let checkoutSessionIdsToExpire: string[] = []
   let txResult: { booking: Booking; creditCovered: boolean }
@@ -212,6 +214,8 @@ export async function POST(request: Request) {
           guestFeeAmountCentavos: guestFeeCentavos,
           customerNameSnapshot,
           customerPhoneSnapshot,
+          accessTokenHash: bookingAccessToken?.tokenHash,
+          accessTokenExpiresAt: bookingAccessToken?.expiresAt,
         },
       })
 
@@ -272,7 +276,7 @@ export async function POST(request: Request) {
 
   const holdExpiresAt = new Date(booking.createdAt.getTime() + HOLD_MINUTES * 60000)
 
-  return Response.json(
+  const response = Response.json(
     {
       id: booking.id,
       status: booking.status,
@@ -293,4 +297,7 @@ export async function POST(request: Request) {
     },
     { status: 201 },
   )
+  return bookingAccessToken
+    ? appendBookingAccessCookie(response, booking.id, bookingAccessToken.rawToken)
+    : response
 }

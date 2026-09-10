@@ -44,7 +44,7 @@ function DisableResourceForm({
       const res = await fetch(`/api/admin/resources/${resource.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: false, disabledReason: reason.trim() || null }),
+        body: JSON.stringify({ isActive: false, disabledNote: reason.trim() || null }),
       })
 
       if (!res.ok) {

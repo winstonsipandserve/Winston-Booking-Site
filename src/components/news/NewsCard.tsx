@@ -62,6 +62,12 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
         <div className="mt-2">
           <p className="text-xs font-medium uppercase tracking-wide text-brand-dark/60">Description</p>
           <p className="mt-1 text-sm text-neutral-700">{item.body}</p>
+          {item.discountSummary && (
+            <p className="mt-1 text-sm font-medium text-accent-primary">
+              {item.discountSummary}
+              {item.promoCode && ` — Code: ${item.promoCode}`}
+            </p>
+          )}
         </div>
 
         {item.impact && (

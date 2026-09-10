@@ -56,11 +56,14 @@ enum CreditTransactionReason {
   activation
   renewal
   booking_redemption
+  top_up
 }
 
 enum PaymentMethod {
   paymongo
   membership_credit
+  cash
+  manual_online
 }
 
 enum AdminRole {
@@ -85,6 +88,56 @@ enum BulletinCategory {
   Community
   General
   FacilityMaintenance
+  Promotion
+}
+
+enum BulletinCustomerEligibility {
+  Everyone
+  MembersOnly
+  NewCustomers
+  ReturningCustomers
+  SpecificMembershipTier
+}
+
+enum ResourceDisabledReason {
+  manual
+  bulletin
+}
+
+enum BulletinBookingImpact {
+  NoImpact
+  LimitedAvailability
+  TemporarilyUnavailable
+  ScheduleChanges
+}
+
+enum BulletinCustomerAction {
+  NoActionRequired
+  RescheduleBooking
+  ContactSupport
+  BookAnotherFacility
+  WaitForFurtherNotice
+}
+
+enum AdminActivityAction {
+  membership_application_approved
+  membership_application_rejected
+  membership_renewal_link_sent
+  booking_rescheduled
+  membership_credit_topup_added
+}
+
+enum AdminActivityEntityType {
+  membership_application
+  booking
+  membership
+}
+
+enum AuthRateLimitScope {
+  admin_login
+  member_login
+  admin_password_reset
+  member_password_reset
 }
 
 // ── Resource model (Decision: Resource model) ─────────
@@ -109,8 +162,17 @@ model Resource {
   resourceType   ResourceType @relation(fields: [resourceTypeId], references: [id])
   label          String
   isActive       Boolean      @default(true) @map("is_active")
-  disabledReason String?      @map("disabled_reason")
+  /// Free-text admin note entered on manual disable (e.g. "Under renovation") — renamed
+  /// from the original `disabledReason` column (2026-08-27) to make room for the new
+  /// structured `disabledReason` enum below. See CLAUDE.md → Bulletin-triggered resource
+  /// auto-disable.
+  disabledNote   String?      @map("disabled_note")
+  /// Which mechanism most recently disabled this resource — null whenever isActive is
+  /// true; meaningful only when isActive is false. A manual disable/enable always wins
+  /// immediately regardless of any bulletin's claim (see CLAUDE.md).
+  disabledReason ResourceDisabledReason? @map("disabled_reason")
   bookings       Booking[]
+  bulletinLinks  BulletinResource[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -215,8 +277,10 @@ model AdminUser {
   reviewedApplications MembershipApplication[] @relation("ApplicationReviewedBy")
   performedReschedules BookingReschedule[]     @relation("ReschedulePerformedBy")
   initiatedRenewalPayments MembershipPayment[] @relation("MembershipPaymentInitiatedByAdmin")
+  initiatedTopUpPayments Payment[] @relation("PaymentInitiatedByAdmin")
   checkInLookupAttempts CheckInLookupAttempt[]
   passwordResetTokens AdminPasswordResetToken[]
+  activityLogs AdminActivityLog[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -326,6 +390,8 @@ model Membership {
   /// Cached running total — MembershipCreditTransaction is the source of truth.
   creditBalanceCentavos Int                   @map("credit_balance_centavos")
   creditTransactions    MembershipCreditTransaction[]
+  /// Top-up Payments only (membershipId set) — activation/renewal payments stay on MembershipPayment.
+  payments              Payment[]
   /// Reminder/expiry-email tracking — each nullable timestamp is set once its email fires,
   /// so the membership-reminders cron can never send the same email twice to a row.
   reminder14SentAt      DateTime?             @map("reminder_14_sent_at")
@@ -379,6 +445,10 @@ model Booking {
   /// customer-attach time, independent of any later change to the linked Customer row.
   customerNameSnapshot  String? @map("customer_name_snapshot")
   customerPhoneSnapshot String? @map("customer_phone_snapshot")
+  /// Hash of the short-lived, HttpOnly browser capability used only by an anonymous
+  /// booker to complete and confirm their own booking. Never store the raw token.
+  accessTokenHash       String? @map("access_token_hash")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
   reschedules BookingReschedule[]
   addOns      BookingAddOn[]
   payment     Payment?
@@ -387,6 +457,23 @@ model Booking {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("bookings")
+}
+
+// â”€â”€ Authentication abuse controls â”€â”€
+// A short-lived, write-once rate-limit counter for credential and reset-email abuse.
+// identifierHash is an HMAC of an email address or client IP, so raw identifiers never
+// enter this table. Retention is expire-on-write in src/lib/auth-rate-limit.ts.
+
+model AuthRateLimitAttempt {
+  id             String             @id @default(cuid())
+  scope          AuthRateLimitScope
+  identifierHash String             @map("identifier_hash")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  // No updatedAt â€” attempts are immutable and deleted once outside their rate window.
+
+  @@index([scope, identifierHash, createdAt])
+  @@index([createdAt])
+  @@map("auth_rate_limit_attempts")
 }
 
 // ── Reschedule audit trail (Decision: BookingReschedule immutability) ─
@@ -464,6 +551,11 @@ model Payment {
   /// Nullable + unique: one Payment per Booking today; null bookingId reserved for future POS transactions.
   bookingId String?       @unique @map("booking_id")
   booking   Booking?      @relation(fields: [bookingId], references: [id])
+  /// Nullable, NOT unique (unlike bookingId) — a Membership can have many top-up
+  /// Payments over its lifetime. Set only for membership-credit-top-up rows;
+  /// null for booking payments. See CLAUDE.md → Membership credit ledger.
+  membershipId String?     @map("membership_id")
+  membership   Membership? @relation(fields: [membershipId], references: [id])
   amountCentavos          Int           @map("amount_centavos")
   status                  PaymentStatus @default(pending)
   method                  PaymentMethod @default(paymongo)
@@ -471,10 +563,26 @@ model Payment {
   paymongoPaymentIntentId String?       @unique @map("paymongo_payment_intent_id")
   /// PayMongo's own payment-resource id (pay_xxx) — distinct from paymongoPaymentIntentId (pi_xxx). Captured from the payment.paid webhook; existing rows stay null, not backfilled.
   paymongoPaymentId       String?       @unique @map("paymongo_payment_id")
+  /// PayMongo's fee + foreign_fee combined, captured from the payment.paid
+  /// webhook. Null for credit-covered bookings (no PayMongo transaction)
+  /// and for bookings confirmed before this column existed — not backfilled.
+  paymongoFeeCentavos       Int? @map("paymongo_fee_centavos")
+  /// PayMongo's net_amount (what actually settles to the merchant account),
+  /// captured from the same webhook. Same null cases as the fee column above.
+  paymongoNetAmountCentavos Int? @map("paymongo_net_amount_centavos")
+  /// Admin-entered reference for manual_online top-ups (GCash ref, bank transfer ref, etc).
+  externalReference String? @map("external_reference")
+  /// Required (enforced at the API layer, not the DB) for cash top-ups; optional for manual_online.
+  adminNote String? @map("admin_note")
+  /// Set only on admin-logged top-ups (cash/manual_online) — mirrors MembershipPayment.initiatedByAdminId.
+  initiatedByAdminId String?    @map("initiated_by_admin_id")
+  initiatedByAdmin   AdminUser? @relation("PaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
   paidAt                  DateTime?     @map("paid_at")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@index([membershipId])
+  @@index([initiatedByAdminId])
   @@map("payments")
 }
 
@@ -492,6 +600,14 @@ model Bulletin {
   affectedFacility String?         @map("affected_facility")
   impact           String?
   action           String?
+  bookingImpact       BulletinBookingImpact?  @map("booking_impact")
+  customerActionType  BulletinCustomerAction? @map("customer_action_type")
+  /// Display-only Promotion-category fields — never validated/redeemed against a real
+  /// price; the discount itself is applied manually by an admin via PricingRule. See
+  /// CLAUDE.md's Bulletin / Promotion category decision.
+  promoCode           String?                       @map("promo_code")
+  discountSummary     String?                       @map("discount_summary")
+  customerEligibility BulletinCustomerEligibility?  @map("customer_eligibility")
   eventStartAt     DateTime?       @map("event_start_at")
   eventEndAt       DateTime?       @map("event_end_at")
   expiresAt        DateTime?       @map("expires_at")
@@ -499,8 +615,50 @@ model Bulletin {
   ctaUrl           String?         @map("cta_url")
   isPublished Boolean   @default(false) @map("is_published")
   publishedAt DateTime? @map("published_at")
+  /// Admin toggle: while true and this bulletin is published (and not expired), its
+  /// linked resources (via BulletinResource) are auto-disabled. See CLAUDE.md.
+  autoDisableResources Boolean @default(false) @map("auto_disable_resources")
+  resourceLinks BulletinResource[]
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("bulletins")
+}
+
+// ── Bulletin-triggered resource auto-disable (Decision: Bulletin-triggered resource auto-disable) ─
+
+model BulletinResource {
+  id         String   @id @default(cuid())
+  bulletinId String   @map("bulletin_id")
+  resourceId String   @map("resource_id")
+  bulletin   Bulletin @relation(fields: [bulletinId], references: [id], onDelete: Cascade)
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+  // No updatedAt — a link either exists or doesn't; edits replace the row set, never mutate a row.
+
+  @@unique([bulletinId, resourceId])
+  @@map("bulletin_resources")
+}
+
+// ── Admin activity log (Decision: audit trail for admin-initiated actions) ─
+// Immutable audit row, same shape as BookingReschedule/MembershipCreditTransaction —
+// no updatedAt, corrections are new rows, never edits to the original.
+
+model AdminActivityLog {
+  id         String                   @id @default(cuid())
+  adminId    String                   @map("admin_id")
+  admin      AdminUser                @relation(fields: [adminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  action     AdminActivityAction
+  entityType AdminActivityEntityType  @map("entity_type")
+  /// Loose reference, deliberately not a real FK — this one table logs against
+  /// multiple entity types (membership_application, booking).
+  entityId    String   @map("entity_id")
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  // No updatedAt — immutable audit row, corrections are new rows, never edits.
+
+  @@index([adminId])
+  @@index([createdAt])
+  @@map("admin_activity_logs")
 }

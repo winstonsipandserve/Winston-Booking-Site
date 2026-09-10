@@ -34,6 +34,15 @@ interface BuildBrandedEmailOutput {
   text: string
 }
 
+export function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
 export function buildBrandedEmail({
   preheaderText,
   eyebrowText,
@@ -42,13 +51,18 @@ export function buildBrandedEmail({
   ctaText,
   ctaUrl,
 }: BuildBrandedEmailInput): BuildBrandedEmailOutput {
-  const showCta = Boolean(ctaText && ctaUrl)
-  const showEyebrow = Boolean(eyebrowText)
+  const safePreheaderText = escapeHtml(preheaderText)
+  const safeEyebrowText = eyebrowText ? escapeHtml(eyebrowText) : undefined
+  const safeHeadingText = escapeHtml(headingText)
+  const safeCtaText = ctaText ? escapeHtml(ctaText) : undefined
+  const safeCtaUrl = ctaUrl ? escapeHtml(ctaUrl) : undefined
+  const showCta = Boolean(safeCtaText && safeCtaUrl)
+  const showEyebrow = Boolean(safeEyebrowText)
 
   const eyebrowHtml = showEyebrow
     ? `
                     <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: ${ACCENT_PRIMARY};">
-                      ${eyebrowText}
+                      ${safeEyebrowText}
                     </p>`
     : ''
 
@@ -59,8 +73,8 @@ export function buildBrandedEmail({
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 28px auto 0;">
                     <tr>
                       <td align="center" bgcolor="${ACCENT_PRIMARY}" style="border-radius: 8px;">
-                        <a href="${ctaUrl}" target="_blank" style="display: inline-block; padding: 14px 36px; font-family: ${BODY_FONT}; font-size: 16px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: ${BRAND_LIGHT}; text-decoration: none; border-radius: 8px;">
-                          ${ctaText}
+                        <a href="${safeCtaUrl}" target="_blank" style="display: inline-block; padding: 14px 36px; font-family: ${BODY_FONT}; font-size: 16px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: ${BRAND_LIGHT}; text-decoration: none; border-radius: 8px;">
+                          ${safeCtaText}
                         </a>
                       </td>
                     </tr>
@@ -73,11 +87,11 @@ export function buildBrandedEmail({
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>${headingText}</title>
+        <title>${safeHeadingText}</title>
       </head>
       <body style="margin: 0; padding: 0; background-color: ${BRAND_LIGHT}; font-family: ${BODY_FONT};">
         <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
-          ${preheaderText}
+          ${safePreheaderText}
           &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
         </div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: ${BRAND_LIGHT};">
@@ -102,7 +116,7 @@ export function buildBrandedEmail({
                   <td style="padding: 36px 32px;">
                     ${eyebrowHtml}
                     <h1 style="margin: 0 0 20px; font-family: ${HEADING_FONT}; font-size: 28px; font-weight: 700; color: ${BRAND_DARK};">
-                      ${headingText}
+                      ${safeHeadingText}
                     </h1>
                     <div style="font-family: ${BODY_FONT}; font-size: 16px; line-height: 1.6; color: ${BRAND_DARK};">
                       ${bodyHtml}

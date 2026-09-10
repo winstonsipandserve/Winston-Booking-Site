@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { getInitials } from '@/components/account/AccountProfile'
 import Modal from '@/components/ui/Modal'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 const NAV_LINKS = [
   { label: 'Home', href: '/' },
@@ -25,7 +26,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+  const [hasScrolled, setHasScrolled] = useState(false)
   const [signOutModalOpen, setSignOutModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const signedIn = status === 'authenticated' && session?.user?.role === 'member'
@@ -33,18 +34,15 @@ export default function Navbar() {
   // stays near-transparent (showing whatever's behind it) while the dropdown panel below is opaque,
   // producing a visible seam. The logo's invert state has to follow the same flag: leaving it tied
   // to `scrolled` alone would put the light/inverted logo on a now-solid light header.
+  const scrolled = FORCE_SOLID_PAGES.includes(pathname) || hasScrolled
   const headerSolid = scrolled || menuOpen
 
   useEffect(() => {
-    if (FORCE_SOLID_PAGES.includes(pathname)) {
-      setScrolled(true)
-      return
-    }
+    if (FORCE_SOLID_PAGES.includes(pathname)) return
 
     const handleScroll = () => {
-      setScrolled(window.scrollY > SCROLL_THRESHOLD)
+      setHasScrolled(window.scrollY > SCROLL_THRESHOLD)
     }
-    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [pathname])
@@ -236,6 +234,7 @@ export default function Navbar() {
       )}
 
       <Modal isOpen={signOutModalOpen} onClose={() => setSignOutModalOpen(false)} title="Sign Out">
+        <LoadingOverlay isOpen={isPending} label="Signing Out…" />
         <p className="text-sm text-brand-dark/70">
           You&apos;ll need to sign in again to access your account. Continue?
         </p>
@@ -254,7 +253,7 @@ export default function Navbar() {
             disabled={isPending}
             className="rounded-none bg-accent-primary px-4 py-1.5 text-sm font-semibold text-brand-light hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? 'Signing Out…' : 'Sign Out'}
+            Sign Out
           </button>
         </div>
       </Modal>

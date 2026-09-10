@@ -1,7 +1,14 @@
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { uploadToStorage, deleteFromStorage, getPublicUrl } from '@/lib/supabase-storage'
-import { MIME_TO_EXTENSION, BULLETIN_CATEGORY_RULES, parseCommonFields, validateImageFile } from '@/lib/bulletin-validation'
+import {
+  MIME_TO_EXTENSION,
+  BULLETIN_CATEGORY_RULES,
+  parseCommonFields,
+  parseResourceFields,
+  validateImageFile,
+} from '@/lib/bulletin-validation'
+import { applyBulletinResourceDisable, bulletinShouldDisableResources } from '@/lib/bulletin-resource-disable'
 
 const BUCKET = 'bulletin-images'
 
@@ -23,7 +30,21 @@ export async function POST(request: Request) {
     return Response.json({ error: parsed.error }, { status: 400 })
   }
 
+  const resourceParsed = parseResourceFields(formData)
+  if ('error' in resourceParsed) {
+    return Response.json({ error: resourceParsed.error }, { status: 400 })
+  }
+
   const { fields } = parsed
+  const { resourceIds, autoDisableResources } = resourceParsed.fields
+
+  if (resourceIds.length > 0) {
+    const matchCount = await prisma.resource.count({ where: { id: { in: resourceIds } } })
+    if (matchCount !== resourceIds.length) {
+      return Response.json({ error: 'One or more selected resources do not exist' }, { status: 400 })
+    }
+  }
+
   const imageValue = formData.get('image')
   const hasImageFile = imageValue instanceof File && imageValue.size > 0
 
@@ -36,7 +57,7 @@ export async function POST(request: Request) {
   let imageUrl: string | null = null
 
   if (hasImageFile) {
-    const imageResult = validateImageFile(imageValue as File)
+    const imageResult = await validateImageFile(imageValue as File)
     if ('error' in imageResult) {
       return Response.json({ error: imageResult.error }, { status: 400 })
     }
@@ -54,27 +75,47 @@ export async function POST(request: Request) {
   }
 
   try {
-    const bulletin = await prisma.bulletin.create({
-      data: {
-        id: bulletinId,
-        title: fields.title,
-        excerpt: fields.excerpt,
-        body: fields.body,
-        category: fields.category,
-        imageUrl,
-        socialPlatform: fields.socialPlatform,
-        socialUrl: fields.socialUrl,
-        affectedFacility: fields.affectedFacility,
-        impact: fields.impact,
-        action: fields.action,
-        eventStartAt: fields.eventStartAt,
-        eventEndAt: fields.eventEndAt,
-        expiresAt: fields.expiresAt,
-        ctaLabel: fields.ctaLabel,
-        ctaUrl: fields.ctaUrl,
-        isPublished: fields.isPublished,
-        publishedAt: fields.isPublished ? new Date() : null,
-      },
+    const bulletin = await prisma.$transaction(async (tx) => {
+      const created = await tx.bulletin.create({
+        data: {
+          id: bulletinId,
+          title: fields.title,
+          excerpt: fields.excerpt,
+          body: fields.body,
+          category: fields.category,
+          imageUrl,
+          socialPlatform: fields.socialPlatform,
+          socialUrl: fields.socialUrl,
+          affectedFacility: fields.affectedFacility,
+          impact: fields.impact,
+          action: fields.action,
+          bookingImpact: fields.bookingImpact,
+          customerActionType: fields.customerActionType,
+          promoCode: fields.promoCode,
+          discountSummary: fields.discountSummary,
+          customerEligibility: fields.customerEligibility,
+          eventStartAt: fields.eventStartAt,
+          eventEndAt: fields.eventEndAt,
+          expiresAt: fields.expiresAt,
+          ctaLabel: fields.ctaLabel,
+          ctaUrl: fields.ctaUrl,
+          isPublished: fields.isPublished,
+          publishedAt: fields.isPublished ? new Date() : null,
+          autoDisableResources,
+        },
+      })
+
+      if (resourceIds.length > 0) {
+        await tx.bulletinResource.createMany({
+          data: resourceIds.map((resourceId) => ({ bulletinId: created.id, resourceId })),
+        })
+      }
+
+      if (bulletinShouldDisableResources(created) && resourceIds.length > 0) {
+        await applyBulletinResourceDisable(tx, resourceIds)
+      }
+
+      return created
     })
 
     return Response.json(bulletin, { status: 201 })

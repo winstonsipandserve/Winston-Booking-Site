@@ -5,6 +5,7 @@ import {
   sendMembershipRenewalEmail,
   sendStaffMembershipActivationEmail,
   sendStaffMembershipRenewalEmail,
+  sendCreditTopUpConfirmationEmail,
 } from '@/lib/resend'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
@@ -21,7 +22,10 @@ interface PaymongoWebhookEvent {
           status?: unknown
           payment_intent_id?: unknown
           paid_at?: unknown
-          metadata?: { bookingId?: unknown; membershipPaymentId?: unknown }
+          fee?: number | null
+          foreign_fee?: number | null
+          net_amount?: number | null
+          metadata?: { bookingId?: unknown; membershipPaymentId?: unknown; topUpPaymentId?: unknown }
         }
       }
     }
@@ -52,6 +56,7 @@ export async function POST(request: Request) {
   const paymentAttributes = event?.data?.attributes?.data?.attributes
   const bookingId = paymentAttributes?.metadata?.bookingId
   const membershipPaymentId = paymentAttributes?.metadata?.membershipPaymentId
+  const topUpPaymentId = paymentAttributes?.metadata?.topUpPaymentId
   const paymentStatus = paymentAttributes?.status
   const paymentIntentIdRaw = paymentAttributes?.payment_intent_id
   const paymentIntentId = isNonEmptyString(paymentIntentIdRaw) ? paymentIntentIdRaw : null
@@ -59,6 +64,10 @@ export async function POST(request: Request) {
   const paymongoPaymentId = isNonEmptyString(paymongoPaymentIdRaw) ? paymongoPaymentIdRaw : null
   const paidAtRaw = paymentAttributes?.paid_at
   const paidAt = typeof paidAtRaw === 'number' ? new Date(paidAtRaw * 1000) : new Date()
+  const rawFee = paymentAttributes?.fee
+  const rawForeignFee = paymentAttributes?.foreign_fee ?? 0
+  const feeCentavos = typeof rawFee === 'number' ? rawFee + rawForeignFee : null
+  const netAmountCentavos = paymentAttributes?.net_amount ?? null
 
   if (paymentStatus !== 'paid') {
     console.error('Webhook type payment.paid but nested payment status is not paid', bookingId, paymentStatus)
@@ -67,6 +76,21 @@ export async function POST(request: Request) {
 
   if (isNonEmptyString(membershipPaymentId) && !isNonEmptyString(bookingId)) {
     return handleMembershipPaymentWebhook(membershipPaymentId, paymentIntentId, paidAt)
+  }
+
+  if (
+    isNonEmptyString(topUpPaymentId) &&
+    !isNonEmptyString(bookingId) &&
+    !isNonEmptyString(membershipPaymentId)
+  ) {
+    return handleTopUpPaymentWebhook(
+      topUpPaymentId,
+      paymentIntentId,
+      paymongoPaymentId,
+      feeCentavos,
+      netAmountCentavos,
+      paidAt,
+    )
   }
 
   if (!isNonEmptyString(bookingId)) {
@@ -105,6 +129,8 @@ export async function POST(request: Request) {
           paidAt,
           paymongoPaymentIntentId: paymentIntentId,
           paymongoPaymentId,
+          paymongoFeeCentavos: feeCentavos,
+          paymongoNetAmountCentavos: netAmountCentavos,
         },
       })
 
@@ -264,6 +290,74 @@ async function handleMembershipPaymentWebhook(
       })
     }
   }
+
+  return Response.json({ received: true }, { status: 200 })
+}
+
+async function handleTopUpPaymentWebhook(
+  topUpPaymentId: string,
+  paymentIntentId: string | null,
+  paymongoPaymentId: string | null,
+  feeCentavos: number | null,
+  netAmountCentavos: number | null,
+  paidAt: Date,
+): Promise<Response> {
+  const payment = await prisma.payment.findUnique({
+    where: { id: topUpPaymentId },
+    include: { membership: { include: { customer: true } } },
+    relationLoadStrategy: 'query',
+  })
+
+  if (!payment || !payment.membershipId || !payment.membership) {
+    console.error('Webhook received for unknown topUpPaymentId', topUpPaymentId)
+    return Response.json({ received: true }, { status: 200 })
+  }
+
+  if (payment.status === 'paid') {
+    return Response.json({ received: true }, { status: 200 })
+  }
+
+  let newBalanceCentavos = payment.membership.creditBalanceCentavos
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.update({
+        where: { id: payment.id },
+        data: {
+          status: 'paid',
+          paidAt,
+          paymongoPaymentIntentId: paymentIntentId,
+          paymongoPaymentId,
+          paymongoFeeCentavos: feeCentavos,
+          paymongoNetAmountCentavos: netAmountCentavos,
+        },
+      })
+
+      await tx.membershipCreditTransaction.create({
+        data: {
+          membershipId: payment.membershipId as string,
+          amountCentavos: payment.amountCentavos,
+          reason: 'top_up',
+        },
+      })
+
+      const updatedMembership = await tx.membership.update({
+        where: { id: payment.membershipId as string },
+        data: { creditBalanceCentavos: { increment: payment.amountCentavos } },
+      })
+      newBalanceCentavos = updatedMembership.creditBalanceCentavos
+    })
+  } catch (err) {
+    console.error('Failed to process PayMongo top-up webhook', topUpPaymentId, err)
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
+
+  await sendCreditTopUpConfirmationEmail({
+    to: payment.membership.customer.email,
+    name: payment.membership.customer.name,
+    amountCentavos: payment.amountCentavos,
+    newBalanceCentavos,
+  })
 
   return Response.json({ received: true }, { status: 200 })
 }

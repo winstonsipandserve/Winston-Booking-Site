@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
+import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 type MembershipTier = 'three_month' | 'six_month' | 'twelve_month'
 
@@ -131,6 +132,7 @@ export default function MembershipApplicationForm() {
 
   return (
     <>
+    <LoadingOverlay isOpen={submitting} label="Submitting…" />
     <form
       onSubmit={handleSubmit}
       className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
@@ -286,7 +288,7 @@ export default function MembershipApplicationForm() {
         disabled={!isValid || submitting}
         className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
       >
-        {submitting ? 'Submitting…' : 'Submit Application'}
+        Submit Application
       </button>
     </form>
 
