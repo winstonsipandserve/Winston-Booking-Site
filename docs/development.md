@@ -47,6 +47,19 @@ Promotion is manual, with no automated merge gates:
 - There are no automated tests. Verification means exercising the affected flow and checking real output or data.
 - Report results honestly. Include failures and identify skipped checks.
 
+## Development data reset
+
+Use `npm run db:reset-dev-data` to preview removal of all customer and test records. The command preserves admin users and reference/configuration data, including resources, resource types, pricing rules, the guest-fee rule, and add-on catalogs.
+
+The command is dry-run by default. After verifying that the configured `DATABASE_URL` is an isolated development database, apply it only with both safeguards enabled:
+
+```powershell
+$env:ALLOW_DEV_DATA_RESET = "true"
+npm run db:reset-dev-data -- --confirm
+```
+
+It must not be run against production or shared data. The deletion order is transaction-protected and follows the schema's foreign-key dependencies.
+
 ## Coding Conventions
 
 ### Prisma and migrations

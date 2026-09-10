@@ -12,6 +12,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 This file is the Codex-facing entry point for this repository. Shared project, business, and technical knowledge lives in `docs/`; keep Codex-specific instructions here and Codex-compatible skills in `.agents/skills/`.
 
+## Git Handoff
+
+When repository changes are complete, do not run Git promotion commands yourself. End the final response with an explicit command block containing the needed `git add`, `git commit`, and, when appropriate, `git push` commands for the user to review and run. Include only files changed for the requested task; never stage unrelated work. Omit commands that are not needed, and do not provide them when verification has failed or the work is incomplete.
+
 ## Read Before Planning or Editing
 
 Read the documents relevant to the task before planning or changing code. Do not infer domain rules from code alone.
