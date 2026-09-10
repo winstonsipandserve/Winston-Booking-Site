@@ -210,41 +210,54 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
         : null
   }, [coachingPricing, coachingPaxCount])
 
-  // Reset dependent fields whenever the chosen resource type changes.
-  useEffect(() => {
-    if (!selectedResourceType) return
+  function handleResourceTypeSelect(nextResourceTypeId: string) {
+    const nextResourceType = data?.resourceTypes.find((resourceType) => resourceType.id === nextResourceTypeId)
+    setResourceTypeId(nextResourceTypeId)
     setResourceId('')
     setGuestCount(0)
-    const durations = getDurationOptions(selectedResourceType, rateTier)
+    setStartTimeLocal('')
+    setAvailabilityLoading(false)
+    setAvailabilityError(null)
+    const durations = nextResourceType ? getDurationOptions(nextResourceType, rateTier) : []
     setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
-    if (selectedResourceType.category !== 'court') {
+    if (nextResourceType?.category !== 'court') {
       setBallBoy(false)
     }
     setCoachingPaxCount(null)
-    if (!getCoachingPricing(selectedResourceType, rateTier).available) {
+    if (!getCoachingPricing(nextResourceType ?? null, rateTier).available) {
       setCoaching(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resourceTypeId])
+  }
+
+  function handleResourceSelect(nextResourceId: string) {
+    setResourceId(nextResourceId)
+    setStartTimeLocal('')
+    setAvailabilityLoading(!!nextResourceId && !!selectedDate)
+    setAvailabilityError(null)
+  }
+
+  function handleDurationChange(nextDurationMinutes: string) {
+    setDurationMinutes(nextDurationMinutes)
+    setStartTimeLocal('')
+  }
+
+  function handleDateSelect(nextSelectedDate: string) {
+    setSelectedDate(nextSelectedDate)
+    setStartTimeLocal('')
+    setAvailabilityLoading(!!resourceId && !!nextSelectedDate)
+    setAvailabilityError(null)
+  }
 
   function handleCoachingChange(value: boolean) {
     setCoaching(value)
     if (!value) setCoachingPaxCount(null)
   }
 
-  // Reset the chosen slot whenever any input that could invalidate it changes.
-  useEffect(() => {
-    setStartTimeLocal('')
-  }, [resourceId, selectedDate, durationMinutes])
-
   useEffect(() => {
     if (!resourceId || !selectedDate) {
-      setBusy([])
       return
     }
     let cancelled = false
-    setAvailabilityLoading(true)
-    setAvailabilityError(null)
     fetch(
       `/api/availability?resourceId=${encodeURIComponent(resourceId)}&date=${encodeURIComponent(selectedDate)}`,
     )
@@ -515,7 +528,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
         <SportStep
           resourceTypes={data.resourceTypes}
           resourceTypeId={resourceTypeId}
-          onSelect={setResourceTypeId}
+          onSelect={handleResourceTypeSelect}
           rateTier={rateTier}
         />
       )}
@@ -525,22 +538,22 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           resourceTypeName={selectedResourceType.name}
           resources={selectedResourceType.resources}
           resourceId={resourceId}
-          onSelect={setResourceId}
+          onSelect={handleResourceSelect}
         />
       )}
 
       {step === 3 && (
         <DateTimeStep
           durationMinutes={durationMinutes}
-          onDurationChange={setDurationMinutes}
+          onDurationChange={handleDurationChange}
           durationOptions={durationOptions}
           selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={handleDateSelect}
           resourceCategory={selectedResourceType?.category ?? ''}
           resourceSlug={selectedResourceType?.slug ?? ''}
-          busy={busy}
-          availabilityLoading={availabilityLoading}
-          availabilityError={availabilityError}
+          busy={resourceId && selectedDate ? busy : []}
+          availabilityLoading={!!resourceId && !!selectedDate && availabilityLoading}
+          availabilityError={resourceId && selectedDate ? availabilityError : null}
           selectedSlot={startTimeLocal}
           onSelectSlot={setStartTimeLocal}
         />
@@ -603,7 +616,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
                 ? "You don't currently have any F&B credit available."
                 : `Your F&B credit balance is ${formatCentavos(memberContext?.creditBalanceCentavos ?? 0)}, which isn't enough to cover this booking.`}
               {' '}This booking totals {formatCentavos((estimateCentavos ?? 0) + addOnsEstimateCentavos)}.
-              Since your credit doesn't fully cover it, none of it will be applied — you'll pay the
+              {"Since your credit doesn't fully cover it, none of it will be applied — you'll pay the"}
               full amount via PayMongo, and your credit balance will stay untouched.
             </p>
             <div className="flex gap-3">

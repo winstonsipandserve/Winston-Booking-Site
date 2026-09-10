@@ -26,7 +26,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+  const [hasScrolled, setHasScrolled] = useState(false)
   const [signOutModalOpen, setSignOutModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const signedIn = status === 'authenticated' && session?.user?.role === 'member'
@@ -34,18 +34,15 @@ export default function Navbar() {
   // stays near-transparent (showing whatever's behind it) while the dropdown panel below is opaque,
   // producing a visible seam. The logo's invert state has to follow the same flag: leaving it tied
   // to `scrolled` alone would put the light/inverted logo on a now-solid light header.
+  const scrolled = FORCE_SOLID_PAGES.includes(pathname) || hasScrolled
   const headerSolid = scrolled || menuOpen
 
   useEffect(() => {
-    if (FORCE_SOLID_PAGES.includes(pathname)) {
-      setScrolled(true)
-      return
-    }
+    if (FORCE_SOLID_PAGES.includes(pathname)) return
 
     const handleScroll = () => {
-      setScrolled(window.scrollY > SCROLL_THRESHOLD)
+      setHasScrolled(window.scrollY > SCROLL_THRESHOLD)
     }
-    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [pathname])

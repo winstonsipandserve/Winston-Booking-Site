@@ -1,10 +1,25 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
 const THEME_STORAGE_KEY = 'winston-admin-theme'
+const THEME_CHANGE_EVENT = 'winston-admin-theme-change'
+
+function getStoredTheme(): ThemeMode {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY)
+  return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system'
+}
+
+function subscribeToThemePreference(onStoreChange: () => void) {
+  window.addEventListener('storage', onStoreChange)
+  window.addEventListener(THEME_CHANGE_EVENT, onStoreChange)
+  return () => {
+    window.removeEventListener('storage', onStoreChange)
+    window.removeEventListener(THEME_CHANGE_EVENT, onStoreChange)
+  }
+}
 
 function resolveIsDark(mode: ThemeMode): boolean {
   if (mode === 'dark') return true
@@ -23,17 +38,9 @@ const OPTIONS: { key: ThemeMode; label: string }[] = [
 ]
 
 export default function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>('system')
-  const [mounted, setMounted] = useState(false)
+  const mode = useSyncExternalStore<ThemeMode>(subscribeToThemePreference, getStoredTheme, () => 'system')
 
   useEffect(() => {
-    const stored = (localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null) ?? 'system'
-    setMode(stored)
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!mounted) return
     applyTheme(mode)
 
     if (mode !== 'system') return
@@ -41,11 +48,11 @@ export default function ThemeToggle() {
     const handleChange = () => applyTheme('system')
     mediaQuery.addEventListener('change', handleChange)
     return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [mode, mounted])
+  }, [mode])
 
   function handleSelect(next: ThemeMode) {
-    setMode(next)
     localStorage.setItem(THEME_STORAGE_KEY, next)
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT))
   }
 
   return (

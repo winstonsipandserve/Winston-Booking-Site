@@ -154,14 +154,15 @@ export default async function AdminMembershipApplicationDetailPage({
   ])
 
   const daysRemaining = latestMembership
-    ? Math.max(0, Math.ceil((latestMembership.endDate.getTime() - Date.now()) / 86400000))
+    ? Math.max(0, Math.ceil((latestMembership.endDate.getTime() - new Date().getTime()) / 86400000))
     : 0
 
-  let runningBalance = (latestMembership?.creditBalanceCentavos ?? 0) - history.newerTransactionAmount
-  const transactionsWithBalance = creditTransactions.map((t) => {
-    const balanceAfter = runningBalance
-    runningBalance -= t.amountCentavos
-    return { ...t, balanceAfter }
+  const startingBalance = (latestMembership?.creditBalanceCentavos ?? 0) - history.newerTransactionAmount
+  const transactionsWithBalance = creditTransactions.map((transaction, index) => {
+    const newerTransactionTotal = creditTransactions
+      .slice(0, index)
+      .reduce((total, newerTransaction) => total + newerTransaction.amountCentavos, 0)
+    return { ...transaction, balanceAfter: startingBalance - newerTransactionTotal }
   })
 
   const historyParams = new URLSearchParams()
