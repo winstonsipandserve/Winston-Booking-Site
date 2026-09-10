@@ -420,9 +420,9 @@ export default async function AdminMembershipApplicationDetailPage({
       {latestMembership && (
         <section className="mb-6 flex flex-col rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Credit Transaction History</h2>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
             <table className="w-full min-w-[480px] table-fixed border-collapse text-sm">
-              <thead>
+              <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr className="h-[42px]">
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Date
@@ -442,7 +442,7 @@ export default async function AdminMembershipApplicationDetailPage({
                   {transactionsWithBalance.map((transaction) => (
                     <tr
                       key={transaction.id}
-                      className="h-[46px] border-b border-gray-100 last:border-b-0 dark:border-gray-800"
+                      className="h-[46px] border-b border-gray-100 last:border-b-0 even:bg-gray-50/70 dark:border-gray-800 dark:even:bg-gray-800/50"
                     >
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {transaction.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
@@ -478,21 +478,23 @@ export default async function AdminMembershipApplicationDetailPage({
               </tbody>
             </table>
           </div>
-          <AdminPagination
-            page={creditPage}
-            totalPages={creditTotalPages}
-            previousHref={historyPageHref('creditPage', Math.max(1, creditPage - 1))}
-            nextHref={historyPageHref('creditPage', Math.min(creditTotalPages, creditPage + 1))}
-          />
+          <div className="mt-4">
+            <AdminPagination
+              page={creditPage}
+              totalPages={creditTotalPages}
+              previousHref={historyPageHref('creditPage', Math.max(1, creditPage - 1))}
+              nextHref={historyPageHref('creditPage', Math.min(creditTotalPages, creditPage + 1))}
+            />
+          </div>
         </section>
       )}
 
       {latestMembership && (
         <section className="mb-6 flex flex-col rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Booking History</h2>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
             <table className="w-full min-w-[840px] border-collapse text-sm">
-              <thead>
+              <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr className="h-[42px]">
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Reference
@@ -519,7 +521,10 @@ export default async function AdminMembershipApplicationDetailPage({
               </thead>
               <tbody>
                   {recentBookings.map((booking) => (
-                    <tr key={booking.id} className="h-[46px] border-b border-gray-100 last:border-b-0 dark:border-gray-800">
+                    <tr
+                      key={booking.id}
+                      className="h-[46px] border-b border-gray-100 last:border-b-0 even:bg-gray-50/70 dark:border-gray-800 dark:even:bg-gray-800/50"
+                    >
                       <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{booking.id}</td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {booking.startTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
@@ -561,12 +566,14 @@ export default async function AdminMembershipApplicationDetailPage({
               </tbody>
             </table>
           </div>
-          <AdminPagination
-            page={bookingPage}
-            totalPages={bookingTotalPages}
-            previousHref={historyPageHref('bookingPage', Math.max(1, bookingPage - 1))}
-            nextHref={historyPageHref('bookingPage', Math.min(bookingTotalPages, bookingPage + 1))}
-          />
+          <div className="mt-4">
+            <AdminPagination
+              page={bookingPage}
+              totalPages={bookingTotalPages}
+              previousHref={historyPageHref('bookingPage', Math.max(1, bookingPage - 1))}
+              nextHref={historyPageHref('bookingPage', Math.min(bookingTotalPages, bookingPage + 1))}
+            />
+          </div>
         </section>
       )}
 

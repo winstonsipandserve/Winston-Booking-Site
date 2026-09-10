@@ -90,7 +90,10 @@ export default function ActivityLogTab() {
           </thead>
           <tbody>
             {data.items.map((item) => (
-              <tr key={item.id} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
+              <tr
+                key={item.id}
+                className="border-b border-gray-100 last:border-b-0 even:bg-gray-50/70 dark:border-gray-800 dark:even:bg-gray-800/50"
+              >
                 <td className="px-3 py-2 text-gray-500 dark:text-gray-400">{formatBookingDateTime(new Date(item.createdAt))}</td>
                 <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{item.adminName}</td>
                 <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{ADMIN_ACTIVITY_ACTION_LABELS[item.action]}</td>
