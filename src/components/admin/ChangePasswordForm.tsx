@@ -53,9 +53,23 @@ export default function ChangePasswordForm() {
 
   return (
     <>
-      <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">Change Password</h2>
-        <form key={formKey} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <details className="group rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40">
+        <summary className="flex cursor-pointer list-none items-start gap-3 p-5 text-left marker:hidden [&::-webkit-details-marker]:hidden">
+          <svg viewBox="0 0 24 24" fill="none" className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true">
+            <path d="M12 3 2.8 20h18.4L12 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M12 9v5M12 17.5v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          <span className="min-w-0 flex-1">
+            <span className="block text-base font-semibold text-amber-900 dark:text-amber-200">Change Password</span>
+            <span className="mt-1 block text-sm text-amber-800 dark:text-amber-300">Use this only if you need to update your admin sign-in password.</span>
+          </span>
+          <svg viewBox="0 0 24 24" fill="none" className="mt-1 h-4 w-4 shrink-0 text-amber-700 transition-transform group-open:rotate-180 dark:text-amber-400" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </summary>
+
+        <div className="border-t border-amber-200/80 px-5 pb-5 pt-4 dark:border-amber-900/50">
+          <form key={formKey} onSubmit={handleSubmit} className="flex flex-col gap-4">
           <PasswordInput
             id="currentPassword"
             name="currentPassword"
@@ -89,8 +103,9 @@ export default function ChangePasswordForm() {
           >
             {submitting ? 'Saving…' : 'Change Password'}
           </button>
-        </form>
-      </div>
+          </form>
+        </div>
+      </details>
 
       <ConfirmModal
         isOpen={errorModalOpen}

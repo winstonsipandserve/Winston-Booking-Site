@@ -51,20 +51,6 @@ function ChevronIcon({ className = '' }: { className?: string }) {
   )
 }
 
-function TrashIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-.7 12.1a2 2 0 0 1-2 1.9H8.7a2 2 0 0 1-2-1.9L6 7h12Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function ActionIconButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} aria-label={label} className="text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300">
@@ -78,17 +64,11 @@ function PriceCell({
   allowed,
   addLabel,
   onAdd,
-  deleteLabel,
-  onDelete,
-  errorMessage,
 }: {
   price: number | undefined
   allowed: boolean
   addLabel: string
   onAdd: () => void
-  deleteLabel: string
-  onDelete: () => void
-  errorMessage?: string
 }) {
   if (price === undefined) {
     if (!allowed) return null
@@ -104,15 +84,7 @@ function PriceCell({
     )
   }
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <span>{formatCentavos(price)}</span>
-        <button type="button" onClick={onDelete} aria-label={deleteLabel} className="text-gray-300 hover:text-red-600 dark:text-gray-600 dark:hover:text-red-400">
-          <TrashIcon className="h-3.5 w-3.5" />
-        </button>
-      </div>
-      {errorMessage && <p className="text-xs text-red-600 dark:text-red-400">{errorMessage}</p>}
-    </div>
+    <span>{formatCentavos(price)}</span>
   )
 }
 
@@ -126,7 +98,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
   const [disablingResource, setDisablingResource] = useState<ResourceRow | null>(null)
   const [editingRow, setEditingRow] = useState<{ title: string; fields: PriceEditField[] } | null>(null)
   const [creatingCell, setCreatingCell] = useState<{ title: string; createField: PriceCreateField } | null>(null)
-  const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({})
   const [pendingAction, setPendingAction] = useState<{
     title: string
     message: string
@@ -136,70 +107,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
   } | null>(null)
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
 
-  function clearDeleteError(cellKey: string) {
-    setDeleteErrors((prev) => {
-      if (!(cellKey in prev)) return prev
-      const next = { ...prev }
-      delete next[cellKey]
-      return next
-    })
-  }
-
-  async function doDeletePricingRule(ruleId: string, cellKey: string) {
-    clearDeleteError(cellKey)
-    try {
-      const res = await fetch(`/api/admin/pricing-rules/${ruleId}`, { method: 'DELETE' })
-      if (!res.ok) {
-        const json = await res.json().catch(() => null)
-        setDeleteErrors((prev) => ({ ...prev, [cellKey]: json?.error ?? 'Something went wrong. Please try again.' }))
-        return
-      }
-      router.refresh()
-    } catch {
-      setDeleteErrors((prev) => ({ ...prev, [cellKey]: 'Something went wrong. Please try again.' }))
-    }
-  }
-
-  function handleDeletePricingRule(ruleId: string, cellKey: string, label: string) {
-    setPendingAction({
-      title: 'Delete Rate?',
-      message: `Delete ${label}? This cannot be undone.`,
-      confirmLabel: 'Delete',
-      confirmVariant: 'danger',
-      onConfirm: () => {
-        setPendingAction(null)
-        void doDeletePricingRule(ruleId, cellKey)
-      },
-    })
-  }
-
-  async function doDeleteAddOnPricingRule(ruleId: string, cellKey: string) {
-    clearDeleteError(cellKey)
-    try {
-      const res = await fetch(`/api/admin/add-on-pricing-rules/${ruleId}`, { method: 'DELETE' })
-      if (!res.ok) {
-        const json = await res.json().catch(() => null)
-        setDeleteErrors((prev) => ({ ...prev, [cellKey]: json?.error ?? 'Something went wrong. Please try again.' }))
-        return
-      }
-      router.refresh()
-    } catch {
-      setDeleteErrors((prev) => ({ ...prev, [cellKey]: 'Something went wrong. Please try again.' }))
-    }
-  }
-
-  function handleDeleteAddOnPricingRule(ruleId: string, cellKey: string, label: string) {
-    setPendingAction({
-      title: 'Delete Rate?',
-      message: `Delete ${label}? This cannot be undone.`,
-      confirmLabel: 'Delete',
-      confirmVariant: 'danger',
-      onConfirm: () => {
-        setPendingAction(null)
-        void doDeleteAddOnPricingRule(ruleId, cellKey)
-      },
-    })
-  }
 
   function openCreateRate(tier: RateTier, durationMinutes: number, rowLabel: string) {
     setCreatingCell({
@@ -274,10 +181,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
 
   function findRateRule(tier: RateTier, durationMinutes: number) {
     return rt.pricingRules.find((r) => r.rateTier === tier && r.durationMinutes === durationMinutes)
-  }
-
-  function findRate(tier: RateTier, durationMinutes: number) {
-    return findRateRule(tier, durationMinutes)?.priceCentavos
   }
 
   const coachingRules = rt.addOnPricingRules.filter((r) => r.addOnService.slug === 'coaching_fee')
@@ -461,8 +364,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                   const rowLabel = isCourt ? 'Hourly rate' : durationLabel(duration)
                   const memberRule = findRateRule('member', duration)
                   const nonMemberRule = findRateRule('non_member', duration)
-                  const memberCellKey = `rate-member-${duration}`
-                  const nonMemberCellKey = `rate-nonMember-${duration}`
                   return (
                     <tr key={duration} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
                       <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{rowLabel}</td>
@@ -472,12 +373,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           allowed={isValidPricingRuleCombo(rt.slug, 'member', duration)}
                           addLabel={`Add ${rowLabel} member rate`}
                           onAdd={() => openCreateRate('member', duration, rowLabel)}
-                          deleteLabel={`Delete ${rowLabel} member rate`}
-                          onDelete={() =>
-                            memberRule &&
-                            handleDeletePricingRule(memberRule.id, memberCellKey, `${rowLabel} member rate`)
-                          }
-                          errorMessage={deleteErrors[memberCellKey]}
                         />
                       </td>
                       <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
@@ -486,12 +381,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           allowed={isValidPricingRuleCombo(rt.slug, 'non_member', duration)}
                           addLabel={`Add ${rowLabel} non-member rate`}
                           onAdd={() => openCreateRate('non_member', duration, rowLabel)}
-                          deleteLabel={`Delete ${rowLabel} non-member rate`}
-                          onDelete={() =>
-                            nonMemberRule &&
-                            handleDeletePricingRule(nonMemberRule.id, nonMemberCellKey, `${rowLabel} non-member rate`)
-                          }
-                          errorMessage={deleteErrors[nonMemberCellKey]}
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -541,12 +430,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 1)}
                           addLabel="Add Coaching (1 pax) member rate"
                           onAdd={() => openCreateCoaching('member', 1, 'Coaching (1 pax)')}
-                          deleteLabel="Delete Coaching (1 pax) member rate"
-                          onDelete={() => {
-                            const rule = findCoachingRule('member', 1)
-                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-member-1', 'Coaching (1 pax) member rate')
-                          }}
-                          errorMessage={deleteErrors['coaching-member-1']}
                         />
                       </td>
                       <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
@@ -555,12 +438,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 1)}
                           addLabel="Add Coaching (1 pax) non-member rate"
                           onAdd={() => openCreateCoaching('non_member', 1, 'Coaching (1 pax)')}
-                          deleteLabel="Delete Coaching (1 pax) non-member rate"
-                          onDelete={() => {
-                            const rule = findCoachingRule('non_member', 1)
-                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-nonMember-1', 'Coaching (1 pax) non-member rate')
-                          }}
-                          errorMessage={deleteErrors['coaching-nonMember-1']}
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -583,12 +460,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 2)}
                           addLabel="Add Coaching (2 pax) member rate"
                           onAdd={() => openCreateCoaching('member', 2, 'Coaching (2 pax)')}
-                          deleteLabel="Delete Coaching (2 pax) member rate"
-                          onDelete={() => {
-                            const rule = findCoachingRule('member', 2)
-                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-member-2', 'Coaching (2 pax) member rate')
-                          }}
-                          errorMessage={deleteErrors['coaching-member-2']}
                         />
                       </td>
                       <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
@@ -597,12 +468,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 2)}
                           addLabel="Add Coaching (2 pax) non-member rate"
                           onAdd={() => openCreateCoaching('non_member', 2, 'Coaching (2 pax)')}
-                          deleteLabel="Delete Coaching (2 pax) non-member rate"
-                          onDelete={() => {
-                            const rule = findCoachingRule('non_member', 2)
-                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-nonMember-2', 'Coaching (2 pax) non-member rate')
-                          }}
-                          errorMessage={deleteErrors['coaching-nonMember-2']}
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -625,12 +490,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           allowed={isValidAddOnPricingRuleCombo('ball_boy', rt.slug, 'member', null)}
                           addLabel="Add Ball Boy member rate"
                           onAdd={() => openCreateBallBoy('member')}
-                          deleteLabel="Delete Ball Boy member rate"
-                          onDelete={() => {
-                            const rule = findBallBoyRule('member')
-                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'ballBoy-member', 'Ball Boy member rate')
-                          }}
-                          errorMessage={deleteErrors['ballBoy-member']}
                         />
                       </td>
                       <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
@@ -639,12 +498,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                           allowed={isValidAddOnPricingRuleCombo('ball_boy', rt.slug, 'non_member', null)}
                           addLabel="Add Ball Boy non-member rate"
                           onAdd={() => openCreateBallBoy('non_member')}
-                          deleteLabel="Delete Ball Boy non-member rate"
-                          onDelete={() => {
-                            const rule = findBallBoyRule('non_member')
-                            if (rule) handleDeleteAddOnPricingRule(rule.id, 'ballBoy-nonMember', 'Ball Boy non-member rate')
-                          }}
-                          errorMessage={deleteErrors['ballBoy-nonMember']}
                         />
                       </td>
                       <td className="px-3 py-2">
@@ -669,12 +522,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                         allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', null)}
                         addLabel="Add Coaching member rate"
                         onAdd={() => openCreateCoaching('member', null, 'Coaching')}
-                        deleteLabel="Delete Coaching member rate"
-                        onDelete={() => {
-                          const rule = findCoachingRule('member', null)
-                          if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-member-null', 'Coaching member rate')
-                        }}
-                        errorMessage={deleteErrors['coaching-member-null']}
                       />
                     </td>
                     <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
@@ -683,12 +530,6 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                         allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', null)}
                         addLabel="Add Coaching non-member rate"
                         onAdd={() => openCreateCoaching('non_member', null, 'Coaching')}
-                        deleteLabel="Delete Coaching non-member rate"
-                        onDelete={() => {
-                          const rule = findCoachingRule('non_member', null)
-                          if (rule) handleDeleteAddOnPricingRule(rule.id, 'coaching-nonMember-null', 'Coaching non-member rate')
-                        }}
-                        errorMessage={deleteErrors['coaching-nonMember-null']}
                       />
                     </td>
                     <td className="px-3 py-2">

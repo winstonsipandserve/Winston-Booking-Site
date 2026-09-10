@@ -39,12 +39,11 @@ export default async function AdminResourcesPage() {
       />
       <div>
         <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">Resources & Pricing</h1>
-        <p className="text-sm italic text-gray-400 dark:text-gray-500">
-          New courts and simulators are added directly in the database — existing ones can only be
-          edited (pricing) or disabled/enabled from this panel. Pricing and add-on rows below support
-          full create/edit/delete. Guest Fee remains edit-only, permanently, by design — its shape has
-          nothing to key a second row on.
-        </p>
+         New courts and simulators are added directly in the database — existing ones can only be
+         edited (pricing) or disabled/enabled from this panel. Pricing and add-on rows below support
+         full create/edit/delete. Guest Fee remains edit-only, permanently, by design — its shape has
+         nothing to key a second row on.
+       */}
       </div>
 
       <div className="min-h-0 flex-1">
