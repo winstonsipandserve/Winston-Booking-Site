@@ -33,6 +33,8 @@ Use these when the task matches; don't reinvent what they already encode.
 - **`booking-conflict-prevention`** — booking creation, availability, or scheduling logic. Any task using it must verify the exclusion constraint is actually present in the database, not assume it survived a migration.
 - **`prisma-schema-conventions`** — any edit to `schema.prisma`.
 
+- **`vibe-sec`** — web-application security implementation and security reviews.
+
 These skills contain task routing and verification checklists. The linked files under `docs/` are authoritative for current project facts.
 
 **General design and motion** (installed via `npx skills`, not project-specific): `impeccable` (broad frontend audit and polish), `emil-design-eng` (UI craft), `animate` (build an animation), `review-animations` (critique motion), `improve-animations` (codebase-wide motion audit), `prototype` (build variants to choose between). Reach for these on visual polish passes. `impeccable`'s hook and image-generation features are off by default — read its own SKILL.md before enabling them.

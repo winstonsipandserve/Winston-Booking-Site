@@ -56,6 +56,7 @@ Use repository skills when their descriptions match the task:
 - `booking-conflict-prevention` for booking creation, availability, cancellation, expiry, or rescheduling.
 - `paymongo-integration` for checkout, webhooks, payment state, reconciliation, or key handling.
 - `prisma-schema-conventions` for schema, migration, raw SQL, RLS, or constraint work.
+- `vibe-sec` for web-application security implementation or security reviews.
 - The installed design and motion skills under `.agents/skills/` for frontend design, polish, prototypes, and animation work.
 
 Skills provide workflows and checklists. The linked files in `docs/` remain authoritative for project facts.
