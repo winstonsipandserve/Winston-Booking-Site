@@ -136,6 +136,9 @@ async function deleteDevelopmentData() {
     }
 
     return counts
+  }, {
+    maxWait: 10_000,
+    timeout: 30_000,
   })
 }
 
