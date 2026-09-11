@@ -106,7 +106,7 @@ Route handlers live under `src/app/api/`, return `Response.json(...)` with expli
 
 Gated twice: `middleware.ts` matches `/admin/:path*` and `/api/admin/:path*`, and every handler independently calls `getActiveAdminSession()`. The two admin auth routes (`forgot-password`, `reset-password`) intentionally require no session.
 
-Covers: account password change, activity log, admin user list and activate/deactivate, booking reschedule and CSV export, bulletin CRUD, check-in by token and by code, guest fee edit, membership approve/reject, credit top-up, renewal link send, membership CSV export, pricing rule and add-on pricing rule CRUD, and resource edit/disable.
+Covers: account password change, activity log, admin user list and activate/deactivate, booking reschedule availability lookup, booking reschedule and CSV export, bulletin CRUD, check-in by token and by code, guest fee edit, membership approve/reject, credit top-up, renewal link send, membership CSV export, pricing rule and add-on pricing rule CRUD, and resource edit/disable.
 
 ### Webhook
 

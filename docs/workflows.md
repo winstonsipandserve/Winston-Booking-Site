@@ -144,7 +144,7 @@ An admin uses `/admin/check-in`, either scanning with the camera or typing the c
 The only way a booking's time changes. See [business.md](business.md) for the policy.
 
 1. An admin opens the booking and expands the Reschedule section (collapsed by default).
-2. They enter the new date, a start time from 6:00 AM through 10:00 AM, and a reason. The start-time window is enforced in the form and API; the resulting slot is also validated against business hours and the same overlap constraint as any other booking.
+2. They select the new date from a calendar, then choose from the live availability-filtered start-time grid (6:00 AM through 10:00 AM) and enter a reason. The lookup excludes the booking being moved and evaluates its full duration. The start-time window is enforced in the form and API; the resulting slot is also validated against business hours and the same overlap constraint as any other booking.
 3. Before submitting, they confirm the change by typing `reschedule <booking reference>` in the confirmation dialog.
 4. In one transaction: the booking is updated, an immutable `BookingReschedule` audit row is written, and an activity log row is recorded.
 5. After the transaction commits, the customer and `winstonsipandserve@gmail.com` receive a reschedule email with the previous slot, new slot, and recorded reason. The staff copy also identifies the admin who performed the reschedule. Any follow-up coordination still happens outside the system by replying to the customer email.

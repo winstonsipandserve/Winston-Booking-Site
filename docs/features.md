@@ -100,7 +100,7 @@ Booking revenue and membership revenue are counted separately and cannot overlap
 
 ### Bookings
 
-List with a working search bar and a filter modal, both server-side and composable. Both list and detail show the true grand total (including add-ons), the PayMongo payment id, and the net settled amount; the detail page additionally shows the PayMongo fee. Reschedule is a collapsed-by-default foldable section. CSV export honours the current filters and exports every matching row, not just the current page.
+List with a working search bar and a filter modal, both server-side and composable. Both list and detail show the true grand total (including add-ons), the PayMongo payment id, and the net settled amount; the detail page additionally shows the PayMongo fee. Reschedule is a collapsed-by-default foldable section with a date calendar and live available-time grid for the booking's resource and duration; the database remains the final conflict authority at confirmation. CSV export honours the current filters and exports every matching row, not just the current page.
 
 ### Resources & Pricing
 

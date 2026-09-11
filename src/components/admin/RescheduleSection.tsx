@@ -12,7 +12,13 @@ function ChevronIcon({ className = '' }: { className?: string }) {
   )
 }
 
-export default function RescheduleSection({ bookingId }: { bookingId: string }) {
+export default function RescheduleSection({
+  bookingId,
+  durationMinutes,
+}: {
+  bookingId: string
+  durationMinutes: number
+}) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -39,7 +45,11 @@ export default function RescheduleSection({ bookingId }: { bookingId: string }) 
 
       {isOpen && (
         <div className="mt-4">
-          <RescheduleForm bookingId={bookingId} referenceNumber={bookingId} />
+          <RescheduleForm
+            bookingId={bookingId}
+            referenceNumber={bookingId}
+            durationMinutes={durationMinutes}
+          />
         </div>
       )}
     </section>

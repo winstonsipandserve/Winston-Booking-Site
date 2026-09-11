@@ -242,7 +242,12 @@ export default async function AdminBookingDetailPage({
           )}
         </section>
 
-        {booking.status === 'confirmed' && <RescheduleSection bookingId={booking.id} />}
+        {booking.status === 'confirmed' && (
+          <RescheduleSection
+            bookingId={booking.id}
+            durationMinutes={(booking.endTime.getTime() - booking.startTime.getTime()) / 60_000}
+          />
+        )}
       </div>
     </div>
   )
