@@ -66,6 +66,11 @@ export default function NewsGrid({ items }: NewsGridProps) {
 
   const filteredItems =
     selectedCategory === 'All' ? items : items.filter((item) => item.category === selectedCategory)
+  const featuredTournament =
+    selectedCategory === 'All' ? filteredItems.find((item) => item.category === 'Tournament') : undefined
+  const gridItems = featuredTournament
+    ? filteredItems.filter((item) => item.id !== featuredTournament.id)
+    : filteredItems
 
   return (
     <section className="bg-background py-24 md:py-28">
@@ -105,12 +110,20 @@ export default function NewsGrid({ items }: NewsGridProps) {
               : 'No announcements in this category yet.'}
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredItems.map((item, index) => (
-              <Reveal key={item.id} delayMs={index * 100}>
-                <NewsCard item={item} objectPosition={OBJECT_POSITIONS[index % OBJECT_POSITIONS.length]} />
+          <div className="space-y-8">
+            {featuredTournament && (
+              <Reveal>
+                <NewsCard item={featuredTournament} variant="featured" />
               </Reveal>
-            ))}
+            )}
+
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {gridItems.map((item, index) => (
+                <Reveal key={item.id} delayMs={(index + (featuredTournament ? 1 : 0)) * 100}>
+                  <NewsCard item={item} objectPosition={OBJECT_POSITIONS[index % OBJECT_POSITIONS.length]} />
+                </Reveal>
+              ))}
+            </div>
           </div>
         )}
       </div>

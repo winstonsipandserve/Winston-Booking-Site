@@ -261,6 +261,6 @@ Master SQL: `prisma/manual-sql/enable-rls-deny-all.sql`.
 
 ## Seed Data
 
-`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds reference data only: the 5 resource types, the 9 resources, 21 pricing rules, the ₱150 guest fee rule, 2 add-on services, and 16 add-on pricing rules. Exact values are in [business.md](business.md).
+`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds the 5 resource types, the 9 resources, 21 pricing rules, the ₱150 guest fee rule, 2 add-on services, 16 add-on pricing rules, and seven published sample bulletins covering every bulletin category. Sample bulletins are identified by their `[Sample]` title prefix and are updated rather than duplicated on subsequent runs. Exact reference-data values are in [business.md](business.md).
 
 **The seed creates no admin user.** There is no reproducible admin bootstrap — admin accounts exist only in the live database. See [roadmap.md](roadmap.md).

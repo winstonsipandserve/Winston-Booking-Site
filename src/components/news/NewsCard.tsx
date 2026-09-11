@@ -22,13 +22,24 @@ const SOCIAL_LABELS = {
 interface NewsCardProps {
   item: NewsItem
   objectPosition?: string
+  variant?: 'standard' | 'featured'
 }
 
-export default function NewsCard({ item, objectPosition = 'center' }: NewsCardProps) {
+export default function NewsCard({ item, objectPosition = 'center', variant = 'standard' }: NewsCardProps) {
+  const featured = variant === 'featured'
+
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-card border-2 border-brand-dark/20 bg-brand-light shadow-card">
+    <article
+      className={`flex h-full flex-col overflow-hidden rounded-card border-2 border-brand-dark/20 bg-brand-light shadow-card ${
+        featured ? 'lg:min-h-[25rem] lg:flex-row' : ''
+      }`}
+    >
       {item.image && (
-        <div className="group relative aspect-[4/3] w-full overflow-hidden">
+        <div
+          className={`group relative aspect-[4/3] w-full shrink-0 overflow-hidden ${
+            featured ? 'lg:aspect-auto lg:w-1/2' : ''
+          }`}
+        >
           <Image
             src={item.image}
             alt={item.title}
@@ -43,7 +54,7 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
         </div>
       )}
 
-      <div className="flex flex-1 flex-col p-6">
+      <div className={`flex flex-1 flex-col p-6 ${featured ? 'lg:p-10' : ''}`}>
         {!item.image && (
           <div className="mb-3 flex items-center gap-2">
             <span className="inline-flex items-center rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
@@ -51,7 +62,9 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
             </span>
           </div>
         )}
-        <h3 className="font-serif text-lg text-brand-dark">{item.title}</h3>
+        <h3 className={`font-serif text-brand-dark ${featured ? 'text-2xl lg:text-3xl' : 'text-lg'}`}>
+          {item.title}
+        </h3>
 
         {item.affectedFacility && (
           <p className="mt-2 text-xs font-medium uppercase tracking-wide text-brand-dark/60">
@@ -118,6 +131,6 @@ export default function NewsCard({ item, objectPosition = 'center' }: NewsCardPr
           </a>
         )}
       </div>
-    </div>
+    </article>
   )
 }
