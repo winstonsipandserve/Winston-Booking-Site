@@ -129,14 +129,14 @@ export default function DashboardBookingCalendar({ initialCalendar }: { initialC
         {formatMonth(calendar.month)}
       </p>
 
-      <div className="grid grid-cols-7 gap-1.5" aria-label={`${formatMonth(calendar.month)} confirmed booking activity`}>
+      <div className="grid grid-cols-7 justify-items-center gap-x-1.5 gap-y-1" aria-label={`${formatMonth(calendar.month)} confirmed booking activity`}>
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="pb-0.5 text-center text-[11px] font-medium text-gray-500 dark:text-gray-400">
             {label}
           </div>
         ))}
         {cells.map((day, index) => {
-          if (day === null) return <div key={`blank-${index}`} aria-hidden="true" />
+          if (day === null) return <div key={`blank-${index}`} className="h-7 w-7" aria-hidden="true" />
 
           const date = dateKey(year, monthIndex, day)
           const count = countsByDate.get(date) ?? 0
@@ -147,7 +147,7 @@ export default function DashboardBookingCalendar({ initialCalendar }: { initialC
               dateTime={date}
               title={bookingCountLabel(date, count)}
               aria-label={bookingCountLabel(date, count)}
-              className={`flex aspect-square min-h-8 items-center justify-center rounded-md text-xs font-medium tabular-nums transition-colors ${activityClass(count)} ${
+              className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-medium tabular-nums transition-colors ${activityClass(count)} ${
                 isToday ? 'ring-2 ring-gray-900 ring-offset-2 ring-offset-white dark:ring-gray-100 dark:ring-offset-gray-900' : ''
               }`}
             >
