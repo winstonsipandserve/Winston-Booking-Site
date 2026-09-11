@@ -39,7 +39,7 @@ export default function RescheduleSection({ bookingId }: { bookingId: string }) 
 
       {isOpen && (
         <div className="mt-4">
-          <RescheduleForm bookingId={bookingId} />
+          <RescheduleForm bookingId={bookingId} referenceNumber={bookingId} />
         </div>
       )}
     </section>

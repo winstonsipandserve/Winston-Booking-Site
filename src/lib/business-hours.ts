@@ -1,5 +1,8 @@
 export const BUSINESS_OPEN_HOUR = 6
 export const BUSINESS_CLOSE_HOUR = 22
+export const RESCHEDULE_START_OPEN_HOUR = 6
+export const RESCHEDULE_START_CLOSE_HOUR = 10
+export const RESCHEDULE_TIME_STEP_MINUTES = 15
 
 /** Minutes since PH midnight for the given absolute instant (PH = fixed UTC+8, no DST). */
 export function toPhMinutesOfDay(date: Date): number {

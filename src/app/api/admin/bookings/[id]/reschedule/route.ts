@@ -1,7 +1,12 @@
 import { Prisma } from '@prisma/client'
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
-import { isWithinBusinessHours } from '@/lib/business-hours'
+import {
+  isWithinBusinessHours,
+  RESCHEDULE_START_CLOSE_HOUR,
+  RESCHEDULE_START_OPEN_HOUR,
+  RESCHEDULE_TIME_STEP_MINUTES,
+} from '@/lib/business-hours'
 import { logAdminActivity } from '@/lib/admin-activity-log'
 import { sendBookingRescheduleEmailForBooking } from '@/lib/booking-confirmation'
 import { formatBookingDateTime } from '@/lib/format'
@@ -25,6 +30,7 @@ interface RescheduleRequestBody {
   newDate?: unknown
   newStartTime?: unknown
   reason?: unknown
+  confirmationPhrase?: unknown
 }
 
 export async function PATCH(
@@ -45,7 +51,7 @@ export async function PATCH(
     return Response.json({ error: 'Malformed JSON body' }, { status: 400 })
   }
 
-  const { newDate, newStartTime, reason } = body
+  const { newDate, newStartTime, reason, confirmationPhrase } = body
   if (
     !isNonEmptyString(newDate) ||
     !isNonEmptyString(newStartTime) ||
@@ -62,6 +68,32 @@ export async function PATCH(
   if (booking.status !== 'confirmed') {
     return Response.json(
       { error: 'Only confirmed bookings can be rescheduled' },
+      { status: 400 },
+    )
+  }
+
+  if (confirmationPhrase !== `reschedule ${booking.id}`) {
+    return Response.json(
+      { error: `Type "reschedule ${booking.id}" to continue.` },
+      { status: 400 },
+    )
+  }
+
+  if (!/^\d{2}:\d{2}$/.test(newStartTime)) {
+    return Response.json({ error: 'Choose a valid start time.' }, { status: 400 })
+  }
+
+  const [startHour, startMinute] = newStartTime.split(':').map(Number)
+  const startMinutes = startHour * 60 + startMinute
+  if (
+    startMinutes < RESCHEDULE_START_OPEN_HOUR * 60 ||
+    startMinutes > RESCHEDULE_START_CLOSE_HOUR * 60 ||
+    startMinute < 0 ||
+    startMinute > 59 ||
+    startMinute % RESCHEDULE_TIME_STEP_MINUTES !== 0
+  ) {
+    return Response.json(
+      { error: 'Reschedule start times must be between 6:00 AM and 10:00 AM.' },
       { status: 400 },
     )
   }
