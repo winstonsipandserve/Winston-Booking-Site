@@ -297,7 +297,7 @@ export default function RescheduleForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+      <div className="flex flex-col gap-6">
         <CalendarPicker selectedDate={selectedDate} onSelectDate={selectDate} />
         <section aria-labelledby="reschedule-time-heading" className="min-w-0">
           <div className="mb-3 flex items-center justify-between gap-3">
