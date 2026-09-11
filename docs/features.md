@@ -93,7 +93,7 @@ Seven sections, all gated by the shared admin session check and all supporting L
 
 - **Six stat cards**: Bookings Today, Booking Revenue This Month, Membership Revenue This Month, Pending Applications, Active Memberships, Resource Utilization.
 - **Revenue Trend chart** with a Booking/Membership view toggle, a range selector (3mo / 6mo / 12mo / YTD), and per-view breakdowns — Booking: Total or By Resource Type; Membership: Total, By Tier, or Top-Ups.
-- **Resource-type pie chart**.
+- **Booking-activity calendar** showing confirmed-booking volume per day through a five-step blue intensity scale, with previous/next month navigation.
 - **Recent Bookings** and **Pending Applications** lists.
 
 Booking revenue and membership revenue are counted separately and cannot overlap: booking revenue counts only payments attached to a booking, while membership revenue counts activation/renewal payments plus top-ups.

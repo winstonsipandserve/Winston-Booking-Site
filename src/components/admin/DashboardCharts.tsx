@@ -5,9 +5,6 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  PieChart,
-  Pie,
-  Cell,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -16,7 +13,8 @@ import {
 } from 'recharts'
 import { formatCentavos } from '@/lib/format'
 import { useIsDarkMode } from '@/hooks/useIsDarkMode'
-import type { RevenueTrendPoint, MembershipRevenueTrendPoint, ResourceBreakdownEntry } from '@/lib/dashboard-data'
+import DashboardBookingCalendar from '@/components/admin/DashboardBookingCalendar'
+import type { BookingCalendarData, RevenueTrendPoint, MembershipRevenueTrendPoint } from '@/lib/dashboard-data'
 
 const LIGHT_PALETTE = {
   grid: '#e5e7eb',
@@ -26,7 +24,6 @@ const LIGHT_PALETTE = {
   tooltipBorder: '#e5e7eb',
   legendText: '#6b7280',
   revenueLine: '#111827',
-  resourceColors: ['#111827', '#374151', '#6b7280', '#9ca3af', '#d1d5db'],
   sportColors: { tennis: '#111827', pickleball: '#6b7280', golf: '#cd1818' },
   membershipTierColors: { threeMonth: '#2563eb', sixMonth: '#d97706', twelveMonth: '#7c3aed' },
   topUpColor: '#059669',
@@ -40,7 +37,6 @@ const DARK_PALETTE = {
   tooltipBorder: '#374151',
   legendText: '#9ca3af',
   revenueLine: '#f3f4f6',
-  resourceColors: ['#f3f4f6', '#d1d5db', '#9ca3af', '#6b7280', '#4b5563'],
   sportColors: { tennis: '#f3f4f6', pickleball: '#9ca3af', golf: '#f87171' },
   membershipTierColors: { threeMonth: '#60a5fa', sixMonth: '#fbbf24', twelveMonth: '#a78bfa' },
   topUpColor: '#34d399',
@@ -98,10 +94,10 @@ function filterByRange<T extends { month: string }>(data: T[], range: RangeOptio
 interface DashboardChartsProps {
   revenueTrend: RevenueTrendPoint[]
   membershipRevenueTrend: MembershipRevenueTrendPoint[]
-  resourceBreakdown: ResourceBreakdownEntry[]
+  bookingCalendar: BookingCalendarData
 }
 
-export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, resourceBreakdown }: DashboardChartsProps) {
+export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, bookingCalendar }: DashboardChartsProps) {
   const isDark = useIsDarkMode()
   const palette = isDark ? DARK_PALETTE : LIGHT_PALETTE
   const [range, setRange] = useState<RangeOption>('6mo')
@@ -361,45 +357,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Bookings by Resource Type</h2>
-        <div className="flex h-64 items-center gap-4">
-          <div className="h-full flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={resourceBreakdown}
-                  dataKey="count"
-                  nameKey="resourceType"
-                  innerRadius="55%"
-                  outerRadius="80%"
-                  paddingAngle={2}
-                >
-                  {resourceBreakdown.map((entry, index) => (
-                    <Cell
-                      key={entry.resourceType}
-                      fill={palette.resourceColors[index % palette.resourceColors.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <ul className="flex shrink-0 flex-col gap-1.5">
-            {resourceBreakdown.map((entry, index) => (
-              <li key={entry.resourceType} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: palette.resourceColors[index % palette.resourceColors.length] }}
-                />
-                <span className="text-gray-900 dark:text-gray-100">{entry.resourceType}</span>
-                <span className="text-gray-500 dark:text-gray-400">({entry.count})</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      <DashboardBookingCalendar initialCalendar={bookingCalendar} />
     </div>
   )
 }
