@@ -332,6 +332,10 @@ model Announcement {
   message              String
   urgency              AnnouncementUrgency    @default(info)
   isActive             Boolean                @default(true) @map("is_active")
+  /// Optional advance-notice date. The notice is visible on /book from
+  /// `announceAt ?? startAt`; resource auto-disable still begins only at `startAt`.
+  /// Must be on or before `startAt` when set.
+  announceAt           DateTime?              @map("announce_at")
   startAt              DateTime               @default(now()) @map("start_at")
   endAt                DateTime?              @map("end_at")
   /// While enabled, linked resources are taken offline during the active window.
@@ -346,6 +350,7 @@ model Announcement {
   updatedAt            DateTime               @updatedAt @map("updated_at")
 
   @@index([isActive, startAt, endAt])
+  @@index([isActive, announceAt, endAt])
   @@index([createdById])
   @@map("announcements")
 }

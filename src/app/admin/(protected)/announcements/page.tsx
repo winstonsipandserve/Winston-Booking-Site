@@ -31,6 +31,7 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
             message: announcement.message,
             urgency: announcement.urgency,
             isActive: announcement.isActive,
+            announceAt: announcement.announceAt?.toISOString() ?? null,
             startAt: announcement.startAt.toISOString(),
             endAt: announcement.endAt?.toISOString() ?? null,
             autoDisableResources: announcement.autoDisableResources,

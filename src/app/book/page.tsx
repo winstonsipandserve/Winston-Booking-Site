@@ -8,10 +8,11 @@ import type { GateNotice } from '@/components/booking/AnnouncementGate'
 import { auth } from '../../../auth'
 
 export default async function BookPage() {
+  const now = new Date()
   const [session, announcements] = await Promise.all([
     auth(),
     prisma.announcement.findMany({
-      where: activeAnnouncementWhere(),
+      where: activeAnnouncementWhere(now),
       include: { resourceLinks: { include: { resource: { include: { resourceType: true } } } } },
     }),
   ])
@@ -21,6 +22,7 @@ export default async function BookPage() {
     title: announcement.title,
     message: announcement.message,
     urgency: announcement.urgency,
+    upcoming: announcement.startAt > now,
     startAt: formatBookingDateTime(announcement.startAt),
     endAt: announcement.endAt ? formatBookingDateTime(announcement.endAt) : null,
     affectedResources: announcement.resourceLinks.map(

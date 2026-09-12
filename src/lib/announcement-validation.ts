@@ -30,6 +30,7 @@ export function parseAnnouncementForm(formData: FormData):
         message: string
         urgency: AnnouncementUrgency
         isActive: boolean
+        announceAt: Date | null
         startAt: Date
         endAt: Date | null
         autoDisableResources: boolean
@@ -41,6 +42,7 @@ export function parseAnnouncementForm(formData: FormData):
   const urgency = formData.get('urgency')
   const isActive = formData.get('isActive')
   const autoDisableResources = formData.get('autoDisableResources')
+  const announceAt = optionalDate(formData, 'announceAt')
   const startAt = optionalDate(formData, 'startAt') ?? new Date()
   const endAt = optionalDate(formData, 'endAt')
 
@@ -53,9 +55,13 @@ export function parseAnnouncementForm(formData: FormData):
   if (autoDisableResources !== 'true' && autoDisableResources !== 'false') {
     return { error: 'autoDisableResources must be a boolean' }
   }
+  if (announceAt === 'invalid') return { error: 'announceAt must be a valid date' }
   if (startAt === 'invalid') return { error: 'startAt must be a valid date' }
   if (endAt === 'invalid') return { error: 'endAt must be a valid date' }
   if (endAt && endAt <= startAt) return { error: 'End date must be after the start date' }
+  if (announceAt && announceAt > startAt) {
+    return { error: 'The notice cannot be shown after the announcement starts' }
+  }
 
   let resourceIds: string[] = []
   const resourceIdsRaw = formData.get('resourceIds')
@@ -77,6 +83,8 @@ export function parseAnnouncementForm(formData: FormData):
       message,
       urgency: urgency as AnnouncementUrgency,
       isActive: isActive === 'true',
+      // Same instant as startAt adds nothing; store null so "no advance notice" is unambiguous.
+      announceAt: announceAt && announceAt.getTime() !== startAt.getTime() ? announceAt : null,
       startAt,
       endAt,
       autoDisableResources: autoDisableResources === 'true' && resourceIds.length > 0,

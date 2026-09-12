@@ -208,7 +208,7 @@ Note also that `getLatestMembershipByCustomerId()` picks the latest membership b
 
 ## Announcements & News
 
-**`Announcement`** — short operational content for the booking gate: `title`, plain-text `message`, `urgency`, `isActive`, `startAt`, optional `endAt`, and `autoDisableResources`. `createdById` is nullable only for migrated content; every new API write derives it from the active admin session. Active-window lookup is indexed on `isActive`, `startAt`, and `endAt`.
+**`Announcement`** — short operational content for the booking gate: `title`, plain-text `message`, `urgency`, `isActive`, optional `announceAt`, `startAt`, optional `endAt`, and `autoDisableResources`. `startAt`–`endAt` is the operational window (when the closure or change applies and auto-disable may run). `announceAt` is an optional advance-notice date that must be on or before `startAt`; the notice is public from `announceAt ?? startAt`, and the API stores null when it equals `startAt`. `createdById` is nullable only for migrated content; every new API write derives it from the active admin session. Lookups are indexed on `isActive` + `startAt` + `endAt` and on `isActive` + `announceAt` + `endAt`.
 
 **`AnnouncementResource`** — the many-to-many link from an announcement to any court or simulator resource. The pair is unique and both foreign keys cascade-delete. Linking is informational unless `autoDisableResources` is true. The automatic disabled-reason value remains internally named `bulletin` during expand and is renamed only in the later contract migration.
 

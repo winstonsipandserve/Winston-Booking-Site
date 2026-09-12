@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { announcementIsClaimingResources, sortAnnouncementsByUrgency } from '@/lib/announcement'
+import { announcementIsClaimingResources, announcementIsVisible, sortAnnouncementsByUrgency } from '@/lib/announcement'
 import { parseAnnouncementForm } from '@/lib/announcement-validation'
 import { createUniqueNewsSlug, newsHtmlToPreview, sanitizeNewsHtml, slugBase } from '@/lib/news'
 import { parseNewsForm } from '@/lib/news-validation'
@@ -23,6 +23,44 @@ test('announcement resource claims respect inactive, scheduled, active, and expi
   assert.equal(announcementIsClaimingResources({ ...base, autoDisableResources: false }, now), false)
   assert.equal(announcementIsClaimingResources({ ...base, startAt: new Date('2026-09-13T05:00:00Z') }, now), false)
   assert.equal(announcementIsClaimingResources({ ...base, endAt: new Date('2026-09-13T04:00:00Z') }, now), false)
+})
+
+test('advance notice shows the announcement early without claiming resources early', () => {
+  const now = new Date('2026-09-13T04:00:00Z')
+  const closure = {
+    isActive: true,
+    autoDisableResources: true,
+    announceAt: new Date('2026-09-10T00:00:00Z'),
+    startAt: new Date('2026-09-22T00:00:00Z'),
+    endAt: new Date('2026-09-26T00:00:00Z'),
+  }
+  assert.equal(announcementIsVisible(closure, now), true)
+  assert.equal(announcementIsClaimingResources(closure, now), false)
+  assert.equal(announcementIsVisible({ ...closure, announceAt: null }, now), false)
+  assert.equal(announcementIsVisible({ ...closure, isActive: false }, now), false)
+  assert.equal(announcementIsVisible({ ...closure, endAt: new Date('2026-09-13T04:00:00Z') }, now), false)
+})
+
+test('announcement input rejects an advance-notice date after the start and drops one equal to it', () => {
+  const form = new FormData()
+  form.set('title', 'Court notice')
+  form.set('message', 'Short message')
+  form.set('urgency', 'urgent')
+  form.set('isActive', 'true')
+  form.set('autoDisableResources', 'false')
+  form.set('announceAt', '2026-09-23T00:00:00Z')
+  form.set('startAt', '2026-09-22T00:00:00Z')
+  assert.deepEqual(parseAnnouncementForm(form), { error: 'The notice cannot be shown after the announcement starts' })
+
+  form.set('announceAt', '2026-09-22T00:00:00Z')
+  const same = parseAnnouncementForm(form)
+  assert.ok('fields' in same)
+  assert.equal(same.fields.announceAt, null)
+
+  form.set('announceAt', '2026-09-15T00:00:00Z')
+  const early = parseAnnouncementForm(form)
+  assert.ok('fields' in early)
+  assert.equal(early.fields.announceAt?.toISOString(), '2026-09-15T00:00:00.000Z')
 })
 
 test('announcement input rejects invalid windows and keeps resource linking separate from auto-disable', () => {

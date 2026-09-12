@@ -104,7 +104,7 @@ Chosen over a polymorphic reference-type/reference-id pattern.
 
 ### Booking announcements and editorial news are separate models
 
-`Announcement` owns short operational notices, active windows, urgency, resource links, and optional automatic disabling. `NewsPost` owns long-form sanitized editorial content, stable slugs, covers, categories, publication scheduling, and featuring.
+`Announcement` owns short operational notices, operational windows with an optional separate advance-notice date, urgency, resource links, and optional automatic disabling. `NewsPost` owns long-form sanitized editorial content, stable slugs, covers, categories, publication scheduling, and featuring.
 
 **Why:** showing every club story at the `/book` entry gate interrupts customers with content unrelated to selecting a court or bay. The two content types have different validation, lifecycle, and display requirements; a nullable-field catch-all table would keep those rules coupled.
 

@@ -203,9 +203,9 @@ Operational booking notices and editorial news are separate domains.
 
 ### Announcements
 
-Announcements are short, plain-text heads-ups shown only in the `/book` “Before You Book” gate. An announcement has an **Information**, **Warning**, or **Urgent** level; an active window; and optional links to specific courts or simulator bays.
+Announcements are short, plain-text heads-ups shown only in the `/book` “Before You Book” gate. An announcement has an **Information**, **Warning**, or **Urgent** level; an operational window (**Affects from** / **Affects until**) describing when the closure or change actually applies; an optional earlier **Show notice from** date so customers get advance warning while the courts stay bookable; and optional links to specific courts or simulator bays.
 
-Linking a resource is informational by default. The separate auto-disable toggle is required to take linked resources offline during the active window. A manual staff enable or disable always overrides an automatic announcement claim, and releasing one announcement never overrides a manual disable or another active claim. See [workflows.md](workflows.md).
+Linking a resource is informational by default. The separate auto-disable toggle is required to take linked resources offline during the operational window; the advance-notice date never affects availability. A manual staff enable or disable always overrides an automatic announcement claim, and releasing one announcement never overrides a manual disable or another active claim. See [workflows.md](workflows.md).
 
 ### News
 

@@ -157,7 +157,7 @@ An announcement can take specific courts or bays offline while it is live.
 
 **An announcement is actively claiming its resources when all of these hold:** `isActive` is on, `autoDisableResources` is on, `startAt` has arrived, and `endAt` is absent or still in the future. This predicate is evaluated fresh every time, never cached.
 
-The start clause lets an operational notice be prepared in advance without disabling anything immediately. Selecting resources without enabling auto-disable only displays their names to the customer.
+The start clause lets an operational notice be prepared in advance without disabling anything immediately. An optional `announceAt` earlier than `startAt` makes the notice visible on `/book` (tagged Upcoming) while the resources remain bookable; the claim still begins only at `startAt`. Selecting resources without enabling auto-disable only displays their names to the customer.
 
 **Manual always wins.** Each resource records which mechanism last disabled it:
 

@@ -5,8 +5,9 @@ import { formatBookingDateTime } from '@/lib/format'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const now = new Date()
   const announcements = await prisma.announcement.findMany({
-    where: activeAnnouncementWhere(),
+    where: activeAnnouncementWhere(now),
     include: {
       resourceLinks: {
         include: { resource: { include: { resourceType: true } } },
@@ -19,6 +20,7 @@ export async function GET() {
     title: announcement.title,
     message: announcement.message,
     urgency: announcement.urgency,
+    upcoming: announcement.startAt > now,
     startAt: formatBookingDateTime(announcement.startAt),
     endAt: announcement.endAt ? formatBookingDateTime(announcement.endAt) : null,
     affectedResources: announcement.resourceLinks.map(

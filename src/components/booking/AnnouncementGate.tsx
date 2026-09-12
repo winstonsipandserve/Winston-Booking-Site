@@ -9,6 +9,8 @@ export type GateNotice = {
   title: string
   message: string
   urgency: 'info' | 'warning' | 'urgent'
+  /** The operational window has not started yet; the notice is advance warning. */
+  upcoming: boolean
   startAt: string
   endAt: string | null
   affectedResources: string[]
@@ -73,6 +75,7 @@ export default function AnnouncementGate({ notices, onContinue }: AnnouncementGa
                     {ANNOUNCEMENT_URGENCY_LABELS[notice.urgency]}
                   </span>
                   <span className="font-mono text-xs text-brand-dark/50">
+                    {notice.upcoming && <span className="mr-2 font-sans font-semibold uppercase tracking-wide text-brand-dark/70">Upcoming</span>}
                     {notice.endAt ? `${notice.startAt} – ${notice.endAt}` : `From ${notice.startAt}`}
                   </span>
                 </div>

@@ -31,7 +31,7 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 
 ## Booking
 
-- **Announcement gate** before the wizard, showing only active operational announcements inside their start/end window. Urgent, warning, and information notices sort in that order, then newest start date; three notices appear per page with an empty state when none are live.
+- **Announcement gate** before the wizard, showing only active operational announcements from their advance-notice date (or their start when none is set) until their end. Notices whose start is still ahead are tagged **Upcoming** so customers can see that the affected courts remain bookable until then. Urgent, warning, and information notices sort in that order, then newest start date; three notices appear per page with an empty state when none are live.
 - **Five-step wizard** — Sport, Court, Date & Time, Add-Ons, Summary — with a step indicator and full back/forward state preservation.
 - **Live availability**: the time-slot grid greys out occupied slots before submit.
 - **Member-aware**: a logged-in member with an active membership gets member pricing and a pre-filled contact step, in a single pricing phase. Anonymous bookers are priced at the non-member rate throughout.
@@ -120,7 +120,7 @@ List and detail with approve/reject. The status filter splits on derived display
 
 ### Announcements
 
-Paginated create/read/update/delete for short booking notices, with urgency, active windows, optional resource links, and a separate auto-disable toggle. Rows show live, scheduled, expired, or inactive state plus affected resources and whether they are taken offline.
+Paginated create/read/update/delete for short booking notices, with urgency, an operational window (Affects from / Affects until), an optional earlier Show-notice-from date, optional resource links, and a separate auto-disable toggle. Rows show inactive, scheduled (not yet visible), announced (visible as advance notice, not yet in effect), live, or expired state plus affected resources and whether they are taken offline.
 
 ### News
 
