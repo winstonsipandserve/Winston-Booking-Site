@@ -1,0 +1,221 @@
+/* =============================================================================
+   WINSTON SIP & SERVE — DESIGN TOKENS
+   Single source of truth. Imported first in globals.css; Tailwind's @theme
+   aliases read from these so utilities (bg-brand-dark, font-serif, ...) and
+   plain var(--token) references resolve to the same values. Fixing a value
+   here fixes it site-wide.
+
+   NAMING NOTE
+   Tailwind v4 owns --text-*, --leading-* and --radius-xs/sm/md/lg for its own
+   utilities, and an unlayered :root here would silently redefine them for the
+   whole app (admin panel included). Those three groups are therefore named
+   --type-*, --lh-* and --radius-control/tile/card/panel. Everything else keeps
+   its original name.
+
+   HOW TO USE
+   - Replace raw values in CSS with var(--token). e.g. background:#2a1515
+     becomes background: var(--color-bg-dark).
+   - The "COMPONENT DECISIONS" block at the bottom resolves the specific bugs
+     from the review (teal toggle, mixed corners, contrast).
+   ============================================================================= */
+
+:root {
+
+  /* ---------------------------------------------------------------------------
+     1. COLOR
+     Primitives (raw values) → semantic (what they mean).
+     Only ONE accent. If a color isn't here, it doesn't belong on the site.
+     --------------------------------------------------------------------------- */
+
+  /* Primitives — warm maroon base */
+  --maroon-900: #2a1515;   /* darkest — nav, footer, hero overlay            */
+  --maroon-800: #3a1f1c;   /* lifted dark — "How It Works" style sections    */
+  --cream-50:   #fbf3e9;   /* primary light background                       */
+  --cream-100:  #f6ece0;   /* alt light background (slightly peach)          */
+  --tan-300:    #cbb6a6;   /* muted text on dark                             */
+  --tan-500:    #6b5a52;   /* muted text on light                            */
+  --ink:        #2a1515;   /* near-black text on light (reuses maroon-900)   */
+  --paper:      #f4eadb;   /* primary text on dark                           */
+
+  /* The one accent — action & emphasis ONLY, never decoration */
+  --red-500:    #d62a20;   /* CTAs, active states, eyebrow labels            */
+  --red-600:    #b21f17;   /* hover / pressed                                */
+
+  /* Semantic — reference THESE in components, not the primitives above */
+  --color-bg-dark:        var(--maroon-900);
+  --color-bg-dark-alt:    var(--maroon-800);
+  --color-bg-light:       var(--cream-50);
+  --color-bg-light-alt:   var(--cream-100);
+
+  --color-text-on-dark:         var(--paper);
+  --color-text-on-dark-muted:   var(--tan-300);
+  --color-text-on-light:        var(--ink);
+  --color-text-on-light-muted:  var(--tan-500);
+
+  --color-accent:        var(--red-500);
+  --color-accent-hover:  var(--red-600);
+  --color-on-accent:     #ffffff;    /* text sitting on a red fill           */
+
+  --color-border-on-dark:   rgba(244, 234, 219, 0.16);
+  --color-border-on-light:  rgba(42, 21, 21, 0.12);
+
+  /* Focus ring — accessibility floor, use on every interactive element */
+  --color-focus-ring: #f4a79f;
+
+
+  /* ---------------------------------------------------------------------------
+     2. TYPOGRAPHY
+     ONE display serif (Fraunces). Contrast comes from weight and size within
+     the one family — never from a second typeface.
+     The script (Parisienne) stays LOGO-ONLY. Never let it into headings.
+     The --font-fraunces / --font-manrope / --font-parisienne variables are set
+     on <html> by next/font in src/app/layout.tsx.
+     --------------------------------------------------------------------------- */
+
+  --font-display: var(--font-fraunces), "EB Garamond", Georgia, serif;
+  --font-body:    var(--font-manrope), "Inter", system-ui, sans-serif;
+  --font-script:  var(--font-parisienne), cursive;  /* logotype only */
+
+  /* Type scale — modular, ~1.25 (major third). Sizes in rem (base 16px). */
+  --type-xs:   0.75rem;   /* 12px — legal, tiny captions        */
+  --type-sm:   0.875rem;  /* 14px — labels, eyebrows, meta      */
+  --type-base: 1rem;      /* 16px — body                        */
+  --type-md:   1.125rem;  /* 18px — lead paragraphs             */
+  --type-lg:   1.5rem;    /* 24px — card titles, small headings */
+  --type-xl:   2rem;      /* 32px — section sub-headings        */
+  --type-2xl:  2.5rem;    /* 40px — section headings            */
+  --type-3xl:  3.25rem;   /* 52px — page H1                     */
+  --type-4xl:  4rem;      /* 64px — hero display                */
+
+  /* Line height — serif body gets MORE than sans (per typographic best practice) */
+  --lh-tight:   1.05;  /* hero display                     */
+  --lh-snug:    1.2;   /* headings                         */
+  --lh-normal:  1.5;   /* sans UI / body                   */
+  --lh-relaxed: 1.65;  /* serif body paragraphs            */
+
+  /* Weights — display stays light & elegant; sans carries the UI weights */
+  --weight-display:      400;
+  --weight-display-med:  500;   /* card titles if you need a touch more   */
+  --weight-body:         400;
+  --weight-body-med:     500;
+  --weight-body-bold:    600;
+
+  /* Letter-spacing */
+  --tracking-display: -0.015em;  /* tighten large serif                    */
+  --tracking-body:     0;
+  --tracking-eyebrow:  0.15em;    /* the tracked-out caps labels           */
+
+
+  /* ---------------------------------------------------------------------------
+     3. RADIUS
+     One scale. Interactive controls share a small radius; containers share a
+     medium one; pills are fully round.
+     --------------------------------------------------------------------------- */
+
+  --radius-control: 4px;      /* buttons, inputs — the "sharp but intentional" one */
+  --radius-tile:    8px;      /* small tiles, image thumbs                         */
+  --radius-card:    14px;     /* cards (membership, news, facilities)              */
+  --radius-panel:   20px;     /* large panels (the Book Now split panel)           */
+  --radius-pill:    9999px;   /* filter chips, café/bar toggle, badges             */
+
+
+  /* ---------------------------------------------------------------------------
+     4. SPACING  (8px base grid)
+     Use these for padding/margin/gap so rhythm stays consistent — this is
+     what fixes the uneven footer link gaps and the top-heavy interior pages.
+     --------------------------------------------------------------------------- */
+
+  --space-1:  0.25rem;   /*  4px */
+  --space-2:  0.5rem;    /*  8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.5rem;    /* 24px */
+  --space-6:  2rem;      /* 32px */
+  --space-8:  3rem;      /* 48px */
+  --space-10: 4rem;      /* 64px */
+  --space-12: 6rem;      /* 96px */
+  --space-16: 8rem;      /* 128px */
+
+  /* Section rhythm */
+  --section-py: var(--space-16);  /* vertical padding for full sections      */
+  --hero-pt:    var(--space-10);  /* interior-page hero TOP padding — was too */
+                                  /* large, causing the dead gap under nav    */
+
+
+  /* ---------------------------------------------------------------------------
+     5. ELEVATION
+     One warm-tinted shadow, used ONLY on genuinely elevated cards — not on
+     every container. (A grey shadow under everything is a generic tell.)
+     --------------------------------------------------------------------------- */
+
+  --shadow-card: 0 8px 24px rgba(42, 21, 21, 0.10);
+
+  /* Motion — keep transitions on interaction, not on scroll */
+  --transition: 160ms ease;
+}
+
+
+/* =============================================================================
+   COMPONENT DECISIONS — the review's bugs, resolved as reusable rules.
+   They all read from the tokens above.
+   ============================================================================= */
+
+/* Eyebrow label (the tracked-out caps above headings) */
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: var(--type-sm);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+/* Primary CTA — one radius, one accent, real focus ring */
+.btn-primary {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  border-radius: var(--radius-control);
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-body);
+  font-weight: var(--weight-body-med);
+  transition: background var(--transition);
+}
+.btn-primary:hover { background: var(--color-accent-hover); }
+.btn-primary:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Card — one shared radius + the single warm shadow */
+.card {
+  background: var(--color-bg-light);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-6);
+}
+
+/* Café / Bar toggle — THE teal fix.
+   Active state is ALWAYS the accent, in both Café and Bar views.
+   Teal appears nowhere else in the palette, so it was reading as a bug. */
+.toggle__option {
+  border-radius: var(--radius-pill);
+  padding: var(--space-2) var(--space-5);
+  font-family: var(--font-body);
+  color: var(--color-text-on-dark-muted);
+  background: transparent;
+}
+.toggle__option[aria-pressed="true"] {
+  background: var(--color-accent);   /* never teal */
+  color: var(--color-on-accent);
+}
+
+/* Footer quick links — even rhythm fixes the uneven gaps */
+.footer__links { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Accessibility floor for the whole site */
+:where(a, button, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

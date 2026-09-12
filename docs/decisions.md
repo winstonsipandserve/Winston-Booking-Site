@@ -166,18 +166,30 @@ No mobile-width support is planned. It is a staff tool used on tablets and deskt
 
 These are locked. Read them before any visual work rather than re-deriving a palette per task.
 
-### Public-site colour tokens
+### Public-site design tokens live in `src/app/tokens.css`
 
-Defined as Tailwind v4 `@theme` tokens in `globals.css`. Every component reads the tokens; **never hardcode a hex value.**
+`tokens.css` is the single source of truth for colour, type, radius, spacing, and elevation. It is imported first in `globals.css`, and the Tailwind v4 `@theme inline` block there only *aliases* onto it — so `bg-brand-dark`, `text-accent-primary`, `font-serif`, and the rest keep their class names but take their values from the sheet. Every component reads a token; **never hardcode a hex value**, and never add a value to `@theme` that is not defined in `tokens.css`.
 
-| Token | Value | Role |
-|---|---|---|
-| `--color-brand-dark` | `#321E1E` | Dominant |
-| `--color-brand-mid` | `#4E3636` | Secondary |
-| `--color-accent-primary` | `#CD1818` | Primary call-to-action — used sparingly |
-| `--color-accent-teal` | `#116D6E` | Tertiary — only the café/bar mode toggle and membership tier checkmarks |
+| Semantic token | Value | Tailwind alias | Role |
+|---|---|---|---|
+| `--color-bg-dark` | `#2a1515` | `brand-dark` | Dominant — nav, footer, hero overlay; also the text-on-light ink |
+| `--color-bg-dark-alt` | `#3a1f1c` | `brand-mid` | Lifted dark sections |
+| `--color-bg-light` | `#fbf3e9` | `background` | Primary light background, body default |
+| `--color-bg-light-alt` | `#f6ece0` | `brand-light` | Alternate light background |
+| `--color-text-on-dark` | `#f4eadb` | `on-dark`, `accent-light` | Primary text on dark |
+| `--color-text-on-dark-muted` | `#cbb6a6` | `on-dark-muted` | Muted text on dark (WCAG AA on both darks) |
+| `--color-text-on-light` | `#2a1515` | `on-light`, `foreground` | Primary text on light |
+| `--color-text-on-light-muted` | `#6b5a52` | `on-light-muted` | Muted text on light |
+| `--color-accent` | `#d62a20` | `accent-primary` | The **one** accent — CTAs, active states, eyebrows. Never decoration |
+| `--color-accent-hover` | `#b21f17` | `accent-dark` | Hover / pressed on the accent |
+| `--color-on-accent` | `#ffffff` | `on-accent` | Text on a red fill |
+| `--color-focus-ring` | `#f4a79f` | `focus-ring` | Focus-visible outline on every interactive element |
 
-`--color-brand-light` / `--color-accent-light` (cream) are unchanged. **The admin panel intentionally stays neutral grey and does not use these tokens.**
+**Naming caveat:** Tailwind owns `--text-*`, `--leading-*`, and `--radius-xs/sm/md/lg` for its own utilities, and an unlayered `:root` redefining them would silently restyle the admin panel. The sheet therefore names those groups `--type-*`, `--lh-*`, and `--radius-control/tile/card/panel`. Do not rename them back.
+
+`--color-accent-teal` (`#116D6E`) is being retired: teal is not in the palette, and its two remaining uses (café/bar toggle, membership tier checkmarks) move to the accent. Until that lands it stays in `@theme` as the one value not sourced from the sheet.
+
+**The admin panel intentionally stays neutral grey and does not use these tokens.**
 
 ### Corner-radius scale
 

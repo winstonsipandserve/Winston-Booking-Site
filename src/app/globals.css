@@ -1,25 +1,33 @@
+@import "./tokens.css";
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --background: #FFF8F0;
-  --foreground: #374151;
-}
-
+/*
+  Tailwind aliases over tokens.css. Existing class names (bg-brand-dark,
+  text-accent-primary, font-serif, ...) are unchanged; their values now come
+  from the token sheet. The on-dark / on-light / on-accent / focus-ring
+  aliases expose the semantic tokens as utilities.
+*/
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-manrope);
-  --font-script: var(--font-parisienne);
-  --font-serif: var(--font-fraunces);
-  --color-brand-dark: #321E1E;
-  --color-brand-mid: #4E3636;
-  --color-brand-light: #FDF3E7;
-  --color-accent-primary: #CD1818;
-  --color-accent-dark: var(--color-brand-mid);
-  --color-accent-light: #F5E6D3;
+  --color-background: var(--color-bg-light);
+  --color-foreground: var(--color-text-on-light);
+  --font-sans: var(--font-body);
+  --font-script: var(--font-script);
+  --font-serif: var(--font-display);
+  --color-brand-dark: var(--color-bg-dark);
+  --color-brand-mid: var(--color-bg-dark-alt);
+  --color-brand-light: var(--color-bg-light-alt);
+  --color-accent-primary: var(--color-accent);
+  --color-accent-dark: var(--color-accent-hover);
+  --color-accent-light: var(--color-text-on-dark);
   --color-accent-teal: #116D6E;
-  --shadow-card: 0 4px 12px rgba(0,0,0,0.1), 0 2px 6px rgba(0,0,0,0.06);
+  --color-on-dark: var(--color-text-on-dark);
+  --color-on-dark-muted: var(--color-text-on-dark-muted);
+  --color-on-light: var(--color-text-on-light);
+  --color-on-light-muted: var(--color-text-on-light-muted);
+  --color-on-accent: var(--color-on-accent);
+  --color-focus-ring: var(--color-focus-ring);
+  --shadow-card: var(--shadow-card);
   --shadow-hero: 0 20px 48px rgba(0,0,0,0.16), 0 8px 24px rgba(0,0,0,0.1);
   --radius-input: 0.5rem;
   --radius-card-inline: 0.75rem;
@@ -27,9 +35,9 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+  background: var(--color-bg-light);
+  color: var(--color-text-on-light);
+  font-family: var(--font-body);
 }
 
 .scrollbar-thin {
