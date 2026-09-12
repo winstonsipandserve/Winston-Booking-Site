@@ -17,11 +17,11 @@ Six pages, all mobile-responsive.
 | **Home** (`/`) | Hero, stats bar, how-it-works, two-sides section, facilities, call-to-action banner |
 | **About** (`/about`) | Hero, our story, values, call to action |
 | **Café & Bar** (`/cafe-bar`) | Café/Bar mode toggle, menu highlights, gallery, speakeasy feature |
-| **News** (`/news`) | Published, non-expired bulletins with a 7-pill category filter (All + 6 categories), driven by a URL query parameter |
+| **News** (`/news`) | "Club Bulletin" header band, then published, non-expired bulletins with a 7-pill category filter (All + 6 categories) and a post count, driven by a URL query parameter. The newest Tournament is pulled out as a featured card when no filter is active |
 | **Membership** (`/membership`) | Hero, tier cards, application process, apply call to action |
 | **Book Now** (`/book`) | The booking wizard |
 
-The navbar is fixed, transparent over a hero and solid on scroll for Home, About, Membership, and Café & Bar. `/book` and `/news` have no hero and force it permanently solid.
+The navbar is fixed, transparent over a hero and solid on scroll for Home, About, Membership, Café & Bar, and News. `/book` has no hero and forces it permanently solid.
 
 The public-site corner-radius system is applied sitewide with no exceptions remaining.
 

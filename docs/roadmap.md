@@ -86,7 +86,7 @@ Genuinely undecided, needing a business or client answer.
 
 - **Facility photography** — the facilities section uses local placeholder photos. Swapping in real venue photography means replacing those five files directly.
 - **Copy pending client input** — Home hero copy, About's Our Story, footer contact details, and News social links.
-- `/book` and `/news` currently have no hero. If either gets one back, revisit whether it still needs to force the navbar solid.
+- `/book` currently has no hero. If it gets one back, revisit whether it still needs to force the navbar solid.
 
 ---
 

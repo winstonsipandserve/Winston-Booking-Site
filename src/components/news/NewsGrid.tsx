@@ -72,61 +72,68 @@ export default function NewsGrid({ items }: NewsGridProps) {
     ? filteredItems.filter((item) => item.id !== featuredTournament.id)
     : filteredItems
 
+  const pillBase =
+    'rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors'
+  const pillActive = `${pillBase} bg-accent-primary text-brand-light`
+  const pillIdle = `${pillBase} border border-brand-dark/20 text-brand-dark hover:border-accent-primary`
+  const postCount = filteredItems.length
+
   return (
-    <section className="bg-background py-24 md:py-28">
-      <div className="mx-auto max-w-6xl px-6 md:px-10">
-        <div className="mb-10 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => handleSelectCategory('All')}
-            className={
-              selectedCategory === 'All'
-                ? 'rounded-full bg-accent-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-light'
-                : 'rounded-full border border-brand-dark/20 px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-dark transition-colors hover:border-accent-primary'
-            }
-          >
-            All
-          </button>
-          {(Object.keys(CATEGORY_LABELS) as NewsCategory[]).map((category) => (
+    <>
+      <div className="border-b border-brand-dark/10 bg-brand-light">
+        <div className="mx-auto max-w-6xl px-6 py-5 md:px-10">
+          <div className="flex flex-wrap gap-2">
             <button
-              key={category}
               type="button"
-              onClick={() => handleSelectCategory(category)}
-              className={
-                selectedCategory === category
-                  ? 'rounded-full bg-accent-primary px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-light'
-                  : 'rounded-full border border-brand-dark/20 px-4 py-2 text-xs font-medium uppercase tracking-wide text-brand-dark transition-colors hover:border-accent-primary'
-              }
+              onClick={() => handleSelectCategory('All')}
+              className={selectedCategory === 'All' ? pillActive : pillIdle}
             >
-              {CATEGORY_LABELS[category]}
+              All
             </button>
-          ))}
-        </div>
-
-        {filteredItems.length === 0 ? (
-          <p className="text-center text-sm text-neutral-700">
-            {items.length === 0
-              ? 'No announcements yet — check back soon.'
-              : 'No announcements in this category yet.'}
-          </p>
-        ) : (
-          <div className="space-y-8">
-            {featuredTournament && (
-              <Reveal>
-                <NewsCard item={featuredTournament} variant="featured" />
-              </Reveal>
-            )}
-
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {gridItems.map((item, index) => (
-                <Reveal key={item.id} delayMs={(index + (featuredTournament ? 1 : 0)) * 100}>
-                  <NewsCard item={item} objectPosition={OBJECT_POSITIONS[index % OBJECT_POSITIONS.length]} />
-                </Reveal>
-              ))}
-            </div>
+            {CATEGORY_KEYS.map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => handleSelectCategory(category)}
+                className={selectedCategory === category ? pillActive : pillIdle}
+              >
+                {CATEGORY_LABELS[category]}
+              </button>
+            ))}
           </div>
-        )}
+          <p className="mt-3 text-right font-mono text-xs text-brand-dark/50">
+            {postCount} {postCount === 1 ? 'post' : 'posts'}
+          </p>
+        </div>
       </div>
-    </section>
+
+      <section className="bg-background py-12 md:py-16">
+        <div className="mx-auto max-w-6xl px-6 md:px-10">
+          {filteredItems.length === 0 ? (
+            <p className="text-center text-sm text-neutral-700">
+              {items.length === 0
+                ? 'No announcements yet — check back soon.'
+                : 'No announcements in this category yet.'}
+            </p>
+          ) : (
+            <div className="space-y-8">
+              {featuredTournament && (
+                <Reveal>
+                  <NewsCard item={featuredTournament} variant="featured" />
+                </Reveal>
+              )}
+
+              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {gridItems.map((item, index) => (
+                  <Reveal key={item.id} delayMs={(index + (featuredTournament ? 1 : 0)) * 100}>
+                    <NewsCard item={item} objectPosition={OBJECT_POSITIONS[index % OBJECT_POSITIONS.length]} />
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
   )
 }

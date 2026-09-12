@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import NewsGrid from '@/components/news/NewsGrid'
+import NewsHeader from '@/components/news/NewsHeader'
 import { prisma } from '@/lib/prisma'
 import { formatBulletinDate, formatBookingDateTime } from '@/lib/format'
 import { bulletinNotExpiredWhere, bulletinOrderBy } from '@/lib/bulletin'
@@ -37,6 +38,7 @@ export default async function NewsPage() {
   return (
     <>
       <Navbar />
+      <NewsHeader />
       <Suspense fallback={null}>
         <NewsGrid items={items} />
       </Suspense>

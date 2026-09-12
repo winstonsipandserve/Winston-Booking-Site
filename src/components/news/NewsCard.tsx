@@ -25,111 +25,173 @@ interface NewsCardProps {
   variant?: 'standard' | 'featured'
 }
 
+function CategoryBadge({ label, className = '' }: { label: string; className?: string }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full bg-brand-dark px-3 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-brand-light ${className}`}
+    >
+      {label}
+    </span>
+  )
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[4rem_1fr] gap-4 border-t border-brand-dark/10 py-3 first:border-t-0 first:pt-0 last:pb-0">
+      <dt className="font-mono text-[0.65rem] uppercase tracking-wide text-brand-dark/50">{label}</dt>
+      <dd className="text-sm leading-relaxed text-neutral-700">{value}</dd>
+    </div>
+  )
+}
+
+function PostedDate({ date }: { date: string }) {
+  return (
+    <div className="flex items-center gap-1.5 font-mono text-xs text-brand-dark/50">
+      <CalendarIcon className="h-3.5 w-3.5" />
+      <span>{date}</span>
+    </div>
+  )
+}
+
+function CtaButton({ label, href, className = '' }: { label: string; href: string; className?: string }) {
+  return (
+    <a
+      href={href}
+      className={`inline-flex items-center justify-center rounded-none bg-accent-primary px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${className}`}
+    >
+      {label}
+    </a>
+  )
+}
+
+function SocialLink({
+  platform,
+  href,
+  className = '',
+}: {
+  platform: 'facebook' | 'instagram'
+  href: string
+  className?: string
+}) {
+  return (
+    <a
+      href={href}
+      className={`inline-flex items-center gap-2 text-sm font-medium text-brand-mid transition-colors hover:text-accent-primary ${className}`}
+    >
+      <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+        <path d={SOCIAL_ICON_PATHS[platform]} />
+      </svg>
+      <span>{SOCIAL_LABELS[platform]}</span>
+    </a>
+  )
+}
+
+function eventRange(item: NewsItem): string | null {
+  if (!item.eventStartAt && !item.eventEndAt) return null
+  if (item.eventStartAt && item.eventEndAt) return `${item.eventStartAt} – ${item.eventEndAt}`
+  return item.eventStartAt ?? item.eventEndAt ?? null
+}
+
 export default function NewsCard({ item, objectPosition = 'center', variant = 'standard' }: NewsCardProps) {
-  const featured = variant === 'featured'
+  const categoryLabel = CATEGORY_LABELS[item.category]
+  const event = eventRange(item)
+  const hasDetails = Boolean(item.impact || item.action)
+
+  if (variant === 'featured') {
+    return (
+      <article className="flex flex-col overflow-hidden rounded-card border border-brand-dark/15 bg-brand-light shadow-card lg:min-h-[22rem] lg:flex-row">
+        {item.image && (
+          <div className="group relative aspect-[4/3] w-full shrink-0 overflow-hidden lg:aspect-auto lg:w-[45%]">
+            <Image
+              src={item.image}
+              alt={item.title}
+              fill
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              style={{ objectPosition }}
+            />
+            <CategoryBadge label={categoryLabel} className="absolute left-5 top-5" />
+          </div>
+        )}
+
+        <div className="flex flex-1 flex-col p-6 md:p-10">
+          {!item.image && <CategoryBadge label={categoryLabel} className="mb-4 self-start" />}
+          <span className="font-mono text-[0.65rem] uppercase tracking-[0.25em] text-accent-primary">
+            Featured
+          </span>
+          <h2 className="mt-3 font-serif text-2xl leading-tight text-brand-dark md:text-3xl">{item.title}</h2>
+          <p className="mt-4 text-sm leading-relaxed text-neutral-700 md:text-base">{item.body}</p>
+
+          {event && (
+            <p className="mt-5 self-start border-l-4 border-brand-mid bg-accent-light px-4 py-2 text-sm font-medium text-brand-dark">
+              {event}
+            </p>
+          )}
+
+          <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+            {item.ctaLabel && item.ctaUrl && <CtaButton label={item.ctaLabel} href={item.ctaUrl} />}
+            {item.socialUrl && item.socialPlatform && (
+              <SocialLink platform={item.socialPlatform} href={item.socialUrl} />
+            )}
+            <PostedDate date={item.date} />
+          </div>
+        </div>
+      </article>
+    )
+  }
 
   return (
-    <article
-      className={`flex h-full flex-col overflow-hidden rounded-card border-2 border-brand-dark/20 bg-brand-light shadow-card ${
-        featured ? 'lg:min-h-[25rem] lg:flex-row' : ''
-      }`}
-    >
+    <article className="flex h-full flex-col overflow-hidden rounded-card border border-brand-dark/15 bg-brand-light shadow-card">
       {item.image && (
-        <div
-          className={`group relative aspect-[4/3] w-full shrink-0 overflow-hidden ${
-            featured ? 'lg:aspect-auto lg:w-1/2' : ''
-          }`}
-        >
+        <div className="group relative aspect-[4/3] w-full shrink-0 overflow-hidden">
           <Image
             src={item.image}
             alt={item.title}
             fill
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             style={{ objectPosition }}
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-dark/60 via-brand-dark/5 to-transparent" />
-          <span className="absolute left-4 top-4 rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
-            {CATEGORY_LABELS[item.category]}
-          </span>
+          <CategoryBadge label={categoryLabel} className="absolute left-4 top-4" />
         </div>
       )}
 
-      <div className={`flex flex-1 flex-col p-6 ${featured ? 'lg:p-10' : ''}`}>
-        {!item.image && (
-          <div className="mb-3 flex items-center gap-2">
-            <span className="inline-flex items-center rounded-full bg-accent-primary px-3 py-1 text-xs font-medium uppercase tracking-wide text-brand-light">
-              {CATEGORY_LABELS[item.category]}
-            </span>
-          </div>
-        )}
-        <h3 className={`font-serif text-brand-dark ${featured ? 'text-2xl lg:text-3xl' : 'text-lg'}`}>
-          {item.title}
-        </h3>
+      <div className="flex flex-1 flex-col p-6">
+        {!item.image && <CategoryBadge label={categoryLabel} className="mb-4 self-start" />}
+
+        <h3 className="font-serif text-xl leading-snug text-brand-dark">{item.title}</h3>
 
         {item.affectedFacility && (
-          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-brand-dark/60">
+          <p className="mt-2 font-mono text-[0.65rem] uppercase tracking-wide text-accent-primary">
             Affects: {item.affectedFacility}
           </p>
         )}
 
-        <div className="mt-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-brand-dark/60">Description</p>
-          <p className="mt-1 text-sm text-neutral-700">{item.body}</p>
-          {item.discountSummary && (
-            <p className="mt-1 text-sm font-medium text-accent-primary">
-              {item.discountSummary}
-              {item.promoCode && ` — Code: ${item.promoCode}`}
-            </p>
-          )}
-        </div>
+        <p className="mt-3 text-sm leading-relaxed text-neutral-700">{item.body}</p>
 
-        {item.impact && (
-          <div className="mt-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-brand-dark/60">Impact</p>
-            <p className="mt-1 text-sm text-neutral-700">{item.impact}</p>
-          </div>
-        )}
-
-        {item.action && (
-          <div className="mt-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-brand-dark/60">Action</p>
-            <p className="mt-1 text-sm text-neutral-700">{item.action}</p>
-          </div>
-        )}
-
-        {(item.eventStartAt || item.eventEndAt) && (
-          <p className="mt-3 text-sm text-neutral-700">
-            {item.eventStartAt}
-            {item.eventStartAt && item.eventEndAt && ' – '}
-            {item.eventEndAt}
+        {item.discountSummary && (
+          <p className="mt-4 bg-accent-light px-4 py-3 text-sm font-medium text-accent-primary">
+            {item.discountSummary}
+            {item.promoCode && ` — Code: ${item.promoCode}`}
           </p>
         )}
 
-        <div className="mt-4 flex items-center gap-1.5 text-xs uppercase tracking-wide text-brand-dark/60">
-          <CalendarIcon className="h-3.5 w-3.5" />
-          <span>{item.date}</span>
+        {event && <p className="mt-4 text-sm font-medium text-brand-mid">{event}</p>}
+
+        {hasDetails && (
+          <dl className="mt-5 border-t border-brand-dark/10 pt-4">
+            {item.impact && <DetailRow label="Impact" value={item.impact} />}
+            {item.action && <DetailRow label="Action" value={item.action} />}
+          </dl>
+        )}
+
+        <div className="mt-auto flex flex-col gap-4 pt-6">
+          <PostedDate date={item.date} />
+          {item.ctaLabel && item.ctaUrl && (
+            <CtaButton label={item.ctaLabel} href={item.ctaUrl} className="self-start" />
+          )}
+          {item.socialUrl && item.socialPlatform && (
+            <SocialLink platform={item.socialPlatform} href={item.socialUrl} className="self-start" />
+          )}
         </div>
-
-        {item.ctaLabel && item.ctaUrl && (
-          <a
-            href={item.ctaUrl}
-            className="mt-4 inline-flex items-center justify-center gap-2 self-start rounded-none bg-accent-primary px-5 py-2.5 text-xs font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-          >
-            {item.ctaLabel}
-          </a>
-        )}
-
-        {item.socialUrl && item.socialPlatform && (
-          <a
-            href={item.socialUrl}
-            className="mt-4 flex items-center gap-2 text-sm font-medium text-accent-primary transition-colors hover:text-brand-mid"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
-              <path d={SOCIAL_ICON_PATHS[item.socialPlatform]} />
-            </svg>
-            <span>{SOCIAL_LABELS[item.socialPlatform]}</span>
-          </a>
-        )}
       </div>
     </article>
   )
