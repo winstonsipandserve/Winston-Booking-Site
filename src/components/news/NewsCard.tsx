@@ -6,7 +6,7 @@ import type { NewsItem } from './NewsGrid'
 
 function CategoryBadge({ item }: { item: NewsItem }) {
   return (
-    <span className="inline-flex rounded-full bg-brand-dark px-3 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-brand-light">
+    <span className="inline-flex w-fit self-start rounded-full bg-brand-dark px-3 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-brand-light">
       {NEWS_CATEGORY_LABELS[item.category]}
     </span>
   )

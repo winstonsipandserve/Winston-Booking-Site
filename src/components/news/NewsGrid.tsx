@@ -51,19 +51,21 @@ export default function NewsGrid({ items }: { items: NewsItem[] }) {
     <>
       <div className="border-b border-brand-dark/10 bg-brand-light">
         <div className="mx-auto max-w-6xl px-6 py-5 md:px-10">
-          <div className="flex flex-wrap gap-2" aria-label="Filter news by category">
-            <button type="button" onClick={() => handleSelectCategory('all')} className={selectedCategory === 'all' ? pillActive : pillIdle}>
-              All
-            </button>
-            {NEWS_CATEGORIES.map((category) => (
-              <button key={category} type="button" onClick={() => handleSelectCategory(category)} className={selectedCategory === category ? pillActive : pillIdle}>
-                {NEWS_CATEGORY_LABELS[category]}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2" aria-label="Filter news by category">
+              <button type="button" onClick={() => handleSelectCategory('all')} className={selectedCategory === 'all' ? pillActive : pillIdle}>
+                All
               </button>
-            ))}
+              {NEWS_CATEGORIES.map((category) => (
+                <button key={category} type="button" onClick={() => handleSelectCategory(category)} className={selectedCategory === category ? pillActive : pillIdle}>
+                  {NEWS_CATEGORY_LABELS[category]}
+                </button>
+              ))}
+            </div>
+            <p className="font-mono text-xs text-brand-dark/50">
+              {filteredItems.length} {filteredItems.length === 1 ? 'post' : 'posts'}
+            </p>
           </div>
-          <p className="mt-3 text-right font-mono text-xs text-brand-dark/50">
-            {filteredItems.length} {filteredItems.length === 1 ? 'post' : 'posts'}
-          </p>
         </div>
       </div>
 
