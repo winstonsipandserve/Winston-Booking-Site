@@ -124,7 +124,7 @@ Paginated create/read/update/delete for short booking notices, with urgency, an 
 
 ### News
 
-Paginated create/read/update/delete for rich-text stories. The editor supports headings, lists, blockquotes, emphasis, and safe links. Rows show cover, category, draft/scheduled/published state, featured state, and publication date. Published posts require a JPEG/PNG cover of at most 5 MB; migrated legacy posts may retain a null cover.
+Paginated create/read/update/delete for rich-text stories. The editor supports headings, lists, blockquotes, emphasis, and safe links. The add/edit modal shows fields on the left and a live preview on the right (`lg` and up) that updates as you type, switchable between the `/news` card (featured horizontal card when "Feature this post" is checked, otherwise the standard grid card) and the full `/news/[slug]` article view. The modal does not close on backdrop click; closing via X, Cancel, or Escape with unsaved changes asks for confirmation first. Rows show cover, category, draft/scheduled/published state, featured state, and publication date. Published posts require a JPEG/PNG cover of at most 5 MB; migrated legacy posts may retain a null cover.
 
 ### Check-In
 

@@ -10,6 +10,8 @@ interface ModalProps {
   children: React.ReactNode
   maxWidthClassName?: string
   variant?: 'brand' | 'neutral'
+  /** When false, clicking the backdrop does nothing; only the close button (or Escape) calls onClose. */
+  closeOnBackdropClick?: boolean
 }
 
 export default function Modal({
@@ -19,6 +21,7 @@ export default function Modal({
   children,
   maxWidthClassName = 'max-w-sm',
   variant = 'brand',
+  closeOnBackdropClick = true,
 }: ModalProps) {
   useEffect(() => {
     if (!isOpen) return
@@ -39,7 +42,7 @@ export default function Modal({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-8"
-      onClick={onClose}
+      onClick={closeOnBackdropClick ? onClose : undefined}
     >
       <div
         role="dialog"

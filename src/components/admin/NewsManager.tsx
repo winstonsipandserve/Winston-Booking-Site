@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
+import NewsPreview from '@/components/admin/NewsPreview'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import { NEWS_CATEGORIES, NEWS_CATEGORY_LABELS } from '@/lib/news'
 
@@ -107,19 +108,48 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
   )
 }
 
+
 function NewsFormModal({ post, isOpen, onClose }: { post: AdminNewsPost | null; isOpen: boolean; onClose: () => void }) {
   const router = useRouter()
-  const [title, setTitle] = useState(post?.title ?? '')
-  const [bodyHtml, setBodyHtml] = useState(post?.bodyHtml ?? '<p></p>')
-  const [category, setCategory] = useState<AdminNewsPost['category']>(post?.category ?? 'general')
-  const [status, setStatus] = useState<AdminNewsPost['status']>(post?.status ?? 'draft')
-  const [publishAt, setPublishAt] = useState(dateTimeLocal(post?.publishAt ?? null))
-  const [featured, setFeatured] = useState(post?.isFeatured ?? false)
+  const initial = useMemo(() => ({
+    title: post?.title ?? '',
+    bodyHtml: post?.bodyHtml ?? '<p></p>',
+    category: post?.category ?? 'general',
+    status: post?.status ?? 'draft',
+    publishAt: dateTimeLocal(post?.publishAt ?? null),
+    featured: post?.isFeatured ?? false,
+  }), [post])
+  const [title, setTitle] = useState(initial.title)
+  const [bodyHtml, setBodyHtml] = useState(initial.bodyHtml)
+  const [category, setCategory] = useState<AdminNewsPost['category']>(initial.category)
+  const [status, setStatus] = useState<AdminNewsPost['status']>(initial.status)
+  const [publishAt, setPublishAt] = useState(initial.publishAt)
+  const [featured, setFeatured] = useState(initial.featured)
   const [image, setImage] = useState<File | null>(null)
   const [preview, setPreview] = useState(post?.coverImageUrl ?? null)
   const [removeCover, setRemoveCover] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+
+  const isDirty =
+    title !== initial.title ||
+    bodyHtml !== initial.bodyHtml ||
+    category !== initial.category ||
+    status !== initial.status ||
+    publishAt !== initial.publishAt ||
+    featured !== initial.featured ||
+    image !== null ||
+    removeCover
+
+  function requestClose() {
+    if (submitting) return
+    if (isDirty) {
+      setConfirmDiscard(true)
+      return
+    }
+    onClose()
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -160,25 +190,36 @@ function NewsFormModal({ post, isOpen, onClose }: { post: AdminNewsPost | null; 
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={post ? 'Edit News' : 'Add News'} maxWidthClassName="max-w-3xl" variant="neutral">
-      <form onSubmit={submit} className="scrollbar-thin flex max-h-[80vh] flex-col gap-5 overflow-y-auto pr-1">
-        <div className="grid gap-4 md:grid-cols-[1fr_12rem]">
-          <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Headline *<input autoFocus required value={title} onChange={(event) => setTitle(event.target.value)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /></label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Category *<select value={category} onChange={(event) => setCategory(event.target.value as AdminNewsPost['category'])} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">{NEWS_CATEGORIES.map((value) => <option key={value} value={value}>{NEWS_CATEGORY_LABELS[value]}</option>)}</select></label>
-        </div>
-        <div className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300"><span>Article body *</span><RichTextEditor value={bodyHtml} onChange={setBodyHtml} /></div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Status *<select value={status} onChange={(event) => setStatus(event.target.value as AdminNewsPost['status'])} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"><option value="draft">Draft</option><option value="published">Published</option></select></label>
-          <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Publish date<input type="datetime-local" value={publishAt} onChange={(event) => setPublishAt(event.target.value)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /><span className="text-xs text-gray-500 dark:text-gray-400">Blank means now when publishing; a future time schedules it.</span></label>
-        </div>
-        <label className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">Cover image {status === 'published' ? '*' : ''}<input type="file" accept="image/jpeg,image/png" onChange={(event) => { const file = event.target.files?.[0] ?? null; setImage(file); setRemoveCover(false); setPreview(file ? URL.createObjectURL(file) : post?.coverImageUrl ?? null) }} />{preview && <span className="flex items-end gap-3"><img src={preview} alt="Cover preview" className="h-36 w-56 rounded-lg object-cover" /><button type="button" onClick={() => { setImage(null); setPreview(null); setRemoveCover(Boolean(post?.coverImageUrl)) }} className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400">Remove cover</button></span>}<span className="text-xs text-gray-500 dark:text-gray-400">JPEG or PNG, up to 5 MB. Required before publishing.</span></label>
-        <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={featured} onChange={(event) => setFeatured(event.target.checked)} />Feature this post at the top of /news</label>
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <div className="flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
-          <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">Cancel</button>
-          <button type="submit" disabled={submitting} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900">{submitting ? 'Saving…' : status === 'published' ? 'Save & publish' : 'Save draft'}</button>
-        </div>
-      </form>
-    </Modal>
+    <>
+      <Modal isOpen={isOpen} onClose={requestClose} title={post ? 'Edit News' : 'Add News'} maxWidthClassName="max-w-6xl" variant="neutral" closeOnBackdropClick={false}>
+        <form onSubmit={submit} className="flex max-h-[80vh] flex-col">
+          <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-2">
+            <div className="scrollbar-thin flex min-h-0 flex-col gap-5 overflow-y-auto pr-1">
+              <div className="grid gap-4 md:grid-cols-[1fr_11rem]">
+                <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Headline *<input autoFocus required value={title} onChange={(event) => setTitle(event.target.value)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /></label>
+                <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Category *<select value={category} onChange={(event) => setCategory(event.target.value as AdminNewsPost['category'])} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">{NEWS_CATEGORIES.map((value) => <option key={value} value={value}>{NEWS_CATEGORY_LABELS[value]}</option>)}</select></label>
+              </div>
+              <div className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300"><span>Article body *</span><RichTextEditor value={bodyHtml} onChange={setBodyHtml} /></div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Status *<select value={status} onChange={(event) => setStatus(event.target.value as AdminNewsPost['status'])} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"><option value="draft">Draft</option><option value="published">Published</option></select></label>
+                <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Publish date<input type="datetime-local" value={publishAt} onChange={(event) => setPublishAt(event.target.value)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /><span className="text-xs text-gray-500 dark:text-gray-400">Blank means now when publishing; a future time schedules it.</span></label>
+              </div>
+              <label className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">Cover image {status === 'published' ? '*' : ''}<input type="file" accept="image/jpeg,image/png" onChange={(event) => { const file = event.target.files?.[0] ?? null; setImage(file); setRemoveCover(false); setPreview(file ? URL.createObjectURL(file) : post?.coverImageUrl ?? null) }} />{preview && <span className="flex items-end gap-3"><img src={preview} alt="Cover preview" className="h-24 w-40 rounded-lg object-cover" /><button type="button" onClick={() => { setImage(null); setPreview(null); setRemoveCover(Boolean(post?.coverImageUrl)) }} className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400">Remove cover</button></span>}<span className="text-xs text-gray-500 dark:text-gray-400">JPEG or PNG, up to 5 MB. Required before publishing.</span></label>
+              <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={featured} onChange={(event) => setFeatured(event.target.checked)} />Feature this post at the top of /news</label>
+            </div>
+            <aside className="scrollbar-thin hidden min-h-0 flex-col gap-2 overflow-y-auto pr-1 lg:flex" aria-label="Live preview">
+              <span className="text-sm text-gray-700 dark:text-gray-300">Preview</span>
+              <NewsPreview title={title} bodyHtml={bodyHtml} category={category} publishAt={publishAt} coverUrl={preview} isFeatured={featured} />
+            </aside>
+          </div>
+          {error && <p className="mt-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+          <div className="mt-5 flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-800">
+            <button type="button" onClick={requestClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">Cancel</button>
+            <button type="submit" disabled={submitting} className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900">{submitting ? 'Saving…' : status === 'published' ? 'Save & publish' : 'Save draft'}</button>
+          </div>
+        </form>
+      </Modal>
+      <ConfirmModal isOpen={confirmDiscard} onClose={() => setConfirmDiscard(false)} onConfirm={() => { setConfirmDiscard(false); onClose() }} title="Discard changes?" message="You have unsaved changes to this news post. Closing now will throw them away." confirmLabel="Discard" cancelLabel="Keep editing" confirmVariant="danger" />
+    </>
   )
 }
