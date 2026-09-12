@@ -4,6 +4,8 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
+import DateTimeField from '@/components/admin/DateTimeField'
+import ImageDropzone from '@/components/admin/ImageDropzone'
 import NewsPreview from '@/components/admin/NewsPreview'
 import RichTextEditor from '@/components/admin/RichTextEditor'
 import { NEWS_CATEGORIES, NEWS_CATEGORY_LABELS } from '@/lib/news'
@@ -202,9 +204,10 @@ function NewsFormModal({ post, isOpen, onClose }: { post: AdminNewsPost | null; 
               <div className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300"><span>Article body *</span><RichTextEditor value={bodyHtml} onChange={setBodyHtml} /></div>
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Status *<select value={status} onChange={(event) => setStatus(event.target.value as AdminNewsPost['status'])} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"><option value="draft">Draft</option><option value="published">Published</option></select></label>
-                <label className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300">Publish date<input type="datetime-local" value={publishAt} onChange={(event) => setPublishAt(event.target.value)} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100" /><span className="text-xs text-gray-500 dark:text-gray-400">Blank means now when publishing; a future time schedules it.</span></label>
               </div>
-              <label className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">Cover image {status === 'published' ? '*' : ''}<input type="file" accept="image/jpeg,image/png" onChange={(event) => { const file = event.target.files?.[0] ?? null; setImage(file); setRemoveCover(false); setPreview(file ? URL.createObjectURL(file) : post?.coverImageUrl ?? null) }} />{preview && <span className="flex items-end gap-3"><img src={preview} alt="Cover preview" className="h-24 w-40 rounded-lg object-cover" /><button type="button" onClick={() => { setImage(null); setPreview(null); setRemoveCover(Boolean(post?.coverImageUrl)) }} className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400">Remove cover</button></span>}<span className="text-xs text-gray-500 dark:text-gray-400">JPEG or PNG, up to 5 MB. Required before publishing.</span></label>
+              <div className="flex flex-col gap-1 text-sm text-gray-700 dark:text-gray-300"><span>Publish date</span><DateTimeField value={publishAt} onChange={setPublishAt} disabled={submitting} /><span className="text-xs text-gray-500 dark:text-gray-400">Blank means now when publishing; a future time schedules it.</span>
+              </div>
+              <div className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300"><span>Cover image {status === 'published' ? '*' : ''}</span><ImageDropzone previewUrl={preview} disabled={submitting} onSelect={(file) => { setImage(file); setRemoveCover(false); setPreview(URL.createObjectURL(file)) }} onRemove={() => { setImage(null); setPreview(null); setRemoveCover(Boolean(post?.coverImageUrl)) }} hint="JPEG or PNG, up to 5 MB. Required before publishing." /></div>
               <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={featured} onChange={(event) => setFeatured(event.target.checked)} />Feature this post at the top of /news</label>
             </div>
             <aside className="scrollbar-thin hidden min-h-0 flex-col gap-2 overflow-y-auto pr-1 lg:flex" aria-label="Live preview">

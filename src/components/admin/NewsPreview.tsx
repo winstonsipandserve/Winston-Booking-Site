@@ -138,7 +138,8 @@ export default function NewsPreview({ title, bodyHtml, category, publishAt, cove
           {view === 'article' ? 'As read at /news/…' : isFeatured ? 'Full width at the top of /news' : 'In the /news grid'}
         </span>
       </div>
-      <div className="rounded-xl bg-background p-4 ring-1 ring-brand-dark/10">
+      {/* Card views are zoomed out so they fit the panel without scrolling; the article view keeps reading size. */}
+      <div className="rounded-xl bg-background p-4 ring-1 ring-brand-dark/10" style={view === 'card' ? { zoom: 0.72 } : undefined}>
         {view === 'article' ? (
           <ArticlePreview title={displayTitle} bodyHtml={bodyHtml} category={category} date={date} coverUrl={coverUrl} hasTitle={hasTitle} />
         ) : isFeatured ? (
