@@ -25,7 +25,6 @@ Never yet run under real conditions:
 - **Business hours cannot reject a midnight-crossing booking.** The check compares minutes-of-day independently for start and end, so a 23:00 → 01:00 range satisfies both bounds and passes. The documented 6 AM–10 PM rule is enforced only for same-day ranges.
 - **The guest fee lookup has no ordering.** It fetches the first row with no `orderBy`, so the single-row assumption is unenforced. A second row would make pricing nondeterministic.
 - **`Membership.status` and `endDate` are two independent expiry rules.** One code path requires `status: 'active'` *and* an unexpired end date; another uses the end date alone. Nothing ever writes `expired`, so they agree only by accident — if an admin set a status manually, member pricing and credit redemption would stop while the badge still read "Active Member". See [database.md](database.md).
-- **A published bulletin can disable a resource ahead of its own future event start.** The event-start gate does not retroactively re-check disables that were already applied. Unpublishing or editing the bulletin brings the resource back early.
 
 ### Display and reporting
 
@@ -50,6 +49,7 @@ Each of these is a conscious scope limit, not an oversight.
 - **Reconciling dashboard revenue against net-of-fee amounts** — the PayMongo fee is captured but surfaced only on the booking detail page.
 - **A `www` variant/redirect and a staging subdomain** — revisit if either becomes useful.
 - **Parallelizing the credit-redemption transaction** — there are candidate groups of independent writes. Revisit only if the transaction timeout margin proves insufficient.
+- **Exact-time announcement resource scheduling** — the current daily cron can apply or release a scheduled resource disable up to one day late. Public announcement visibility is request-time accurate; increasing cron frequency requires a hosting-plan change.
 
 ---
 
@@ -66,7 +66,7 @@ Genuinely undecided, needing a business or client answer.
 ## Test Data Gaps
 
 - **No expired-membership fixture exists** in the dev dataset. The expired branch of the display-status logic, the admin detail layout for it, and its reapplication-blocking message have never been exercised against a real row. Supabase MCP access is read-only, so creating one needs a script or the admin UI.
-- **No test-data reset script exists.** The previous one was deleted. Write a fresh, ID-scoped one when a reset is next needed — read the throwaway-script data-safety convention in [development.md](development.md) first.
+- **No content lifecycle fixture set exists.** The reset utility safely removes announcement and news data, but repeatable fixtures for scheduled/expired notices, overlapping resource claims, and draft/scheduled news still need to be added to automated tests.
 - **No reproducible admin bootstrap.** The seed creates reference data only and no admin user, so admin accounts exist only in the live dev database. A fresh environment currently has no way to create the first admin.
 
 ---
@@ -79,13 +79,14 @@ Genuinely undecided, needing a business or client answer.
 - **Production overrides need confirming** at the eventual staging-to-production promotion. The custom domain is connected to Production and currently returns 404s because of the framework-preset issue described in [architecture.md](architecture.md).
 - **Connection priming floor** of roughly 300 ms per admin navigation on a fresh pooled connection. Reducing it project-wide — via Prisma Accelerate, a different pooling strategy, or Vercel Fluid Compute — is an open investigation.
 - The Supabase MCP role cannot terminate backend connections; killing the local Node process is the actual fix when the session-mode pooler hits its connection cap.
+- **Bulletin contract cleanup is intentionally pending.** After staging and production verification on the new Announcement/News code, apply a separate migration that removes the legacy bulletin tables/enums and renames the internal resource-disable reason from `bulletin` to `announcement`.
 
 ---
 
 ## Content
 
 - **Facility photography** — the facilities section uses local placeholder photos. Swapping in real venue photography means replacing those five files directly.
-- **Copy pending client input** — Home hero copy, About's Our Story, footer contact details, and News social links.
+- **Copy pending client input** — Home hero copy, About's Our Story, and footer contact details.
 - `/book` currently has no hero. If it gets one back, revisit whether it still needs to force the navbar solid.
 
 ---

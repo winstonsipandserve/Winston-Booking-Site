@@ -102,6 +102,14 @@ Chosen over a polymorphic reference-type/reference-id pattern.
 
 **Why:** real database-enforced referential integrity. A future POS transaction will create a payment with no booking attached.
 
+### Booking announcements and editorial news are separate models
+
+`Announcement` owns short operational notices, active windows, urgency, resource links, and optional automatic disabling. `NewsPost` owns long-form sanitized editorial content, stable slugs, covers, categories, publication scheduling, and featuring.
+
+**Why:** showing every club story at the `/book` entry gate interrupts customers with content unrelated to selecting a court or bay. The two content types have different validation, lifecycle, and display requirements; a nullable-field catch-all table would keep those rules coupled.
+
+**Rollout consequence:** the old `Bulletin` tables remain only through the expand/verification window. Contract cleanup must happen in a separate deployment after staging and production are confirmed on the new code.
+
 ---
 
 ## Pricing & Access
@@ -136,7 +144,7 @@ Every admin page and API route calls the same function, which re-checks the admi
 
 ### Manual always wins over automation
 
-For resource disabling: a manual admin decision always overrides a bulletin's automatic claim, and releasing a bulletin's claim never steals back a manually disabled resource.
+For resource disabling: a manual admin decision always overrides an announcement's automatic claim, and releasing an announcement's claim never steals back a manually disabled resource.
 
 **Why:** staff acting deliberately at the venue must not be silently overridden by a scheduled rule.
 
@@ -184,6 +192,11 @@ These are locked. Read them before any visual work rather than re-deriving a pal
 | `--color-accent-hover` | `#b21f17` | `accent-dark` | Hover / pressed on the accent |
 | `--color-on-accent` | `#ffffff` | `on-accent` | Text on a red fill |
 | `--color-focus-ring` | `#f4a79f` | `focus-ring` | Focus-visible outline on every interactive element |
+| `--color-notice-info-*` | blue family | `notice-info-*` | Information announcement background, border, and text only |
+| `--color-notice-warning-*` | amber family | `notice-warning-*` | Warning announcement background, border, and text only |
+| `--color-notice-urgent-*` | red family | `notice-urgent-*` | Urgent announcement background, border, and text only |
+
+The three announcement urgency families are the only semantic-colour exception to the one-accent public palette. They communicate operational severity in the `/book` gate, use paired background/border/text tokens for accessible contrast, and must not be reused as decorative colours elsewhere.
 
 **Naming caveat:** Tailwind owns `--text-*`, `--leading-*`, and `--radius-xs/sm/md/lg` for its own utilities, and an unlayered `:root` redefining them would silently restyle the admin panel. The sheet therefore names those groups `--type-*`, `--lh-*`, and `--radius-control/tile/card/panel`. Do not rename them back.
 

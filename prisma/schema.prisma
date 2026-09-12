@@ -119,6 +119,24 @@ enum BulletinCustomerAction {
   WaitForFurtherNotice
 }
 
+enum AnnouncementUrgency {
+  info
+  warning
+  urgent
+}
+
+enum NewsCategory {
+  tournament
+  community
+  promo
+  general
+}
+
+enum NewsStatus {
+  draft
+  published
+}
+
 enum AdminActivityAction {
   membership_application_approved
   membership_application_rejected
@@ -143,38 +161,39 @@ enum AuthRateLimitScope {
 // ── Resource model (Decision: Resource model) ─────────
 
 model ResourceType {
-  id        String           @id @default(cuid())
-  slug      ResourceTypeSlug @unique
-  name      String
-  category  ResourceCategory
+  id                String             @id @default(cuid())
+  slug              ResourceTypeSlug   @unique
+  name              String
+  category          ResourceCategory
   resources         Resource[]
   pricingRules      PricingRule[]
   addOnPricingRules AddOnPricingRule[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
 
   @@map("resource_types")
 }
 
 model Resource {
-  id             String       @id @default(cuid())
-  resourceTypeId String       @map("resource_type_id")
-  resourceType   ResourceType @relation(fields: [resourceTypeId], references: [id])
-  label          String
-  isActive       Boolean      @default(true) @map("is_active")
+  id                String                  @id @default(cuid())
+  resourceTypeId    String                  @map("resource_type_id")
+  resourceType      ResourceType            @relation(fields: [resourceTypeId], references: [id])
+  label             String
+  isActive          Boolean                 @default(true) @map("is_active")
   /// Free-text admin note entered on manual disable (e.g. "Under renovation") — renamed
   /// from the original `disabledReason` column (2026-08-27) to make room for the new
-  /// structured `disabledReason` enum below. See CLAUDE.md → Bulletin-triggered resource
-  /// auto-disable.
-  disabledNote   String?      @map("disabled_note")
+  /// structured `disabledReason` enum below. See docs/workflows.md → Announcement-triggered
+  /// resource auto-disable.
+  disabledNote      String?                 @map("disabled_note")
   /// Which mechanism most recently disabled this resource — null whenever isActive is
   /// true; meaningful only when isActive is false. A manual disable/enable always wins
-  /// immediately regardless of any bulletin's claim (see CLAUDE.md).
-  disabledReason ResourceDisabledReason? @map("disabled_reason")
-  bookings       Booking[]
-  bulletinLinks  BulletinResource[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  /// immediately regardless of any announcement claim (see docs/workflows.md).
+  disabledReason    ResourceDisabledReason? @map("disabled_reason")
+  bookings          Booking[]
+  bulletinLinks     BulletinResource[]
+  announcementLinks AnnouncementResource[]
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
 
   @@map("resources")
 }
@@ -188,8 +207,8 @@ model PricingRule {
   rateTier        RateTier     @map("rate_tier")
   durationMinutes Int          @map("duration_minutes")
   priceCentavos   Int          @map("price_centavos")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
 
   @@unique([resourceTypeId, rateTier, durationMinutes])
   @@map("pricing_rules")
@@ -200,8 +219,8 @@ model PricingRule {
 model GuestFeeRule {
   id             String   @id @default(cuid())
   amountCentavos Int      @map("amount_centavos")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("guest_fee_rules")
 }
@@ -209,24 +228,24 @@ model GuestFeeRule {
 // ── Customer & auth (Decision: Customer & auth model) ─
 
 model Customer {
-  id           String  @id @default(cuid())
-  name         String
-  email        String  @unique
-  phone        String
+  id                     String                  @id @default(cuid())
+  name                   String
+  email                  String                  @unique
+  phone                  String
   /// Null until a member completes activation via MemberActivationToken. Non-member Customer rows never get one.
-  passwordHash String? @map("password_hash")
+  passwordHash           String?                 @map("password_hash")
   /// Null until first generated on /account load (see getOrCreateCheckInToken). Front-desk check-in QR payload.
-  checkInToken String? @unique @map("check_in_token")
+  checkInToken           String?                 @unique @map("check_in_token")
   /// Zero-padded 6-digit fallback code, always created/rotated together with checkInToken.
-  checkInCode  String? @unique @map("check_in_code") @db.VarChar(6)
+  checkInCode            String?                 @unique @map("check_in_code") @db.VarChar(6)
   bookings               Booking[]
   membershipApplications MembershipApplication[]
   memberships            Membership[]
   activationTokens       MemberActivationToken[]
   passwordResetTokens    PasswordResetToken[]
   membershipPayments     MembershipPayment[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
 
   @@map("customers")
 }
@@ -241,8 +260,8 @@ model MemberActivationToken {
   tokenHash  String    @unique @map("token_hash")
   expiresAt  DateTime  @map("expires_at")
   usedAt     DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   @@map("member_activation_tokens")
 }
@@ -257,8 +276,8 @@ model PasswordResetToken {
   tokenHash  String    @unique @map("token_hash")
   expiresAt  DateTime  @map("expires_at")
   usedAt     DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   @@map("password_reset_tokens")
 }
@@ -266,23 +285,25 @@ model PasswordResetToken {
 // ── Admin/staff model (Decision: Admin/staff model) ───
 
 model AdminUser {
-  id           String    @id @default(cuid())
-  name         String
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  role         AdminRole @default(admin)
+  id                       String                    @id @default(cuid())
+  name                     String
+  email                    String                    @unique
+  passwordHash             String                    @map("password_hash")
+  role                     AdminRole                 @default(admin)
   /// Deactivation disables login and every existing session's next request/API call —
   /// enforced via getActiveAdminSession(), not just at sign-in. See CLAUDE.md.
-  isActive     Boolean   @default(true) @map("is_active")
-  reviewedApplications MembershipApplication[] @relation("ApplicationReviewedBy")
-  performedReschedules BookingReschedule[]     @relation("ReschedulePerformedBy")
-  initiatedRenewalPayments MembershipPayment[] @relation("MembershipPaymentInitiatedByAdmin")
-  initiatedTopUpPayments Payment[] @relation("PaymentInitiatedByAdmin")
-  checkInLookupAttempts CheckInLookupAttempt[]
-  passwordResetTokens AdminPasswordResetToken[]
-  activityLogs AdminActivityLog[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  isActive                 Boolean                   @default(true) @map("is_active")
+  reviewedApplications     MembershipApplication[]   @relation("ApplicationReviewedBy")
+  performedReschedules     BookingReschedule[]       @relation("ReschedulePerformedBy")
+  initiatedRenewalPayments MembershipPayment[]       @relation("MembershipPaymentInitiatedByAdmin")
+  initiatedTopUpPayments   Payment[]                 @relation("PaymentInitiatedByAdmin")
+  checkInLookupAttempts    CheckInLookupAttempt[]
+  passwordResetTokens      AdminPasswordResetToken[]
+  activityLogs             AdminActivityLog[]
+  createdAnnouncements     Announcement[]
+  createdNewsPosts         NewsPost[]
+  createdAt                DateTime                  @default(now()) @map("created_at")
+  updatedAt                DateTime                  @updatedAt @map("updated_at")
 
   @@map("admin_users")
 }
@@ -297,10 +318,74 @@ model AdminPasswordResetToken {
   tokenHash   String    @unique @map("token_hash")
   expiresAt   DateTime  @map("expires_at")
   usedAt      DateTime? @map("used_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@map("admin_password_reset_tokens")
+}
+
+// ── Booking entry announcements ─────────────────────────
+
+model Announcement {
+  id                   String                 @id @default(cuid())
+  title                String
+  message              String
+  urgency              AnnouncementUrgency    @default(info)
+  isActive             Boolean                @default(true) @map("is_active")
+  startAt              DateTime               @default(now()) @map("start_at")
+  endAt                DateTime?              @map("end_at")
+  /// While enabled, linked resources are taken offline during the active window.
+  /// The legacy ResourceDisabledReason value remains `bulletin` until the later
+  /// contract migration so old application instances stay compatible during rollout.
+  autoDisableResources Boolean                @default(false) @map("auto_disable_resources")
+  resourceLinks        AnnouncementResource[]
+  /// Nullable only for content migrated from the legacy Bulletin table.
+  createdById          String?                @map("created_by_id")
+  createdBy            AdminUser?             @relation(fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdAt            DateTime               @default(now()) @map("created_at")
+  updatedAt            DateTime               @updatedAt @map("updated_at")
+
+  @@index([isActive, startAt, endAt])
+  @@index([createdById])
+  @@map("announcements")
+}
+
+model AnnouncementResource {
+  id             String       @id @default(cuid())
+  announcementId String       @map("announcement_id")
+  resourceId     String       @map("resource_id")
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  resource       Resource     @relation(fields: [resourceId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@unique([announcementId, resourceId])
+  @@index([resourceId])
+  @@map("announcement_resources")
+}
+
+// ── Public news ──────────────────────────────────────────────
+
+model NewsPost {
+  id            String       @id @default(cuid())
+  slug          String       @unique
+  title         String
+  bodyHtml      String       @map("body_html")
+  coverImageUrl String?      @map("cover_image_url")
+  category      NewsCategory
+  publishAt     DateTime?    @map("publish_at")
+  status        NewsStatus   @default(draft)
+  isFeatured    Boolean      @default(false) @map("is_featured")
+  /// Nullable only for content migrated from the legacy Bulletin table.
+  createdById   String?      @map("created_by_id")
+  createdBy     AdminUser?   @relation(fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@index([status, publishAt])
+  @@index([isFeatured, publishAt])
+  @@index([category, publishAt])
+  @@index([createdById])
+  @@map("news_posts")
 }
 
 // ── Check-in code rate limiting (Decision: Member check-in) ──
@@ -321,24 +406,24 @@ model CheckInLookupAttempt {
 // ── Membership application & approval ─────────────────
 
 model MembershipApplication {
-  id              String            @id @default(cuid())
-  customerId      String            @map("customer_id")
-  customer        Customer          @relation(fields: [customerId], references: [id])
-  requestedTier   MembershipTier    @map("requested_tier")
-  status          ApplicationStatus @default(pending)
+  id              String              @id @default(cuid())
+  customerId      String              @map("customer_id")
+  customer        Customer            @relation(fields: [customerId], references: [id])
+  requestedTier   MembershipTier      @map("requested_tier")
+  status          ApplicationStatus   @default(pending)
   address         String
-  contactNumber   String            @map("contact_number")
-  govIdFrontUrl   String            @map("gov_id_front_url")
-  govIdBackUrl    String            @map("gov_id_back_url")
-  govIdSelfieUrl  String            @map("gov_id_selfie_url")
-  rejectionReason String?           @map("rejection_reason")
-  reviewedById    String?           @map("reviewed_by_id")
-  reviewedBy      AdminUser?        @relation("ApplicationReviewedBy", fields: [reviewedById], references: [id])
-  reviewedAt      DateTime?         @map("reviewed_at")
+  contactNumber   String              @map("contact_number")
+  govIdFrontUrl   String              @map("gov_id_front_url")
+  govIdBackUrl    String              @map("gov_id_back_url")
+  govIdSelfieUrl  String              @map("gov_id_selfie_url")
+  rejectionReason String?             @map("rejection_reason")
+  reviewedById    String?             @map("reviewed_by_id")
+  reviewedBy      AdminUser?          @relation("ApplicationReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?           @map("reviewed_at")
   membership      Membership?
   payments        MembershipPayment[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
 
   @@map("membership_applications")
 }
@@ -350,23 +435,23 @@ model MembershipApplication {
 // independent of future MEMBERSHIP_TIER_PLANS edits — same pattern as BookingAddOn.
 
 model MembershipPayment {
-  id            String                 @id @default(cuid())
-  applicationId String?                @map("application_id")
-  application   MembershipApplication? @relation(fields: [applicationId], references: [id])
-  customerId    String                 @map("customer_id")
-  customer      Customer               @relation(fields: [customerId], references: [id])
-  tier          MembershipTier
-  amountCentavos            Int           @map("amount_centavos")
-  status                    PaymentStatus @default(pending)
-  paymongoCheckoutSessionId String?       @unique @map("paymongo_checkout_session_id")
-  paymongoPaymentIntentId   String?       @unique @map("paymongo_payment_intent_id")
-  paidAt                    DateTime?     @map("paid_at")
+  id                        String                 @id @default(cuid())
+  applicationId             String?                @map("application_id")
+  application               MembershipApplication? @relation(fields: [applicationId], references: [id])
+  customerId                String                 @map("customer_id")
+  customer                  Customer               @relation(fields: [customerId], references: [id])
+  tier                      MembershipTier
+  amountCentavos            Int                    @map("amount_centavos")
+  status                    PaymentStatus          @default(pending)
+  paymongoCheckoutSessionId String?                @unique @map("paymongo_checkout_session_id")
+  paymongoPaymentIntentId   String?                @unique @map("paymongo_payment_intent_id")
+  paidAt                    DateTime?              @map("paid_at")
   /// Set only when an admin sends a manual renewal-payment-link (see CLAUDE.md → Membership
   /// payment model). Null for self-service renewal and the original application-flow payment.
-  initiatedByAdminId String?    @map("initiated_by_admin_id")
-  initiatedByAdmin   AdminUser? @relation("MembershipPaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  initiatedByAdminId        String?                @map("initiated_by_admin_id")
+  initiatedByAdmin          AdminUser?             @relation("MembershipPaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
+  createdAt                 DateTime               @default(now()) @map("created_at")
+  updatedAt                 DateTime               @updatedAt @map("updated_at")
 
   @@index([applicationId])
   @@index([customerId])
@@ -377,28 +462,28 @@ model MembershipPayment {
 // ── Membership & credit ledger (Decision: Membership credit ledger) ─
 
 model Membership {
-  id                    String                @id @default(cuid())
-  customerId            String                 @map("customer_id")
-  customer              Customer               @relation(fields: [customerId], references: [id])
-  applicationId         String?                @unique @map("application_id")
-  application           MembershipApplication? @relation(fields: [applicationId], references: [id])
+  id                    String                        @id @default(cuid())
+  customerId            String                        @map("customer_id")
+  customer              Customer                      @relation(fields: [customerId], references: [id])
+  applicationId         String?                       @unique @map("application_id")
+  application           MembershipApplication?        @relation(fields: [applicationId], references: [id])
   tier                  MembershipTier
-  status                MembershipStatus      @default(active)
-  startDate             DateTime              @map("start_date")
-  endDate               DateTime              @map("end_date")
-  activationFeeCentavos Int                   @map("activation_fee_centavos")
+  status                MembershipStatus              @default(active)
+  startDate             DateTime                      @map("start_date")
+  endDate               DateTime                      @map("end_date")
+  activationFeeCentavos Int                           @map("activation_fee_centavos")
   /// Cached running total — MembershipCreditTransaction is the source of truth.
-  creditBalanceCentavos Int                   @map("credit_balance_centavos")
+  creditBalanceCentavos Int                           @map("credit_balance_centavos")
   creditTransactions    MembershipCreditTransaction[]
   /// Top-up Payments only (membershipId set) — activation/renewal payments stay on MembershipPayment.
   payments              Payment[]
   /// Reminder/expiry-email tracking — each nullable timestamp is set once its email fires,
   /// so the membership-reminders cron can never send the same email twice to a row.
-  reminder14SentAt      DateTime?             @map("reminder_14_sent_at")
-  reminder3SentAt       DateTime?             @map("reminder_3_sent_at")
-  expiredNoticeSentAt   DateTime?             @map("expired_notice_sent_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  reminder14SentAt      DateTime?                     @map("reminder_14_sent_at")
+  reminder3SentAt       DateTime?                     @map("reminder_3_sent_at")
+  expiredNoticeSentAt   DateTime?                     @map("expired_notice_sent_at")
+  createdAt             DateTime                      @default(now()) @map("created_at")
+  updatedAt             DateTime                      @updatedAt @map("updated_at")
 
   @@map("memberships")
 }
@@ -409,14 +494,14 @@ model MembershipCreditTransaction {
   membership     Membership              @relation(fields: [membershipId], references: [id])
   /// Set only for booking_redemption rows — which booking this debit paid for.
   /// Null for activation/renewal credits, which have no associated booking.
-  bookingId String?  @map("booking_id")
-  booking   Booking? @relation(fields: [bookingId], references: [id])
+  bookingId      String?                 @map("booking_id")
+  booking        Booking?                @relation(fields: [bookingId], references: [id])
   /// Positive for credits added (activation/renewal), negative for debits
   /// (booking_redemption) — SUM(amountCentavos) per membership always recovers
   /// the correct balance regardless of reason.
-  amountCentavos Int @map("amount_centavos")
+  amountCentavos Int                     @map("amount_centavos")
   reason         CreditTransactionReason
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt      DateTime                @default(now()) @map("created_at")
   // No updatedAt — immutable audit row, corrections are new rows, never edits.
 
   @@index([bookingId])
@@ -426,35 +511,35 @@ model MembershipCreditTransaction {
 // ── Booking & exclusion constraint (raw SQL — see Part 5) ─
 
 model Booking {
-  id         String        @id @default(cuid())
-  customerId String?       @map("customer_id")
-  customer   Customer?     @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  resourceId String        @map("resource_id")
-  resource   Resource      @relation(fields: [resourceId], references: [id])
-  startTime  DateTime      @map("start_time")
-  endTime    DateTime      @map("end_time")
-  status     BookingStatus @default(pending_payment)
-  guestCount Int           @default(0) @map("guest_count")
+  id                     String                        @id @default(cuid())
+  customerId             String?                       @map("customer_id")
+  customer               Customer?                     @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  resourceId             String                        @map("resource_id")
+  resource               Resource                      @relation(fields: [resourceId], references: [id])
+  startTime              DateTime                      @map("start_time")
+  endTime                DateTime                      @map("end_time")
+  status                 BookingStatus                 @default(pending_payment)
+  guestCount             Int                           @default(0) @map("guest_count")
   /// Court/sim rate + guest fee only — excludes add-ons, which are priced separately on BookingAddOn.
-  totalAmountCentavos Int  @map("total_amount_centavos")
+  totalAmountCentavos    Int                           @map("total_amount_centavos")
   /// Snapshot of the guest fee actually charged at booking time, already included inside
   /// totalAmountCentavos above — this column exists only so the guest fee can be broken back
   /// out for display (e.g. the confirmation receipt), independent of any later GuestFeeRule edit.
-  guestFeeAmountCentavos Int @default(0) @map("guest_fee_amount_centavos")
+  guestFeeAmountCentavos Int                           @default(0) @map("guest_fee_amount_centavos")
   /// Snapshot of the name/phone actually submitted for this specific booking at
   /// customer-attach time, independent of any later change to the linked Customer row.
-  customerNameSnapshot  String? @map("customer_name_snapshot")
-  customerPhoneSnapshot String? @map("customer_phone_snapshot")
+  customerNameSnapshot   String?                       @map("customer_name_snapshot")
+  customerPhoneSnapshot  String?                       @map("customer_phone_snapshot")
   /// Hash of the short-lived, HttpOnly browser capability used only by an anonymous
   /// booker to complete and confirm their own booking. Never store the raw token.
-  accessTokenHash       String? @map("access_token_hash")
-  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
-  reschedules BookingReschedule[]
-  addOns      BookingAddOn[]
-  payment     Payment?
-  creditTransactions MembershipCreditTransaction[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  accessTokenHash        String?                       @map("access_token_hash")
+  accessTokenExpiresAt   DateTime?                     @map("access_token_expires_at")
+  reschedules            BookingReschedule[]
+  addOns                 BookingAddOn[]
+  payment                Payment?
+  creditTransactions     MembershipCreditTransaction[]
+  createdAt              DateTime                      @default(now()) @map("created_at")
+  updatedAt              DateTime                      @updatedAt @map("updated_at")
 
   @@map("bookings")
 }
@@ -489,7 +574,7 @@ model BookingReschedule {
   reason        String
   performedById String    @map("performed_by_id")
   performedBy   AdminUser @relation("ReschedulePerformedBy", fields: [performedById], references: [id])
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
   // No updatedAt — corrections are new rows, never edits to the original.
 
   @@map("booking_reschedules")
@@ -498,30 +583,30 @@ model BookingReschedule {
 // ── Add-on services ────────────────────────────────────
 
 model AddOnService {
-  id   String           @id @default(cuid())
-  slug AddOnServiceSlug @unique
-  name String
+  id            String             @id @default(cuid())
+  slug          AddOnServiceSlug   @unique
+  name          String
   pricingRules  AddOnPricingRule[]
   bookingAddOns BookingAddOn[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
 
   @@map("add_on_services")
 }
 
 model AddOnPricingRule {
-  id             String       @id @default(cuid())
-  addOnServiceId String       @map("add_on_service_id")
-  addOnService   AddOnService @relation(fields: [addOnServiceId], references: [id])
-  resourceTypeId String       @map("resource_type_id")
-  resourceType   ResourceType @relation(fields: [resourceTypeId], references: [id])
-  rateTier       RateTier     @map("rate_tier")
+  id             String         @id @default(cuid())
+  addOnServiceId String         @map("add_on_service_id")
+  addOnService   AddOnService   @relation(fields: [addOnServiceId], references: [id])
+  resourceTypeId String         @map("resource_type_id")
+  resourceType   ResourceType   @relation(fields: [resourceTypeId], references: [id])
+  rateTier       RateTier       @map("rate_tier")
   /// Null for services without a pax tier (e.g. ball boy). 1 or 2 for coaching fee.
-  paxCount       Int?         @map("pax_count")
-  priceCentavos  Int          @map("price_centavos")
+  paxCount       Int?           @map("pax_count")
+  priceCentavos  Int            @map("price_centavos")
   bookingAddOns  BookingAddOn[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
 
   @@unique([addOnServiceId, resourceTypeId, rateTier, paxCount])
   @@map("add_on_pricing_rules")
@@ -538,8 +623,8 @@ model BookingAddOn {
   quantity           Int              @default(1)
   /// Snapshot of the price actually charged, independent of future AddOnPricingRule edits.
   amountCentavos     Int              @map("amount_centavos")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
 
   @@map("booking_add_ons")
 }
@@ -547,39 +632,39 @@ model BookingAddOn {
 // ── Payment (Decision: Payment ↔ Booking relationship) ─
 
 model Payment {
-  id        String        @id @default(cuid())
+  id                        String        @id @default(cuid())
   /// Nullable + unique: one Payment per Booking today; null bookingId reserved for future POS transactions.
-  bookingId String?       @unique @map("booking_id")
-  booking   Booking?      @relation(fields: [bookingId], references: [id])
+  bookingId                 String?       @unique @map("booking_id")
+  booking                   Booking?      @relation(fields: [bookingId], references: [id])
   /// Nullable, NOT unique (unlike bookingId) — a Membership can have many top-up
   /// Payments over its lifetime. Set only for membership-credit-top-up rows;
   /// null for booking payments. See CLAUDE.md → Membership credit ledger.
-  membershipId String?     @map("membership_id")
-  membership   Membership? @relation(fields: [membershipId], references: [id])
-  amountCentavos          Int           @map("amount_centavos")
-  status                  PaymentStatus @default(pending)
-  method                  PaymentMethod @default(paymongo)
-  paymongoCheckoutSessionId String?     @unique @map("paymongo_checkout_session_id")
-  paymongoPaymentIntentId String?       @unique @map("paymongo_payment_intent_id")
+  membershipId              String?       @map("membership_id")
+  membership                Membership?   @relation(fields: [membershipId], references: [id])
+  amountCentavos            Int           @map("amount_centavos")
+  status                    PaymentStatus @default(pending)
+  method                    PaymentMethod @default(paymongo)
+  paymongoCheckoutSessionId String?       @unique @map("paymongo_checkout_session_id")
+  paymongoPaymentIntentId   String?       @unique @map("paymongo_payment_intent_id")
   /// PayMongo's own payment-resource id (pay_xxx) — distinct from paymongoPaymentIntentId (pi_xxx). Captured from the payment.paid webhook; existing rows stay null, not backfilled.
-  paymongoPaymentId       String?       @unique @map("paymongo_payment_id")
+  paymongoPaymentId         String?       @unique @map("paymongo_payment_id")
   /// PayMongo's fee + foreign_fee combined, captured from the payment.paid
   /// webhook. Null for credit-covered bookings (no PayMongo transaction)
   /// and for bookings confirmed before this column existed — not backfilled.
-  paymongoFeeCentavos       Int? @map("paymongo_fee_centavos")
+  paymongoFeeCentavos       Int?          @map("paymongo_fee_centavos")
   /// PayMongo's net_amount (what actually settles to the merchant account),
   /// captured from the same webhook. Same null cases as the fee column above.
-  paymongoNetAmountCentavos Int? @map("paymongo_net_amount_centavos")
+  paymongoNetAmountCentavos Int?          @map("paymongo_net_amount_centavos")
   /// Admin-entered reference for manual_online top-ups (GCash ref, bank transfer ref, etc).
-  externalReference String? @map("external_reference")
+  externalReference         String?       @map("external_reference")
   /// Required (enforced at the API layer, not the DB) for cash top-ups; optional for manual_online.
-  adminNote String? @map("admin_note")
+  adminNote                 String?       @map("admin_note")
   /// Set only on admin-logged top-ups (cash/manual_online) — mirrors MembershipPayment.initiatedByAdminId.
-  initiatedByAdminId String?    @map("initiated_by_admin_id")
-  initiatedByAdmin   AdminUser? @relation("PaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
-  paidAt                  DateTime?     @map("paid_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  initiatedByAdminId        String?       @map("initiated_by_admin_id")
+  initiatedByAdmin          AdminUser?    @relation("PaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
+  paidAt                    DateTime?     @map("paid_at")
+  createdAt                 DateTime      @default(now()) @map("created_at")
+  updatedAt                 DateTime      @updatedAt @map("updated_at")
 
   @@index([membershipId])
   @@index([initiatedByAdminId])
@@ -589,38 +674,38 @@ model Payment {
 // ── Bulletin ────────────────────────────────────────────
 
 model Bulletin {
-  id          String           @id @default(cuid())
-  title       String
-  excerpt     String
-  body        String
-  category    BulletinCategory
-  imageUrl    String?          @map("image_url")
-  socialPlatform String?       @map("social_platform")
-  socialUrl      String?       @map("social_url")
-  affectedFacility String?         @map("affected_facility")
-  impact           String?
-  action           String?
-  bookingImpact       BulletinBookingImpact?  @map("booking_impact")
-  customerActionType  BulletinCustomerAction? @map("customer_action_type")
+  id                   String                       @id @default(cuid())
+  title                String
+  excerpt              String
+  body                 String
+  category             BulletinCategory
+  imageUrl             String?                      @map("image_url")
+  socialPlatform       String?                      @map("social_platform")
+  socialUrl            String?                      @map("social_url")
+  affectedFacility     String?                      @map("affected_facility")
+  impact               String?
+  action               String?
+  bookingImpact        BulletinBookingImpact?       @map("booking_impact")
+  customerActionType   BulletinCustomerAction?      @map("customer_action_type")
   /// Display-only Promotion-category fields — never validated/redeemed against a real
   /// price; the discount itself is applied manually by an admin via PricingRule. See
   /// CLAUDE.md's Bulletin / Promotion category decision.
-  promoCode           String?                       @map("promo_code")
-  discountSummary     String?                       @map("discount_summary")
-  customerEligibility BulletinCustomerEligibility?  @map("customer_eligibility")
-  eventStartAt     DateTime?       @map("event_start_at")
-  eventEndAt       DateTime?       @map("event_end_at")
-  expiresAt        DateTime?       @map("expires_at")
-  ctaLabel         String?         @map("cta_label")
-  ctaUrl           String?         @map("cta_url")
-  isPublished Boolean   @default(false) @map("is_published")
-  publishedAt DateTime? @map("published_at")
+  promoCode            String?                      @map("promo_code")
+  discountSummary      String?                      @map("discount_summary")
+  customerEligibility  BulletinCustomerEligibility? @map("customer_eligibility")
+  eventStartAt         DateTime?                    @map("event_start_at")
+  eventEndAt           DateTime?                    @map("event_end_at")
+  expiresAt            DateTime?                    @map("expires_at")
+  ctaLabel             String?                      @map("cta_label")
+  ctaUrl               String?                      @map("cta_url")
+  isPublished          Boolean                      @default(false) @map("is_published")
+  publishedAt          DateTime?                    @map("published_at")
   /// Admin toggle: while true and this bulletin is published (and not expired), its
   /// linked resources (via BulletinResource) are auto-disabled. See CLAUDE.md.
-  autoDisableResources Boolean @default(false) @map("auto_disable_resources")
-  resourceLinks BulletinResource[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  autoDisableResources Boolean                      @default(false) @map("auto_disable_resources")
+  resourceLinks        BulletinResource[]
+  createdAt            DateTime                     @default(now()) @map("created_at")
+  updatedAt            DateTime                     @updatedAt @map("updated_at")
 
   @@map("bulletins")
 }
@@ -645,17 +730,17 @@ model BulletinResource {
 // no updatedAt, corrections are new rows, never edits to the original.
 
 model AdminActivityLog {
-  id         String                   @id @default(cuid())
-  adminId    String                   @map("admin_id")
-  admin      AdminUser                @relation(fields: [adminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  action     AdminActivityAction
-  entityType AdminActivityEntityType  @map("entity_type")
+  id          String                  @id @default(cuid())
+  adminId     String                  @map("admin_id")
+  admin       AdminUser               @relation(fields: [adminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  action      AdminActivityAction
+  entityType  AdminActivityEntityType @map("entity_type")
   /// Loose reference, deliberately not a real FK — this one table logs against
   /// multiple entity types (membership_application, booking).
-  entityId    String   @map("entity_id")
+  entityId    String                  @map("entity_id")
   description String
   metadata    Json?
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt   DateTime                @default(now()) @map("created_at")
   // No updatedAt — immutable audit row, corrections are new rows, never edits.
 
   @@index([adminId])

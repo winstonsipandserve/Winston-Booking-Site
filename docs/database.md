@@ -10,7 +10,7 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 ## Ground Rules
 
-- **24 models.** PascalCase model names, snake_case database columns via `@map`, `cuid()` primary keys.
+- **27 models during the expand rollout.** PascalCase model names, snake_case database columns via `@map`, `cuid()` primary keys. Two of those models are the legacy `Bulletin` pair retained temporarily for rollback compatibility.
 - **Money is always `Int` in centavos.** ₱100.00 is stored as `10000`. Never a float, anywhere.
 - **`createdAt` / `updatedAt` on every model — except the immutable audit models**, which are `createdAt`-only by design (listed below).
 - **Every new table must enable RLS with explicit deny-all policies** for the `anon` and `authenticated` roles, in the same migration that creates it. Never deferred to a follow-up.
@@ -67,6 +67,9 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 | `BulletinBookingImpact` | `NoImpact`, `LimitedAvailability`, `TemporarilyUnavailable`, `ScheduleChanges` |
 | `BulletinCustomerAction` | `NoActionRequired`, `RescheduleBooking`, `ContactSupport`, `BookAnotherFacility`, `WaitForFurtherNotice` |
 | `ResourceDisabledReason` | `manual`, `bulletin` |
+| `AnnouncementUrgency` | `info`, `warning`, `urgent` |
+| `NewsCategory` | `tournament`, `community`, `promo`, `general` |
+| `NewsStatus` | `draft`, `published` |
 | `AdminActivityAction` | `membership_application_approved`, `membership_application_rejected`, `membership_renewal_link_sent`, `booking_rescheduled`, `membership_credit_topup_added` |
 | `AdminActivityEntityType` | `membership_application`, `booking`, `membership` |
 
@@ -203,19 +206,15 @@ Note also that `getLatestMembershipByCustomerId()` picks the latest membership b
 
 ---
 
-## Bulletin
+## Announcements & News
 
-**`Bulletin`** — `title`, `excerpt` (a short summary, distinct from the body), `body` (labeled "Description" in the admin UI; the column is still `body`), `category`, optional `imageUrl`, and an optional `socialPlatform`/`socialUrl` pair provided together or not at all.
+**`Announcement`** — short operational content for the booking gate: `title`, plain-text `message`, `urgency`, `isActive`, `startAt`, optional `endAt`, and `autoDisableResources`. `createdById` is nullable only for migrated content; every new API write derives it from the active admin session. Active-window lookup is indexed on `isActive`, `startAt`, and `endAt`.
 
-Optional metadata, all nullable: `affectedFacility`, `impact`, `action` (free text), the structured `bookingImpact` and `customerActionType` enums, `eventStartAt`/`eventEndAt` (independent, not required as a pair), `expiresAt`, and a `ctaLabel`/`ctaUrl` pair.
+**`AnnouncementResource`** — the many-to-many link from an announcement to any court or simulator resource. The pair is unique and both foreign keys cascade-delete. Linking is informational unless `autoDisableResources` is true. The automatic disabled-reason value remains internally named `bulletin` during expand and is renamed only in the later contract migration.
 
-Promotion-only, all display-only and never computed against a real price: `promoCode`, `discountSummary`, `customerEligibility`. See [business.md](business.md).
+**`NewsPost`** — editorial content with an immutable, unique generated `slug`; `title`; sanitized `bodyHtml`; optional `coverImageUrl`; `category`; optional `publishAt`; `status`; and `isFeatured`. New published posts require a cover in the API, while drafts and migrated legacy records may be coverless. Publication, featured ordering, and category lookups are indexed. `createdById` follows the same migration-only nullability rule as announcements.
 
-Publishing: `isPublished` plus `publishedAt`. **`publishedAt` is auto-set on first publish and preserved forever after** — never reset by a later unpublish/republish cycle. There is no evergreen concept; an unpublished bulletin is simply a draft with a null `publishedAt`.
-
-`autoDisableResources` is the per-bulletin opt-in for taking resources offline.
-
-**`BulletinResource`** — the join table linking a bulletin to the resources it claims. Unique on the pair; both foreign keys cascade-delete. No `updatedAt` — a link either exists or it does not, and edits replace the row set rather than mutating a row.
+**Legacy expand state.** `Bulletin` and `BulletinResource`, plus their old enums, remain in the schema only until staging and production verification completes. Application reads and writes no longer use them. The expand migration omits `[Sample]` titles, classifies non-sample rows into the new models, and preserves resource claims by creating an operational announcement when editorial content had linked resources or auto-disable enabled.
 
 ---
 
@@ -235,7 +234,8 @@ These four have **no `updatedAt`** and their rows are never edited. Corrections 
 - `MembershipCreditTransaction`
 - `AdminActivityLog`
 - `CheckInLookupAttempt`
-- `BulletinResource` (structurally immutable rather than an audit trail)
+- `AnnouncementResource` (structurally immutable rather than an audit trail)
+- `BulletinResource` (legacy expand-only)
 
 ---
 
@@ -261,6 +261,6 @@ Master SQL: `prisma/manual-sql/enable-rls-deny-all.sql`.
 
 ## Seed Data
 
-`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds the 5 resource types, the 9 resources, 21 pricing rules, the ₱150 guest fee rule, 2 add-on services, 16 add-on pricing rules, and seven published sample bulletins covering every bulletin category. Sample bulletins are identified by their `[Sample]` title prefix and are updated rather than duplicated on subsequent runs. Exact reference-data values are in [business.md](business.md).
+`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds only reference configuration: the 5 resource types, 9 resources, 21 pricing rules, the ₱150 guest fee rule, 2 add-on services, and 16 add-on pricing rules. It creates no announcements or news posts. Exact reference-data values are in [business.md](business.md).
 
 **The seed creates no admin user.** There is no reproducible admin bootstrap — admin accounts exist only in the live database. See [roadmap.md](roadmap.md).

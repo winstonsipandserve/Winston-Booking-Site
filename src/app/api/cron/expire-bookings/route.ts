@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/prisma'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 import {
-  applyBulletinResourceDisable,
-  bulletinShouldDisableResources,
-  releaseBulletinResourceDisable,
-} from '@/lib/bulletin-resource-disable'
+  applyAnnouncementResourceDisable,
+  announcementIsClaimingResources,
+  releaseAnnouncementResourceDisable,
+} from '@/lib/announcement-resource-disable'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,48 +53,46 @@ export async function GET(request: Request) {
     await expirePaymongoCheckoutSession(checkoutSessionId)
   }
 
-  // Release resources whose disabling bulletin has expired — never touches isPublished
-  // or any other Bulletin field. See CLAUDE.md → Bulletin-triggered resource auto-disable.
+  // Release resources whose disabling announcement has ended. The resource helper
+  // preserves manual disables and overlapping announcement claims.
   const now = new Date()
   await prisma.$transaction(async (tx) => {
-    const expiredBulletins = await tx.bulletin.findMany({
+    const endedAnnouncements = await tx.announcement.findMany({
       where: {
-        isPublished: true,
+        isActive: true,
         autoDisableResources: true,
-        expiresAt: { not: null, lte: now },
+        endAt: { not: null, lte: now },
       },
       include: { resourceLinks: { select: { resourceId: true } } },
     })
 
-    for (const bulletin of expiredBulletins) {
-      const resourceIds = bulletin.resourceLinks.map((l) => l.resourceId)
+    for (const announcement of endedAnnouncements) {
+      const resourceIds = announcement.resourceLinks.map((link) => link.resourceId)
       if (resourceIds.length > 0) {
-        await releaseBulletinResourceDisable(tx, resourceIds, bulletin.id)
+        await releaseAnnouncementResourceDisable(tx, resourceIds, announcement.id)
       }
     }
   })
 
-  // Apply scheduled disables: a published, auto-disabling bulletin with a future eventStartAt
-  // doesn't disable its linked resources until that start time arrives (see
-  // bulletinShouldDisableResources). KNOWN LIMITATION: this cron runs once daily (Vercel
+  // Apply scheduled disables after startAt. KNOWN LIMITATION: this cron runs once daily (Vercel
   // Hobby plan cap), so a scheduled disable takes effect on the next daily cron run after
-  // eventStartAt passes, not at the exact time — same granularity as the expiry-release step
+  // startAt passes, not at the exact time — same granularity as the expiry-release step
   // above. A more frequent cron is a separate Vercel-plan change (see CLAUDE.md).
   await prisma.$transaction(async (tx) => {
-    const dueBulletins = await tx.bulletin.findMany({
+    const dueAnnouncements = await tx.announcement.findMany({
       where: {
-        isPublished: true,
+        isActive: true,
         autoDisableResources: true,
-        eventStartAt: { not: null, lte: now },
+        startAt: { lte: now },
       },
       include: { resourceLinks: { select: { resourceId: true } } },
     })
 
-    for (const bulletin of dueBulletins) {
-      if (!bulletinShouldDisableResources(bulletin)) continue
-      const resourceIds = bulletin.resourceLinks.map((l) => l.resourceId)
+    for (const announcement of dueAnnouncements) {
+      if (!announcementIsClaimingResources(announcement, now)) continue
+      const resourceIds = announcement.resourceLinks.map((link) => link.resourceId)
       if (resourceIds.length > 0) {
-        await applyBulletinResourceDisable(tx, resourceIds)
+        await applyAnnouncementResourceDisable(tx, resourceIds)
       }
     }
   })

@@ -14,14 +14,14 @@ interface MemberContext {
 
 interface BookingPageClientProps {
   memberContext: MemberContext | null
+  notices: GateNotice[]
 }
 
-export default function BookingPageClient({ memberContext }: BookingPageClientProps) {
+export default function BookingPageClient({ memberContext, notices }: BookingPageClientProps) {
   const [started, setStarted] = useState(false)
   const [data, setData] = useState<ResourcesResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [notices, setNotices] = useState<GateNotice[]>([])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -39,25 +39,6 @@ export default function BookingPageClient({ memberContext }: BookingPageClientPr
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false)
-      })
-    return () => {
-      controller.abort()
-    }
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-    fetch('/api/bulletin/gate-notices', { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load notices')
-        return res.json() as Promise<{ notices: GateNotice[] }>
-      })
-      .then((json) => {
-        setNotices(json.notices)
-      })
-      .catch((err) => {
-        if ((err as Error).name === 'AbortError') return
-        setNotices([])
       })
     return () => {
       controller.abort()

@@ -57,8 +57,8 @@ export async function PATCH(
     disabledNoteToSet = disabledNote === null ? null : (disabledNote as string).trim() || null
   }
 
-  // A manual toggle always wins immediately, regardless of any bulletin's claim — see
-  // CLAUDE.md → Bulletin-triggered resource auto-disable. Setting isActive:false stamps
+  // A manual toggle always wins immediately, regardless of any announcement claim.
+  // Setting isActive:false stamps
   // disabledReason: 'manual'; setting isActive:true clears it, same as disabledNote.
   let disabledReasonToSet: 'manual' | null | undefined
   if (isActive === true) {

@@ -302,7 +302,7 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
                 <div className="flex flex-col">
                   <span className="text-gray-900 dark:text-gray-100">{resource.label}</span>
                   {!resource.isActive && resource.disabledReason === 'bulletin' && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">Disabled by bulletin</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">Disabled by announcement</span>
                   )}
                   {!resource.isActive && resource.disabledNote && (
                     <span className="text-xs text-gray-400 dark:text-gray-500">{resource.disabledNote}</span>

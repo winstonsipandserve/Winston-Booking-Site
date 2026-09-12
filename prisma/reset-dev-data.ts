@@ -19,6 +19,9 @@ const deletionLabels = [
   'memberships',
   'bookings',
   'membership applications',
+  'announcement-resource links',
+  'announcements',
+  'news posts',
   'bulletin-resource links',
   'bulletins',
   'customers',
@@ -62,6 +65,9 @@ async function getCounts(client: PrismaClient): Promise<DeletionCounts> {
     memberships,
     bookings,
     membershipApplications,
+    announcementResources,
+    announcements,
+    newsPosts,
     bulletinResources,
     bulletins,
     customers,
@@ -80,6 +86,9 @@ async function getCounts(client: PrismaClient): Promise<DeletionCounts> {
     client.membership.count(),
     client.booking.count(),
     client.membershipApplication.count(),
+    client.announcementResource.count(),
+    client.announcement.count(),
+    client.newsPost.count(),
     client.bulletinResource.count(),
     client.bulletin.count(),
     client.customer.count(),
@@ -100,6 +109,9 @@ async function getCounts(client: PrismaClient): Promise<DeletionCounts> {
     memberships,
     bookings,
     'membership applications': membershipApplications,
+    'announcement-resource links': announcementResources,
+    announcements,
+    'news posts': newsPosts,
     'bulletin-resource links': bulletinResources,
     bulletins,
     customers,
@@ -115,6 +127,13 @@ function printCounts(counts: DeletionCounts, heading: string) {
 
 async function deleteDevelopmentData() {
   return prisma.$transaction(async (tx) => {
+    // Preserve manual facility configuration while releasing only automatic
+    // announcement/bulletin claims before their source rows are removed.
+    await tx.resource.updateMany({
+      where: { disabledReason: 'bulletin' },
+      data: { isActive: true, disabledReason: null },
+    })
+
     const counts: DeletionCounts = {
       'auth rate-limit attempts': (await tx.authRateLimitAttempt.deleteMany()).count,
       'admin password reset tokens': (await tx.adminPasswordResetToken.deleteMany()).count,
@@ -130,6 +149,9 @@ async function deleteDevelopmentData() {
       memberships: (await tx.membership.deleteMany()).count,
       bookings: (await tx.booking.deleteMany()).count,
       'membership applications': (await tx.membershipApplication.deleteMany()).count,
+      'announcement-resource links': (await tx.announcementResource.deleteMany()).count,
+      announcements: (await tx.announcement.deleteMany()).count,
+      'news posts': (await tx.newsPost.deleteMany()).count,
       'bulletin-resource links': (await tx.bulletinResource.deleteMany()).count,
       bulletins: (await tx.bulletin.deleteMany()).count,
       customers: (await tx.customer.deleteMany()).count,

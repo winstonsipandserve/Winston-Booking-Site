@@ -10,7 +10,7 @@ How the important processes actually run, end to end.
 
 The default path. The customer is not logged in and may not exist in the system yet.
 
-1. **Announcement gate.** `/book` loads published, non-expired bulletins (excluding Promotions) and shows them as an interstitial notice. The customer continues past it into the wizard.
+1. **Announcement gate.** `/book` loads active announcements whose start has arrived and whose optional end is still in the future. Urgent notices appear first, then warnings and information; the customer continues past the interstitial into the wizard.
 2. **Five-step wizard** — Sport → Court → Date & Time → Add-Ons → Summary. All state, including the current step, lives in the top-level orchestrator, so navigating Back and forward again never loses an entered value.
    - The Date & Time step calls `/api/availability` to grey out occupied slots before submit.
 3. **Hold created.** On Confirm, `POST /api/bookings` creates the booking with `status: pending_payment` and `customerId: null`. Pricing here is **provisional and always at the non-member rate**, because no customer or email exists yet. The response also establishes a random 24-hour, HttpOnly, SameSite browser capability; only that browser can read the hold, attach contact details, start checkout, or poll its confirmation.
@@ -151,24 +151,24 @@ The only way a booking's time changes. See [business.md](business.md) for the po
 
 ---
 
-## Bulletin-triggered resource auto-disable
+## Announcement-triggered resource auto-disable
 
-A bulletin can take specific courts or bays offline while it is live.
+An announcement can take specific courts or bays offline while it is live.
 
-**A bulletin is actively claiming its resources when all of these hold:** it is published, `autoDisableResources` is on, it has not expired, and its event start (if set) has already passed. This predicate is evaluated fresh every time, never cached.
+**An announcement is actively claiming its resources when all of these hold:** `isActive` is on, `autoDisableResources` is on, `startAt` has arrived, and `endAt` is absent or still in the future. This predicate is evaluated fresh every time, never cached.
 
-The event-start clause is what lets a closure be announced in advance without disabling anything immediately.
+The start clause lets an operational notice be prepared in advance without disabling anything immediately. Selecting resources without enabling auto-disable only displays their names to the customer.
 
 **Manual always wins.** Each resource records which mechanism last disabled it:
 
-- A manual admin Disable or Enable always stamps or clears `manual`, regardless of any bulletin's claim.
-- Releasing a bulletin's claim only re-enables a resource currently tagged `bulletin` — it never steals back a manual disable.
+- A manual admin Disable or Enable always stamps or clears `manual`, regardless of any announcement claim.
+- During the expand rollout, an announcement claim is internally tagged `bulletin` for compatibility with older application instances. Releasing it only re-enables a resource with that automatic tag — it never steals back a manual disable.
 - Applying a claim only disables a resource that is currently active.
-- Before re-enabling, the release path checks whether **any other** published, auto-disabling, unexpired bulletin still links to that resource.
+- Before re-enabling, the release path checks whether **any other** active, auto-disabling announcement inside its window still links to that resource.
 
-Each of the three bulletin write routes wraps its handler in a single transaction, and deleting a bulletin releases every linked resource first.
+Each announcement write route wraps resource-link and apply/release work in a single transaction, and deleting an announcement releases every linked resource first.
 
-The daily `/api/cron/expire-bookings` run also releases resources for bulletins whose expiry has passed and applies disables for bulletins whose event start has passed. **Because it runs once daily, a scheduled effect can lag by up to a day.**
+The daily `/api/cron/expire-bookings` run also releases resources for announcements whose end has passed and applies disables whose start has passed. **Because it runs once daily, a scheduled effect can lag by up to a day.** Public announcement visibility is evaluated at request time and does not share this delay.
 
 ---
 

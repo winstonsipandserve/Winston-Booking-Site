@@ -27,6 +27,15 @@
   --color-on-light-muted: var(--color-text-on-light-muted);
   --color-on-accent: var(--color-on-accent);
   --color-focus-ring: var(--color-focus-ring);
+  --color-notice-info-bg: var(--color-notice-info-bg);
+  --color-notice-info-border: var(--color-notice-info-border);
+  --color-notice-info-text: var(--color-notice-info-text);
+  --color-notice-warning-bg: var(--color-notice-warning-bg);
+  --color-notice-warning-border: var(--color-notice-warning-border);
+  --color-notice-warning-text: var(--color-notice-warning-text);
+  --color-notice-urgent-bg: var(--color-notice-urgent-bg);
+  --color-notice-urgent-border: var(--color-notice-urgent-border);
+  --color-notice-urgent-text: var(--color-notice-urgent-text);
   --shadow-card: var(--shadow-card);
   --shadow-hero: 0 20px 48px rgba(0,0,0,0.16), 0 8px 24px rgba(0,0,0,0.1);
   --radius-input: 0.5rem;

@@ -2,10 +2,31 @@ import BookingPageClient from '@/components/booking/BookingPageClient'
 import Navbar from '@/components/layout/Navbar'
 import { getActiveMembership } from '@/lib/customer-resolution'
 import { prisma } from '@/lib/prisma'
+import { activeAnnouncementWhere, sortAnnouncementsByUrgency } from '@/lib/announcement'
+import { formatBookingDateTime } from '@/lib/format'
+import type { GateNotice } from '@/components/booking/AnnouncementGate'
 import { auth } from '../../../auth'
 
 export default async function BookPage() {
-  const session = await auth()
+  const [session, announcements] = await Promise.all([
+    auth(),
+    prisma.announcement.findMany({
+      where: activeAnnouncementWhere(),
+      include: { resourceLinks: { include: { resource: { include: { resourceType: true } } } } },
+    }),
+  ])
+
+  const notices: GateNotice[] = sortAnnouncementsByUrgency(announcements).map((announcement) => ({
+    id: announcement.id,
+    title: announcement.title,
+    message: announcement.message,
+    urgency: announcement.urgency,
+    startAt: formatBookingDateTime(announcement.startAt),
+    endAt: announcement.endAt ? formatBookingDateTime(announcement.endAt) : null,
+    affectedResources: announcement.resourceLinks.map(
+      (link) => `${link.resource.resourceType.name} — ${link.resource.label}`,
+    ),
+  }))
 
   let memberContext: {
     name: string
@@ -36,7 +57,7 @@ export default async function BookPage() {
     <>
       <Navbar />
 
-      <BookingPageClient memberContext={memberContext} />
+      <BookingPageClient memberContext={memberContext} notices={notices} />
     </>
   )
 }

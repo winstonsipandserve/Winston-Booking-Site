@@ -192,36 +192,23 @@ Three plans. Each payment splits into a **non-refundable activation fee** plus a
 - Manage all bookings
 - Manage courts and simulators
 - Manage membership accounts, including application approval and rejection
-- Manage the bulletin (announcements)
+- Manage booking announcements and public news independently
 - Manage pricing rules — court and simulator rates, add-on service rates, and the guest fee, for both member and non-member tiers
 
 ---
 
-## Bulletin & Announcements
+## Announcements & News
 
-The bulletin is the venue's announcement channel. One set of announcements feeds the public news page and an interstitial notice shown before booking.
+Operational booking notices and editorial news are separate domains.
 
-### Categories
+### Announcements
 
-Seven categories: **Renovation**, **Facility Closure**, **Tournament**, **Community Event**, **General Announcement**, **Facility Maintenance**, and **Promotion**.
+Announcements are short, plain-text heads-ups shown only in the `/book` “Before You Book” gate. An announcement has an **Information**, **Warning**, or **Urgent** level; an active window; and optional links to specific courts or simulator bays.
 
-Every category except Promotion is expected to describe which facility is affected, what the impact on customers is, and what a customer should do about it.
+Linking a resource is informational by default. The separate auto-disable toggle is required to take linked resources offline during the active window. A manual staff enable or disable always overrides an automatic announcement claim, and releasing one announcement never overrides a manual disable or another active claim. See [workflows.md](workflows.md).
 
-### What a bulletin can do
+### News
 
-- Announce something in advance, with an optional event window and an optional expiry after which it stops being shown publicly.
-- **Take resources offline automatically.** A closure or maintenance notice can claim one or more specific courts/bays and force them unbookable for as long as it is published and unexpired. A manual staff decision to enable or disable a resource always overrides a bulletin's claim. See [workflows.md](workflows.md).
-- Carry an optional call-to-action link and an optional social media link.
+News is long-form editorial content shown only on `/news` and `/news/[slug]`. Its categories are **Tournament**, **Community**, **Promotion**, and **General**. Posts may be drafted, published immediately, or scheduled, and any number may be featured; the newest featured post receives the large-card treatment.
 
-### The Promotion category
-
-**A promotion is informational only.** It advertises a discount; it never applies one.
-
-- It never touches checkout, payment, or the pricing rules. **Any actual discount is applied manually by an admin editing the rates.**
-- Its discount description is deliberately free text ("20% off", "₱200 off bookings") rather than a structured percentage or amount, precisely because it is never computed against a real price.
-- It may carry a promo code, but the code is **display-only and is never validated or redeemed** anywhere in the system.
-- It may state customer eligibility (everyone / members only / new customers / returning customers / a specific tier), but this is **display-only and is not enforced at booking time**.
-- A promotion **requires** a validity window (start and end), unlike other categories where an end date is optional — an open-ended promotion does not make business sense.
-- A promotion is **excluded from the pre-booking announcement gate**, since an advertisement should not interrupt someone who is trying to book. It still appears on the public news page.
-
-Announcements do not have a priority level. One existed briefly and was removed as a business decision.
+Promotion news remains informational. It does not modify checkout totals, validate promo codes, or change pricing rules. Any actual price change is made separately by an admin through pricing.

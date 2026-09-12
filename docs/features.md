@@ -17,7 +17,7 @@ Six pages, all mobile-responsive.
 | **Home** (`/`) | Hero, stats bar, how-it-works, two-sides section, facilities, call-to-action banner |
 | **About** (`/about`) | Hero, our story, values, call to action |
 | **Café & Bar** (`/cafe-bar`) | Café/Bar mode toggle, menu highlights, gallery, speakeasy feature |
-| **News** (`/news`) | "Club Bulletin" header band, then published, non-expired bulletins with a 7-pill category filter (All + 6 categories) and a post count, driven by a URL query parameter. The newest Tournament is pulled out as a featured card when no filter is active |
+| **News** (`/news`) | Published and scheduled-by-date editorial posts with four category filters. Featured posts sort first and the newest featured post receives the large-card treatment; cards link to full articles at `/news/[slug]` |
 | **Membership** (`/membership`) | Hero, tier cards, application process, apply call to action |
 | **Book Now** (`/book`) | The booking wizard |
 
@@ -25,13 +25,13 @@ The navbar is fixed, transparent over a hero and solid on scroll for Home, About
 
 The public-site corner-radius system is applied sitewide with no exceptions remaining.
 
-**Placeholder content pending client input:** Home hero copy, About's Our Story, footer contact details, and News social links.
+**Placeholder content pending client input:** Home hero copy, About's Our Story, and footer contact details.
 
 ---
 
 ## Booking
 
-- **Announcement gate** before the wizard, showing current published notices (Promotions excluded) as title + excerpt, three per page with previous/next paging when there are more. The card is sized to fit the viewport without page scrolling.
+- **Announcement gate** before the wizard, showing only active operational announcements inside their start/end window. Urgent, warning, and information notices sort in that order, then newest start date; three notices appear per page with an empty state when none are live.
 - **Five-step wizard** — Sport, Court, Date & Time, Add-Ons, Summary — with a step indicator and full back/forward state preservation.
 - **Live availability**: the time-slot grid greys out occupied slots before submit.
 - **Member-aware**: a logged-in member with an active membership gets member pricing and a pre-filled contact step, in a single pricing phase. Anonymous bookers are priced at the non-member rate throughout.
@@ -85,7 +85,7 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 ## Admin Panel
 
-Seven sections, all gated by the shared admin session check and all supporting Light / Dark / System theming stored per-browser.
+Eight sections, all gated by the shared admin session check and all supporting Light / Dark / System theming stored per-browser.
 
 > The admin panel is **tablet-and-up only** by decision — no mobile-width support is planned. See [decisions.md](decisions.md).
 
@@ -106,7 +106,7 @@ List with a working search bar and a filter modal, both server-side and composab
 
 Tabbed as Courts / Simulators / Guest Fee.
 
-- Resources are **edit and disable/enable only** — no create or delete. A resource disabled by a bulletin is labelled as such.
+- Resources are **edit and disable/enable only** — no create or delete. A resource disabled by an announcement is labelled as such.
 - Pricing and add-on rows have full create/edit/delete, gated by the valid-combination allow-list, so an unoffered combination has no "+ Add" control at all.
 - The guest fee is **edit-only**, permanently.
 
@@ -118,9 +118,13 @@ List and detail with approve/reject. The status filter splits on derived display
 - An **active or expired** member's page shows a header with name and "Member since", a four-cell quick-stats row, member information and membership detail cards, a collapsible verification-documents section, and credit-transaction and booking histories (capped at 10 rows each, no pagination).
 - Actions: Send Renewal Link (expired only) and Add Credit (active only).
 
-### Bulletin
+### Announcements
 
-Full create/read/update/delete with optional image upload, all seven categories with their own required-field rules, and optional resource linking for auto-disable. The list shows a bulletin's linked resource names inline when auto-disable is on.
+Paginated create/read/update/delete for short booking notices, with urgency, active windows, optional resource links, and a separate auto-disable toggle. Rows show live, scheduled, expired, or inactive state plus affected resources and whether they are taken offline.
+
+### News
+
+Paginated create/read/update/delete for rich-text stories. The editor supports headings, lists, blockquotes, emphasis, and safe links. Rows show cover, category, draft/scheduled/published state, featured state, and publication date. Published posts require a JPEG/PNG cover of at most 5 MB; migrated legacy posts may retain a null cover.
 
 ### Check-In
 
@@ -156,7 +160,7 @@ Booking confirmation and staff booking notification emails show a base-rate pric
 
 Two daily cron jobs, both secret-authenticated:
 
-- **Expire bookings** — cancels stale holds, expires their PayMongo sessions, and releases or applies bulletin-driven resource disables.
+- **Expire bookings** — cancels stale holds, expires their PayMongo sessions, and releases or applies announcement-driven resource disables.
 - **Membership reminders** — 14-day and 3-day expiry reminders plus expired notices, each stamped per-row so they can never double-send.
 
 ---

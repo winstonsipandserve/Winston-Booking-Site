@@ -82,7 +82,7 @@ Route handlers live under `src/app/api/`, return `Response.json(...)` with expli
 | `/api/bookings` | POST | Create a booking hold (session-aware — see [workflows.md](workflows.md)) |
 | `/api/bookings/[id]` | GET, PATCH | Read booking detail / attach customer contact details and re-price |
 | `/api/checkout` | POST | Create or reuse a PayMongo Checkout Session for a booking |
-| `/api/bulletin/gate-notices` | GET | Top 3 published non-expired bulletins, excluding Promotion |
+| `/api/announcements/active` | GET | Active booking announcements, ordered by urgency and start date |
 | `/api/membership-applications` | POST | Submit an application (multipart, with ID images) |
 | `/api/membership-applications/[id]` | GET | Application status poller |
 | `/api/membership-payments` | POST | Create/resume checkout for an approved application |
@@ -106,7 +106,7 @@ Route handlers live under `src/app/api/`, return `Response.json(...)` with expli
 
 Gated twice: `middleware.ts` matches `/admin/:path*` and `/api/admin/:path*`, and every handler independently calls `getActiveAdminSession()`. The two admin auth routes (`forgot-password`, `reset-password`) intentionally require no session.
 
-Covers: account password change, activity log, admin user list and activate/deactivate, booking reschedule availability lookup, booking reschedule and CSV export, bulletin CRUD, check-in by token and by code, guest fee edit, membership approve/reject, credit top-up, renewal link send, membership CSV export, pricing rule and add-on pricing rule CRUD, and resource edit/disable.
+Covers: account password change, activity log, admin user list and activate/deactivate, booking reschedule availability lookup, booking reschedule and CSV export, announcement CRUD, news CRUD and cover upload, check-in by token and by code, guest fee edit, membership approve/reject, credit top-up, renewal link send, membership CSV export, pricing rule and add-on pricing rule CRUD, and resource edit/disable.
 
 ### Webhook
 
@@ -118,7 +118,7 @@ Both require `Authorization: Bearer $CRON_SECRET` and return 401 otherwise, incl
 
 | Route | Schedule (UTC) | Purpose |
 |---|---|---|
-| `/api/cron/expire-bookings` | `0 0 * * *` | Expire stale holds; release and apply bulletin resource disables |
+| `/api/cron/expire-bookings` | `0 0 * * *` | Expire stale holds; release and apply announcement resource disables |
 | `/api/cron/membership-reminders` | `0 1 * * *` | 14-day and 3-day expiry reminders, plus expired notices |
 
 **There are two cron entries, not one.** Vercel's Hobby plan caps cron frequency at once per day, which is why scheduled effects can lag by up to a day.
@@ -159,7 +159,7 @@ PostgreSQL, Storage, and row-level security.
 | Bucket | Visibility | Contents |
 |---|---|---|
 | `membership-applications` | Private, admin-only via signed URLs | Government ID images |
-| `bulletin-images` | Public | Bulletin artwork |
+| `bulletin-images` | Public | News cover artwork; the legacy bucket ID is retained, while new objects use `news/<post-id>/...` paths |
 | `email-assets` | Public (read-only for anon; writes service-role only) | The logo used in transactional emails, uploaded manually via the Supabase dashboard |
 
 - MCP access to Supabase is **read-only**.

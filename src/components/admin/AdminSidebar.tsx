@@ -9,6 +9,7 @@ import {
   ResourcesIcon,
   MembershipsIcon,
   BulletinIcon,
+  NewsIcon,
   CheckInIcon,
   SettingsIcon,
   FoldIcon,
@@ -19,7 +20,8 @@ const NAV_ITEMS = [
   { href: '/admin/bookings', label: 'Bookings', icon: BookingsIcon },
   { href: '/admin/resources', label: 'Resources & Pricing', icon: ResourcesIcon },
   { href: '/admin/memberships', label: 'Memberships', icon: MembershipsIcon },
-  { href: '/admin/bulletin', label: 'Bulletin', icon: BulletinIcon },
+  { href: '/admin/announcements', label: 'Announcements', icon: BulletinIcon },
+  { href: '/admin/news', label: 'News', icon: NewsIcon },
   { href: '/admin/check-in', label: 'Check-In', icon: CheckInIcon },
   { href: '/admin/settings', label: 'Settings', icon: SettingsIcon },
 ]

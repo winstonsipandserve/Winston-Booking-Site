@@ -2,107 +2,67 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import Reveal from '@/components/ui/Reveal'
-import { CATEGORY_LABELS } from '@/lib/bulletin-validation'
+import { NEWS_CATEGORIES, NEWS_CATEGORY_LABELS } from '@/lib/news'
 import NewsCard from './NewsCard'
 
-export type NewsCategory =
-  | 'Renovation'
-  | 'Closure'
-  | 'Tournament'
-  | 'Community'
-  | 'General'
-  | 'FacilityMaintenance'
-  | 'Promotion'
+export type NewsCategory = (typeof NEWS_CATEGORIES)[number]
 
 export interface NewsItem {
   id: string
+  slug: string
   category: NewsCategory
   title: string
-  excerpt: string
-  body: string
-  date: string // display string, e.g. "August 2026" — not a real ISO timestamp requirement yet
-  image: string | null // null when the bulletin's category doesn't require one
-  socialPlatform?: 'instagram' | 'facebook'
-  socialUrl?: string // always '#' in this pass — real post URLs not yet available
-  affectedFacility?: string
-  impact?: string
-  action?: string
-  discountSummary?: string // Promotion only — display only, never validated against a real price
-  promoCode?: string // Promotion only — display only
-  eventStartAt?: string // pre-formatted display string
-  eventEndAt?: string // pre-formatted display string
-  ctaLabel?: string
-  ctaUrl?: string
+  preview: string
+  date: string
+  coverImageUrl: string | null
+  isFeatured: boolean
 }
 
 const OBJECT_POSITIONS = ['center', 'top', '20% 70%', 'right']
 
-const CATEGORY_KEYS = Object.keys(CATEGORY_LABELS) as NewsCategory[]
-
 function isNewsCategory(value: string | null): value is NewsCategory {
-  return value !== null && (CATEGORY_KEYS as string[]).includes(value)
+  return value !== null && (NEWS_CATEGORIES as readonly string[]).includes(value)
 }
 
-interface NewsGridProps {
-  items: NewsItem[]
-}
-
-export default function NewsGrid({ items }: NewsGridProps) {
+export default function NewsGrid({ items }: { items: NewsItem[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const categoryParam = searchParams.get('category')
-  const selectedCategory: NewsCategory | 'All' = isNewsCategory(categoryParam) ? categoryParam : 'All'
+  const selectedCategory: NewsCategory | 'all' = isNewsCategory(categoryParam) ? categoryParam : 'all'
 
-  function handleSelectCategory(category: NewsCategory | 'All') {
+  function handleSelectCategory(category: NewsCategory | 'all') {
     const params = new URLSearchParams(searchParams.toString())
-    if (category === 'All') {
-      params.delete('category')
-    } else {
-      params.set('category', category)
-    }
+    if (category === 'all') params.delete('category')
+    else params.set('category', category)
     const query = params.toString()
     router.replace(query ? `/news?${query}` : '/news', { scroll: false })
   }
 
-  const filteredItems =
-    selectedCategory === 'All' ? items : items.filter((item) => item.category === selectedCategory)
-  const featuredTournament =
-    selectedCategory === 'All' ? filteredItems.find((item) => item.category === 'Tournament') : undefined
-  const gridItems = featuredTournament
-    ? filteredItems.filter((item) => item.id !== featuredTournament.id)
-    : filteredItems
-
-  const pillBase =
-    'rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors'
+  const filteredItems = selectedCategory === 'all'
+    ? items
+    : items.filter((item) => item.category === selectedCategory)
+  const featured = filteredItems.find((item) => item.isFeatured)
+  const gridItems = featured ? filteredItems.filter((item) => item.id !== featured.id) : filteredItems
+  const pillBase = 'rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors'
   const pillActive = `${pillBase} bg-accent-primary text-brand-light`
   const pillIdle = `${pillBase} border border-brand-dark/20 text-brand-dark hover:border-accent-primary`
-  const postCount = filteredItems.length
 
   return (
     <>
       <div className="border-b border-brand-dark/10 bg-brand-light">
         <div className="mx-auto max-w-6xl px-6 py-5 md:px-10">
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => handleSelectCategory('All')}
-              className={selectedCategory === 'All' ? pillActive : pillIdle}
-            >
+          <div className="flex flex-wrap gap-2" aria-label="Filter news by category">
+            <button type="button" onClick={() => handleSelectCategory('all')} className={selectedCategory === 'all' ? pillActive : pillIdle}>
               All
             </button>
-            {CATEGORY_KEYS.map((category) => (
-              <button
-                key={category}
-                type="button"
-                onClick={() => handleSelectCategory(category)}
-                className={selectedCategory === category ? pillActive : pillIdle}
-              >
-                {CATEGORY_LABELS[category]}
+            {NEWS_CATEGORIES.map((category) => (
+              <button key={category} type="button" onClick={() => handleSelectCategory(category)} className={selectedCategory === category ? pillActive : pillIdle}>
+                {NEWS_CATEGORY_LABELS[category]}
               </button>
             ))}
           </div>
           <p className="mt-3 text-right font-mono text-xs text-brand-dark/50">
-            {postCount} {postCount === 1 ? 'post' : 'posts'}
+            {filteredItems.length} {filteredItems.length === 1 ? 'post' : 'posts'}
           </p>
         </div>
       </div>
@@ -111,21 +71,14 @@ export default function NewsGrid({ items }: NewsGridProps) {
         <div className="mx-auto max-w-6xl px-6 md:px-10">
           {filteredItems.length === 0 ? (
             <p className="text-center text-sm text-neutral-700">
-              {items.length === 0
-                ? 'No announcements yet — check back soon.'
-                : 'No announcements in this category yet.'}
+              {items.length === 0 ? 'No news has been published yet.' : 'No news in this category yet.'}
             </p>
           ) : (
             <div className="space-y-8">
-              {featuredTournament && (
-                <Reveal>
-                  <NewsCard item={featuredTournament} variant="featured" />
-                </Reveal>
-              )}
-
+              {featured && <Reveal><NewsCard item={featured} variant="featured" /></Reveal>}
               <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                 {gridItems.map((item, index) => (
-                  <Reveal key={item.id} delayMs={(index + (featuredTournament ? 1 : 0)) * 100}>
+                  <Reveal key={item.id} delayMs={(index + (featured ? 1 : 0)) * 100}>
                     <NewsCard item={item} objectPosition={OBJECT_POSITIONS[index % OBJECT_POSITIONS.length]} />
                   </Reveal>
                 ))}
