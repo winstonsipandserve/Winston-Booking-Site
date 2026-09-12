@@ -4,8 +4,9 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier, formatCentavos } from '@/lib/format'
+import { formatMembershipTier } from '@/lib/format'
 import CompleteRenewalPaymentButton from '@/components/membership/CompleteRenewalPaymentButton'
+import MembershipCheckoutSummary from '@/components/membership/MembershipCheckoutSummary'
 
 export default async function MembershipRenewalPaymentPage({
   params,
@@ -16,6 +17,7 @@ export default async function MembershipRenewalPaymentPage({
 
   const membershipPayment = await prisma.membershipPayment.findUnique({
     where: { id },
+    include: { customer: true },
   })
 
   if (!membershipPayment) {
@@ -35,10 +37,15 @@ export default async function MembershipRenewalPaymentPage({
           <h1 className="mt-5 font-serif text-4xl text-brand-light md:text-6xl">
             Complete Your Renewal
           </h1>
+
+          <p className="mt-6 max-w-xl text-brand-light/80">
+            Settle the amount below to keep your priority bookings, facility access, and F&amp;B
+            credit active without interruption.
+          </p>
         </div>
       </section>
 
-      <div className="flex flex-1 flex-col items-center gap-8 bg-brand-light px-6 py-16">
+      <div className="flex flex-1 flex-col items-center gap-8 bg-background px-6 py-16">
         {membershipPayment.status === 'paid' ? (
           <div className="flex max-w-md flex-col items-center gap-3 text-center">
             <p className="text-brand-dark">You&apos;re already renewed!</p>
@@ -51,42 +58,19 @@ export default async function MembershipRenewalPaymentPage({
           </div>
         ) : (
           <div className="flex w-full max-w-md flex-col gap-4">
-            <div className="rounded-card border border-brand-dark/10 bg-brand-light px-5 py-6 shadow-card sm:px-6">
-              <dl className="flex flex-col">
-                <div className="flex justify-between gap-4 pb-3">
-                  <dt className="text-sm text-brand-dark/65">Tier</dt>
-                  <dd className="text-right font-medium text-brand-dark">
-                    {formatMembershipTier(membershipPayment.tier)}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-                  <dt className="text-sm text-brand-dark/65">Activation Fee</dt>
-                  <dd className="text-right font-medium text-brand-dark/85">
-                    {formatCentavos(
-                      MEMBERSHIP_TIER_PLANS[membershipPayment.tier].activationFeeCentavos,
-                    )}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-                  <dt className="text-sm text-brand-dark/65">F&amp;B Credit</dt>
-                  <dd className="text-right font-medium text-brand-dark/85">
-                    {formatCentavos(
-                      MEMBERSHIP_TIER_PLANS[membershipPayment.tier].creditCentavos,
-                    )}
-                  </dd>
-                </div>
-                <div className="mt-4 flex items-center justify-between gap-4 rounded-card-inline bg-brand-dark px-4 py-4 text-brand-light">
-                  <dt className="text-sm font-medium uppercase tracking-[0.16em] text-brand-light/75">
-                    Total Due
-                  </dt>
-                  <dd className="text-right text-2xl font-semibold tracking-tight text-brand-light">
-                    {formatCentavos(
-                      MEMBERSHIP_TIER_PLANS[membershipPayment.tier].totalCentavos,
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+            <MembershipCheckoutSummary
+              tierLabel={formatMembershipTier(membershipPayment.tier)}
+              customerName={membershipPayment.customer.name}
+              activationFeeCentavos={
+                MEMBERSHIP_TIER_PLANS[membershipPayment.tier].activationFeeCentavos
+              }
+              creditCentavos={MEMBERSHIP_TIER_PLANS[membershipPayment.tier].creditCentavos}
+              totalCentavos={MEMBERSHIP_TIER_PLANS[membershipPayment.tier].totalCentavos}
+            />
+
+            <p className="rounded-card-inline border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-3 text-sm text-brand-dark/70">
+              You&apos;ll be redirected to PayMongo to complete payment securely.
+            </p>
 
             <CompleteRenewalPaymentButton membershipPaymentId={membershipPayment.id} />
           </div>
