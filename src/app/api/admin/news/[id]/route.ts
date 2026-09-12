@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { parseNewsForm } from '@/lib/news-validation'
 import { MIME_TO_EXTENSION, validateImageFile } from '@/lib/content-image-validation'
 import { deleteFromStorage, getPublicUrl, uploadToStorage } from '@/lib/supabase-storage'
+import { logAdminActivity } from '@/lib/admin-activity-log'
 
 const BUCKET = 'bulletin-images'
 
@@ -50,12 +51,30 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   try {
-    const post = await prisma.newsPost.update({
-      where: { id },
-      data: {
-        ...parsed.fields,
-        ...(coverImageUrl ? { coverImageUrl } : removeCover ? { coverImageUrl: null } : {}),
-      },
+    const post = await prisma.$transaction(async (tx) => {
+      const post = await tx.newsPost.update({
+        where: { id },
+        data: {
+          ...parsed.fields,
+          ...(coverImageUrl ? { coverImageUrl } : removeCover ? { coverImageUrl: null } : {}),
+        },
+      })
+      await logAdminActivity(
+        {
+          adminId: activeSession.adminUser.id,
+          action: 'news_post_updated',
+          entityType: 'news_post',
+          entityId: post.id,
+          description: `Updated news post "${post.title}"`,
+          metadata: {
+            previousStatus: existing.status,
+            status: post.status,
+            coverChanged: Boolean(newPath) || removeCover,
+          },
+        },
+        tx,
+      )
+      return post
     })
     if ((newPath || removeCover) && existing.coverImageUrl) {
       const oldPath = storagePath(existing.coverImageUrl)
@@ -89,7 +108,20 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (!existing) return Response.json({ error: 'News post not found' }, { status: 404 })
 
   try {
-    await prisma.newsPost.delete({ where: { id } })
+    await prisma.$transaction(async (tx) => {
+      await tx.newsPost.delete({ where: { id } })
+      await logAdminActivity(
+        {
+          adminId: activeSession.adminUser.id,
+          action: 'news_post_deleted',
+          entityType: 'news_post',
+          entityId: existing.id,
+          description: `Deleted news post "${existing.title}"`,
+          metadata: { status: existing.status, slug: existing.slug },
+        },
+        tx,
+      )
+    })
     if (existing.coverImageUrl) {
       const path = storagePath(existing.coverImageUrl)
       if (path) {

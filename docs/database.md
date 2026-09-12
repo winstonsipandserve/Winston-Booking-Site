@@ -70,8 +70,8 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 | `AnnouncementUrgency` | `info`, `warning`, `urgent` |
 | `NewsCategory` | `tournament`, `community`, `promo`, `general` |
 | `NewsStatus` | `draft`, `published` |
-| `AdminActivityAction` | `membership_application_approved`, `membership_application_rejected`, `membership_renewal_link_sent`, `booking_rescheduled`, `membership_credit_topup_added` |
-| `AdminActivityEntityType` | `membership_application`, `booking`, `membership` |
+| `AdminActivityAction` | `membership_application_approved`, `membership_application_rejected`, `membership_renewal_link_sent`, `booking_rescheduled`, `membership_credit_topup_added`, `news_post_created`, `news_post_updated`, `news_post_deleted`, `announcement_created`, `announcement_updated`, `announcement_deleted` |
+| `AdminActivityEntityType` | `membership_application`, `booking`, `membership`, `news_post`, `announcement` |
 
 `MembershipDisplayStatus` is **not** a database enum — it is a derived TypeScript union (`pending`, `awaiting_payment`, `active`, `expired`, `rejected`). See "Membership status" below.
 

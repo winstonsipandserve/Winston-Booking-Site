@@ -9,6 +9,12 @@ type AdminActivityAction =
   | 'membership_renewal_link_sent'
   | 'booking_rescheduled'
   | 'membership_credit_topup_added'
+  | 'news_post_created'
+  | 'news_post_updated'
+  | 'news_post_deleted'
+  | 'announcement_created'
+  | 'announcement_updated'
+  | 'announcement_deleted'
 
 const ADMIN_ACTIVITY_ACTION_LABELS: Record<AdminActivityAction, string> = {
   membership_application_approved: 'Membership Approved',
@@ -16,6 +22,12 @@ const ADMIN_ACTIVITY_ACTION_LABELS: Record<AdminActivityAction, string> = {
   membership_renewal_link_sent: 'Renewal Link Sent',
   booking_rescheduled: 'Booking Rescheduled',
   membership_credit_topup_added: 'Credit Top-Up',
+  news_post_created: 'News Created',
+  news_post_updated: 'News Updated',
+  news_post_deleted: 'News Deleted',
+  announcement_created: 'Announcement Created',
+  announcement_updated: 'Announcement Updated',
+  announcement_deleted: 'Announcement Deleted',
 }
 
 interface ActivityLogItem {

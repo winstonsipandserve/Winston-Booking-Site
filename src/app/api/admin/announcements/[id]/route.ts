@@ -6,6 +6,7 @@ import {
   applyAnnouncementResourceDisable,
   releaseAnnouncementResourceDisable,
 } from '@/lib/announcement-resource-disable'
+import { logAdminActivity } from '@/lib/admin-activity-log'
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const activeSession = await getActiveAdminSession()
@@ -65,6 +66,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
       await applyAnnouncementResourceDisable(tx, toApply)
       await releaseAnnouncementResourceDisable(tx, toRelease, id)
+      await logAdminActivity(
+        {
+          adminId: activeSession.adminUser.id,
+          action: 'announcement_updated',
+          entityType: 'announcement',
+          entityId: announcement.id,
+          description: `Updated announcement "${announcement.title}"`,
+          metadata: {
+            wasActive: existing.isActive,
+            isActive: announcement.isActive,
+            urgency: announcement.urgency,
+            resourceCount: newResourceIds.length,
+            resourcesDisabled: toApply.length,
+            resourcesReleased: toRelease.length,
+          },
+        },
+        tx,
+      )
       return announcement
     })
     return Response.json(updated, { status: 200 })
@@ -90,6 +109,17 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
       })
       await releaseAnnouncementResourceDisable(tx, links.map((link) => link.resourceId), id)
       await tx.announcement.delete({ where: { id } })
+      await logAdminActivity(
+        {
+          adminId: activeSession.adminUser.id,
+          action: 'announcement_deleted',
+          entityType: 'announcement',
+          entityId: existing.id,
+          description: `Deleted announcement "${existing.title}"`,
+          metadata: { isActive: existing.isActive, urgency: existing.urgency, resourceCount: links.length },
+        },
+        tx,
+      )
     })
     return Response.json({ success: true }, { status: 200 })
   } catch (error) {

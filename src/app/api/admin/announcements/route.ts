@@ -5,6 +5,7 @@ import {
   announcementIsClaimingResources,
   applyAnnouncementResourceDisable,
 } from '@/lib/announcement-resource-disable'
+import { logAdminActivity } from '@/lib/admin-activity-log'
 
 export async function POST(request: Request) {
   const activeSession = await getActiveAdminSession()
@@ -41,6 +42,17 @@ export async function POST(request: Request) {
       if (announcementIsClaimingResources(created)) {
         await applyAnnouncementResourceDisable(tx, resourceIds)
       }
+      await logAdminActivity(
+        {
+          adminId: activeSession.adminUser.id,
+          action: 'announcement_created',
+          entityType: 'announcement',
+          entityId: created.id,
+          description: `Created ${created.isActive ? 'active' : 'inactive'} ${created.urgency} announcement "${created.title}"`,
+          metadata: { isActive: created.isActive, urgency: created.urgency, resourceCount: resourceIds.length },
+        },
+        tx,
+      )
       return created
     })
     return Response.json(announcement, { status: 201 })

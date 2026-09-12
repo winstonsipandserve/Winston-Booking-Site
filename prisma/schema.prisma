@@ -143,12 +143,20 @@ enum AdminActivityAction {
   membership_renewal_link_sent
   booking_rescheduled
   membership_credit_topup_added
+  news_post_created
+  news_post_updated
+  news_post_deleted
+  announcement_created
+  announcement_updated
+  announcement_deleted
 }
 
 enum AdminActivityEntityType {
   membership_application
   booking
   membership
+  news_post
+  announcement
 }
 
 enum AuthRateLimitScope {

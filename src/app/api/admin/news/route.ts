@@ -5,6 +5,7 @@ import { createUniqueNewsSlug, slugBase } from '@/lib/news'
 import { parseNewsForm } from '@/lib/news-validation'
 import { MIME_TO_EXTENSION, validateImageFile } from '@/lib/content-image-validation'
 import { deleteFromStorage, getPublicUrl, uploadToStorage } from '@/lib/supabase-storage'
+import { logAdminActivity } from '@/lib/admin-activity-log'
 
 const BUCKET = 'bulletin-images'
 
@@ -47,20 +48,33 @@ export async function POST(request: Request) {
     const slug = await createUniqueNewsSlug(parsed.fields.title, async (candidate) =>
       Boolean(await prisma.newsPost.findUnique({ where: { slug: candidate }, select: { id: true } })),
     )
-    try {
-      const post = await prisma.newsPost.create({
-        data: { id, slug, ...parsed.fields, coverImageUrl, createdById: activeSession.adminUser.id },
+    const createPost = (finalSlug: string) =>
+      prisma.$transaction(async (tx) => {
+        const post = await tx.newsPost.create({
+          data: { id, slug: finalSlug, ...parsed.fields, coverImageUrl, createdById: activeSession.adminUser.id },
+        })
+        await logAdminActivity(
+          {
+            adminId: activeSession.adminUser.id,
+            action: 'news_post_created',
+            entityType: 'news_post',
+            entityId: post.id,
+            description: `Created ${post.status} news post "${post.title}"`,
+            metadata: { status: post.status, slug: post.slug },
+          },
+          tx,
+        )
+        return post
       })
+    try {
+      const post = await createPost(slug)
       return Response.json(post, { status: 201 })
     } catch (error) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error
 
       // A concurrent create can win after the existence check. The generated id makes
       // this retry collision-safe without ever changing the slug after creation.
-      const retrySlug = `${slugBase(parsed.fields.title)}-${id.slice(0, 8)}`
-      const post = await prisma.newsPost.create({
-        data: { id, slug: retrySlug, ...parsed.fields, coverImageUrl, createdById: activeSession.adminUser.id },
-      })
+      const post = await createPost(`${slugBase(parsed.fields.title)}-${id.slice(0, 8)}`)
       return Response.json(post, { status: 201 })
     }
   } catch (error) {
