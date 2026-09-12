@@ -31,7 +31,7 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 
 ## Booking
 
-- **Announcement gate** before the wizard, showing current published notices (Promotions excluded).
+- **Announcement gate** before the wizard, showing current published notices (Promotions excluded) as title + excerpt, three per page with previous/next paging when there are more. The card is sized to fit the viewport without page scrolling.
 - **Five-step wizard** — Sport, Court, Date & Time, Add-Ons, Summary — with a step indicator and full back/forward state preservation.
 - **Live availability**: the time-slot grid greys out occupied slots before submit.
 - **Member-aware**: a logged-in member with an active membership gets member pricing and a pre-filled contact step, in a single pricing phase. Anonymous bookers are priced at the non-member rate throughout.

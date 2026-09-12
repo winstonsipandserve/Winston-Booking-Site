@@ -9,13 +9,14 @@ export async function GET() {
     // Bulletin / Promotion category decision. It still appears on /news.
     where: { isPublished: true, category: { not: 'Promotion' }, ...bulletinNotExpiredWhere() },
     orderBy: bulletinOrderBy,
-    take: 3,
   })
 
   const notices = bulletins.map((bulletin) => ({
     category: bulletin.category,
     title: bulletin.title,
-    body: bulletin.body,
+    // The gate is a quick pre-booking scan, so it shows the one-line excerpt; the full
+    // body is on /news.
+    excerpt: bulletin.excerpt,
     publishedAt: formatBulletinDate(bulletin.publishedAt as Date),
     affectedFacility: bulletin.affectedFacility ?? undefined,
     action: bulletin.action ?? undefined,
