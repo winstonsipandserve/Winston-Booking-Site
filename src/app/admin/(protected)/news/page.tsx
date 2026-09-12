@@ -16,20 +16,17 @@ export default async function AdminNewsPage({ searchParams }: { searchParams: Pr
   return (
     <div className="relative isolate flex h-full flex-col gap-4">
       <div aria-hidden="true" className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900" />
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">News</h1>
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 p-4 dark:border-gray-800">
-        <NewsManager posts={posts.map((post) => ({
-          id: post.id,
-          slug: post.slug,
-          title: post.title,
-          bodyHtml: post.bodyHtml,
-          coverImageUrl: post.coverImageUrl,
-          category: post.category,
-          publishAt: post.publishAt?.toISOString() ?? null,
-          status: post.status,
-          isFeatured: post.isFeatured,
-        }))} />
-      </div>
+      <NewsManager posts={posts.map((post) => ({
+        id: post.id,
+        slug: post.slug,
+        title: post.title,
+        bodyHtml: post.bodyHtml,
+        coverImageUrl: post.coverImageUrl,
+        category: post.category,
+        publishAt: post.publishAt?.toISOString() ?? null,
+        status: post.status,
+        isFeatured: post.isFeatured,
+      }))} />
       <AdminPagination page={page} totalPages={totalPages} previousHref={`/admin/news?page=${Math.max(1, page - 1)}`} nextHref={`/admin/news?page=${Math.min(totalPages, page + 1)}`} />
     </div>
   )

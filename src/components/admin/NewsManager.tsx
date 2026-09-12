@@ -60,10 +60,11 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Long-form stories, tournaments, community updates, and promotions.</p>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">News</h1>
         <button type="button" onClick={() => setEditing('new')} className="shrink-0 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200">+ Add News</button>
       </div>
+      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-100 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
       {posts.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center dark:border-gray-700">
           <p className="font-medium text-gray-900 dark:text-gray-100">No news posts yet</p>
@@ -72,8 +73,16 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
       ) : (
         <div className="space-y-3">
           {posts.map((post) => (
-            <article key={post.id} className="flex gap-4 rounded-xl bg-white p-4 ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800">
-              {post.coverImageUrl ? <img src={post.coverImageUrl} alt="" className="h-20 w-24 shrink-0 rounded-lg object-cover" /> : <div className="h-20 w-24 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-800" />}
+            <article key={post.id} className="flex gap-4 rounded-xl p-4 ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800 bg-white">
+              {post.coverImageUrl ? (
+                <img src={post.coverImageUrl} alt="" className="h-20 w-24 shrink-0 rounded-lg object-cover" />
+              ) : (
+                <div className="flex h-20 w-24 shrink-0 items-center justify-center rounded-lg bg-gray-200 dark:bg-gray-800" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-8 w-8 text-gray-400 dark:text-gray-500">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 0 1-2.25 2.25M16.5 7.5V18a2.25 2.25 0 0 0 2.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 0 0 2.25 2.25h13.5M6 7.5h3v3H6v-3Z" />
+                  </svg>
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="font-semibold text-gray-900 dark:text-gray-100">{post.title}</h2>
@@ -91,6 +100,7 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
           ))}
         </div>
       )}
+      </div>
       <NewsFormModal key={editing === 'new' ? 'new' : editing?.id ?? 'closed'} post={editing === 'new' ? null : editing} isOpen={editing !== null} onClose={() => setEditing(null)} />
       <ConfirmModal isOpen={pendingDelete !== null} onClose={() => { setPendingDelete(null); setDeleteError(null) }} onConfirm={deletePost} title="Delete news post?" message={pendingDelete ? `Delete “${pendingDelete.title}” and its uploaded cover image?` : ''} confirmLabel="Delete" confirmVariant="danger" isLoading={deleting} error={deleteError} />
     </>

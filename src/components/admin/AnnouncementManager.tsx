@@ -77,10 +77,8 @@ export default function AnnouncementManager({
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Booking-impact notices shown before customers choose a court or bay.
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Announcements</h1>
         <button
           type="button"
           onClick={() => setEditing('new')}
@@ -90,6 +88,7 @@ export default function AnnouncementManager({
         </button>
       </div>
 
+      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-100 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
       {announcements.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center dark:border-gray-700">
           <p className="font-medium text-gray-900 dark:text-gray-100">No announcements yet</p>
@@ -134,6 +133,7 @@ export default function AnnouncementManager({
           ))}
         </div>
       )}
+      </div>
 
       <AnnouncementFormModal
         key={editing === 'new' ? 'new' : editing?.id ?? 'closed'}
