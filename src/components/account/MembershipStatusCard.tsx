@@ -25,6 +25,10 @@ type MembershipStatusCardProps =
         remainingCreditCentavos: number
         expiryDateLabel: string
         isExpired: boolean
+        /** Expired, or the current term ends within the renewal window and nothing is scheduled yet. */
+        canRenew: boolean
+        /** Set when a renewal has already been paid for and queued behind the current term. */
+        scheduledRenewalExpiryLabel: string | null
       }
       customerId: string
       qrCodeDataUrl: string
@@ -175,6 +179,13 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
         </div>
       </div>
 
+      {membership.scheduledRenewalExpiryLabel && (
+        <p className="mt-6 border-l-4 border-accent-light/60 bg-brand-light/5 px-4 py-3 text-sm text-neutral-200">
+          Your renewal is paid and starts automatically when this term ends. It runs through{' '}
+          <span className="font-medium text-neutral-100">{membership.scheduledRenewalExpiryLabel}</span>.
+        </p>
+      )}
+
       {membership.isExpired && (
         <>
           <Link
@@ -193,20 +204,30 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
       )}
 
       {!membership.isExpired && (
-        <div className="mt-6 flex gap-3">
-          <button
-            type="button"
-            onClick={() => setTopUpModalOpen(true)}
-            className="flex flex-1 items-center justify-center rounded-none border border-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-accent-primary transition-colors hover:bg-accent-primary hover:text-brand-light"
-          >
-            Top Up
-          </button>
-          <Link
-            href="/book"
-            className="flex flex-1 items-center justify-center rounded-none bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
-          >
-            Book a Court
-          </Link>
+        <div className="mt-6 flex flex-col gap-3">
+          {membership.canRenew && (
+            <Link
+              href="/account/renew"
+              className="flex items-center justify-center rounded-none bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+            >
+              Renew Early
+            </Link>
+          )}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setTopUpModalOpen(true)}
+              className="flex flex-1 items-center justify-center rounded-none border border-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-accent-primary transition-colors hover:bg-accent-primary hover:text-brand-light"
+            >
+              Top Up
+            </button>
+            <Link
+              href="/book"
+              className="flex flex-1 items-center justify-center rounded-none bg-accent-primary px-6 py-2.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+            >
+              Book a Court
+            </Link>
+          </div>
         </div>
       )}
 

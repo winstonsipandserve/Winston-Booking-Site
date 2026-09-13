@@ -1,5 +1,6 @@
 import { Customer, Membership } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { getMembershipActiveAt } from '@/lib/membership-current'
 
 export interface ResolveCustomerInput {
   name: string
@@ -12,11 +13,9 @@ export interface ResolveCustomerResult {
   isMember: boolean
 }
 
+/** The membership covering right now. Pass a slot start to `getMembershipActiveAt` when pricing a booking. */
 export async function getActiveMembership(customerId: string): Promise<Membership | null> {
-  const now = new Date()
-  return prisma.membership.findFirst({
-    where: { customerId, status: 'active', endDate: { gte: now } },
-  })
+  return getMembershipActiveAt(customerId, new Date())
 }
 
 export async function isActiveMember(customerId: string): Promise<boolean> {

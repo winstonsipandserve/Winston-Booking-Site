@@ -47,7 +47,7 @@ export async function getMembershipApplicationsForFilter(
           customer: {
             include: {
               memberships: {
-                orderBy: { startDate: 'desc' },
+                orderBy: [{ endDate: 'desc' }, { startDate: 'desc' }, { id: 'asc' }],
                 take: 1,
               },
             },
@@ -78,7 +78,7 @@ export async function getMembershipApplicationsForFilter(
         customer: {
           include: {
             memberships: {
-              orderBy: { startDate: 'desc' },
+              orderBy: [{ endDate: 'desc' }, { startDate: 'desc' }, { id: 'asc' }],
               take: 1,
             },
           },

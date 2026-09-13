@@ -19,6 +19,7 @@ interface DateTimeStepProps {
   availabilityError: string | null
   selectedSlot: string | null
   onSelectSlot: (startTimeIso: string) => void
+  membershipCoverageNotice: string | null
 }
 
 export default function DateTimeStep({
@@ -34,6 +35,7 @@ export default function DateTimeStep({
   availabilityError,
   selectedSlot,
   onSelectSlot,
+  membershipCoverageNotice,
 }: DateTimeStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -66,6 +68,12 @@ export default function DateTimeStep({
         <span className="text-sm font-medium text-brand-dark">Date</span>
         <Calendar selectedDate={selectedDate} onSelectDate={onSelectDate} />
       </div>
+
+      {membershipCoverageNotice && (
+        <p role="status" className="border-l-4 border-accent-primary bg-accent-primary/10 px-4 py-3 text-sm text-brand-dark">
+          {membershipCoverageNotice}
+        </p>
+      )}
 
       {selectedDate && (
         <div className="flex flex-col gap-1">

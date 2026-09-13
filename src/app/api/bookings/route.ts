@@ -4,7 +4,7 @@ import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 import { priceBooking } from '@/lib/booking-pricing'
-import { getActiveMembership } from '@/lib/customer-resolution'
+import { getMembershipActiveAt } from '@/lib/membership-current'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { appendBookingAccessCookie, createBookingAccessToken } from '@/lib/booking-access'
 import { auth } from '../../../../auth'
@@ -80,7 +80,10 @@ export async function POST(request: Request) {
   let customerPhoneSnapshot: string | null = null
   if (isMemberSession) {
     customerId = session!.user.id
-    activeMembership = await getActiveMembership(customerId)
+    // Member benefits require a membership whose term covers the slot itself, not just the
+    // moment of booking — a member two days from expiry gets non-member pricing for next
+    // week (see docs/business.md → Membership perks).
+    activeMembership = await getMembershipActiveAt(customerId, parsedStartTime)
     isMember = !!activeMembership
     const sessionCustomer = await prisma.customer.findUnique({ where: { id: customerId } })
     if (sessionCustomer) {
@@ -195,8 +198,15 @@ export async function POST(request: Request) {
         activeMembership &&
         activeMembership.creditBalanceCentavos >= grandTotalCentavos
       ) {
+        // The term filter is re-applied here so the redemption can never land on a row
+        // that stopped covering the slot between the lookup above and this write.
         const decrement = await tx.membership.updateMany({
-          where: { id: activeMembership.id, creditBalanceCentavos: { gte: grandTotalCentavos } },
+          where: {
+            id: activeMembership.id,
+            creditBalanceCentavos: { gte: grandTotalCentavos },
+            startDate: { lte: parsedStartTime },
+            endDate: { gte: parsedStartTime },
+          },
           data: { creditBalanceCentavos: { decrement: grandTotalCentavos } },
         })
         creditCovered = decrement.count === 1

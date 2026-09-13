@@ -6,10 +6,12 @@ import {
   sendStaffMembershipActivationEmail,
   sendStaffMembershipRenewalEmail,
   sendCreditTopUpConfirmationEmail,
+  sendStaffTopUpAfterExpiryEmail,
 } from '@/lib/resend'
+import { getLiveMemberships } from '@/lib/membership-current'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { formatMembershipTier, formatMembershipExpiryDate } from '@/lib/format'
 import { generateActivationToken } from '@/lib/member-activation'
 
 interface PaymongoWebhookEvent {
@@ -184,15 +186,14 @@ async function handleMembershipPaymentWebhook(
 
   const isRenewal = membershipPayment.applicationId === null
   const plan = MEMBERSHIP_TIER_PLANS[membershipPayment.tier]
-  const startDate = paidAt
+  // An early renewal queues behind the customer's latest unexpired term instead of
+  // restarting today, so no paid-for days are lost. A lapsed member starts from paidAt.
+  const liveMemberships = isRenewal ? await getLiveMemberships(membershipPayment.customerId, paidAt) : []
+  const latestLiveTerm = liveMemberships[liveMemberships.length - 1]
+  const startDate = latestLiveTerm ? new Date(latestLiveTerm.endDate.getTime() + 1) : paidAt
   const endDate = computeMembershipEndDate(startDate, membershipPayment.tier)
   const tierName = formatMembershipTier(membershipPayment.tier)
-  const expiryDateLabel = new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Asia/Manila',
-  }).format(endDate)
+  const expiryDateLabel = formatMembershipExpiryDate(endDate)
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -240,6 +241,7 @@ async function handleMembershipPaymentWebhook(
       activationFeeCentavos: plan.activationFeeCentavos,
       creditBalanceCentavos: plan.creditCentavos,
       expiryDateLabel,
+      startDateLabel: latestLiveTerm ? formatMembershipExpiryDate(startDate) : null,
     })
     await sendStaffMembershipRenewalEmail({
       customerName: membershipPayment.customer.name,
@@ -358,6 +360,26 @@ async function handleTopUpPaymentWebhook(
     amountCentavos: payment.amountCentavos,
     newBalanceCentavos,
   })
+
+  // The checkout was started while the membership was active, but the payment landed
+  // after the term ended. The money is real and has been credited above; staff decide
+  // whether to refund it or roll it into a renewal (docs/business.md → Membership).
+  if (payment.membership.endDate < paidAt) {
+    console.warn('Top-up paid after membership expiry', {
+      topUpPaymentId,
+      membershipId: payment.membershipId,
+      endDate: payment.membership.endDate.toISOString(),
+      paidAt: paidAt.toISOString(),
+    })
+    await sendStaffTopUpAfterExpiryEmail({
+      customerName: payment.membership.customer.name,
+      customerEmail: payment.membership.customer.email,
+      amountCentavos: payment.amountCentavos,
+      newBalanceCentavos,
+      expiryDateLabel: formatMembershipExpiryDate(payment.membership.endDate),
+      paymentId: payment.id,
+    })
+  }
 
   return Response.json({ received: true }, { status: 200 })
 }

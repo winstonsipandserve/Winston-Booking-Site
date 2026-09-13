@@ -1,10 +1,12 @@
 import BookingPageClient from '@/components/booking/BookingPageClient'
 import Navbar from '@/components/layout/Navbar'
-import { getActiveMembership } from '@/lib/customer-resolution'
+import { getLiveMemberships, membershipCoversInstant } from '@/lib/membership-current'
+import { manilaDateKey } from '@/lib/manila-date'
 import { prisma } from '@/lib/prisma'
 import { activeAnnouncementWhere, sortAnnouncementsByUrgency } from '@/lib/announcement'
-import { formatBookingDateTime } from '@/lib/format'
+import { formatBookingDateTime, formatMembershipExpiryDate } from '@/lib/format'
 import type { GateNotice } from '@/components/booking/AnnouncementGate'
+import type { MemberContext } from '@/components/booking/BookingPageClient'
 import { auth } from '../../../auth'
 
 export default async function BookPage() {
@@ -30,13 +32,7 @@ export default async function BookPage() {
     ),
   }))
 
-  let memberContext: {
-    name: string
-    email: string
-    phone: string
-    isActiveMember: boolean
-    creditBalanceCentavos: number
-  } | null = null
+  let memberContext: MemberContext | null = null
 
   if (session?.user?.id && session.user.role === 'member') {
     const customer = await prisma.customer.findUnique({
@@ -44,13 +40,24 @@ export default async function BookPage() {
     })
 
     if (customer) {
-      const membership = await getActiveMembership(customer.id)
+      // Every unexpired term (current plus a scheduled renewal) so the wizard can price a
+      // slot by the term that actually covers it — the API applies the same rule.
+      const liveMemberships = await getLiveMemberships(customer.id, now)
+      const activeNow = liveMemberships.find((membership) => membershipCoversInstant(membership, now))
       memberContext = {
         name: customer.name,
         email: customer.email,
         phone: customer.phone,
-        isActiveMember: !!membership,
-        creditBalanceCentavos: membership?.creditBalanceCentavos ?? 0,
+        isActiveMember: !!activeNow,
+        creditBalanceCentavos: activeNow?.creditBalanceCentavos ?? 0,
+        coverage: liveMemberships.map((membership) => ({
+          startsAt: membership.startDate.toISOString(),
+          endsAt: membership.endDate.toISOString(),
+          startDateKey: manilaDateKey(membership.startDate),
+          expiryDateKey: manilaDateKey(membership.endDate),
+          expiryDateLabel: formatMembershipExpiryDate(membership.endDate),
+          creditBalanceCentavos: membership.creditBalanceCentavos,
+        })),
       }
     }
   }

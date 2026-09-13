@@ -4,12 +4,24 @@ import { useEffect, useState } from 'react'
 import AnnouncementGate, { type GateNotice } from '@/components/booking/AnnouncementGate'
 import BookingForm, { type ResourcesResponse } from '@/components/booking/BookingForm'
 
-interface MemberContext {
+export interface MembershipCoverage {
+  startsAt: string
+  endsAt: string
+  /** Manila `YYYY-MM-DD` of the term's first and last day — compared against the calendar's date keys. */
+  startDateKey: string
+  expiryDateKey: string
+  expiryDateLabel: string
+  creditBalanceCentavos: number
+}
+
+export interface MemberContext {
   name: string
   email: string
   phone: string
   isActiveMember: boolean
   creditBalanceCentavos: number
+  /** Unexpired terms, earliest first. Empty for a lapsed member. */
+  coverage: MembershipCoverage[]
 }
 
 interface BookingPageClientProps {

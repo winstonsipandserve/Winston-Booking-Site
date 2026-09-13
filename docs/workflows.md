@@ -28,9 +28,9 @@ The default path. The customer is not logged in and may not exist in the system 
 
 Same `/book` route, not a separate one.
 
-1. `/book` reads the session **server-side**. If the session role is `member`, it loads that customer and builds a member context (name, email, phone, active-membership flag, credit balance) passed into the wizard.
-2. The wizard is pre-filled, so there is no contact-details step to complete.
-3. **Single-phase pricing.** `POST /api/bookings` resolves membership status itself, prices at the **member rate**, and attaches `customerId` directly at hold creation. There is no PATCH round-trip.
+1. `/book` reads the session **server-side**. If the session role is `member`, it loads that customer and builds a member context (name, email, phone, active-membership flag, and the coverage window plus credit balance of every unexpired term) passed into the wizard.
+2. The wizard is pre-filled, so there is no contact-details step to complete. The rate tier follows the **chosen date**: a day outside every term's coverage is priced non-member and a notice on the date step explains why.
+3. **Single-phase pricing.** `POST /api/bookings` resolves the membership **covering the slot start** itself (`getMembershipActiveAt`), prices at the member rate only when one exists, and attaches `customerId` directly at hold creation. There is no PATCH round-trip.
 4. The payment step skips straight to a "Booking under {name} ({email})" summary.
 5. Credit redemption is evaluated at this point — see below.
 
@@ -44,7 +44,7 @@ Evaluated inside `POST /api/bookings` on the member path only.
 
 **Full coverage or nothing.**
 
-- **If the credit balance covers the entire grand total** (base + guest fee + add-ons): the balance is decremented atomically inside the booking's own transaction, the booking is created **already `confirmed`**, a payment row is written with method `membership_credit` and status `paid`, and a negative `booking_redemption` ledger entry is recorded. **No PayMongo involvement at all.**
+- **If the credit balance covers the entire grand total** (base + guest fee + add-ons): the balance is decremented atomically inside the booking's own transaction (the decrement re-checks that the term still covers the slot start, so a lapse between lookup and write cannot redeem credit), the booking is created **already `confirmed`**, a payment row is written with method `membership_credit` and status `paid`, and a negative `booking_redemption` ledger entry is recorded. **No PayMongo involvement at all.**
   - The atomic guard is a conditional decrement that only applies if the balance is still sufficient, so two concurrent bookings cannot both spend the same credit.
 - **If the balance does not cover it**: credit is left completely untouched, the booking is created as `pending_payment`, and the member pays the **full amount** through PayMongo. An advisory modal explains this before they proceed.
 
@@ -67,7 +67,7 @@ Evaluated inside `POST /api/bookings` on the member path only.
 | `topUpPaymentId` | Credit top-up |
 
 4. **Booking branch** — mark the payment paid, capture PayMongo's payment id, fee, and net amount, confirm the booking, and send the confirmation email plus a staff notification. If the booking is not pending, log a loud "payment collected for non-pending booking — manual review needed" error rather than failing silently.
-5. **Membership branch** — compute the end date from the tier, create the `Membership` row with its credit balance, write the activation or renewal ledger entry, generate an activation token, and send the activation (or renewal) email plus a staff notification.
+5. **Membership branch** — pick the start date (payment time, or one millisecond after the customer's latest unexpired term for an early renewal), compute the end date from the tier as end-of-day Manila, create the `Membership` row with its credit balance, write the activation or renewal ledger entry, generate an activation token, and send the activation (or renewal) email plus a staff notification.
 6. **Top-up branch** — mark the payment paid, write a `top_up` ledger entry, increment the cached balance, and send the top-up confirmation email.
 
 > Client-side redirect completion never confirms anything. A customer can close the browser before returning.
@@ -106,16 +106,18 @@ In both cases the linked PayMongo checkout session is **actively expired** throu
 
 Two routes to the same outcome; both create a `MembershipPayment` with no application attached.
 
-- **Self-service** — an expired member sees a "Renew Membership" call to action on `/account`, picks a tier at `/account/renew`, and pays.
-- **Admin-initiated** — an admin uses "Send Renewal Link" (shown only for an expired membership), which creates the payment row, emails the member a `/membership/renew/[id]` link, and logs the action.
+Both are gated by one rule, `getRenewalEligibility()` in `membership-current.ts`: eligible when the customer has no unexpired term, or exactly one that ends within `RENEWAL_WINDOW_DAYS` (14). A second unexpired row means a renewal is already queued and both routes refuse with a distinct 409.
 
-Either way the webhook creates a fresh membership with a `renewal` ledger entry. **Renewal never attaches the certificate PDF.**
+- **Self-service** — an expired member sees "Renew Membership" and an eligible active member sees "Renew Early" on `/account`; both lead to `/account/renew`, which restates when the new term will start before the member picks a tier and pays.
+- **Admin-initiated** — an admin uses "Send Renewal Link" (shown when the customer is eligible), which creates the payment row, emails the member a `/membership/renew/[id]` link, and logs the action. When a renewal is already queued the detail page says so instead.
+
+Either way the webhook creates a fresh membership with a `renewal` ledger entry. For an early renewal the new row's `startDate` is one millisecond after the current term's `endDate` (i.e. the next Manila day); the renewal email states the start date. The account card shows a queued renewal's end date under the current term. **Renewal never attaches the certificate PDF.**
 
 ---
 
 ## Credit top-up
 
-- **Self-service** — an active member uses "Top Up F&B Credit" on `/account`, choosing one of four fixed presets (₱1,000 / ₱2,500 / ₱5,000 / ₱10,000), and pays through PayMongo. The webhook's top-up branch credits the balance and emails a confirmation. Shown **only** for an active, unexpired membership — the mirror image of the Renew call to action.
+- **Self-service** — an active member uses "Top Up F&B Credit" on `/account`, choosing one of four fixed presets (₱1,000 / ₱2,500 / ₱5,000 / ₱10,000), and pays through PayMongo. The webhook's top-up branch credits the balance and emails a confirmation. Shown **only** for an active, unexpired membership. If the payment lands after the term has ended, the credit is still applied and staff get a `Membership | Top-Up After Expiry | …` notification to arrange a refund or renewal (see [business.md](business.md)).
 - **Admin / front desk** — an admin uses "Add Credit" on an active member's detail page, choosing Cash or Online mode (a note is required for cash; a reference is required for online). The amount must be at least ₱1,000, and the admin must type the displayed member-and-amount confirmation before the top-up can be recorded. This records an **already-paid** payment row, a ledger entry, and an activity log row in one transaction. Gated to a currently-active membership.
 
 > The admin path sends **no** confirmation email; only the self-service path does. See [roadmap.md](roadmap.md).
@@ -178,8 +180,12 @@ The daily `/api/cron/expire-bookings` run also releases resources for announceme
 
 | Trigger | Email |
 |---|---|
-| Expiring within 14 days | 14-day reminder |
+| Expiring in more than 3 and up to 14 days | 14-day reminder |
 | Expiring within 3 days | 3-day reminder |
 | Already past the end date | Expired notice |
+
+The windows only select rows. Each email states the **actual** number of Manila calendar days left (today / tomorrow / in N days), computed at send time. The 3-day block stamps both `reminder3SentAt` and `reminder14SentAt`, so a member is never sent both reminders in one run.
+
+A row is **suppressed** — stamped without sending, and counted in the response's `suppressedCount` — when the customer holds a later membership (a queued early renewal, or a new term bought after this one lapsed). Reminder and expired emails link to `/account/renew`, never to `/membership/apply`, because reapplication is blocked for anyone who has held a membership.
 
 Each membership carries a nullable timestamp per email type, stamped **immediately after** that email is sent, row by row rather than batched. This is deliberate: a mid-run failure can never cause a retry to double-send.

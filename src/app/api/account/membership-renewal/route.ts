@@ -2,6 +2,7 @@ import { auth } from '../../../../../auth'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
+import { getRenewalEligibility } from '@/lib/membership-current'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
 import type { MembershipTier } from '@prisma/client'
 
@@ -36,11 +37,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Customer not found' }, { status: 404 })
   }
 
-  const activeMembership = await prisma.membership.findFirst({
-    where: { customerId: customer.id, status: 'active', endDate: { gte: new Date() } },
-  })
-  if (activeMembership) {
-    return Response.json({ error: 'You already have an active membership' }, { status: 409 })
+  const renewal = await getRenewalEligibility(customer.id)
+  if (!renewal.eligible) {
+    return Response.json(
+      {
+        error:
+          renewal.reason === 'already_scheduled'
+            ? 'Your renewal is already paid and scheduled'
+            : 'You already have an active membership',
+      },
+      { status: 409 },
+    )
   }
 
   const existingPending = await prisma.membershipPayment.findFirst({

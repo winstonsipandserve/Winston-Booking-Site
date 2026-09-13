@@ -191,18 +191,22 @@ Because the constraint ignores `cancelled` rows only, stale pending holds must b
 - `bookingId` is set only on `booking_redemption` rows; null otherwise.
 - A future POS will add a further `reason` value, not a new table.
 
-### Membership status — two rules coexist
+### Membership status — one rule, one module
 
-This is a genuine subtlety worth knowing before writing any membership query.
+`endDate` alone decides whether a term is live. **`Membership.status` is never consulted and never written as `expired`** — it exists in the schema but is dead; do not filter on it.
 
-| Function | Rule |
+All row selection goes through `src/lib/membership-current.ts`:
+
+| Helper | Rule |
 |---|---|
-| `getMembershipDisplayStatus()` (`membership-display-status.ts`) | Application status wins for `pending`/`rejected`. An approved application with no membership row is `awaiting_payment`. Otherwise **`endDate >= now`** decides active vs expired. `Membership.status` is never consulted. |
-| `isActiveMember()` / `getActiveMembership()` (`customer-resolution.ts`) | Requires **`status: 'active'` AND `endDate >= now`.** |
+| `getMembershipActiveAt(customerId, at)` | The row whose `startDate <= at <= endDate`. Bookings pass the slot start; everything else passes now. |
+| `getCurrentMembership(customerId)` | The row covering now, else the one with the latest `endDate` (a queued renewal or the most recently lapsed term). This is what account, admin detail, check-in, and reapplication display. |
+| `getLiveMemberships(customerId)` | Every row with `endDate >= now`, earliest first — the current term plus any queued renewal. |
+| `getRenewalEligibility(customerId)` | No live row → eligible; one live row ending within `RENEWAL_WINDOW_DAYS` → eligible; otherwise `not_in_window` or `already_scheduled`. |
 
-**Nothing in the codebase ever writes `status: 'expired'`** — only `active` is ever set. So the two rules agree today purely by accident. If an admin ever set a status manually, member pricing and credit redemption would stop working while the badge still read "Active Member". Tracked in [roadmap.md](roadmap.md).
+Ties are broken by `MEMBERSHIP_RELEVANCE_ORDER` (`endDate desc, startDate desc, id asc`), so a customer with two rows always resolves the same way. `getMembershipDisplayStatus()` layers application status on top: `pending`/`rejected` win, an approved application with no row is `awaiting_payment`, otherwise `endDate >= now`.
 
-Note also that `getLatestMembershipByCustomerId()` picks the latest membership by **`startDate`**, not `endDate` or `createdAt`.
+`endDate` for rows created after September 2026 is 23:59:59.999 Asia/Manila on the last day of the term (`computeMembershipEndDate`); older rows carry the exact PayMongo `paid_at` instant.
 
 ---
 

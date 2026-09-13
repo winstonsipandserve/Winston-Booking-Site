@@ -5,10 +5,11 @@ import Reveal from '@/components/ui/Reveal'
 import AccountProfile from '@/components/account/AccountProfile'
 import MembershipStatusCard from '@/components/account/MembershipStatusCard'
 import RecentBookingsList, { type BookingListItem } from '@/components/account/RecentBookingsList'
-import { formatBookingDateTime } from '@/lib/format'
+import { formatBookingDateTime, formatMembershipExpiryDate } from '@/lib/format'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
 import { buildMembershipDisplayFields } from '@/lib/membership-latest'
+import { getCurrentMembership, getRenewalEligibility } from '@/lib/membership-current'
 import { auth } from '../../../auth'
 
 export default async function AccountPage() {
@@ -26,19 +27,7 @@ export default async function AccountPage() {
     redirect('/login')
   }
 
-  const now = new Date()
-
-  let membership = await prisma.membership.findFirst({
-    where: { customerId: customer.id, status: 'active', endDate: { gte: now } },
-    orderBy: { startDate: 'desc' },
-  })
-
-  if (!membership) {
-    membership = await prisma.membership.findFirst({
-      where: { customerId: customer.id },
-      orderBy: { startDate: 'desc' },
-    })
-  }
+  const membership = await getCurrentMembership(customer.id)
 
   let membershipStatusProps:
     | { membership: null; customerId: string }
@@ -50,6 +39,8 @@ export default async function AccountPage() {
           remainingCreditCentavos: number
           expiryDateLabel: string
           isExpired: boolean
+          canRenew: boolean
+          scheduledRenewalExpiryLabel: string | null
         }
         customerId: string
         qrCodeDataUrl: string
@@ -57,13 +48,23 @@ export default async function AccountPage() {
       } = { membership: null, customerId: customer.id }
 
   if (membership) {
-    const displayFields = await buildMembershipDisplayFields(membership)
+    const [displayFields, renewal] = await Promise.all([
+      buildMembershipDisplayFields(membership),
+      getRenewalEligibility(customer.id),
+    ])
 
     const { token: checkInToken, code: checkInCode } = await getOrCreateCheckInToken(customer.id)
     const qrCodeDataUrl = await generateQrCodeDataUrl(checkInToken)
 
     membershipStatusProps = {
-      membership: displayFields,
+      membership: {
+        ...displayFields,
+        canRenew: renewal.eligible,
+        scheduledRenewalExpiryLabel:
+          !renewal.eligible && renewal.reason === 'already_scheduled'
+            ? formatMembershipExpiryDate(renewal.current.endDate)
+            : null,
+      },
       customerId: customer.id,
       qrCodeDataUrl,
       checkInCode,

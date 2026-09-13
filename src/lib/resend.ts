@@ -165,6 +165,8 @@ interface SendMembershipRenewalEmailInput {
   activationFeeCentavos: number
   creditBalanceCentavos: number
   expiryDateLabel: string
+  /** Set for an early renewal: the Manila date the new term begins (day after the current one ends). */
+  startDateLabel: string | null
 }
 
 export async function sendMembershipRenewalEmail({
@@ -175,6 +177,7 @@ export async function sendMembershipRenewalEmail({
   activationFeeCentavos,
   creditBalanceCentavos,
   expiryDateLabel,
+  startDateLabel,
 }: SendMembershipRenewalEmailInput): Promise<void> {
   const receiptHtml = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
@@ -192,7 +195,11 @@ export async function sendMembershipRenewalEmail({
   const bodyHtml = `
     <p>Hi ${escapeHtml(name)},</p>
     <p>Your ${tierName} membership at Winston Sip &amp; Serve has been renewed — your member rates, priority booking, and Speakeasy Lounge access are all still yours.</p>${receiptHtml}
-    <p>Your membership is now active through <strong>${expiryDateLabel}</strong>.</p>
+    ${
+      startDateLabel
+        ? `<p>Your current term keeps running as usual. The renewed term begins on <strong>${startDateLabel}</strong> and is active through <strong>${expiryDateLabel}</strong>.</p>`
+        : `<p>Your membership is now active through <strong>${expiryDateLabel}</strong>.</p>`
+    }
     <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you on the court,<br />— The Winston Sip &amp; Serve Team</p>
   `
 
@@ -1200,6 +1207,82 @@ export async function sendStaffMembershipRenewalEmail({
   }
 }
 
+interface SendStaffTopUpAfterExpiryEmailInput {
+  customerName: string
+  customerEmail: string
+  amountCentavos: number
+  newBalanceCentavos: number
+  expiryDateLabel: string
+  paymentId: string
+}
+
+/**
+ * A top-up checkout that was started while the membership was active but paid after the
+ * term ended. The credit has already been applied; staff decide on a refund or a renewal.
+ */
+export async function sendStaffTopUpAfterExpiryEmail({
+  customerName,
+  customerEmail,
+  amountCentavos,
+  newBalanceCentavos,
+  expiryDateLabel,
+  paymentId,
+}: SendStaffTopUpAfterExpiryEmailInput): Promise<void> {
+  const ledgerRows = [
+    ledgerRow('Top-Up Paid', formatCentavos(amountCentavos)),
+    ledgerRow('Balance After Credit', formatCentavos(newBalanceCentavos)),
+    ledgerRow('Membership Ended', expiryDateLabel),
+    ledgerRow('Payment ID', escapeHtml(paymentId), true),
+  ].join('')
+
+  const bodyHtml = `
+    <p>A credit top-up was paid <strong>after</strong> the member's term had already ended. The credit has been applied to the expired membership so no payment is lost, but it cannot be spent until the member renews.</p>
+    <p style="margin: 20px 0 4px;"><strong>${escapeHtml(customerName)}</strong></p>
+    <p style="margin: 0 0 20px;"><a href="mailto:${escapeHtml(customerEmail)}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${escapeHtml(customerEmail)}</a></p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRows}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <p style="margin: 0; font-size: 14px; color: ${BRAND_MID};">Please contact the member to arrange a refund through PayMongo or a renewal.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Top-up paid after expiry — ${customerName}.`,
+    eyebrowText: 'ACTION NEEDED',
+    headingText: `Top-Up After Expiry — ${customerName}`,
+    bodyHtml,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: REPLY_TO_ADDRESS,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `Membership | Top-Up After Expiry | ${customerName} | ${formatCentavos(amountCentavos)}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendStaffTopUpAfterExpiryEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendStaffTopUpAfterExpiryEmail threw', err)
+  }
+}
+
 interface SendCreditTopUpConfirmationEmailInput {
   to: string
   name: string
@@ -1276,14 +1359,30 @@ interface ReminderMembership {
   creditBalanceCentavos: number
 }
 
+/** "today" / "tomorrow" / "in N days" for a Manila calendar-day count. */
+function describeDaysRemaining(daysRemaining: number): string {
+  if (daysRemaining <= 0) return 'today'
+  if (daysRemaining === 1) return 'tomorrow'
+  return `in ${daysRemaining} days`
+}
+
 export async function sendMembershipExpiryReminderEmail(
   customer: ReminderCustomer,
   membership: ReminderMembership,
-  daysRemaining: 14 | 3,
+  /** Whole Manila calendar days until endDate at send time — not the cron window that selected the row. */
+  daysRemaining: number,
 ): Promise<void> {
   const tierName = formatMembershipTier(membership.tier)
   const endDateLabel = formatManilaDate(membership.endDate)
-  const urgent = daysRemaining === 3
+  const urgent = daysRemaining <= 3
+  const expiresIn = describeDaysRemaining(daysRemaining)
+  const headingText = urgent
+    ? daysRemaining <= 0
+      ? `Expires Today, ${customer.name}`
+      : daysRemaining === 1
+        ? `1 Day Left, ${customer.name}`
+        : `${daysRemaining} Days Left, ${customer.name}`
+    : 'Your Membership Is Expiring Soon'
 
   const creditLine =
     membership.creditBalanceCentavos > 0
@@ -1293,22 +1392,22 @@ export async function sendMembershipExpiryReminderEmail(
   const bodyHtml = urgent
     ? `
     <p>Hi ${escapeHtml(customer.name)},</p>
-    <p>Your ${tierName} membership expires in just ${daysRemaining} days, on <strong>${endDateLabel}</strong>. Renew now to keep your member rates and perks going without a gap.</p>${creditLine}
+    <p>Your ${tierName} membership expires ${expiresIn}, on <strong>${endDateLabel}</strong>. Renew now to keep your member rates and perks going without a gap &mdash; the renewed term starts right after this one ends.</p>${creditLine}
   `
     : `
     <p>Hi ${escapeHtml(customer.name)},</p>
-    <p>Just a heads-up &mdash; your ${tierName} membership is set to expire on <strong>${endDateLabel}</strong>, ${daysRemaining} days from now. Renew any time before then to keep your priority booking, member rates, and Speakeasy Lounge access going.</p>${creditLine}
+    <p>Just a heads-up &mdash; your ${tierName} membership is set to expire on <strong>${endDateLabel}</strong>, ${expiresIn}. Renew any time before then to keep your priority booking, member rates, and Speakeasy Lounge access going &mdash; the renewed term starts right after this one ends.</p>${creditLine}
   `
 
   const { html, text } = buildBrandedEmail({
     preheaderText: urgent
-      ? `Your membership expires in ${daysRemaining} days &mdash; renew now.`
-      : `Your membership expires in ${daysRemaining} days.`,
+      ? `Your membership expires ${expiresIn} &mdash; renew now.`
+      : `Your membership expires ${expiresIn}.`,
     eyebrowText: urgent ? 'EXPIRES SOON' : 'MEMBERSHIP REMINDER',
-    headingText: urgent ? `${daysRemaining} Days Left, ${customer.name}` : 'Your Membership Is Expiring Soon',
+    headingText,
     bodyHtml,
     ctaText: 'Renew Your Membership',
-    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/membership/apply`,
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/renew`,
   })
 
   try {
@@ -1323,7 +1422,7 @@ export async function sendMembershipExpiryReminderEmail(
         to: customer.email,
         reply_to: REPLY_TO_ADDRESS,
         subject: urgent
-          ? `Your Winston Membership Expires in ${daysRemaining} Days`
+          ? `Your Winston Membership Expires ${daysRemaining <= 0 ? 'Today' : daysRemaining === 1 ? 'Tomorrow' : `in ${daysRemaining} Days`}`
           : 'Your Winston Membership Expires Soon',
         html,
         text,
@@ -1354,7 +1453,7 @@ export async function sendMembershipExpiredEmail(
     <p>Hi ${escapeHtml(customer.name)},</p>
     <p>Your ${tierName} membership expired on ${endDateLabel}.${creditNote}</p>
     <div style="margin: 24px 0; padding: 20px 24px; background-color: rgba(140, 90, 60, 0.08); border-left: 4px solid ${ACCENT_PRIMARY}; border-radius: 8px;">
-      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">You're still always welcome at Winston as a guest &mdash; book a court, simulator bay, or table at the café any time. Reapply below whenever you're ready to pick your member rates and perks back up.</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">You're still always welcome at Winston as a guest &mdash; book a court, simulator bay, or table at the café any time. Log in and renew below whenever you're ready to pick your member rates and perks back up.</p>
     </div>
   `
 
@@ -1363,8 +1462,8 @@ export async function sendMembershipExpiredEmail(
     eyebrowText: 'MEMBERSHIP EXPIRED',
     headingText: 'Your Membership Has Expired',
     bodyHtml,
-    ctaText: 'Reapply for Membership',
-    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/membership/apply`,
+    ctaText: 'Renew Your Membership',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/renew`,
   })
 
   try {

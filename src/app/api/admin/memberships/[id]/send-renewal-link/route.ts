@@ -2,7 +2,7 @@ import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
-import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
+import { getRenewalEligibility } from '@/lib/membership-current'
 import { sendRenewalPaymentLinkEmail } from '@/lib/resend'
 import { logAdminActivity } from '@/lib/admin-activity-log'
 import type { MembershipTier } from '@prisma/client'
@@ -46,9 +46,17 @@ export async function POST(
     return Response.json({ error: 'Membership application not found' }, { status: 404 })
   }
 
-  const latestMembership = await getLatestMembershipByCustomerId(application.customerId)
-  if (!latestMembership || latestMembership.endDate >= new Date()) {
-    return Response.json({ error: "This customer's membership is not expired" }, { status: 409 })
+  const renewal = await getRenewalEligibility(application.customerId)
+  if (!renewal.eligible) {
+    return Response.json(
+      {
+        error:
+          renewal.reason === 'already_scheduled'
+            ? "This customer's renewal is already paid and scheduled"
+            : "This customer's membership is not expired or expiring soon",
+      },
+      { status: 409 },
+    )
   }
 
   const existingPending = await prisma.membershipPayment.findFirst({

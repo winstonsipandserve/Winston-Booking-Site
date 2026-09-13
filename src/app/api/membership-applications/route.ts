@@ -3,6 +3,7 @@ import { resolveCustomer } from '@/lib/customer-resolution'
 import { uploadToStorage, deleteFromStorage } from '@/lib/supabase-storage'
 import { sendStaffMembershipApplicationEmail } from '@/lib/resend'
 import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
+import { getCurrentMembership } from '@/lib/membership-current'
 import { hasExpectedImageSignature } from '@/lib/image-validation'
 
 const BUCKET = 'membership-applications'
@@ -98,12 +99,13 @@ export async function POST(request: Request) {
     const latestApplication = await prisma.membershipApplication.findFirst({
       where: { customerId: customer.id },
       orderBy: { createdAt: 'desc' },
-      include: { membership: true },
     })
     if (latestApplication) {
+      // Renewals create memberships with no application attached, so the customer's
+      // current row — not the one tied to the original application — decides active/expired.
       const displayStatus = getMembershipDisplayStatus({
         status: latestApplication.status,
-        latestMembership: latestApplication.membership,
+        latestMembership: await getCurrentMembership(customer.id),
       })
       if (displayStatus === 'pending') {
         return Response.json(

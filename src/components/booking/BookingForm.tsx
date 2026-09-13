@@ -10,6 +10,7 @@ import ReviewStep from './steps/ReviewStep'
 import PaymentStep from './steps/PaymentStep'
 import Modal from '@/components/ui/Modal'
 import { formatCentavos } from '@/lib/format'
+import type { MemberContext, MembershipCoverage } from '@/components/booking/BookingPageClient'
 
 type RateTier = 'member' | 'non_member'
 type ResourceCategory = 'court' | 'simulator'
@@ -125,12 +126,37 @@ function getDurationOptions(resourceType: ResourceTypeOption, rateTier: RateTier
   ).sort((a, b) => a - b)
 }
 
-interface MemberContext {
-  name: string
-  email: string
-  phone: string
-  isActiveMember: boolean
-  creditBalanceCentavos: number
+/**
+ * The term that covers the slot being built. Falls back to date-level matching before a
+ * time is picked, and to the term covering now before a date is picked.
+ */
+function findCoveringMembership(
+  memberContext: MemberContext | null,
+  selectedDate: string | null,
+  startTimeLocal: string,
+): MembershipCoverage | null {
+  if (!memberContext) return null
+  if (startTimeLocal) {
+    const slotStart = new Date(startTimeLocal)
+    return (
+      memberContext.coverage.find(
+        (term) => new Date(term.startsAt) <= slotStart && slotStart <= new Date(term.endsAt),
+      ) ?? null
+    )
+  }
+  if (selectedDate) {
+    return (
+      memberContext.coverage.find(
+        (term) => term.startDateKey <= selectedDate && selectedDate <= term.expiryDateKey,
+      ) ?? null
+    )
+  }
+  if (!memberContext.isActiveMember) return null
+  const now = new Date()
+  return (
+    memberContext.coverage.find((term) => new Date(term.startsAt) <= now && now <= new Date(term.endsAt)) ??
+    null
+  )
 }
 
 interface BookingFormProps {
@@ -143,13 +169,23 @@ interface BookingFormProps {
 export default function BookingForm({ data, loading, loadError, memberContext }: BookingFormProps) {
   const [step, setStep] = useState(1)
 
-  const rateTier: RateTier = memberContext?.isActiveMember ? 'member' : 'non_member'
-
   const [resourceTypeId, setResourceTypeId] = useState('')
   const [resourceId, setResourceId] = useState('')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [startTimeLocal, setStartTimeLocal] = useState('')
   const [durationMinutes, setDurationMinutes] = useState('')
+
+  const coveringMembership = useMemo(
+    () => findCoveringMembership(memberContext, selectedDate, startTimeLocal),
+    [memberContext, selectedDate, startTimeLocal],
+  )
+  const rateTier: RateTier = coveringMembership ? 'member' : 'non_member'
+  const creditBalanceCentavos = coveringMembership?.creditBalanceCentavos ?? 0
+  // Shown on the date step when a member has picked a day their membership won't cover.
+  const membershipCoverageNotice =
+    memberContext && memberContext.coverage.length > 0 && selectedDate && !coveringMembership
+      ? `Your membership ends on ${memberContext.coverage[memberContext.coverage.length - 1].expiryDateLabel}. Dates after that are priced at non-member rates and can't use your F&B credit — renew from your account to keep member pricing.`
+      : null
   const [guestCount, setGuestCount] = useState(0)
   const [busy, setBusy] = useState<BusyRange[]>([])
   const [availabilityLoading, setAvailabilityLoading] = useState(false)
@@ -246,6 +282,22 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setStartTimeLocal('')
     setAvailabilityLoading(!!resourceId && !!nextSelectedDate)
     setAvailabilityError(null)
+
+    // The rate tier follows the chosen date (a day past the membership's end is priced
+    // non-member), which can remove a member-only duration such as 30-minute golf.
+    const nextRateTier: RateTier = findCoveringMembership(memberContext, nextSelectedDate, '')
+      ? 'member'
+      : 'non_member'
+    if (nextRateTier !== rateTier && selectedResourceType) {
+      const durations = getDurationOptions(selectedResourceType, nextRateTier)
+      if (!durations.includes(Number(durationMinutes))) {
+        setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
+      }
+      if (coaching && !getCoachingPricing(selectedResourceType, nextRateTier).available) {
+        setCoaching(false)
+        setCoachingPaxCount(null)
+      }
+    }
   }
 
   function handleCoachingChange(value: boolean) {
@@ -430,7 +482,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   function handleConfirmBookingClick() {
     if (rateTier === 'member' && memberContext && estimateCentavos !== null) {
       const totalCentavos = estimateCentavos + addOnsEstimateCentavos
-      if (memberContext.creditBalanceCentavos < totalCentavos) {
+      if (creditBalanceCentavos < totalCentavos) {
         setShowInsufficientCreditModal(true)
         return
       }
@@ -556,6 +608,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           availabilityError={resourceId && selectedDate ? availabilityError : null}
           selectedSlot={startTimeLocal}
           onSelectSlot={setStartTimeLocal}
+          membershipCoverageNotice={membershipCoverageNotice}
         />
       )}
 
@@ -612,9 +665,9 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
         >
           <div className="flex flex-col gap-4">
             <p className="text-sm text-brand-dark/80">
-              {memberContext && memberContext.creditBalanceCentavos === 0
+              {creditBalanceCentavos === 0
                 ? "You don't currently have any F&B credit available."
-                : `Your F&B credit balance is ${formatCentavos(memberContext?.creditBalanceCentavos ?? 0)}, which isn't enough to cover this booking.`}
+                : `Your F&B credit balance is ${formatCentavos(creditBalanceCentavos)}, which isn't enough to cover this booking.`}
               {' '}This booking totals {formatCentavos((estimateCentavos ?? 0) + addOnsEstimateCentavos)}.
               {"Since your credit doesn't fully cover it, none of it will be applied — you'll pay the"}
               full amount via PayMongo, and your credit balance will stay untouched.

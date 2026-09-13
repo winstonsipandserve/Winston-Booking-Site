@@ -150,9 +150,17 @@ Three plans. Each payment splits into a **non-refundable activation fee** plus a
 | 6-month | ₱12,500 | ₱6,000 | ₱6,500 | 6 months |
 | 12-month | ₱22,500 | ₱10,500 | ₱12,000 | 12 months |
 
+### Term, expiry, and renewal
+
+- **A term runs through 23:59:59 Asia/Manila on its last day.** The end date is the start date plus the plan's months, on the Manila calendar; members never lapse mid-day. (Rows created before this rule carry the exact PayMongo payment time and lapse at that instant.)
+- **Member benefits are judged at the slot, not at checkout.** A booking gets member pricing and can spend credit only when a membership term covers the booking's start time. A member two days from expiry booking next week pays non-member rates for that slot and the wizard says so.
+- **Renewal opens 14 days before expiry.** The renewed term is queued to start the day after the current one ends, so no paid-for days are lost. Outside that window a live member cannot renew, and only one renewal can be queued at a time. A lapsed member can renew at any time and the new term starts on payment.
+- **Each term has its own credit balance.** Credit does not carry from the current term into a queued renewal; the old balance is forfeited when that term ends (see Credit rules).
+
 ### Credit rules
 
 - **Credit expires at plan end regardless of usage.** No rollover, no refund on unused credit.
+- **A top-up paid after the term ended is still credited to that term** (the checkout was started while active, the payment landed late). Staff receive an "Action needed" notification and arrange a refund or a renewal by hand; a successful payment is never discarded.
 - Credit can be **topped up** beyond the original grant, both by the member themselves and by staff at the front desk.
 - Credit is spent on bookings on a **full-coverage-only basis**: if the balance covers the entire booking total, the booking is paid entirely from credit; if it does not, credit is left untouched and the member pays the full amount by card/e-wallet. **Credit is never split with a card payment.** See [workflows.md](workflows.md).
 - Every change to a member's balance is recorded as an immutable ledger entry, so the balance can always be re-derived. See [decisions.md](decisions.md).

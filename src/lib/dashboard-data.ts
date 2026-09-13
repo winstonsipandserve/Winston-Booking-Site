@@ -151,7 +151,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     membershipPaymentRevenueAgg,
     membershipTopUpRevenueAgg,
     pendingApplications,
-    activeMemberships,
+    activeMembershipCustomers,
     weekBookings,
     activeResourceCount,
     paymentsForRevenue,
@@ -177,7 +177,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
     }),
     prisma.membershipApplication.count({ where: { status: 'pending' } }),
-    prisma.membership.count({ where: { endDate: { gte: new Date() } } }),
+    // Customers with a live term — an early renewal is two rows for one member.
+    prisma.membership.findMany({ where: { endDate: { gte: new Date() } }, distinct: ['customerId'], select: { customerId: true } }),
     prisma.booking.findMany({
       where: {
         status: 'confirmed',
@@ -233,7 +234,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       (membershipPaymentRevenueAgg._sum.amountCentavos ?? 0) +
       (membershipTopUpRevenueAgg._sum.amountCentavos ?? 0),
     pendingApplications,
-    activeMemberships,
+    activeMemberships: activeMembershipCustomers.length,
     resourceUtilizationPct,
   }
 

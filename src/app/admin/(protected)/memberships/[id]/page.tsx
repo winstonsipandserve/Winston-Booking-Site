@@ -9,6 +9,8 @@ import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
 import AddCreditButton from '@/components/admin/AddCreditButton'
 import AdminPagination from '@/components/admin/AdminPagination'
 import { formatMembershipTier, formatCentavos } from '@/lib/format'
+import { getRenewalEligibility, RENEWAL_WINDOW_DAYS } from '@/lib/membership-current'
+import { manilaCalendarDaysBetween } from '@/lib/manila-date'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import {
   getMembershipDisplayStatus,
@@ -60,8 +62,14 @@ export default async function AdminMembershipApplicationDetailPage({
     notFound()
   }
 
-  const latestMembership = await getLatestMembershipByCustomerId(application.customerId)
+  const [latestMembership, renewal] = await Promise.all([
+    getLatestMembershipByCustomerId(application.customerId),
+    getRenewalEligibility(application.customerId),
+  ])
   const displayStatus = getMembershipDisplayStatus({ status: application.status, latestMembership })
+  // Renewal links follow the same window as self-service renewal: expired, or the single
+  // live term ends within RENEWAL_WINDOW_DAYS and nothing is queued behind it.
+  const canSendRenewalLink = displayStatus !== 'awaiting_payment' && latestMembership !== null && renewal.eligible
 
   const requestedCreditPage = parsePage(creditPageParam)
   const requestedBookingPage = parsePage(bookingPageParam)
@@ -154,7 +162,7 @@ export default async function AdminMembershipApplicationDetailPage({
   ])
 
   const daysRemaining = latestMembership
-    ? Math.max(0, Math.ceil((latestMembership.endDate.getTime() - new Date().getTime()) / 86400000))
+    ? Math.max(0, manilaCalendarDaysBetween(new Date(), latestMembership.endDate))
     : 0
 
   const startingBalance = (latestMembership?.creditBalanceCentavos ?? 0) - history.newerTransactionAmount
@@ -582,10 +590,23 @@ export default async function AdminMembershipApplicationDetailPage({
         <MembershipReviewActions applicationId={application.id} applicantName={application.customer.name} />
       )}
 
-      {displayStatus === 'expired' && (
+      {canSendRenewalLink && (
         <section className="mt-6">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Renewal</h2>
+          {displayStatus === 'active' && (
+            <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+              This membership ends within the next {RENEWAL_WINDOW_DAYS} days. A renewal paid now starts the day after the current term ends.
+            </p>
+          )}
           <SendRenewalLinkButton applicationId={application.id} />
+        </section>
+      )}
+      {!renewal.eligible && renewal.reason === 'already_scheduled' && (
+        <section className="mt-6">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Renewal</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            A renewal is already paid and scheduled to start when the current term ends.
+          </p>
         </section>
       )}
     </div>

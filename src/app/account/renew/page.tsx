@@ -3,7 +3,8 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { formatMembershipTier, formatMembershipExpiryDate } from '@/lib/format'
+import { getRenewalEligibility } from '@/lib/membership-current'
 import RenewMembershipButton from '@/components/membership/RenewMembershipButton'
 import MembershipCheckoutSummary from '@/components/membership/MembershipCheckoutSummary'
 import { auth } from '../../../../auth'
@@ -26,21 +27,26 @@ export default async function RenewMembershipPage() {
     redirect('/login')
   }
 
-  const activeMembership = await prisma.membership.findFirst({
-    where: { customerId: customer.id, status: 'active', endDate: { gte: new Date() } },
-  })
+  const renewal = await getRenewalEligibility(customer.id)
 
-  if (activeMembership) {
+  if (!renewal.eligible) {
     redirect('/account')
   }
 
-  const anyMembership = await prisma.membership.findFirst({
-    where: { customerId: customer.id },
-  })
-
-  if (!anyMembership) {
-    redirect('/membership/apply')
+  if (!renewal.current) {
+    const anyMembership = await prisma.membership.findFirst({
+      where: { customerId: customer.id },
+    })
+    if (!anyMembership) {
+      redirect('/membership/apply')
+    }
   }
+
+  // Renewing before the current term ends queues the new term behind it, so the copy has
+  // to say so — nobody should think they're paying to restart today.
+  const earlyRenewalNote = renewal.current
+    ? `Your current membership runs through ${formatMembershipExpiryDate(renewal.current.endDate)}. The tier you pick below starts the day after, so you keep every remaining day.`
+    : null
 
   return (
     <>
@@ -60,6 +66,11 @@ export default async function RenewMembershipPage() {
             Pick a tier below to pick up right where you left off — priority bookings, full
             facility access, and an F&amp;B credit to spend at the café and bar.
           </p>
+          {earlyRenewalNote && (
+            <p className="mt-4 max-w-xl border-l-4 border-accent-light/60 bg-brand-light/5 px-4 py-3 text-left text-sm text-brand-light/90">
+              {earlyRenewalNote}
+            </p>
+          )}
         </div>
       </section>
 

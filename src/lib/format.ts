@@ -35,6 +35,16 @@ export function formatBulletinDate(date: Date): string {
   }).format(date)
 }
 
+/** Long Manila date used wherever a membership expiry is shown (account, check-in, emails, wizard). */
+export function formatMembershipExpiryDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'Asia/Manila',
+  }).format(date)
+}
+
 export function formatShortDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
