@@ -39,6 +39,7 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 - **Add-ons**: ball boy (courts only) and coaching (with pax selection on courts).
 - **Full-coverage credit redemption** for members whose balance covers the whole total — confirms instantly with no payment redirect.
 - **PayMongo Checkout** for everything else, with automatic redirect.
+- **Booking hold limits** — hold creation is throttled per client (member id, or IP for anonymous bookers) and each client may keep at most 3 unpaid holds live at once; the wizard surfaces the API's 429 message inline. Rules in [workflows.md](workflows.md) → Hold and expiry.
 - **Confirmation page** showing a booking-details card (reference, resource, date and time, duration, guests, ball boy, coaching) and a separate pricing card (base price, itemized add-ons, total). Anonymous booking follow-up is bound to a short-lived HttpOnly browser capability; member booking follow-up is bound to the member session.
 
 ---

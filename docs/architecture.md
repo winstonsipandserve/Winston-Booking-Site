@@ -141,7 +141,7 @@ Auth.js v5 with two Credentials providers — `credentials` for admins, `member-
 
 Admin gating goes through one shared helper, `getActiveAdminSession()` (`src/lib/admin-session.ts`), used by the protected layout and every admin API route. It re-checks the admin's active flag against the database on every request, so deactivating an admin rejects their already-open session on its next request rather than only at next login.
 
-Credential sign-in and password-reset requests are rate-limited for both the normalized account identifier and client IP in a rolling 15-minute window. The database stores only HMAC hashes of those identifiers, and old rows are deleted opportunistically on later requests.
+Credential sign-in and password-reset requests are rate-limited for both the normalized account identifier and client IP in a rolling 15-minute window; booking-hold creation shares the same counter under its own scope (see [workflows.md](workflows.md) → Hold abuse controls). The database stores only HMAC hashes of those identifiers, and old rows are deleted opportunistically on later requests.
 
 Anonymous booking holds use a separate, random, short-lived browser capability stored only in an HttpOnly, SameSite cookie. The database stores its SHA-256 hash. Follow-up booking reads, contact attachment, checkout, and confirmation polling require that capability; member bookings instead require the owning member session.
 

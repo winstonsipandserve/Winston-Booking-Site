@@ -3,7 +3,14 @@ import { prisma } from '@/lib/prisma'
 import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
-import { priceBooking } from '@/lib/booking-pricing'
+import { COURT_DURATION_CAP_ERROR, priceBooking } from '@/lib/booking-pricing'
+import { MAX_COURT_DURATION_MINUTES } from '@/lib/booking-limits'
+import {
+  consumeHoldCreationAttempt,
+  hasReachedLiveHoldCap,
+  identifyHoldClient,
+  lockHoldClient,
+} from '@/lib/booking-hold-abuse'
 import { getMembershipActiveAt } from '@/lib/membership-current'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { appendBookingAccessCookie, createBookingAccessToken } from '@/lib/booking-access'
@@ -22,6 +29,12 @@ interface BookingRequestBody {
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
+
+/** Thrown inside the booking transaction to roll it back when the client has too many live holds. */
+class LiveHoldCapError extends Error {}
+
+const HOLD_LIMIT_ERROR =
+  'Too many booking attempts. Complete or wait for your pending bookings to expire, then try again.'
 
 function isExclusionViolation(err: unknown): boolean {
   if (
@@ -86,10 +99,13 @@ export async function POST(request: Request) {
     activeMembership = await getMembershipActiveAt(customerId, parsedStartTime)
     isMember = !!activeMembership
     const sessionCustomer = await prisma.customer.findUnique({ where: { id: customerId } })
-    if (sessionCustomer) {
-      customerNameSnapshot = sessionCustomer.name
-      customerPhoneSnapshot = sessionCustomer.phone
+    if (!sessionCustomer) {
+      // A JWT can outlive its customer row (e.g. fixture cleanup); fail closed instead of
+      // hitting the customer foreign key inside the transaction.
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    customerNameSnapshot = sessionCustomer.name
+    customerPhoneSnapshot = sessionCustomer.phone
   }
 
   const guestCount = guestCountRaw
@@ -127,6 +143,9 @@ export async function POST(request: Request) {
       { status: 400 },
     )
   }
+  if (isCourt && durationMinutes > MAX_COURT_DURATION_MINUTES) {
+    return Response.json({ error: COURT_DURATION_CAP_ERROR }, { status: 400 })
+  }
 
   const endTime = new Date(parsedStartTime.getTime() + durationMinutes * 60000)
 
@@ -135,6 +154,13 @@ export async function POST(request: Request) {
       { error: 'Bookings must start and end between 6:00 AM and 10:00 PM' },
       { status: 400 },
     )
+  }
+
+  // Hold-spam controls (docs/features.md → Booking hold limits). Counted only for requests
+  // that passed validation, so malformed traffic cannot burn a real customer's budget.
+  const holdClient = identifyHoldClient(request, customerId)
+  if (!(await consumeHoldCreationAttempt(holdClient))) {
+    return Response.json({ error: HOLD_LIMIT_ERROR }, { status: 429 })
   }
 
   const priceResult = await priceBooking({
@@ -158,6 +184,9 @@ export async function POST(request: Request) {
   let txResult: { booking: Booking; creditCovered: boolean }
   try {
     txResult = await prisma.$transaction(async (tx) => {
+      // Serialise hold creation per client so parallel requests cannot all pass the cap.
+      await lockHoldClient(tx, holdClient.clientHash)
+
       const holdCutoff = new Date(Date.now() - HOLD_MINUTES * 60000)
       const staleBookings = await tx.booking.findMany({
         where: {
@@ -212,6 +241,13 @@ export async function POST(request: Request) {
         creditCovered = decrement.count === 1
       }
 
+      // A credit-covered booking confirms immediately and never occupies a hold, so the
+      // cap only applies when this row will sit in pending_payment. Throwing here rolls
+      // back the credit decrement above along with everything else.
+      if (!creditCovered && (await hasReachedLiveHoldCap(tx, holdClient.clientHash, new Date()))) {
+        throw new LiveHoldCapError()
+      }
+
       const createdBooking = await tx.booking.create({
         data: {
           customerId,
@@ -226,6 +262,7 @@ export async function POST(request: Request) {
           customerPhoneSnapshot,
           accessTokenHash: bookingAccessToken?.tokenHash,
           accessTokenExpiresAt: bookingAccessToken?.expiresAt,
+          holdClientHash: holdClient.clientHash,
         },
       })
 
@@ -264,6 +301,9 @@ export async function POST(request: Request) {
       return { booking: createdBooking, creditCovered }
     }, { timeout: 15000 })
   } catch (err) {
+    if (err instanceof LiveHoldCapError) {
+      return Response.json({ error: HOLD_LIMIT_ERROR }, { status: 429 })
+    }
     console.error('Booking creation failed', err)
     if (isExclusionViolation(err)) {
       return Response.json({ error: 'Slot unavailable' }, { status: 409 })

@@ -87,6 +87,16 @@ Expiry runs in two layers:
 
 In both cases the linked PayMongo checkout session is **actively expired** through PayMongo's API (best-effort), closing the window where a customer could pay into an already-released slot.
 
+### Hold abuse controls
+
+Holds are free and occupy their slot for the hold window, so without limits an anonymous script could keep every slot perpetually busy. `POST /api/bookings` applies three server-side limits, in this order, after request validation and before any write:
+
+1. **Creation throttle.** Each validated hold request consumes one attempt in the shared 15-minute rate-limit window (`booking_hold` scope of `AuthRateLimitAttempt`). Members are keyed on their customer id (10 per window) plus their IP (20 per window); anonymous bookers on IP only (10 per window). Over budget → `429`, nothing written.
+2. **Live-hold cap.** Inside the booking transaction, after a per-client advisory lock, the client's `pending_payment` rows still inside the hold window are counted; a fourth is refused with `429` and the transaction rolls back (including any credit decrement). Credit-covered bookings confirm immediately and are exempt because they never hold a slot.
+3. **Court duration cap.** Court bookings are limited to 4 hours (see [business.md](business.md) → Pricing), so one hold cannot occupy a court's whole day.
+
+The client key is stored as `Booking.holdClientHash` (an HMAC, never a raw IP). Constants live in `src/lib/booking-limits.ts`; the checks in `src/lib/booking-hold-abuse.ts`. These limits bound one client; a distributed attacker with many IPs is out of scope — see [roadmap.md](roadmap.md).
+
 ---
 
 ## Membership: application → approval → activation

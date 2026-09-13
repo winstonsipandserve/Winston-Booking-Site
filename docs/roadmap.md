@@ -84,6 +84,7 @@ Genuinely undecided, needing a business or client answer.
 - **Production overrides need confirming** at the eventual staging-to-production promotion. The custom domain is connected to Production and currently returns 404s because of the framework-preset issue described in [architecture.md](architecture.md).
 - **Connection priming floor** of roughly 300 ms per admin navigation on a fresh pooled connection. Reducing it project-wide — via Prisma Accelerate, a different pooling strategy, or Vercel Fluid Compute — is an open investigation.
 - The Supabase MCP role cannot terminate backend connections; killing the local Node process is the actual fix when the session-mode pooler hits its connection cap.
+- **Booking hold spam from many IPs is not mitigated.** The per-client hold limits in [workflows.md](workflows.md) stop a single script; a distributed attacker can still tie up slots. The backstop options are bot protection on the hold step (e.g. Cloudflare Turnstile — a new dependency) or Vercel WAF rate limiting (Pro plan). Not yet decided.
 - **Bulletin contract cleanup is intentionally pending.** After staging and production verification on the new Announcement/News code, apply a separate migration that removes the legacy bulletin tables/enums and renames the internal resource-disable reason from `bulletin` to `announcement`.
 
 ---

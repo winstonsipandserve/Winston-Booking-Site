@@ -4,9 +4,10 @@ import { prisma } from '@/lib/prisma'
 
 const WINDOW_MS = 15 * 60 * 1000
 
-const LIMITS: Record<
-  AuthRateLimitScope,
-  { accountAttempts: number; ipAttempts: number }
+// Credential/reset scopes are keyed on account + IP. `booking_hold` builds its own keys in
+// src/lib/booking-hold-abuse.ts and is deliberately absent here.
+const LIMITS: Partial<
+  Record<AuthRateLimitScope, { accountAttempts: number; ipAttempts: number }>
 > = {
   admin_login: { accountAttempts: 5, ipAttempts: 20 },
   member_login: { accountAttempts: 5, ipAttempts: 20 },
@@ -14,18 +15,19 @@ const LIMITS: Record<
   member_password_reset: { accountAttempts: 3, ipAttempts: 10 },
 }
 
-interface RateLimitKey {
+export interface RateLimitKey {
   identifierHash: string
   maximumAttempts: number
 }
 
-function getClientIp(request: Request): string {
+/** Vercel overwrites x-forwarded-for with the real client IP, so the first hop is trustworthy there. */
+export function getClientIp(request: Request): string {
   const forwardedFor = request.headers.get('x-forwarded-for')
   if (forwardedFor) return forwardedFor.split(',', 1)[0].trim()
   return request.headers.get('x-real-ip')?.trim() || 'unknown'
 }
 
-function hashIdentifier(identifier: string): string {
+export function hashIdentifier(identifier: string): string {
   const secret = process.env.AUTH_SECRET
   if (!secret) {
     throw new Error('AUTH_SECRET is not set')
@@ -39,6 +41,7 @@ function getRateLimitKeys(
   accountIdentifier: string,
 ): RateLimitKey[] {
   const limits = LIMITS[scope]
+  if (!limits) throw new Error(`No account/IP limits configured for scope ${scope}`)
   return [
     {
       identifierHash: hashIdentifier(`account:${accountIdentifier.trim().toLowerCase()}`),
@@ -56,7 +59,17 @@ export async function consumeAuthRateLimitAttempt(
   request: Request,
   accountIdentifier: string,
 ): Promise<boolean> {
-  const keys = getRateLimitKeys(scope, request, accountIdentifier)
+  return consumeRateLimitAttempt(scope, getRateLimitKeys(scope, request, accountIdentifier))
+}
+
+/**
+ * Records one attempt against every key, or records nothing and returns false when any
+ * key is already at its limit inside the 15-minute window.
+ */
+export async function consumeRateLimitAttempt(
+  scope: AuthRateLimitScope,
+  keys: RateLimitKey[],
+): Promise<boolean> {
   const cutoff = new Date(Date.now() - WINDOW_MS)
 
   // Every request performs bounded retention, so this abuse-control table never becomes
@@ -64,7 +77,7 @@ export async function consumeAuthRateLimitAttempt(
   await prisma.authRateLimitAttempt.deleteMany({ where: { createdAt: { lt: cutoff } } })
 
   return prisma.$transaction(async (tx) => {
-    // Lock both buckets in a deterministic order. Without this, a burst of parallel
+    // Lock every bucket in a deterministic order. Without this, a burst of parallel
     // requests could all observe the same pre-insert count and bypass the limit.
     const lockIds = keys
       .map((key) => `${scope}:${key.identifierHash}`)
@@ -89,5 +102,7 @@ export async function consumeAuthRateLimitAttempt(
       data: keys.map((key) => ({ scope, identifierHash: key.identifierHash })),
     })
     return true
-  })
+    // Waiters queue on the advisory lock, so a burst of parallel requests for one bucket
+    // needs more than Prisma's 5s default before the last one gets its turn (P2028).
+  }, { maxWait: 5000, timeout: 15000 })
 }

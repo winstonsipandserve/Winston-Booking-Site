@@ -10,6 +10,7 @@ import ReviewStep from './steps/ReviewStep'
 import PaymentStep from './steps/PaymentStep'
 import Modal from '@/components/ui/Modal'
 import { formatCentavos } from '@/lib/format'
+import { MAX_COURT_DURATION_MINUTES } from '@/lib/booking-limits'
 import type { MemberContext, MembershipCoverage } from '@/components/booking/BookingPageClient'
 
 type RateTier = 'member' | 'non_member'
@@ -114,7 +115,11 @@ interface BusyRange {
   end: string
 }
 
-const COURT_DURATIONS_MINUTES = [60, 120, 180, 240]
+// Whole hours up to the server-enforced cap (src/lib/booking-limits.ts).
+const COURT_DURATIONS_MINUTES = Array.from(
+  { length: MAX_COURT_DURATION_MINUTES / 60 },
+  (_, i) => (i + 1) * 60,
+)
 const TOTAL_STEPS = 5
 
 function getDurationOptions(resourceType: ResourceTypeOption, rateTier: RateTier): number[] {
@@ -466,7 +471,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
         }
       } else if (res.status === 409) {
         setSubmitError('That slot was just booked by someone else — please pick a different time.')
-      } else if (res.status === 400) {
+      } else if (res.status === 400 || res.status === 429) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem with your booking details.')
       } else {

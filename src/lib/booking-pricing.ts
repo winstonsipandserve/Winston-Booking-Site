@@ -1,5 +1,8 @@
 import { RateTier, ResourceCategory } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { MAX_COURT_DURATION_MINUTES } from '@/lib/booking-limits'
+
+export const COURT_DURATION_CAP_ERROR = `Court bookings must be ${MAX_COURT_DURATION_MINUTES / 60} hours or shorter`
 
 export interface PriceBookingInput {
   resourceTypeId: string
@@ -51,6 +54,9 @@ export async function priceBooking(
 
   if (isCourt && durationMinutes % 60 !== 0) {
     return { error: 'Court bookings must be a positive multiple of 60 minutes', status: 400 }
+  }
+  if (isCourt && durationMinutes > MAX_COURT_DURATION_MINUTES) {
+    return { error: COURT_DURATION_CAP_ERROR, status: 400 }
   }
 
   const pricingRule = await prisma.pricingRule.findUnique({

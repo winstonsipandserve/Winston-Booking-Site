@@ -85,7 +85,7 @@ All prices are in Philippine pesos. Courts are charged at a flat hourly rate; si
 
 **The 30-minute golf simulator tier is member-only.** This is a deliberate membership perk, not an oversight — non-members have no 30-minute golf option at any price.
 
-Court bookings must be a whole number of hours. Simulator bookings must match one of the tiers above exactly.
+Court bookings must be a whole number of hours, **up to 4 hours per booking**. Simulator bookings must match one of the tiers above exactly. The 4-hour court cap is enforced by the API and bounds how much of a court a single unpaid hold can occupy — see [workflows.md](workflows.md) → Hold and expiry.
 
 ### Where rates live
 
