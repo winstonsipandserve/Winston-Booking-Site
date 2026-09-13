@@ -68,13 +68,12 @@ export async function createPaymongoCheckoutSession(
           },
           description: input.description,
           send_email_receipt: input.sendEmailReceipt,
-          // PayMongo's Checkout Sessions API rejects requests with this field omitted
-          // (confirmed live, contrary to docs implying it defaults to the account's
-          // enabled methods). All four of card/gcash/grab_pay/paymaya are confirmed
-          // live-working for Arjay's personal test account (see CLAUDE.md's Open /
-          // Not Yet Decided) — not necessarily final once the client's own PayMongo
-          // account exists.
-          payment_method_types: ['card', 'gcash', 'grab_pay', 'paymaya'],
+          // PayMongo's Checkout Sessions API rejects requests with this field omitted.
+          // Keep this list aligned with the methods enabled on the PayMongo account:
+          // `dob` covers BPI/UnionBank, while `brankas` covers BDO/Landbank/Metrobank.
+          // GrabPay is intentionally excluded because its mobile authorization flow
+          // can return a terminal-state Source error after authorization.
+          payment_method_types: ['card', 'gcash', 'paymaya', 'dob', 'brankas'],
         },
       },
     }),
