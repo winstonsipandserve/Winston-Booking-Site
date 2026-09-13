@@ -113,7 +113,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 > **The raw token is never stored.** Only its SHA-256 hex digest goes in `tokenHash`.
 
-**`AuthRateLimitAttempt`** — a short-lived, write-once abuse-control counter for member/admin login, password-reset, and booking-hold requests. `scope` distinguishes the flow (the `booking_hold` scope keys on member id and/or IP, see [workflows.md](workflows.md)); `identifierHash` is an HMAC of either the normalized account identifier or client IP, never the raw value. It is indexed by `(scope, identifierHash, createdAt)` and cleaned up expire-on-write, so it is not an audit ledger.
+**`AuthRateLimitAttempt`** — a short-lived, write-once abuse-control counter for member/admin login, password-reset, and booking-hold requests. `scope` distinguishes the flow (the `booking_hold` and `membership_application` scopes key on member id and/or IP, see [workflows.md](workflows.md)); `identifierHash` is an HMAC of either the normalized account identifier or client IP, never the raw value. It is indexed by `(scope, identifierHash, createdAt)` and cleaned up expire-on-write, so it is not an audit ledger.
 
 **`CheckInLookupAttempt`** — a soft abuse counter for failed code lookups, indexed on `(adminUserId, createdAt)`, cascade-deleted with the admin. Write-once rows, cleared opportunistically once outside the rate-limit window. Not a financial or audit ledger, so it needs no locking guarantees.
 

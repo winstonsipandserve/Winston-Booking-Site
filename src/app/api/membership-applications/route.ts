@@ -5,12 +5,20 @@ import { sendStaffMembershipApplicationEmail } from '@/lib/resend'
 import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
 import { getCurrentMembership } from '@/lib/membership-current'
 import { hasExpectedImageSignature } from '@/lib/image-validation'
+import { consumeRateLimitAttempt, getClientIp, hashIdentifier } from '@/lib/auth-rate-limit'
 
 const BUCKET = 'membership-applications'
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png']
 const VALID_TIERS = ['three_month', 'six_month', 'twelve_month'] as const
 type MembershipTier = (typeof VALID_TIERS)[number]
+
+// Submissions per IP inside the shared 15-minute rate-limit window. Each accepted
+// submission uploads up to 15 MB, creates a customer row, and emails staff, so the
+// budget is deliberately small; validation failures do not count against it.
+const APPLICATIONS_PER_IP_PER_WINDOW = 3
+
+const RATE_LIMIT_ERROR = 'Too many applications from this connection. Please wait a few minutes and try again.'
 
 const MIME_TO_EXTENSION: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -90,6 +98,13 @@ export async function POST(request: Request) {
   const govIdFront = govIdFrontResult.file
   const govIdBack = govIdBackResult.file
   const govIdSelfie = govIdSelfieResult.file
+
+  const rateLimitKeys = [
+    { identifierHash: hashIdentifier(`ip:${getClientIp(request)}`), maximumAttempts: APPLICATIONS_PER_IP_PER_WINDOW },
+  ]
+  if (!(await consumeRateLimitAttempt('membership_application', rateLimitKeys))) {
+    return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 })
+  }
 
   const uploadedPaths: string[] = []
 

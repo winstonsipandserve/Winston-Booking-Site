@@ -75,7 +75,7 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 ## Membership
 
-- **Application** (`/membership/apply`) — multipart form with three government ID uploads to private storage. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal.
+- **Application** (`/membership/apply`) — multipart form with three government ID uploads to private storage. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Submissions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
 - **Admin review** — approve or reject, with a mandatory rejection reason.
 - **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller.
 - **Self-service renewal** (`/account/renew`) and **admin-initiated renewal links** (`/membership/renew/[id]`).

@@ -165,6 +165,7 @@ enum AuthRateLimitScope {
   admin_password_reset
   member_password_reset
   booking_hold
+  membership_application
 }
 
 // ── Resource model (Decision: Resource model) ─────────
