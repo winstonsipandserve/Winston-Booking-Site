@@ -58,7 +58,8 @@ Each of these is a conscious scope limit, not an oversight.
 Genuinely undecided, needing a business or client answer.
 
 - **PayMongo account provenance.** The client has not created their own PayMongo account. The keys currently in use are Arjay's personal test-mode account. The client's own **test** keys must be swapped in before promoting to staging, and **live** keys before promoting to production. This swap must be explicitly confirmed before any payment-touching promotion to production.
-- **Enabled payment methods.** Checkout requests card, GCash, Maya, and online banking (`dob` / `brankas`); GrabPay is intentionally excluded after its mobile authorization flow returned a terminal-state Source error. The client's account may not have every requested method enabled, so verify GCash, Maya, DOB, and Brankas on the target PayMongo account before promotion.
+- **Enabled payment methods.** Checkout requests GCash and Maya only. Verify both
+  are enabled on the target PayMongo account before promotion.
 - **Does "Booking Revenue This Month" mean services rendered or cash collected?** It sums every paid booking payment regardless of method, so a credit-covered booking counts identically to a fresh card charge. Not a bug — the question has not been put to the client. Revisit if the number is ever used for real financial reporting.
 
 ---

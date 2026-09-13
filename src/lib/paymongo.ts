@@ -69,11 +69,9 @@ export async function createPaymongoCheckoutSession(
           description: input.description,
           send_email_receipt: input.sendEmailReceipt,
           // PayMongo's Checkout Sessions API rejects requests with this field omitted.
-          // Keep this list aligned with the methods enabled on the PayMongo account:
-          // `dob` covers BPI/UnionBank, while `brankas` covers BDO/Landbank/Metrobank.
-          // GrabPay is intentionally excluded because its mobile authorization flow
-          // can return a terminal-state Source error after authorization.
-          payment_method_types: ['card', 'gcash', 'paymaya', 'dob', 'brankas'],
+          // Checkout is intentionally limited to the two e-wallet methods enabled
+          // for customers: GCash and Maya.
+          payment_method_types: ['gcash', 'paymaya'],
         },
       },
     }),

@@ -168,10 +168,9 @@ PostgreSQL, Storage, and row-level security.
 
 **Checkout Sessions** (hosted, redirect-based) — not raw Payment Intents with client-side Elements.
 
-- Requested payment methods: `card`, `gcash`, `paymaya`, `dob`, and `brankas`.
-  GrabPay is intentionally excluded. `dob` covers BPI/UnionBank online banking;
-  `brankas` covers BDO/Landbank/Metrobank. Availability still depends on the
-  methods enabled on the PayMongo account for the current environment.
+- Requested payment methods: `gcash` and `paymaya` (Maya) only. Availability
+  still depends on those methods being enabled on the PayMongo account for the
+  current environment.
 - Amounts are always in centavos, matching PayMongo's native format.
 - Confirmation happens **only** via a verified `payment.paid` webhook (HMAC-SHA256 over the `Paymongo-Signature` header), never on the client-side redirect.
 - When a stale hold is cancelled, its checkout session is actively expired via PayMongo's Expire Checkout Session endpoint, closing the window where someone could pay into a released slot.
