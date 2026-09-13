@@ -4,15 +4,24 @@ import { prisma } from '@/lib/prisma'
 
 const WINDOW_MS = 15 * 60 * 1000
 
-// Credential/reset scopes are keyed on account + IP. `booking_hold` builds its own keys in
-// src/lib/booking-hold-abuse.ts and is deliberately absent here.
-const LIMITS: Partial<
+// Password-reset scopes count every request against email + IP: the per-email cap is meant
+// to be global so nobody can flood a victim's inbox with reset emails. Login scopes use
+// `getLoginRateLimitKeys` instead, and `booking_hold` builds its own keys in
+// src/lib/booking-hold-abuse.ts.
+const REQUEST_LIMITS: Partial<
   Record<AuthRateLimitScope, { accountAttempts: number; ipAttempts: number }>
 > = {
-  admin_login: { accountAttempts: 5, ipAttempts: 20 },
-  member_login: { accountAttempts: 5, ipAttempts: 20 },
   admin_password_reset: { accountAttempts: 3, ipAttempts: 10 },
   member_password_reset: { accountAttempts: 3, ipAttempts: 10 },
+}
+
+// Login scopes count *failures* only, and the strict bucket is the (account, IP) pair so a
+// stranger's wrong guesses never lock the real owner out from their own IP. The global
+// per-account bucket is a loose backstop against a distributed password spray.
+const LOGIN_LIMITS = {
+  accountIpFailures: 5,
+  ipFailures: 20,
+  accountFailures: 30,
 }
 
 export interface RateLimitKey {
@@ -40,11 +49,11 @@ function getRateLimitKeys(
   request: Request,
   accountIdentifier: string,
 ): RateLimitKey[] {
-  const limits = LIMITS[scope]
-  if (!limits) throw new Error(`No account/IP limits configured for scope ${scope}`)
+  const limits = REQUEST_LIMITS[scope]
+  if (!limits) throw new Error(`No account/IP request limits configured for scope ${scope}`)
   return [
     {
-      identifierHash: hashIdentifier(`account:${accountIdentifier.trim().toLowerCase()}`),
+      identifierHash: hashIdentifier(`account:${normalizeAccount(accountIdentifier)}`),
       maximumAttempts: limits.accountAttempts,
     },
     {
@@ -52,6 +61,55 @@ function getRateLimitKeys(
       maximumAttempts: limits.ipAttempts,
     },
   ]
+}
+
+function normalizeAccount(accountIdentifier: string): string {
+  return accountIdentifier.trim().toLowerCase()
+}
+
+/** The three failure buckets for a credential sign-in: account+IP (strict), IP, account (backstop). */
+export function getLoginRateLimitKeys(
+  request: Request,
+  accountIdentifier: string,
+): RateLimitKey[] {
+  const account = normalizeAccount(accountIdentifier)
+  const ip = getClientIp(request)
+  return [
+    { identifierHash: hashIdentifier(`account-ip:${account}|${ip}`), maximumAttempts: LOGIN_LIMITS.accountIpFailures },
+    { identifierHash: hashIdentifier(`ip:${ip}`), maximumAttempts: LOGIN_LIMITS.ipFailures },
+    { identifierHash: hashIdentifier(`account:${account}`), maximumAttempts: LOGIN_LIMITS.accountFailures },
+  ]
+}
+
+async function deleteExpiredAttempts(cutoff: Date): Promise<void> {
+  // Every request performs bounded retention, so this abuse-control table never becomes
+  // a long-lived activity log. The createdAt index keeps this cleanup targeted.
+  await prisma.authRateLimitAttempt.deleteMany({ where: { createdAt: { lt: cutoff } } })
+}
+
+/**
+ * Read-only check: true when any key is already at its limit. Call before verifying the
+ * credential, then `recordRateLimitFailure` only when verification fails, so successful
+ * sign-ins never spend budget. Two simultaneous failures can overshoot by one; acceptable.
+ */
+export async function isRateLimited(scope: AuthRateLimitScope, keys: RateLimitKey[]): Promise<boolean> {
+  const cutoff = new Date(Date.now() - WINDOW_MS)
+  await deleteExpiredAttempts(cutoff)
+  const counts = await Promise.all(
+    keys.map((key) =>
+      prisma.authRateLimitAttempt.count({
+        where: { scope, identifierHash: key.identifierHash, createdAt: { gte: cutoff } },
+      }),
+    ),
+  )
+  return counts.some((count, index) => count >= keys[index].maximumAttempts)
+}
+
+/** Records one failure against every key, unconditionally. */
+export async function recordRateLimitFailure(scope: AuthRateLimitScope, keys: RateLimitKey[]): Promise<void> {
+  await prisma.authRateLimitAttempt.createMany({
+    data: keys.map((key) => ({ scope, identifierHash: key.identifierHash })),
+  })
 }
 
 export async function consumeAuthRateLimitAttempt(
@@ -71,10 +129,7 @@ export async function consumeRateLimitAttempt(
   keys: RateLimitKey[],
 ): Promise<boolean> {
   const cutoff = new Date(Date.now() - WINDOW_MS)
-
-  // Every request performs bounded retention, so this abuse-control table never becomes
-  // a long-lived activity log. The createdAt index keeps this cleanup targeted.
-  await prisma.authRateLimitAttempt.deleteMany({ where: { createdAt: { lt: cutoff } } })
+  await deleteExpiredAttempts(cutoff)
 
   return prisma.$transaction(async (tx) => {
     // Lock every bucket in a deterministic order. Without this, a burst of parallel

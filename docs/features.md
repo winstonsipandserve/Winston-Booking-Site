@@ -62,10 +62,10 @@ Gated on a member session; anything else redirects to login.
 
 | Surface | Status |
 |---|---|
-| Member login (`/login`) | Live — client-side sign-in so the navbar updates immediately, with a password show/hide toggle |
+| Member login (`/login`) | Live — client-side sign-in so the navbar updates immediately, with a password show/hide toggle; rate-limited on failed attempts only (see [architecture.md](architecture.md) → Authentication) |
 | Member activation (`/activate`) | Live — sets the first password from an emailed token |
 | Member forgot/reset password | Live end-to-end, enumeration-safe and rate-limited |
-| Admin login (`/admin/login`) | Live, rate-limited, with an error modal |
+| Admin login (`/admin/login`) | Live, rate-limited on failed attempts only (see [architecture.md](architecture.md) → Authentication), with an error modal |
 | Admin forgot/reset password | Live end-to-end and rate-limited |
 | Sign out | Confirmation modal required on the public navbar |
 
