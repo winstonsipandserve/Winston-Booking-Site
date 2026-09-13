@@ -71,8 +71,13 @@ export default async function AccountPage() {
     }
   }
 
+  // A cancelled row that was never paid is an abandoned hold — including one a stranger
+  // created under this email — and has no place in the member's history.
   const bookings = await prisma.booking.findMany({
-    where: { customerId: customer.id },
+    where: {
+      customerId: customer.id,
+      OR: [{ status: { not: 'cancelled' } }, { payment: { is: { status: 'paid' } } }],
+    },
     orderBy: { startTime: 'desc' },
     take: 50,
     include: { resource: { include: { resourceType: true } } },

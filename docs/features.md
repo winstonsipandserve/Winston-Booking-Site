@@ -53,7 +53,7 @@ Gated on a member session; anything else redirects to login.
 - **Check-in credentials** — QR code plus a 6-digit fallback code, with a regenerate action.
 - **Top Up F&B Credit** — four preset amounts in a modal, shown only for an active membership.
 - **Renew Membership** — shown for an expired membership; **Renew Early** appears for an active one within 14 days of its end. A paid, queued renewal is shown as a note with its end date instead.
-- **Recent bookings** — the 50 most recent, with real booking data.
+- **Recent bookings** — the 50 most recent, with real booking data. Cancelled rows that were never paid (abandoned holds, including any a stranger created under the member's email) are hidden.
 - **Renewal and top-up confirmation pages** that poll for payment completion.
 
 ---

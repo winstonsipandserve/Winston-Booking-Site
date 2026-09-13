@@ -94,7 +94,7 @@ export async function POST(request: Request) {
   const uploadedPaths: string[] = []
 
   try {
-    const { customer } = await resolveCustomer({ name, phone, email })
+    const { customer } = await resolveCustomer({ name, phone, email }, { updateExistingProfile: true })
 
     const latestApplication = await prisma.membershipApplication.findFirst({
       where: { customerId: customer.id },

@@ -131,7 +131,17 @@ export async function PATCH(
     )
   }
 
-  const { customer } = await resolveCustomer({ name, phone, email })
+  // Attachment is one-shot. Member holds are attached at creation, and an anonymous hold
+  // is attached exactly once by the wizard, so a second PATCH can only be an attempt to
+  // re-point a booking at someone else's account.
+  if (booking.customerId !== null) {
+    return Response.json(
+      { error: 'Contact details are already attached to this booking' },
+      { status: 409 },
+    )
+  }
+
+  const { customer } = await resolveCustomer({ name, phone, email }, { updateExistingProfile: false })
 
   // Deliberate: the anonymous booking path never grants member rate or F&B
   // credit, regardless of the resolved Customer's actual membership status —
