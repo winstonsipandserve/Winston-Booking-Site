@@ -25,11 +25,18 @@ Never yet run under real conditions:
 - **Business hours cannot reject a midnight-crossing booking.** The check compares minutes-of-day independently for start and end, so a 23:00 → 01:00 range satisfies both bounds and passes. The documented 6 AM–10 PM rule is enforced only for same-day ranges.
 - **The guest fee lookup has no ordering.** It fetches the first row with no `orderBy`, so the single-row assumption is unenforced. A second row would make pricing nondeterministic.
 - **`Membership.status` and `endDate` are two independent expiry rules.** One code path requires `status: 'active'` *and* an unexpired end date; another uses the end date alone. Nothing ever writes `expired`, so they agree only by accident — if an admin set a status manually, member pricing and credit redemption would stop while the badge still read "Active Member". See [database.md](database.md).
+- **A booking can use member pricing and credit for a slot after the membership expires.** Booking creation resolves membership eligibility against the request time, not the slot start. A near-expiry fixture successfully booked a post-expiry slot at the member rate and immediately redeemed ₱650 from its credit balance.
+- **Active-membership selection is nondeterministic when more than one row qualifies.** `getActiveMembership` has no `orderBy`. The renewed-member fixture selected the newer row in the exercised run, but PostgreSQL does not guarantee that result.
+- **Renewed members are misclassified during reapplication.** The application endpoint evaluates the membership attached to the original application instead of the customer's current membership, so a customer with an expired original row and an active renewal receives the expired-member 409 response.
+- **The expiry cron evaluates rows rather than a customer's current membership.** A renewed customer received an expired-membership email for the old row while the new membership was active.
+- **Reminder emails can state the wrong number of days remaining.** The 14-day and 3-day jobs pass their window label into the email rather than calculating the selected row's remaining time. A ten-day fixture was told it had 14 days, while two-day and one-hour fixtures were told they had 3 days.
+- **A completed top-up checkout can credit an expired membership.** `handleTopUpPaymentWebhook` checks that the payment is pending but does not revalidate the membership's status or `endDate` before adding credit.
 
 ### Display and reporting
 
 - The membership approve/reject route reports its email as sent unconditionally. The underlying senders swallow send failures internally and the route never checks their result, so a real delivery failure is invisible to the admin. No fix scoped yet.
 - Several date-formatting calls in the email, webhook, and membership-lookup modules use a Philippine locale with no explicit time zone, and so fall back to the server runtime's zone. Flagged as likely correctness bugs, not yet confirmed.
+- **Renewal credit is displayed as the current balance instead of the original grant.** Membership display fields look only for an `activation` ledger row. A renewed membership whose initial row is correctly marked `renewal` showed “₱2,850 F&B credit” after a ₱650 booking instead of the original ₱3,500 grant; check-in likewise showed ₱2,850 remaining out of ₱2,850.
 
 ### Dead code
 
@@ -61,12 +68,16 @@ Genuinely undecided, needing a business or client answer.
 - **Enabled payment methods.** Checkout requests GCash and Maya only. Verify both
   are enabled on the target PayMongo account before promotion.
 - **Does "Booking Revenue This Month" mean services rendered or cash collected?** It sums every paid booking payment regardless of method, so a credit-covered booking counts identically to a fresh card charge. Not a bug — the question has not been put to the client. Revisit if the number is ever used for real financial reporting.
+- **Should membership expiry be an exact activation-time anniversary or the end of the Manila calendar day?** Memberships currently inherit PayMongo's arbitrary `paidAt` time and flip to expired at that exact instant, including within an already-authenticated session.
+- **Should near-expiry members be able to renew before lapse?** Self-service renewal currently returns 409 until the active membership has expired, including two days before expiry.
+- **Should overlapping reminder windows send both messages in one cron run?** A row with null backfilled stamps and two days remaining receives both the 14-day and 3-day emails. Decide whether the narrower message should suppress the broader one.
+- **Should an expired member remain authenticated on member routes?** The account correctly hides top-up and booking uses non-member pricing, but the member session itself remains valid and `/account/renew` stays available.
 
 ---
 
 ## Test Data Gaps
 
-- **No expired-membership fixture exists** in the dev dataset. The expired branch of the display-status logic, the admin detail layout for it, and its reapplication-blocking message have never been exercised against a real row. Supabase MCP access is read-only, so creating one needs a script or the admin UI.
+- **Membership expiry coverage remains manual.** `scripts/membership-expiry-fixtures.ts` now creates an ID-scoped near-expiry, expired, and renewed-member dataset and cleans it up from its manifest, but the walkthrough is not automated.
 - **No content lifecycle fixture set exists.** The reset utility safely removes announcement and news data, but repeatable fixtures for scheduled/expired notices, overlapping resource claims, and draft/scheduled news still need to be added to automated tests.
 - **No reproducible admin bootstrap.** The seed creates reference data only and no admin user, so admin accounts exist only in the live dev database. A fresh environment currently has no way to create the first admin.
 

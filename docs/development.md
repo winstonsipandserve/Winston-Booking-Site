@@ -60,6 +60,24 @@ npm run db:reset-dev-data -- --confirm
 
 It must not be run against production or shared data. The deletion order is transaction-protected and follows the schema's foreign-key dependencies.
 
+### Membership expiry fixtures
+
+Use the ID-scoped membership lifecycle fixtures for near-expiry, expired, and renewed-member testing. The command prints the configured database host, refuses to run without the same development-data safeguard, and records exact created IDs in the git-ignored `scripts/.membership-fixtures.json` manifest:
+
+```powershell
+$env:ALLOW_DEV_DATA_RESET = "true"
+npm run db:membership-fixtures -- create
+```
+
+Run the walkthrough against those rows, then remove only fixture-owned customers and their dependent test records:
+
+```powershell
+$env:ALLOW_DEV_DATA_RESET = "true"
+npm run db:membership-fixtures -- cleanup
+```
+
+The fixtures must not be created in production or a shared database. All six accounts use the development-only password printed by `create`; their private verification documents are a harmless placeholder object that cleanup also removes.
+
 ## Coding Conventions
 
 ### Prisma and migrations

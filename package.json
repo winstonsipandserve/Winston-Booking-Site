@@ -11,7 +11,8 @@
     "db:migrate": "dotenv -e .env.local -- prisma migrate deploy",
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "db:seed": "dotenv -e .env.local -- prisma db seed",
-    "db:reset-dev-data": "dotenv -e .env.local -- tsx prisma/reset-dev-data.ts"
+    "db:reset-dev-data": "dotenv -e .env.local -- tsx prisma/reset-dev-data.ts",
+    "db:membership-fixtures": "dotenv -e .env.local -- tsx scripts/membership-expiry-fixtures.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
