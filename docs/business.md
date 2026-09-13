@@ -53,7 +53,7 @@ A booking is always made against a *specific* unit (Court 1, Bay 2), never again
 ## Business Hours
 
 - **6:00 AM – 10:00 PM daily**, uniform across every resource type.
-- **No maximum advance-booking window** — a customer may book arbitrarily far ahead.
+- **No maximum advance-booking window** — a customer may book arbitrarily far ahead. A booking's start must be in the future; past slots cannot be booked (the wizard disables them and the API rejects them).
 - The AM (6–11) / PM (12–10) rate-period split that appears on the client's rate sheet is a **display label only**, not a booking restriction. Bookings may span the 11 AM–12 PM boundary freely, and no pricing differs by period.
 
 ---

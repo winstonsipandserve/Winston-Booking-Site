@@ -14,7 +14,7 @@ import {
 import { getMembershipActiveAt } from '@/lib/membership-current'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { appendBookingAccessCookie, createBookingAccessToken } from '@/lib/booking-access'
-import { auth } from '../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 
 interface BookingRequestBody {
   resourceId?: unknown
@@ -48,8 +48,10 @@ function isExclusionViolation(err: unknown): boolean {
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
-  const isMemberSession = !!session?.user?.id && session.user.role === 'member'
+  // A deleted customer or a token revoked by a password change yields null here, and the
+  // request proceeds as anonymous — the same thing /book renders for that browser.
+  const memberSession = await getActiveMemberSession()
+  const isMemberSession = memberSession !== null
 
   let body: BookingRequestBody
   try {
@@ -91,21 +93,15 @@ export async function POST(request: Request) {
   let activeMembership: Membership | null = null
   let customerNameSnapshot: string | null = null
   let customerPhoneSnapshot: string | null = null
-  if (isMemberSession) {
-    customerId = session!.user.id
+  if (memberSession) {
+    customerId = memberSession.customer.id
     // Member benefits require a membership whose term covers the slot itself, not just the
     // moment of booking — a member two days from expiry gets non-member pricing for next
     // week (see docs/business.md → Membership perks).
     activeMembership = await getMembershipActiveAt(customerId, parsedStartTime)
     isMember = !!activeMembership
-    const sessionCustomer = await prisma.customer.findUnique({ where: { id: customerId } })
-    if (!sessionCustomer) {
-      // A JWT can outlive its customer row (e.g. fixture cleanup); fail closed instead of
-      // hitting the customer foreign key inside the transaction.
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-    customerNameSnapshot = sessionCustomer.name
-    customerPhoneSnapshot = sessionCustomer.phone
+    customerNameSnapshot = memberSession.customer.name
+    customerPhoneSnapshot = memberSession.customer.phone
   }
 
   const guestCount = guestCountRaw
@@ -154,6 +150,13 @@ export async function POST(request: Request) {
       { error: 'Bookings must start and end between 6:00 AM and 10:00 PM' },
       { status: 400 },
     )
+  }
+
+  // Mirrors the wizard, which disables any slot whose start is not in the future. Without
+  // this a lapsed member could book a slot inside their expired term and spend forfeited
+  // credit, and anyone could write past-dated rows.
+  if (parsedStartTime <= new Date()) {
+    return Response.json({ error: 'Bookings must start in the future' }, { status: 400 })
   }
 
   // Hold-spam controls (docs/features.md → Booking hold limits). Counted only for requests
