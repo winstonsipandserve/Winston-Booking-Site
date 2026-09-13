@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import PasswordInput from '@/components/ui/PasswordInput'
 import ConfirmModal from '@/components/admin/ConfirmModal'
+import { adminSignOut } from '@/lib/actions/admin-auth-actions'
+
+// Changing the password revokes every session issued before it — including this one — so
+// the admin is signed out shortly after the success message (docs/architecture.md → Authentication).
+const SIGN_OUT_DELAY_MS = 2500
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -34,6 +39,9 @@ export default function ChangePasswordForm() {
       if (res.status === 200) {
         setSubmitState('success')
         setFormKey((k) => k + 1)
+        setTimeout(() => {
+          void adminSignOut()
+        }, SIGN_OUT_DELAY_MS)
       } else if (res.status === 400) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem changing your password.')
@@ -93,7 +101,7 @@ export default function ChangePasswordForm() {
           />
 
           {submitState === 'success' && (
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Password changed successfully.</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Password changed successfully. Signing you out — please sign in again with your new password.</p>
           )}
 
           <button

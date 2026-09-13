@@ -1,9 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { auth } from '../../../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'member') {
+  const memberSession = await getActiveMemberSession()
+  if (!memberSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -14,7 +14,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     include: { membership: true },
   })
 
-  if (!payment || !payment.membershipId || payment.membership?.customerId !== session.user.id) {
+  if (!payment || !payment.membershipId || payment.membership?.customerId !== memberSession.customer.id) {
     return Response.json({ error: 'Payment not found' }, { status: 404 })
   }
 

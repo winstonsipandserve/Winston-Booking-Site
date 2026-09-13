@@ -10,22 +10,14 @@ import { prisma } from '@/lib/prisma'
 import { getOrCreateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
 import { buildMembershipDisplayFields } from '@/lib/membership-latest'
 import { getCurrentMembership, getRenewalEligibility } from '@/lib/membership-current'
-import { auth } from '../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 
 export default async function AccountPage() {
-  const session = await auth()
-
-  if (!session?.user?.id || session.user.role !== 'member') {
+  const memberSession = await getActiveMemberSession()
+  if (!memberSession) {
     redirect('/login')
   }
-
-  const customer = await prisma.customer.findUnique({
-    where: { id: session.user.id },
-  })
-
-  if (!customer) {
-    redirect('/login')
-  }
+  const { customer } = memberSession
 
   const membership = await getCurrentMembership(customer.id)
 

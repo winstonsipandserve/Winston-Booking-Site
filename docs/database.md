@@ -104,6 +104,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 **`Customer`** — one row per person, unique on `email`.
 
 - `passwordHash` is **nullable** — null for a non-member row created from a booking's name/email/phone, set once a member activates. A customer with a password has a real login account.
+- `passwordChangedAt` — stamped by every password-setting route; sessions issued before it are rejected (see [architecture.md](architecture.md) → Authentication). `AdminUser` carries the same column.
 - `checkInToken` (unique) and `checkInCode` (unique, 6 chars) are the front-desk check-in identifier pair. Always created and rotated **together**. Both nullable until first generated.
 - **Resolved by look-up-or-create on `email`**, never blind-inserted.
 

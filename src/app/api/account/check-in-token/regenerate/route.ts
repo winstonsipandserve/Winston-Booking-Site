@@ -1,17 +1,12 @@
-import { auth } from '../../../../../../auth'
-import { prisma } from '@/lib/prisma'
+import { getActiveMemberSession } from '@/lib/member-session'
 import { regenerateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
 
 export async function POST() {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'member') {
+  const memberSession = await getActiveMemberSession()
+  if (!memberSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  const customer = await prisma.customer.findUnique({ where: { id: session.user.id } })
-  if (!customer) {
-    return Response.json({ error: 'Customer not found' }, { status: 404 })
-  }
+  const { customer } = memberSession
 
   try {
     const { token, code } = await regenerateCheckInToken(customer.id)

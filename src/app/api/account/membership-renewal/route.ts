@@ -1,4 +1,4 @@
-import { auth } from '../../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
@@ -15,10 +15,11 @@ function isMembershipTier(value: unknown): value is MembershipTier {
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'member') {
+  const memberSession = await getActiveMemberSession()
+  if (!memberSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const { customer } = memberSession
 
   let body: MembershipRenewalRequestBody
   try {
@@ -30,11 +31,6 @@ export async function POST(request: Request) {
   const { tier } = body
   if (!isMembershipTier(tier)) {
     return Response.json({ error: 'A valid tier is required' }, { status: 400 })
-  }
-
-  const customer = await prisma.customer.findUnique({ where: { id: session.user.id } })
-  if (!customer) {
-    return Response.json({ error: 'Customer not found' }, { status: 404 })
   }
 
   const renewal = await getRenewalEligibility(customer.id)

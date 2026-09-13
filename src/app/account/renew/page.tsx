@@ -7,25 +7,17 @@ import { formatMembershipTier, formatMembershipExpiryDate } from '@/lib/format'
 import { getRenewalEligibility } from '@/lib/membership-current'
 import RenewMembershipButton from '@/components/membership/RenewMembershipButton'
 import MembershipCheckoutSummary from '@/components/membership/MembershipCheckoutSummary'
-import { auth } from '../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 import type { MembershipTier } from '@prisma/client'
 
 const TIERS = Object.keys(MEMBERSHIP_TIER_PLANS) as MembershipTier[]
 
 export default async function RenewMembershipPage() {
-  const session = await auth()
-
-  if (!session?.user?.id || session.user.role !== 'member') {
+  const memberSession = await getActiveMemberSession()
+  if (!memberSession) {
     redirect('/login')
   }
-
-  const customer = await prisma.customer.findUnique({
-    where: { id: session.user.id },
-  })
-
-  if (!customer) {
-    redirect('/login')
-  }
+  const { customer } = memberSession
 
   const renewal = await getRenewalEligibility(customer.id)
 

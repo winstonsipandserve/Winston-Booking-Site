@@ -7,12 +7,12 @@ import { activeAnnouncementWhere, sortAnnouncementsByUrgency } from '@/lib/annou
 import { formatBookingDateTime, formatMembershipExpiryDate } from '@/lib/format'
 import type { GateNotice } from '@/components/booking/AnnouncementGate'
 import type { MemberContext } from '@/components/booking/BookingPageClient'
-import { auth } from '../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 
 export default async function BookPage() {
   const now = new Date()
-  const [session, announcements] = await Promise.all([
-    auth(),
+  const [memberSession, announcements] = await Promise.all([
+    getActiveMemberSession(),
     prisma.announcement.findMany({
       where: activeAnnouncementWhere(now),
       include: { resourceLinks: { include: { resource: { include: { resourceType: true } } } } },
@@ -34,12 +34,9 @@ export default async function BookPage() {
 
   let memberContext: MemberContext | null = null
 
-  if (session?.user?.id && session.user.role === 'member') {
-    const customer = await prisma.customer.findUnique({
-      where: { id: session.user.id },
-    })
-
-    if (customer) {
+  if (memberSession) {
+    const { customer } = memberSession
+    {
       // Every unexpired term (current plus a scheduled renewal) so the wizard can price a
       // slot by the term that actually covers it — the API applies the same rule.
       const liveMemberships = await getLiveMemberships(customer.id, now)

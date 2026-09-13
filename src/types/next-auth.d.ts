@@ -5,6 +5,8 @@ declare module 'next-auth' {
     user: {
       id: string
       role: 'admin' | 'member'
+      /** Sign-in instant (ms). 0 for tokens issued before this field existed. */
+      authAt: number
     } & DefaultSession['user']
   }
 
@@ -17,5 +19,6 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id: string
     role: 'admin' | 'member'
+    authAt?: number
   }
 }

@@ -80,6 +80,7 @@ Genuinely undecided, needing a business or client answer.
 
 - **Supabase is still on the Free tier.** Pro is required before launch for backups and a higher connection limit. Not yet actioned.
 - **Vercel two-factor authentication is inactive.** Strongly recommended, no target date.
+- **Admin forgot/reset password vs. middleware on Vercel — unverified.** `middleware.ts` exempts only `/admin/login`, yet `/api/admin/auth/forgot-password` and `reset-password` must work without a session. Locally the middleware never executes so the routes answer normally; on a deployment where it does run, the matcher would redirect them to the login page and the forms would show a false "link sent" message. Check on staging; if it reproduces, exempt `/api/admin/auth/*` (and `/admin/forgot-password`, `/admin/reset-password`) in the matcher.
 - **Staging re-verification needed** — the region fix and the Vercel Auth re-enable were only ever applied by redeploying `dev`.
 - **Production overrides need confirming** at the eventual staging-to-production promotion. The custom domain is connected to Production and currently returns 404s because of the framework-preset issue described in [architecture.md](architecture.md).
 - **Connection priming floor** of roughly 300 ms per admin navigation on a fresh pooled connection. Reducing it project-wide — via Prisma Accelerate, a different pooling strategy, or Vercel Fluid Compute — is an open investigation.

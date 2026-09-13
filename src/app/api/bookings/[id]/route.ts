@@ -3,7 +3,7 @@ import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { resolveCustomer } from '@/lib/customer-resolution'
 import { priceBooking } from '@/lib/booking-pricing'
 import { hasValidBookingAccessToken } from '@/lib/booking-access'
-import { auth } from '../../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -15,12 +15,8 @@ async function canAccessBooking(request: Request, booking: {
   accessTokenHash: string | null
   accessTokenExpiresAt: Date | null
 }): Promise<boolean> {
-  const session = await auth()
-  if (
-    session?.user?.role === 'member' &&
-    session.user.id &&
-    booking.customerId === session.user.id
-  ) {
+  const memberSession = await getActiveMemberSession()
+  if (memberSession && booking.customerId === memberSession.customer.id) {
     return true
   }
   return hasValidBookingAccessToken(request, booking)
