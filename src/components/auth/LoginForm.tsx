@@ -36,9 +36,9 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+    <div className="w-full">
       <LoadingOverlay isOpen={isPending} label="Signing In…" />
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
           <label htmlFor="email" className="text-sm font-medium text-brand-dark">
             Email
