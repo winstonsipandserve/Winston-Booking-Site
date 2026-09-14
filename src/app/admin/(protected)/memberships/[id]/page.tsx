@@ -7,6 +7,7 @@ import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
 import IdentityVerificationGallery from '@/components/admin/IdentityVerificationGallery'
 import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
 import ResendActivationButton from '@/components/admin/ResendActivationButton'
+import ResendPaymentLinkButton from '@/components/admin/ResendPaymentLinkButton'
 import AddCreditButton from '@/components/admin/AddCreditButton'
 import AdminPagination from '@/components/admin/AdminPagination'
 import { formatMembershipTier, formatCentavos } from '@/lib/format'
@@ -263,6 +264,16 @@ export default async function AdminMembershipApplicationDetailPage({
               </span>
             </div>
           </section>
+        </div>
+      )}
+
+      {displayStatus === 'awaiting_payment' && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-300 bg-blue-50 p-4 dark:border-blue-700/60 dark:bg-blue-950/40">
+          <p className="text-sm text-blue-900 dark:text-blue-200">
+            This applicant hasn&apos;t completed payment yet. If their link expired, send a new
+            one.
+          </p>
+          <ResendPaymentLinkButton applicationId={application.id} email={application.customer.email} />
         </div>
       )}
 

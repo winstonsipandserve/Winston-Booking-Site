@@ -5,9 +5,10 @@ import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 interface CompletePaymentButtonProps {
   applicationId: string
+  token: string
 }
 
-export default function CompletePaymentButton({ applicationId }: CompletePaymentButtonProps) {
+export default function CompletePaymentButton({ applicationId, token }: CompletePaymentButtonProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,7 +20,7 @@ export default function CompletePaymentButton({ applicationId }: CompletePayment
       const res = await fetch('/api/membership-payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ applicationId }),
+        body: JSON.stringify({ applicationId, token }),
       })
 
       if (res.ok) {

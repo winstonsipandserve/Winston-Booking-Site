@@ -1,5 +1,6 @@
 import type { MembershipTier } from '@prisma/client'
 import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
+import { MEMBERSHIP_PAYMENT_LINK_TOKEN_HOURS } from './membership-payment-link'
 import { ADMIN_PASSWORD_RESET_TOKEN_HOURS } from './admin-password-reset'
 import { buildBrandedEmail, escapeHtml } from './email-templates'
 import { formatCentavos, formatMembershipTier } from './format'
@@ -261,6 +262,7 @@ export async function sendMembershipPaymentEmail({
       <p style="margin: 4px 0 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_MID};">${tierName} Membership</p>
     </div>
     <p>Complete your payment below to activate your membership and set your account password.</p>
+    <p>This link will expire in ${MEMBERSHIP_PAYMENT_LINK_TOKEN_HOURS} hours.</p>
   `
 
   const { html, text } = buildBrandedEmail({

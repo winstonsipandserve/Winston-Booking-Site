@@ -77,9 +77,10 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 - **Application** (`/membership/apply`) — multipart form with three government ID uploads to private storage. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Submissions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
 - **Admin review** — approve or reject, with a mandatory rejection reason.
-- **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller.
+- **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller. The link's `?token=` is checked before showing the checkout summary, so an invalid/superseded/expired link shows an error instead of a payment form — same pre-check pattern as `/activate`.
 - **Self-service renewal** (`/account/renew`) and **admin-initiated renewal links** (`/membership/renew/[id]`).
 - **Admin-initiated activation resend** — on a member's detail page, if they've never set a password (e.g. their original activation link expired unused), an admin can issue a fresh 48-hour activation link, which retires any earlier unused one.
+- **Admin-initiated payment-link resend** — on an application's detail page, while it's awaiting payment, an admin can issue a fresh 48-hour payment link, which supersedes any earlier unused one.
 - **Credit top-up** — self-service via PayMongo, and admin-logged cash or manual-online at the front desk.
 - **Membership certificate PDF** attached to first-time activation emails only.
 
@@ -117,6 +118,7 @@ Tabbed as Courts / Simulators / Guest Fee.
 List and detail with approve/reject. The status filter splits on derived display status. CSV export is functional.
 
 - A **pending** application's detail page shows an identity-verification lightbox gallery and a sticky Approve/Reject bottom bar.
+- An **awaiting-payment** application's detail page shows a Resend Payment Link action.
 - An **active or expired** member's page shows a header with name and "Member since", a four-cell quick-stats row, member information and membership detail cards, a collapsible verification-documents section, and credit-transaction and booking histories (capped at 10 rows each, no pagination).
 - Actions: Send Renewal Link (expired, or active and within the 14-day renewal window with nothing queued) and Add Credit (active only). "Days remaining" counts Manila calendar days.
 

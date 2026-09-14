@@ -106,11 +106,12 @@ The client key is stored as `Booking.holdClientHash` (an HMAC, never a raw IP). 
    - **Reapplication is blocked** unless the most recent application for that email was rejected. Each blocked case returns its own distinct message, derived from the same display-status logic the admin list uses.
 2. **Review.** An admin opens the application, views the ID images through signed URLs in an admin-only lightbox, and approves or rejects. Rejection requires a non-empty reason. Either way an activity log row is written in the same transaction as the mutation.
 3. **On rejection** — a branded email is sent carrying the admin's reason. No membership is created. The customer record stays, with no membership attached.
-4. **On approval** — the application is marked approved and a **payment link email** is sent. **No membership exists yet.**
+4. **On approval** — the application is marked approved and a **payment link email** is sent. **No membership exists yet.** The link carries a hashed, 48-hour `MembershipPaymentLinkToken` in its query string (`?token=`), not just the bare application id — both `/membership/pay/[id]` and the checkout-session API (`POST /api/membership-payments`) reject a missing, invalid, superseded, or expired token, mirroring `MemberActivationToken`.
 5. **Payment.** The applicant opens `/membership/pay/[id]` and pays through PayMongo Checkout.
 6. **Activation.** The webhook's membership branch creates the `Membership` with its tier, dates, and credit balance, writes the activation ledger entry, and issues an activation token. The activation email carries a **PDF membership certificate** (first-time activation only).
 7. **Account setup.** The member opens `/activate`, sets a password, and the token is consumed. They now have a login.
    - **If the activation link expires unused**, the member has an active membership but no way to log in, and forgot-password can't help (it only emails members who already have a `passwordHash`). An admin can resend a fresh activation link from the member's detail page — this retires the dead token and issues a new one with the same 48-hour expiry, via a plainer reminder email (no certificate, no congratulations copy).
+   - **If the payment link expires unused**, the application is still `approved` with no membership. An admin can resend a fresh payment link from the application's detail page (shown whenever it's awaiting payment) — this supersedes any earlier unused token and issues a new one with the same 48-hour expiry, reusing the original approval email copy.
 
 ---
 

@@ -7,13 +7,17 @@ import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import CompletePaymentButton from '@/components/membership/CompletePaymentButton'
 import MembershipCheckoutSummary from '@/components/membership/MembershipCheckoutSummary'
+import { lookupPaymentLinkToken } from '@/lib/membership-payment-link'
 
 export default async function MembershipPaymentPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ token?: string }>
 }) {
   const { id } = await params
+  const { token } = await searchParams
 
   const application = await prisma.membershipApplication.findUnique({
     where: { id },
@@ -23,6 +27,23 @@ export default async function MembershipPaymentPage({
 
   if (!application) {
     notFound()
+  }
+
+  // The token only gates the still-outstanding-payment state — every other branch below
+  // (already a member, still pending, rejected) is already a terminal, non-actionable page.
+  let linkError: string | null = null
+  if (!application.membership && application.status === 'approved') {
+    if (!token) {
+      linkError = "This payment link is missing its access code. Please use the link from your email."
+    } else {
+      const result = await lookupPaymentLinkToken(application.id, token)
+      if (!result.ok) {
+        linkError =
+          result.status === 404
+            ? 'This payment link is invalid. Please use the most recent email we sent you.'
+            : 'This payment link has expired or is no longer valid. Please contact us and we’ll send you a new one.'
+      }
+    }
   }
 
   return (
@@ -65,6 +86,8 @@ export default async function MembershipPaymentPage({
           <p className="max-w-md text-center text-brand-dark/60">
             This application wasn&apos;t approved. Check your email for details.
           </p>
+        ) : linkError ? (
+          <p className="max-w-md text-center text-red-600">{linkError}</p>
         ) : (
           <div className="flex w-full max-w-md flex-col gap-4">
             <MembershipCheckoutSummary
@@ -81,7 +104,7 @@ export default async function MembershipPaymentPage({
               You&apos;ll be redirected to PayMongo to complete payment securely.
             </p>
 
-            <CompletePaymentButton applicationId={application.id} />
+            <CompletePaymentButton applicationId={application.id} token={token as string} />
           </div>
         )}
       </div>

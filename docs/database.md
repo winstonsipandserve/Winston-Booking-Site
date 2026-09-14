@@ -10,7 +10,7 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 ## Ground Rules
 
-- **27 models during the expand rollout.** PascalCase model names, snake_case database columns via `@map`, `cuid()` primary keys. Two of those models are the legacy `Bulletin` pair retained temporarily for rollback compatibility.
+- **28 models during the expand rollout.** PascalCase model names, snake_case database columns via `@map`, `cuid()` primary keys. Two of those models are the legacy `Bulletin` pair retained temporarily for rollback compatibility.
 - **Money is always `Int` in centavos.** ₱100.00 is stored as `10000`. Never a float, anywhere.
 - **`createdAt` / `updatedAt` on every model — except the immutable audit models**, which are `createdAt`-only by design (listed below).
 - **Every new table must enable RLS with explicit deny-all policies** for the `anon` and `authenticated` roles, in the same migration that creates it. Never deferred to a follow-up.
@@ -70,7 +70,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 | `AnnouncementUrgency` | `info`, `warning`, `urgent` |
 | `NewsCategory` | `tournament`, `community`, `promo`, `general` |
 | `NewsStatus` | `draft`, `published` |
-| `AdminActivityAction` | `membership_application_approved`, `membership_application_rejected`, `membership_renewal_link_sent`, `member_activation_link_resent`, `booking_rescheduled`, `membership_credit_topup_added`, `news_post_created`, `news_post_updated`, `news_post_deleted`, `announcement_created`, `announcement_updated`, `announcement_deleted` |
+| `AdminActivityAction` | `membership_application_approved`, `membership_application_rejected`, `membership_renewal_link_sent`, `member_activation_link_resent`, `membership_payment_link_resent`, `booking_rescheduled`, `membership_credit_topup_added`, `news_post_created`, `news_post_updated`, `news_post_deleted`, `announcement_created`, `announcement_updated`, `announcement_deleted` |
 | `AdminActivityEntityType` | `membership_application`, `booking`, `membership`, `news_post`, `announcement` |
 
 `MembershipDisplayStatus` is **not** a database enum — it is a derived TypeScript union (`pending`, `awaiting_payment`, `active`, `expired`, `rejected`). See "Membership status" below.
@@ -113,6 +113,8 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 **Token models** — `MemberActivationToken`, `PasswordResetToken`, `AdminPasswordResetToken` all share the same shape: an owner foreign key, a unique `tokenHash`, `expiresAt`, and a nullable `usedAt`.
 
 > **The raw token is never stored.** Only its SHA-256 hex digest goes in `tokenHash`.
+
+**`MembershipPaymentLinkToken`** shares that same shape, keyed off `applicationId` — it gates `/membership/pay/[id]` and `POST /api/membership-payments` so the emailed approval payment link is a bounded-lifetime capability rather than the bare application id. One difference from the other three: `usedAt` here means *superseded by a resend*, never *consumed by a successful action* — a customer can make several checkout attempts on the same token before paying, and the existing `application.membership` check is what actually blocks reuse after payment succeeds.
 
 **`AuthRateLimitAttempt`** — a short-lived, write-once abuse-control counter for member/admin login, password-reset, and booking-hold requests. `scope` distinguishes the flow (the `booking_hold` and `membership_application` scopes key on member id and/or IP, see [workflows.md](workflows.md)); `identifierHash` is an HMAC of either the normalized account identifier or client IP, never the raw value. It is indexed by `(scope, identifierHash, createdAt)` and cleaned up expire-on-write, so it is not an audit ledger.
 

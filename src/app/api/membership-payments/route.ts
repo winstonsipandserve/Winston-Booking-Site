@@ -2,9 +2,11 @@ import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
+import { lookupPaymentLinkToken } from '@/lib/membership-payment-link'
 
 interface MembershipPaymentRequestBody {
   applicationId?: unknown
+  token?: unknown
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -19,9 +21,12 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Malformed JSON body' }, { status: 400 })
   }
 
-  const { applicationId } = body
+  const { applicationId, token } = body
   if (!isNonEmptyString(applicationId)) {
     return Response.json({ error: 'applicationId is required' }, { status: 400 })
+  }
+  if (!isNonEmptyString(token)) {
+    return Response.json({ error: 'A token is required' }, { status: 400 })
   }
 
   const application = await prisma.membershipApplication.findUnique({
@@ -43,6 +48,11 @@ export async function POST(request: Request) {
 
   if (application.status !== 'approved') {
     return Response.json({ error: 'This application is not approved' }, { status: 409 })
+  }
+
+  const tokenResult = await lookupPaymentLinkToken(application.id, token)
+  if (!tokenResult.ok) {
+    return Response.json({ error: tokenResult.error }, { status: tokenResult.status })
   }
 
   const existingPending = await prisma.membershipPayment.findFirst({

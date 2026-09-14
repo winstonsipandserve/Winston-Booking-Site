@@ -142,6 +142,7 @@ enum AdminActivityAction {
   membership_application_rejected
   membership_renewal_link_sent
   member_activation_link_resent
+  membership_payment_link_resent
   booking_rescheduled
   membership_credit_topup_added
   news_post_created
@@ -427,26 +428,49 @@ model CheckInLookupAttempt {
 // ── Membership application & approval ─────────────────
 
 model MembershipApplication {
-  id              String              @id @default(cuid())
-  customerId      String              @map("customer_id")
-  customer        Customer            @relation(fields: [customerId], references: [id])
-  requestedTier   MembershipTier      @map("requested_tier")
-  status          ApplicationStatus   @default(pending)
-  address         String
-  contactNumber   String              @map("contact_number")
-  govIdFrontUrl   String              @map("gov_id_front_url")
-  govIdBackUrl    String              @map("gov_id_back_url")
-  govIdSelfieUrl  String              @map("gov_id_selfie_url")
-  rejectionReason String?             @map("rejection_reason")
-  reviewedById    String?             @map("reviewed_by_id")
-  reviewedBy      AdminUser?          @relation("ApplicationReviewedBy", fields: [reviewedById], references: [id])
-  reviewedAt      DateTime?           @map("reviewed_at")
-  membership      Membership?
-  payments        MembershipPayment[]
-  createdAt       DateTime            @default(now()) @map("created_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
+  id                String                       @id @default(cuid())
+  customerId        String                       @map("customer_id")
+  customer          Customer                     @relation(fields: [customerId], references: [id])
+  requestedTier     MembershipTier               @map("requested_tier")
+  status            ApplicationStatus            @default(pending)
+  address           String
+  contactNumber     String                       @map("contact_number")
+  govIdFrontUrl     String                       @map("gov_id_front_url")
+  govIdBackUrl      String                       @map("gov_id_back_url")
+  govIdSelfieUrl    String                       @map("gov_id_selfie_url")
+  rejectionReason   String?                      @map("rejection_reason")
+  reviewedById      String?                      @map("reviewed_by_id")
+  reviewedBy        AdminUser?                   @relation("ApplicationReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt        DateTime?                    @map("reviewed_at")
+  membership        Membership?
+  payments          MembershipPayment[]
+  paymentLinkTokens MembershipPaymentLinkToken[]
+  createdAt         DateTime                     @default(now()) @map("created_at")
+  updatedAt         DateTime                     @updatedAt @map("updated_at")
 
   @@map("membership_applications")
+}
+
+// ── Membership payment link (Decision: mirrors MemberActivationToken's shape) ─
+// Gates /membership/pay/[id] and POST /api/membership-payments with a bounded-lifetime,
+// hashed capability token instead of the bare application id — see CLAUDE.md.
+
+model MembershipPaymentLinkToken {
+  id            String                @id @default(cuid())
+  applicationId String                @map("application_id")
+  application   MembershipApplication @relation(fields: [applicationId], references: [id])
+  /// SHA-256 hex digest of the raw token — the raw token itself is never stored.
+  tokenHash     String                @unique @map("token_hash")
+  expiresAt     DateTime              @map("expires_at")
+  /// Set when superseded by a newer resend, same technique as MemberActivationToken —
+  /// this token is never "consumed" by a single successful action since a customer may
+  /// make several checkout attempts before paying.
+  usedAt        DateTime?             @map("used_at")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+
+  @@index([applicationId])
+  @@map("membership_payment_link_tokens")
 }
 
 // ── Membership payment (Decision: Membership payment ↔ Payment relationship) ─

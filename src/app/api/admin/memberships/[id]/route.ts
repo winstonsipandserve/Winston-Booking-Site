@@ -4,6 +4,7 @@ import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import { sendMembershipPaymentEmail, sendRejectionEmail } from '@/lib/resend'
 import { logAdminActivity } from '@/lib/admin-activity-log'
+import { generatePaymentLinkToken } from '@/lib/membership-payment-link'
 
 interface ReviewRequestBody {
   action?: unknown
@@ -83,6 +84,8 @@ export async function PATCH(
     return Response.json({ ...updated, rejectionEmailSent }, { status: 200 })
   }
 
+  const { rawToken, tokenHash, expiresAt } = generatePaymentLinkToken()
+
   const updatedApplication = await prisma.$transaction(async (tx) => {
     const updatedApplication = await tx.membershipApplication.update({
       where: { id },
@@ -103,12 +106,15 @@ export async function PATCH(
       },
       tx,
     )
+    await tx.membershipPaymentLinkToken.create({
+      data: { applicationId: application.id, tokenHash, expiresAt },
+    })
     return updatedApplication
   })
 
   const tierName = formatMembershipTier(application.requestedTier)
   const amountCentavos = MEMBERSHIP_TIER_PLANS[application.requestedTier].totalCentavos
-  const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/pay/${application.id}`
+  const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/pay/${application.id}?token=${rawToken}`
   await sendMembershipPaymentEmail({
     to: application.customer.email,
     name: application.customer.name,
