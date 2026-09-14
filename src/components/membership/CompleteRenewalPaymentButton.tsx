@@ -5,10 +5,12 @@ import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 interface CompleteRenewalPaymentButtonProps {
   membershipPaymentId: string
+  token: string
 }
 
 export default function CompleteRenewalPaymentButton({
   membershipPaymentId,
+  token,
 }: CompleteRenewalPaymentButtonProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -20,6 +22,8 @@ export default function CompleteRenewalPaymentButton({
     try {
       const res = await fetch(`/api/membership-payments/${membershipPaymentId}/checkout`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
       })
 
       if (res.ok) {

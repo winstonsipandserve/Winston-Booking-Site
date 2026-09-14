@@ -323,6 +323,7 @@ export async function sendRenewalPaymentLinkEmail({
       <p style="margin: 4px 0 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_MID};">${tierName} Membership Renewal</p>
     </div>
     <p>Complete your payment below to reactivate your membership.</p>
+    <p>This link will expire in ${MEMBERSHIP_PAYMENT_LINK_TOKEN_HOURS} hours. If it expires, just ask us to resend it.</p>
   `
 
   const { html, text } = buildBrandedEmail({

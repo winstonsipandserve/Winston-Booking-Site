@@ -5,6 +5,7 @@ import { formatMembershipTier } from '@/lib/format'
 import { getRenewalEligibility } from '@/lib/membership-current'
 import { sendRenewalPaymentLinkEmail } from '@/lib/resend'
 import { logAdminActivity } from '@/lib/admin-activity-log'
+import { generatePaymentLinkToken } from '@/lib/membership-payment-link'
 import type { MembershipTier } from '@prisma/client'
 
 interface SendRenewalLinkRequestBody {
@@ -79,6 +80,22 @@ export async function POST(
 
   const tierName = formatMembershipTier(membershipPayment.tier)
 
+  const { rawToken, tokenHash, expiresAt } = generatePaymentLinkToken()
+
+  // A newly issued link supersedes every earlier link for this payment row, same technique
+  // as the activation and application-payment-link resends — this also covers the resend
+  // case, since re-sending here reuses the same pending MembershipPayment row.
+  await prisma.$transaction(async (tx) => {
+    const now = new Date()
+    await tx.membershipPaymentLinkToken.updateMany({
+      where: { membershipPaymentId: membershipPayment.id, usedAt: null },
+      data: { usedAt: now },
+    })
+    await tx.membershipPaymentLinkToken.create({
+      data: { membershipPaymentId: membershipPayment.id, tokenHash, expiresAt },
+    })
+  })
+
   await logAdminActivity({
     adminId: activeSession.adminUser.id,
     action: 'membership_renewal_link_sent',
@@ -87,7 +104,7 @@ export async function POST(
     description: `Sent renewal link to ${application.customer.name} (${tierName}, ${existingPending ? 're-sent' : 'new link'})`,
     metadata: { membershipPaymentId: membershipPayment.id, tier },
   })
-  const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/renew/${membershipPayment.id}`
+  const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/renew/${membershipPayment.id}?token=${rawToken}`
   await sendRenewalPaymentLinkEmail({
     to: application.customer.email,
     name: application.customer.name,

@@ -452,24 +452,30 @@ model MembershipApplication {
 }
 
 // ── Membership payment link (Decision: mirrors MemberActivationToken's shape) ─
-// Gates /membership/pay/[id] and POST /api/membership-payments with a bounded-lifetime,
-// hashed capability token instead of the bare application id — see CLAUDE.md.
+// Gates /membership/pay/[id] + POST /api/membership-payments (applicationId) and
+// /membership/renew/[id] + POST /api/membership-payments/[id]/checkout (membershipPaymentId)
+// with a bounded-lifetime, hashed capability token instead of a bare id — see CLAUDE.md.
+// Nullable, mutually-exclusive FKs rather than two token tables — same choice already made
+// for Payment.bookingId/membershipId, for the same reason (real FK integrity per link kind).
 
 model MembershipPaymentLinkToken {
-  id            String                @id @default(cuid())
-  applicationId String                @map("application_id")
-  application   MembershipApplication @relation(fields: [applicationId], references: [id])
+  id                  String                 @id @default(cuid())
+  applicationId       String?                @map("application_id")
+  application         MembershipApplication? @relation(fields: [applicationId], references: [id])
+  membershipPaymentId String?                @map("membership_payment_id")
+  membershipPayment   MembershipPayment?     @relation(fields: [membershipPaymentId], references: [id])
   /// SHA-256 hex digest of the raw token — the raw token itself is never stored.
-  tokenHash     String                @unique @map("token_hash")
-  expiresAt     DateTime              @map("expires_at")
+  tokenHash           String                 @unique @map("token_hash")
+  expiresAt           DateTime               @map("expires_at")
   /// Set when superseded by a newer resend, same technique as MemberActivationToken —
   /// this token is never "consumed" by a single successful action since a customer may
   /// make several checkout attempts before paying.
-  usedAt        DateTime?             @map("used_at")
-  createdAt     DateTime              @default(now()) @map("created_at")
-  updatedAt     DateTime              @updatedAt @map("updated_at")
+  usedAt              DateTime?              @map("used_at")
+  createdAt           DateTime               @default(now()) @map("created_at")
+  updatedAt           DateTime               @updatedAt @map("updated_at")
 
   @@index([applicationId])
+  @@index([membershipPaymentId])
   @@map("membership_payment_link_tokens")
 }
 
@@ -480,23 +486,24 @@ model MembershipPaymentLinkToken {
 // independent of future MEMBERSHIP_TIER_PLANS edits — same pattern as BookingAddOn.
 
 model MembershipPayment {
-  id                        String                 @id @default(cuid())
-  applicationId             String?                @map("application_id")
-  application               MembershipApplication? @relation(fields: [applicationId], references: [id])
-  customerId                String                 @map("customer_id")
-  customer                  Customer               @relation(fields: [customerId], references: [id])
+  id                        String                       @id @default(cuid())
+  applicationId             String?                      @map("application_id")
+  application               MembershipApplication?       @relation(fields: [applicationId], references: [id])
+  customerId                String                       @map("customer_id")
+  customer                  Customer                     @relation(fields: [customerId], references: [id])
   tier                      MembershipTier
-  amountCentavos            Int                    @map("amount_centavos")
-  status                    PaymentStatus          @default(pending)
-  paymongoCheckoutSessionId String?                @unique @map("paymongo_checkout_session_id")
-  paymongoPaymentIntentId   String?                @unique @map("paymongo_payment_intent_id")
-  paidAt                    DateTime?              @map("paid_at")
+  amountCentavos            Int                          @map("amount_centavos")
+  status                    PaymentStatus                @default(pending)
+  paymongoCheckoutSessionId String?                      @unique @map("paymongo_checkout_session_id")
+  paymongoPaymentIntentId   String?                      @unique @map("paymongo_payment_intent_id")
+  paidAt                    DateTime?                    @map("paid_at")
   /// Set only when an admin sends a manual renewal-payment-link (see CLAUDE.md → Membership
   /// payment model). Null for self-service renewal and the original application-flow payment.
-  initiatedByAdminId        String?                @map("initiated_by_admin_id")
-  initiatedByAdmin          AdminUser?             @relation("MembershipPaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
-  createdAt                 DateTime               @default(now()) @map("created_at")
-  updatedAt                 DateTime               @updatedAt @map("updated_at")
+  initiatedByAdminId        String?                      @map("initiated_by_admin_id")
+  initiatedByAdmin          AdminUser?                   @relation("MembershipPaymentInitiatedByAdmin", fields: [initiatedByAdminId], references: [id])
+  paymentLinkTokens         MembershipPaymentLinkToken[]
+  createdAt                 DateTime                     @default(now()) @map("created_at")
+  updatedAt                 DateTime                     @updatedAt @map("updated_at")
 
   @@index([applicationId])
   @@index([customerId])

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
-import { lookupPaymentLinkToken } from '@/lib/membership-payment-link'
+import { lookupApplicationPaymentLinkToken } from '@/lib/membership-payment-link'
 
 interface MembershipPaymentRequestBody {
   applicationId?: unknown
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'This application is not approved' }, { status: 409 })
   }
 
-  const tokenResult = await lookupPaymentLinkToken(application.id, token)
+  const tokenResult = await lookupApplicationPaymentLinkToken(application.id, token)
   if (!tokenResult.ok) {
     return Response.json({ error: tokenResult.error }, { status: tokenResult.status })
   }

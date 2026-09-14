@@ -7,7 +7,7 @@ import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { formatMembershipTier } from '@/lib/format'
 import CompletePaymentButton from '@/components/membership/CompletePaymentButton'
 import MembershipCheckoutSummary from '@/components/membership/MembershipCheckoutSummary'
-import { lookupPaymentLinkToken } from '@/lib/membership-payment-link'
+import { lookupApplicationPaymentLinkToken } from '@/lib/membership-payment-link'
 
 export default async function MembershipPaymentPage({
   params,
@@ -36,7 +36,7 @@ export default async function MembershipPaymentPage({
     if (!token) {
       linkError = "This payment link is missing its access code. Please use the link from your email."
     } else {
-      const result = await lookupPaymentLinkToken(application.id, token)
+      const result = await lookupApplicationPaymentLinkToken(application.id, token)
       if (!result.ok) {
         linkError =
           result.status === 404

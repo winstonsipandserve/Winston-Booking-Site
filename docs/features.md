@@ -78,7 +78,7 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 - **Application** (`/membership/apply`) — multipart form with three government ID uploads to private storage. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Submissions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
 - **Admin review** — approve or reject, with a mandatory rejection reason.
 - **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller. The link's `?token=` is checked before showing the checkout summary, so an invalid/superseded/expired link shows an error instead of a payment form — same pre-check pattern as `/activate`.
-- **Self-service renewal** (`/account/renew`) and **admin-initiated renewal links** (`/membership/renew/[id]`).
+- **Self-service renewal** (`/account/renew`, session-gated) and **admin-initiated renewal links** (`/membership/renew/[id]`, gated the same `?token=` way as the approval payment link — clicking "Send Renewal Link" again re-sends a fresh token for an already-queued pending payment, doubling as the resend action for an expired link).
 - **Admin-initiated activation resend** — on a member's detail page, if they've never set a password (e.g. their original activation link expired unused), an admin can issue a fresh 48-hour activation link, which retires any earlier unused one.
 - **Admin-initiated payment-link resend** — on an application's detail page, while it's awaiting payment, an admin can issue a fresh 48-hour payment link, which supersedes any earlier unused one.
 - **Credit top-up** — self-service via PayMongo, and admin-logged cash or manual-online at the front desk.

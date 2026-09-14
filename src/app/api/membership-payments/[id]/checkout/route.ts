@@ -1,12 +1,29 @@
 import { prisma } from '@/lib/prisma'
 import { formatMembershipTier } from '@/lib/format'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
+import { lookupRenewalPaymentLinkToken } from '@/lib/membership-payment-link'
+
+interface CheckoutRequestBody {
+  token?: unknown
+}
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
+
+  let body: CheckoutRequestBody
+  try {
+    body = await request.json()
+  } catch {
+    return Response.json({ error: 'Malformed JSON body' }, { status: 400 })
+  }
+
+  const { token } = body
+  if (typeof token !== 'string' || token.length === 0) {
+    return Response.json({ error: 'A token is required' }, { status: 400 })
+  }
 
   const membershipPayment = await prisma.membershipPayment.findUnique({
     where: { id },
@@ -22,6 +39,11 @@ export async function POST(
 
   if (membershipPayment.applicationId !== null) {
     return Response.json({ error: 'This renewal link is no longer valid' }, { status: 409 })
+  }
+
+  const tokenResult = await lookupRenewalPaymentLinkToken(membershipPayment.id, token)
+  if (!tokenResult.ok) {
+    return Response.json({ error: tokenResult.error }, { status: tokenResult.status })
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL

@@ -114,7 +114,12 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 > **The raw token is never stored.** Only its SHA-256 hex digest goes in `tokenHash`.
 
-**`MembershipPaymentLinkToken`** shares that same shape, keyed off `applicationId` — it gates `/membership/pay/[id]` and `POST /api/membership-payments` so the emailed approval payment link is a bounded-lifetime capability rather than the bare application id. One difference from the other three: `usedAt` here means *superseded by a resend*, never *consumed by a successful action* — a customer can make several checkout attempts on the same token before paying, and the existing `application.membership` check is what actually blocks reuse after payment succeeds.
+**`MembershipPaymentLinkToken`** shares that same shape but gates two different emailed links, told apart by which of its two nullable, mutually-exclusive FKs is set — same choice already made for `Payment.bookingId`/`membershipId`, and for the same reason (real FK integrity per link kind) rather than a polymorphic reference or a second token table:
+
+- `applicationId` set — gates `/membership/pay/[id]` and `POST /api/membership-payments` (the approval payment link).
+- `membershipPaymentId` set — gates `/membership/renew/[id]` and `POST /api/membership-payments/[id]/checkout` (the admin-initiated renewal link). Self-service renewal (`/account/renew`) is gated by the member's own session instead and never touches this table.
+
+One difference from the other three token models: `usedAt` here means *superseded by a resend*, never *consumed by a successful action* — a customer can make several checkout attempts on the same token before paying. Reuse after payment succeeds is blocked by the existing `application.membership` / `membershipPayment.status` checks, not by this table.
 
 **`AuthRateLimitAttempt`** — a short-lived, write-once abuse-control counter for member/admin login, password-reset, and booking-hold requests. `scope` distinguishes the flow (the `booking_hold` and `membership_application` scopes key on member id and/or IP, see [workflows.md](workflows.md)); `identifierHash` is an HMAC of either the normalized account identifier or client IP, never the raw value. It is indexed by `(scope, identifierHash, createdAt)` and cleaned up expire-on-write, so it is not an audit ledger.
 
