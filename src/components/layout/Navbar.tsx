@@ -21,6 +21,14 @@ const NAV_LINKS = [
 const SCROLL_THRESHOLD = 50
 
 const FORCE_SOLID_PAGES = ['/book', '/login', '/activate', '/reset-password']
+const FORCE_SOLID_PREFIXES = ['/membership/renew']
+
+function isForceSolidPage(pathname: string) {
+  return (
+    FORCE_SOLID_PAGES.includes(pathname) ||
+    FORCE_SOLID_PREFIXES.some((prefix) => pathname.startsWith(prefix + '/'))
+  )
+}
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -34,11 +42,11 @@ export default function Navbar() {
   // stays near-transparent (showing whatever's behind it) while the dropdown panel below is opaque,
   // producing a visible seam. The logo's invert state has to follow the same flag: leaving it tied
   // to `scrolled` alone would put the light/inverted logo on a now-solid light header.
-  const scrolled = FORCE_SOLID_PAGES.includes(pathname) || hasScrolled
+  const scrolled = isForceSolidPage(pathname) || hasScrolled
   const headerSolid = scrolled || menuOpen
 
   useEffect(() => {
-    if (FORCE_SOLID_PAGES.includes(pathname)) return
+    if (isForceSolidPage(pathname)) return
 
     const handleScroll = () => {
       setHasScrolled(window.scrollY > SCROLL_THRESHOLD)
