@@ -110,6 +110,7 @@ The client key is stored as `Booking.holdClientHash` (an HMAC, never a raw IP). 
 5. **Payment.** The applicant opens `/membership/pay/[id]` and pays through PayMongo Checkout.
 6. **Activation.** The webhook's membership branch creates the `Membership` with its tier, dates, and credit balance, writes the activation ledger entry, and issues an activation token. The activation email carries a **PDF membership certificate** (first-time activation only).
 7. **Account setup.** The member opens `/activate`, sets a password, and the token is consumed. They now have a login.
+   - **If the activation link expires unused**, the member has an active membership but no way to log in, and forgot-password can't help (it only emails members who already have a `passwordHash`). An admin can resend a fresh activation link from the member's detail page — this retires the dead token and issues a new one with the same 48-hour expiry, via a plainer reminder email (no certificate, no congratulations copy).
 
 ---
 

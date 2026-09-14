@@ -63,10 +63,10 @@ Gated on a member session; anything else redirects to login.
 | Surface | Status |
 |---|---|
 | Member login (`/login`) | Live — client-side sign-in so the navbar updates immediately, with a password show/hide toggle; rate-limited on failed attempts only (see [architecture.md](architecture.md) → Authentication) |
-| Member activation (`/activate`) | Live — sets the first password from an emailed token |
-| Member forgot/reset password | Live end-to-end, enumeration-safe and rate-limited |
+| Member activation (`/activate`) | Live — sets the first password from an emailed token; the page checks the token before showing the form, so an invalid/used/expired link shows an error instead of a doomed form. An admin can resend a fresh link (see Membership) |
+| Member forgot/reset password | Live end-to-end, enumeration-safe and rate-limited; `/reset-password` checks the token before showing the form, same as `/activate` |
 | Admin login (`/admin/login`) | Live, rate-limited on failed attempts only (see [architecture.md](architecture.md) → Authentication), with an error modal |
-| Admin forgot/reset password | Live end-to-end and rate-limited |
+| Admin forgot/reset password | Live end-to-end and rate-limited; same pre-check as the member reset page |
 | Sign out | Confirmation modal required on the public navbar |
 
 Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surface re-checks the admin's active flag against the database on each request.
@@ -79,6 +79,7 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 - **Admin review** — approve or reject, with a mandatory rejection reason.
 - **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller.
 - **Self-service renewal** (`/account/renew`) and **admin-initiated renewal links** (`/membership/renew/[id]`).
+- **Admin-initiated activation resend** — on a member's detail page, if they've never set a password (e.g. their original activation link expired unused), an admin can issue a fresh 48-hour activation link, which retires any earlier unused one.
 - **Credit top-up** — self-service via PayMongo, and admin-logged cash or manual-online at the front desk.
 - **Membership certificate PDF** attached to first-time activation emails only.
 
@@ -147,7 +148,7 @@ All email shares one branded layout. **Fifteen senders** are live, sending from 
 
 | Group | Emails |
 |---|---|
-| Member lifecycle | Activation (with certificate PDF), membership payment link, renewal, renewal payment link, expiry reminder, expired notice, rejection |
+| Member lifecycle | Activation (with certificate PDF), activation reminder (admin-triggered resend, no certificate), membership payment link, renewal, renewal payment link, expiry reminder, expired notice, rejection |
 | Auth | Member password reset, admin password reset |
 | Booking | Booking confirmation, reschedule notice |
 | Credit | Top-up confirmation |

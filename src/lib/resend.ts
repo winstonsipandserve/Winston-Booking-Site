@@ -405,6 +405,60 @@ export async function sendPasswordResetEmail({
   }
 }
 
+interface SendActivationReminderEmailInput {
+  to: string
+  name: string
+  activationUrl: string
+}
+
+/** Admin-triggered resend for a member who never finished first-time activation — unlike
+ * sendActivationEmail, this carries no congratulations copy, receipt, or certificate, since
+ * the member already joined and just needs a fresh link. */
+export async function sendActivationReminderEmail({
+  to,
+  name,
+  activationUrl,
+}: SendActivationReminderEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>Hi ${escapeHtml(name)},</p>
+    <p>It looks like you haven't finished setting up your Winston Sip &amp; Serve account login yet. Use the button below to set your password and access your account.</p>
+    <p>This link will expire in ${MEMBER_ACTIVATION_TOKEN_HOURS} hours.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: 'Finish setting up your Winston Sip & Serve account login.',
+    eyebrowText: 'ACCOUNT SETUP',
+    headingText: 'Set Up Your Account Login',
+    bodyHtml,
+    ctaText: 'Set My Password',
+    ctaUrl: activationUrl,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Set Up Your Winston Sip & Serve Account Login',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendActivationReminderEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendActivationReminderEmail threw', err)
+  }
+}
+
 interface SendAdminPasswordResetEmailInput {
   to: string
   resetUrl: string

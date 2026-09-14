@@ -1,3 +1,4 @@
+import type { MemberActivationToken } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 // hashPassword is generic (not admin-specific) despite the file's name — reused here for members.
 import { hashPassword } from '@/lib/admin-auth'
@@ -7,6 +8,43 @@ interface ActivateRequestBody {
   token?: unknown
   password?: unknown
   confirmPassword?: unknown
+}
+
+type TokenLookupResult =
+  | { ok: true; activationToken: MemberActivationToken }
+  | { ok: false; error: string; status: number }
+
+/** Shared by GET (pre-check, no mutation) and POST (consumes the token) so both agree on
+ * what counts as invalid/used/expired. */
+async function lookupActivationToken(token: string): Promise<TokenLookupResult> {
+  const tokenHash = hashActivationToken(token)
+  const activationToken = await prisma.memberActivationToken.findUnique({
+    where: { tokenHash },
+  })
+
+  if (!activationToken) {
+    return { ok: false, error: 'Invalid activation link', status: 404 }
+  }
+  if (activationToken.usedAt) {
+    return { ok: false, error: 'This activation link has already been used', status: 400 }
+  }
+  if (activationToken.expiresAt < new Date()) {
+    return { ok: false, error: 'This activation link has expired', status: 400 }
+  }
+  return { ok: true, activationToken }
+}
+
+export async function GET(request: Request) {
+  const token = new URL(request.url).searchParams.get('token')
+  if (!token) {
+    return Response.json({ error: 'A token is required' }, { status: 400 })
+  }
+
+  const result = await lookupActivationToken(token)
+  if (!result.ok) {
+    return Response.json({ error: result.error }, { status: result.status })
+  }
+  return Response.json({ valid: true }, { status: 200 })
 }
 
 export async function POST(request: Request) {
@@ -35,20 +73,11 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Passwords do not match' }, { status: 400 })
   }
 
-  const tokenHash = hashActivationToken(token)
-  const activationToken = await prisma.memberActivationToken.findUnique({
-    where: { tokenHash },
-  })
-
-  if (!activationToken) {
-    return Response.json({ error: 'Invalid activation link' }, { status: 404 })
+  const result = await lookupActivationToken(token)
+  if (!result.ok) {
+    return Response.json({ error: result.error }, { status: result.status })
   }
-  if (activationToken.usedAt) {
-    return Response.json({ error: 'This activation link has already been used' }, { status: 400 })
-  }
-  if (activationToken.expiresAt < new Date()) {
-    return Response.json({ error: 'This activation link has expired' }, { status: 400 })
-  }
+  const { activationToken } = result
 
   const passwordHash = await hashPassword(password)
 

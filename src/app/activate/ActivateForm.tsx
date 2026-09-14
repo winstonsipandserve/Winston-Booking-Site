@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
+type CheckState = 'checking' | 'valid' | 'invalid'
 
 function inputClassName() {
   return 'rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
@@ -15,10 +16,39 @@ export default function ActivateForm() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
+  const [checkState, setCheckState] = useState<CheckState>('checking')
+  const [checkError, setCheckError] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+
+    let cancelled = false
+
+    fetch(`/api/activate?token=${encodeURIComponent(token)}`)
+      .then(async (res) => {
+        if (cancelled) return
+        if (res.ok) {
+          setCheckState('valid')
+          return
+        }
+        const json = await res.json().catch(() => null)
+        setCheckError(json?.error ?? 'This activation link is no longer valid.')
+        setCheckState('invalid')
+      })
+      .catch(() => {
+        if (cancelled) return
+        setCheckError('This activation link is no longer valid.')
+        setCheckState('invalid')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   if (!token) {
     return (
@@ -26,6 +56,25 @@ export default function ActivateForm() {
         <p className="text-brand-dark/70">
           This activation link is missing its token. Please use the full link from your
           activation email.
+        </p>
+      </div>
+    )
+  }
+
+  if (checkState === 'checking') {
+    return (
+      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+        <p className="text-brand-dark/70">Checking your activation link…</p>
+      </div>
+    )
+  }
+
+  if (checkState === 'invalid') {
+    return (
+      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+        <p className="text-brand-dark/70">{checkError}</p>
+        <p className="text-sm text-brand-dark/60">
+          Please contact the club to request a new activation link.
         </p>
       </div>
     )

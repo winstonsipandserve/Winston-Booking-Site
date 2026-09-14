@@ -6,6 +6,7 @@ import { getSignedUrl } from '@/lib/supabase-storage'
 import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
 import IdentityVerificationGallery from '@/components/admin/IdentityVerificationGallery'
 import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
+import ResendActivationButton from '@/components/admin/ResendActivationButton'
 import AddCreditButton from '@/components/admin/AddCreditButton'
 import AdminPagination from '@/components/admin/AdminPagination'
 import { formatMembershipTier, formatCentavos } from '@/lib/format'
@@ -70,6 +71,7 @@ export default async function AdminMembershipApplicationDetailPage({
   // Renewal links follow the same window as self-service renewal: expired, or the single
   // live term ends within RENEWAL_WINDOW_DAYS and nothing is queued behind it.
   const canSendRenewalLink = displayStatus !== 'awaiting_payment' && latestMembership !== null && renewal.eligible
+  const needsActivation = latestMembership !== null && !application.customer.passwordHash
 
   const requestedCreditPage = parsePage(creditPageParam)
   const requestedBookingPage = parsePage(bookingPageParam)
@@ -295,6 +297,15 @@ export default async function AdminMembershipApplicationDetailPage({
               <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{daysRemaining} Days</p>
             </div>
           </div>
+
+          {needsActivation && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/60 dark:bg-amber-950/40">
+              <p className="text-sm text-amber-900 dark:text-amber-200">
+                This member has never set a password and can&apos;t sign in.
+              </p>
+              <ResendActivationButton applicationId={application.id} email={application.customer.email} />
+            </div>
+          )}
 
           <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
