@@ -34,8 +34,17 @@ export async function POST(request: Request) {
   if (adminUser && adminUser.isActive) {
     const { rawToken, tokenHash, expiresAt } = generateAdminPasswordResetToken()
 
-    await prisma.adminPasswordResetToken.create({
-      data: { adminUserId: adminUser.id, tokenHash, expiresAt },
+    // A newly issued link supersedes every earlier link. Otherwise, an older link
+    // that was exposed could still reset the account after the owner uses a newer one.
+    await prisma.$transaction(async (tx) => {
+      const now = new Date()
+      await tx.adminPasswordResetToken.updateMany({
+        where: { adminUserId: adminUser.id, usedAt: null },
+        data: { usedAt: now },
+      })
+      await tx.adminPasswordResetToken.create({
+        data: { adminUserId: adminUser.id, tokenHash, expiresAt },
+      })
     })
 
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/admin/reset-password?token=${rawToken}`

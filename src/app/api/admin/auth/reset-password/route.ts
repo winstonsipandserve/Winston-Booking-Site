@@ -51,17 +51,31 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await hashPassword(password)
+  const consumedAt = new Date()
 
-  await prisma.$transaction([
-    prisma.adminUser.update({
+  const consumed = await prisma.$transaction(async (tx) => {
+    // The conditional update is the atomic single-use check: exactly one concurrent
+    // request can consume the token, and expiry is rechecked at the write boundary.
+    const markedUsed = await tx.adminPasswordResetToken.updateMany({
+      where: { id: resetToken.id, usedAt: null, expiresAt: { gte: consumedAt } },
+      data: { usedAt: consumedAt },
+    })
+    if (markedUsed.count !== 1) return false
+
+    await tx.adminUser.update({
       where: { id: resetToken.adminUserId },
-      data: { passwordHash, passwordChangedAt: new Date() },
-    }),
-    prisma.adminPasswordResetToken.update({
-      where: { id: resetToken.id },
-      data: { usedAt: new Date() },
-    }),
-  ])
+      data: { passwordHash, passwordChangedAt: consumedAt },
+    })
+    await tx.adminPasswordResetToken.updateMany({
+      where: { adminUserId: resetToken.adminUserId, usedAt: null },
+      data: { usedAt: consumedAt },
+    })
+    return true
+  })
+
+  if (!consumed) {
+    return Response.json({ error: 'Invalid or expired reset link' }, { status: 404 })
+  }
 
   return Response.json({ success: true }, { status: 200 })
 }
