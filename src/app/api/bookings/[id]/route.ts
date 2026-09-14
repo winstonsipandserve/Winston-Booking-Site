@@ -137,7 +137,7 @@ export async function PATCH(
     )
   }
 
-  const { customer } = await resolveCustomer({ name, phone, email }, { updateExistingProfile: false })
+  const { customer } = await resolveCustomer({ name, phone, email })
 
   // Deliberate: the anonymous booking path never grants member rate or F&B
   // credit, regardless of the resolved Customer's actual membership status —

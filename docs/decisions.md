@@ -44,7 +44,7 @@ Several columns deliberately duplicate data that could otherwise be recomputed: 
 
 Always look-up-or-create on the unique email.
 
-Related rule: **the anonymous booking path never updates an existing customer's name or phone.** Anyone can type any email into the booking wizard, and the booking already snapshots what was submitted, so letting that path rewrite the shared row would let a stranger change the contact details staff see for a pending applicant. Only the membership-application flow (the applicant describing themselves) may update a row on mismatch, and even then only **while the customer has no password** — a real login account's profile is frozen against every unauthenticated path.
+Related rule: **no unauthenticated path updates an existing customer's name or phone.** Anyone can type any email into the booking wizard or membership application, and letting either flow rewrite the shared row would let a stranger change the contact details staff see for a pending applicant. The membership application stores its submitted contact details separately for review; changing an existing customer profile requires a future authenticated flow with verified ownership.
 
 **Attachment is one-shot.** `PATCH /api/bookings/[id]` refuses a booking that already has a customer, so a hold can never be re-pointed at another person's account.
 

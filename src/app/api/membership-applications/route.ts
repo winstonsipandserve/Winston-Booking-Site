@@ -49,6 +49,52 @@ async function validateFile(value: unknown, label: string): Promise<{ error: str
   return { file: value }
 }
 
+async function getBlockedApplicationResponse(customerId: string): Promise<Response | null> {
+  const latestApplication = await prisma.membershipApplication.findFirst({
+    where: { customerId },
+    orderBy: { createdAt: 'desc' },
+  })
+  if (!latestApplication) return null
+
+  // Renewals create memberships with no application attached, so the customer's
+  // current row — not the one tied to the original application — decides active/expired.
+  const displayStatus = getMembershipDisplayStatus({
+    status: latestApplication.status,
+    latestMembership: await getCurrentMembership(customerId),
+  })
+  if (displayStatus === 'pending') {
+    return Response.json({ error: 'An application is already pending for this email.' }, { status: 409 })
+  }
+  if (displayStatus === 'awaiting_payment') {
+    return Response.json(
+      {
+        error:
+          'Your previous application was approved and is awaiting payment. Please check your email for the payment link, or contact us if you need it resent.',
+      },
+      { status: 409 },
+    )
+  }
+  if (displayStatus === 'active') {
+    return Response.json(
+      {
+        error: "This email already has an active membership. Please contact us if you'd like to renew or make changes.",
+      },
+      { status: 409 },
+    )
+  }
+  if (displayStatus === 'expired') {
+    return Response.json(
+      {
+        error: 'Your membership has expired. Please log in to your account to renew instead of submitting a new application.',
+      },
+      { status: 409 },
+    )
+  }
+
+  // A rejected most-recent application permits a reapplication.
+  return null
+}
+
 export async function POST(request: Request) {
   let formData: FormData
   try {
@@ -109,54 +155,11 @@ export async function POST(request: Request) {
   const uploadedPaths: string[] = []
 
   try {
-    const { customer } = await resolveCustomer({ name, phone, email }, { updateExistingProfile: true })
-
-    const latestApplication = await prisma.membershipApplication.findFirst({
-      where: { customerId: customer.id },
-      orderBy: { createdAt: 'desc' },
-    })
-    if (latestApplication) {
-      // Renewals create memberships with no application attached, so the customer's
-      // current row — not the one tied to the original application — decides active/expired.
-      const displayStatus = getMembershipDisplayStatus({
-        status: latestApplication.status,
-        latestMembership: await getCurrentMembership(customer.id),
-      })
-      if (displayStatus === 'pending') {
-        return Response.json(
-          { error: 'An application is already pending for this email.' },
-          { status: 409 },
-        )
-      }
-      if (displayStatus === 'awaiting_payment') {
-        return Response.json(
-          {
-            error:
-              'Your previous application was approved and is awaiting payment. Please check your email for the payment link, or contact us if you need it resent.',
-          },
-          { status: 409 },
-        )
-      }
-      if (displayStatus === 'active') {
-        return Response.json(
-          {
-            error:
-              "This email already has an active membership. Please contact us if you'd like to renew or make changes.",
-          },
-          { status: 409 },
-        )
-      }
-      if (displayStatus === 'expired') {
-        return Response.json(
-          {
-            error:
-              'Your membership has expired. Please log in to your account to renew instead of submitting a new application.',
-          },
-          { status: 409 },
-        )
-      }
-      // 'rejected' falls through — a rejected most-recent application allows reapplication.
-    }
+    // An application may create a Customer but never mutates an existing profile:
+    // control of an email has not yet been verified on this public endpoint.
+    const { customer } = await resolveCustomer({ name, phone, email })
+    const blockedResponse = await getBlockedApplicationResponse(customer.id)
+    if (blockedResponse) return blockedResponse
 
     const applicationId = crypto.randomUUID()
 
