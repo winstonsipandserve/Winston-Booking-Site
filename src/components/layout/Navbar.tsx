@@ -20,7 +20,7 @@ const NAV_LINKS = [
 
 const SCROLL_THRESHOLD = 50
 
-const FORCE_SOLID_PAGES = ['/book', '/login']
+const FORCE_SOLID_PAGES = ['/book', '/login', '/activate', '/reset-password']
 
 export default function Navbar() {
   const pathname = usePathname()

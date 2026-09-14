@@ -52,7 +52,7 @@ export default function ActivateForm() {
 
   if (!token) {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+      <div className="flex w-full flex-col gap-4 text-center">
         <p className="text-brand-dark/70">
           This activation link is missing its token. Please use the full link from your
           activation email.
@@ -63,7 +63,7 @@ export default function ActivateForm() {
 
   if (checkState === 'checking') {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+      <div className="flex w-full flex-col gap-4 text-center">
         <p className="text-brand-dark/70">Checking your activation link…</p>
       </div>
     )
@@ -71,7 +71,7 @@ export default function ActivateForm() {
 
   if (checkState === 'invalid') {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+      <div className="flex w-full flex-col gap-4 text-center">
         <p className="text-brand-dark/70">{checkError}</p>
         <p className="text-sm text-brand-dark/60">
           Please contact the club to request a new activation link.
@@ -82,7 +82,7 @@ export default function ActivateForm() {
 
   if (submitState === 'success') {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
+      <div className="flex w-full flex-col gap-4 text-center">
         <h2 className="font-serif text-2xl text-brand-dark">Your account is activated</h2>
         <p className="text-sm text-brand-dark/70">
           You can now sign in.{' '}
@@ -128,10 +128,7 @@ export default function ActivateForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
-    >
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-5">
       <LoadingOverlay isOpen={submitting} label="Activating…" />
       <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-brand-dark">
