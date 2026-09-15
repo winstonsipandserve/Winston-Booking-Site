@@ -6,10 +6,11 @@ import { MEMBERSHIP_DISPLAY_STATUS_LABELS, type MembershipDisplayStatus } from '
 
 interface MembershipsExportButtonProps {
   status: MembershipDisplayStatus | 'all'
+  search: string
   totalCount: number
 }
 
-export default function MembershipsExportButton({ status, totalCount }: MembershipsExportButtonProps) {
+export default function MembershipsExportButton({ status, search, totalCount }: MembershipsExportButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -18,6 +19,7 @@ export default function MembershipsExportButton({ status, totalCount }: Membersh
   if (status !== 'all') {
     activeFilters.push(`Status: ${MEMBERSHIP_DISPLAY_STATUS_LABELS[status]}`)
   }
+  if (search) activeFilters.push(`Search: "${search}"`)
 
   const message =
     error ??
@@ -41,6 +43,7 @@ export default function MembershipsExportButton({ status, totalCount }: Membersh
     try {
       const params = new URLSearchParams()
       if (status !== 'all') params.set('status', status)
+      if (search) params.set('search', search)
 
       const res = await fetch(`/api/admin/memberships/export?${params.toString()}`)
       if (!res.ok) {

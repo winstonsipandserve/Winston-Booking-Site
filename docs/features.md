@@ -115,7 +115,7 @@ Tabbed as Courts / Simulators / Guest Fee.
 
 ### Memberships
 
-List and detail with approve/reject. The status filter splits on derived display status. CSV export is functional.
+List and detail with approve/reject. The list has a server-side search bar (applicant name, email, phone) and a status filter that splits on derived display status; CSV export honours both.
 
 - A **pending** application's detail page shows an identity-verification lightbox gallery and a sticky Approve/Reject bottom bar.
 - An **awaiting-payment** application's detail page shows a Resend Payment Link action.

@@ -12,8 +12,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const statusParam = searchParams.get('status') ?? 'all'
   const filter = isMembershipDisplayStatusFilter(statusParam) ? statusParam : 'all'
+  const search = searchParams.get('search')?.trim() || undefined
 
-  const { applications, latestMembershipsByCustomer } = await getMembershipApplicationsForFilter(filter)
+  const { applications, latestMembershipsByCustomer } = await getMembershipApplicationsForFilter(filter, { search })
 
   const headers = ['Applicant', 'Email', 'Phone', 'Requested Tier', 'Status', 'Submitted', 'Reviewed By']
   const rows = applications.map((a) => {

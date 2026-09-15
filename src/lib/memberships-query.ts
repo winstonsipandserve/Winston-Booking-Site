@@ -15,6 +15,18 @@ export function isMembershipDisplayStatusFilter(value: string): value is Members
   return VALID_STATUS_FILTER_VALUES.has(value)
 }
 
+export function buildMembershipSearchWhere(search?: string): Prisma.MembershipApplicationWhereInput {
+  const trimmedSearch = search?.trim()
+  if (!trimmedSearch) return {}
+  return {
+    OR: [
+      { customer: { name: { contains: trimmedSearch, mode: 'insensitive' } } },
+      { customer: { email: { contains: trimmedSearch, mode: 'insensitive' } } },
+      { customer: { phone: { contains: trimmedSearch, mode: 'insensitive' } } },
+    ],
+  }
+}
+
 export type ApplicationWithRelations = Prisma.MembershipApplicationGetPayload<{
   include: {
     customer: { include: { memberships: true } }
@@ -24,7 +36,7 @@ export type ApplicationWithRelations = Prisma.MembershipApplicationGetPayload<{
 
 export async function getMembershipApplicationsForFilter(
   filter: MembershipDisplayStatus | 'all',
-  pagination?: { skip: number; take: number },
+  options?: { pagination?: { skip: number; take: number }; search?: string },
 ): Promise<{
   applications: ApplicationWithRelations[]
   totalCount: number
@@ -34,8 +46,11 @@ export async function getMembershipApplicationsForFilter(
   let totalCount: number
   let latestMembershipsByCustomer: Map<string, { endDate: Date }>
 
+  const pagination = options?.pagination
+  const searchWhere = buildMembershipSearchWhere(options?.search)
+
   if (filter === 'all' || filter === 'pending' || filter === 'rejected') {
-    const where: Prisma.MembershipApplicationWhereInput = {}
+    const where: Prisma.MembershipApplicationWhereInput = { ...searchWhere }
     if (filter !== 'all') {
       where.status = filter
     }
@@ -73,7 +88,7 @@ export async function getMembershipApplicationsForFilter(
     )
   } else {
     const approvedApplications = await prisma.membershipApplication.findMany({
-      where: { status: 'approved' },
+      where: { status: 'approved', ...searchWhere },
       include: {
         customer: {
           include: {

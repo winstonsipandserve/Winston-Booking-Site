@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { formatMembershipTier } from '@/lib/format'
 import {
@@ -8,6 +9,7 @@ import {
 import { isMembershipDisplayStatusFilter, getMembershipApplicationsForFilter } from '@/lib/memberships-query'
 import MembershipsFilterModal from '@/components/admin/MembershipsFilterModal'
 import MembershipsExportButton from '@/components/admin/MembershipsExportButton'
+import MembershipsSearchBar from '@/components/admin/MembershipsSearchBar'
 import AdminPagination from '@/components/admin/AdminPagination'
 
 const PAGE_SIZE = 25
@@ -24,18 +26,19 @@ function formatDateTime(date: Date) {
 export default async function AdminMembershipsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>
+  searchParams: Promise<{ status?: string; page?: string; search?: string }>
 }) {
   console.time('memberships:pageTotal')
-  const { status: statusParam, page: pageParam } = await searchParams
+  const { status: statusParam, page: pageParam, search } = await searchParams
 
   const filter = statusParam && isMembershipDisplayStatusFilter(statusParam) ? statusParam : 'all'
   const page = Math.max(1, Number(pageParam) || 1)
+  const trimmedSearch = search?.trim()
 
   console.time('memberships:promiseAll')
   const { applications, totalCount, latestMembershipsByCustomer } = await getMembershipApplicationsForFilter(
     filter,
-    { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE },
+    { pagination: { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }, search: trimmedSearch },
   )
   console.timeEnd('memberships:promiseAll')
 
@@ -44,6 +47,7 @@ export default async function AdminMembershipsPage({
   function pageHref(targetPage: number) {
     const params = new URLSearchParams()
     if (statusParam) params.set('status', statusParam)
+    if (trimmedSearch) params.set('search', trimmedSearch)
     params.set('page', String(targetPage))
     return `/admin/memberships?${params.toString()}`
   }
@@ -52,9 +56,15 @@ export default async function AdminMembershipsPage({
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <MembershipsFilterModal status={filter} />
-        <MembershipsExportButton status={filter} totalCount={totalCount} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <MembershipsFilterModal status={filter} />
+          <MembershipsExportButton status={filter} search={trimmedSearch ?? ''} totalCount={totalCount} />
+        </div>
+
+        <Suspense fallback={null}>
+          <MembershipsSearchBar />
+        </Suspense>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
