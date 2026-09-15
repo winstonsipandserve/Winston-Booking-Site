@@ -37,10 +37,6 @@ export default async function AdminResourcesPage() {
         aria-hidden="true"
         className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
       />
-      <div>
-        <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">Resources & Pricing</h1>
-      </div>
-
       <div className="min-h-0 flex-1">
         <ResourcesTabs
           courts={courts}

@@ -75,8 +75,6 @@ export default async function AdminBookingsPage({
         aria-hidden="true"
         className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
       />
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Bookings</h1>
-
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <BookingsFilterModal

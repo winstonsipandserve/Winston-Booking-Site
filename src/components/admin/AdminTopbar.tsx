@@ -1,15 +1,20 @@
 import SignOutButton from '@/components/admin/SignOutButton'
-import { FoldIcon } from '@/components/admin/AdminIcons'
-import { SIDEBAR_COLLAPSED_WIDTH_CLASS, SIDEBAR_WIDTH_CLASS } from '@/components/admin/AdminSidebar'
+import {
+  SIDEBAR_COLLAPSED_WIDTH_CLASS,
+  SIDEBAR_WIDTH_CLASS,
+  SidebarFoldButton,
+} from '@/components/admin/AdminSidebar'
 
 export default function AdminTopbar({
   email,
   collapsed,
   onToggleSidebar,
+  sectionLabel,
 }: {
   email: string
   collapsed: boolean
   onToggleSidebar: () => void
+  sectionLabel: string
 }) {
   const initials = email.slice(0, 2).toUpperCase() || '?'
 
@@ -45,20 +50,17 @@ export default function AdminTopbar({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 items-center justify-between pr-4">
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-expanded={!collapsed}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-200/70 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
-        >
-          <FoldIcon
-            className={`h-4 w-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
-          />
-        </button>
+      <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center pr-4">
+        {/* Fold button only sits here while collapsed; expanded, it lives in the sidebar's Menu row. */}
+        <div className="flex items-center">
+          {collapsed && <SidebarFoldButton collapsed={collapsed} onClick={onToggleSidebar} />}
+        </div>
 
-        <div className="flex shrink-0 items-center gap-3">
+        <h1 className="truncate text-center text-base font-semibold text-gray-900 dark:text-gray-100">
+          {sectionLabel}
+        </h1>
+
+        <div className="flex shrink-0 items-center justify-end gap-3">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
               {initials}

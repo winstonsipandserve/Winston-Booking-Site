@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import {
+  FoldIcon,
   DashboardIcon,
   BookingsIcon,
   ResourcesIcon,
@@ -25,11 +26,33 @@ export const NAV_ITEMS = [
 export const SIDEBAR_WIDTH_CLASS = 'w-[240px]'
 export const SIDEBAR_COLLAPSED_WIDTH_CLASS = 'w-[72px]'
 
+export function SidebarFoldButton({
+  collapsed,
+  onClick,
+}: {
+  collapsed: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      aria-expanded={!collapsed}
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-200/70 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+    >
+      <FoldIcon className={`h-4 w-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`} />
+    </button>
+  )
+}
+
 export default function AdminSidebar({
   collapsed,
+  onToggleSidebar,
   pathname,
 }: {
   collapsed: boolean
+  onToggleSidebar: () => void
   pathname: string
 }) {
   return (
@@ -38,10 +61,14 @@ export default function AdminSidebar({
         collapsed ? SIDEBAR_COLLAPSED_WIDTH_CLASS : SIDEBAR_WIDTH_CLASS
       }`}
     >
+      {/* When expanded the fold button lives here, level with the Menu label; when collapsed it moves up to the topbar. */}
       {!collapsed && (
-        <span className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-          Menu
-        </span>
+        <div className="flex items-center justify-between pb-2 pl-3 pr-1">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            Menu
+          </span>
+          <SidebarFoldButton collapsed={collapsed} onClick={onToggleSidebar} />
+        </div>
       )}
 
       <nav className="flex flex-col gap-1">

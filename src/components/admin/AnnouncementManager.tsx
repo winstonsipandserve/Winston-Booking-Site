@@ -77,8 +77,7 @@ export default function AnnouncementManager({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Announcements</h1>
+      <div className="flex items-center justify-end gap-4">
         <button
           type="button"
           onClick={() => setEditing('new')}

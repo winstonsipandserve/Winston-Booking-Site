@@ -56,8 +56,6 @@ export default async function AdminMembershipsPage({
         aria-hidden="true"
         className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
       />
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Memberships</h1>
-
       <div className="flex items-center gap-2">
         <MembershipsFilterModal status={filter} />
         <MembershipsExportButton status={filter} totalCount={totalCount} />
