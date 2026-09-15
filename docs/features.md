@@ -107,7 +107,7 @@ List with a working search bar and a filter modal, both server-side and composab
 
 ### Resources & Pricing
 
-Tabbed as Courts / Simulators / Guest Fee.
+Tabbed as Courts / Simulators / Guest Fee. Each resource type is a collapsible card; the first card in a tab opens by default, and collapsed cards summarise the base member/non-member rate and any disabled resources in the header.
 
 - Resources are **edit and disable/enable only** — no create or delete. A resource disabled by an announcement is labelled as such.
 - Pricing and add-on rows have full create/edit/delete, gated by the valid-combination allow-list, so an unoffered combination has no "+ Add" control at all.
@@ -132,7 +132,7 @@ Paginated create/read/update/delete for rich-text stories. The editor supports h
 
 ### Check-In
 
-Camera QR scanning plus a rate-limited manual code fallback, sharing one result card across four states.
+Manual 6-digit code entry is the default view (input auto-focused, submits automatically on the sixth digit); camera QR scanning is the alternate tab. Both share one result card across four states, and code lookups are rate-limited.
 
 ### Settings
 

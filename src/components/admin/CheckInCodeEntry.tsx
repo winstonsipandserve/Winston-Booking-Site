@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import CheckInResultCard, { type CheckInResult } from '@/components/admin/CheckInResultCard'
 
 export default function CheckInCodeEntry() {
@@ -8,15 +8,21 @@ export default function CheckInCodeEntry() {
   const [isVerifying, setIsVerifying] = useState(false)
   const [result, setResult] = useState<CheckInResult | null>(null)
 
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const isValidCode = /^\d{6}$/.test(code)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!isValidCode) return
+  // Focus the field whenever the form is (re)shown so the desk can type straight away.
+  useEffect(() => {
+    if (!result) inputRef.current?.focus()
+  }, [result])
+
+  async function verifyCode(value: string) {
+    if (!/^\d{6}$/.test(value) || isVerifying) return
 
     setIsVerifying(true)
     try {
-      const res = await fetch(`/api/admin/check-in/code/${encodeURIComponent(code)}`)
+      const res = await fetch(`/api/admin/check-in/code/${encodeURIComponent(value)}`)
       const json = await res.json().catch(() => null)
 
       if (res.status === 429) {
@@ -52,6 +58,18 @@ export default function CheckInCodeEntry() {
     }
   }
 
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    void verifyCode(code)
+  }
+
+  // Six digits is a complete code — submit without waiting for the button.
+  function handleChange(next: string) {
+    const digits = next.replace(/\D/g, '').slice(0, 6)
+    setCode(digits)
+    if (digits.length === 6) void verifyCode(digits)
+  }
+
   function handleEnterAnother() {
     setResult(null)
     setCode('')
@@ -67,13 +85,18 @@ export default function CheckInCodeEntry() {
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col items-center gap-4">
-      <p className="text-sm text-gray-500 dark:text-gray-400">Enter the member&apos;s 6-digit check-in code.</p>
+      <label htmlFor="check-in-code" className="sr-only">
+        6-digit check-in code
+      </label>
       <input
+        ref={inputRef}
+        id="check-in-code"
         type="text"
         inputMode="numeric"
+        autoComplete="one-time-code"
         maxLength={6}
         value={code}
-        onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+        onChange={(e) => handleChange(e.target.value)}
         placeholder="000000"
         className="w-full rounded-lg border border-gray-200 px-4 py-2 text-center text-2xl font-semibold tracking-[0.3em] text-gray-900 focus:border-gray-400 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-gray-500"
       />

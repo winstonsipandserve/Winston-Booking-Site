@@ -93,10 +93,18 @@ function tierLabel(tier: RateTier): string {
   return tier === 'member' ? 'Member' : 'Non-Member'
 }
 
-function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations; addOnServices: AddOnService[] }) {
+function ResourceTypeCard({
+  rt,
+  addOnServices,
+  defaultOpen = false,
+}: {
+  rt: ResourceTypeWithRelations
+  addOnServices: AddOnService[]
+  defaultOpen?: boolean
+}) {
   const router = useRouter()
   const toast = useToast()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(defaultOpen)
   const [disablingResource, setDisablingResource] = useState<ResourceRow | null>(null)
   const [editingRow, setEditingRow] = useState<{ title: string; fields: PriceEditField[] } | null>(null)
   const [creatingCell, setCreatingCell] = useState<{ title: string; createField: PriceCreateField } | null>(null)
@@ -280,20 +288,40 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
     return fields
   }
 
+  // Collapsed header summary so pricing is scannable without expanding every type.
+  const baseDuration = durations[0]
+  const baseMemberRate = baseDuration !== undefined ? findRateRule('member', baseDuration)?.priceCentavos : undefined
+  const baseNonMemberRate =
+    baseDuration !== undefined ? findRateRule('non_member', baseDuration)?.priceCentavos : undefined
+  const disabledCount = rt.resources.filter((r) => !r.isActive).length
+  const summaryParts: string[] = []
+  if (baseMemberRate !== undefined || baseNonMemberRate !== undefined) {
+    const per = isCourt ? '/hr' : `/${baseDuration}m`
+    summaryParts.push(
+      `${baseMemberRate !== undefined ? formatCentavos(baseMemberRate) : '—'} member · ${
+        baseNonMemberRate !== undefined ? formatCentavos(baseNonMemberRate) : '—'
+      } non-member${per}`,
+    )
+  }
+  if (disabledCount > 0) summaryParts.push(`${disabledCount} disabled`)
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className={`flex items-center justify-between gap-3 ${isOpen ? 'mb-4' : ''}`}>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           aria-expanded={isOpen}
-          className="flex items-center gap-2 text-left"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left"
         >
           <ChevronIcon
             className={`h-4 w-4 shrink-0 text-gray-500 transition-transform duration-200 dark:text-gray-400 ${isOpen ? 'rotate-180' : ''}`}
           />
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">{rt.name}</h2>
           <span className="text-xs text-gray-500 dark:text-gray-400">{pluralize(rt.resources.length, 'resource')}</span>
+          {!isOpen && summaryParts.length > 0 && (
+            <span className="ml-auto truncate text-xs text-gray-500 dark:text-gray-400">{summaryParts.join(' · ')}</span>
+          )}
         </button>
       </div>
 
@@ -625,16 +653,16 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
       <div className="min-h-0 flex-1 overflow-y-auto">
         {activeTab === 'courts' && (
           <div className="space-y-6">
-            {courts.map((rt) => (
-              <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} />
+            {courts.map((rt, index) => (
+              <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} defaultOpen={index === 0} />
             ))}
           </div>
         )}
 
         {activeTab === 'simulators' && (
           <div className="space-y-6">
-            {simulators.map((rt) => (
-              <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} />
+            {simulators.map((rt, index) => (
+              <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} defaultOpen={index === 0} />
             ))}
           </div>
         )}
