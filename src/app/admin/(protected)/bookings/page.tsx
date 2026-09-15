@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { prisma } from '@/lib/prisma'
-import { formatCentavos } from '@/lib/format'
+import { formatCentavos, formatManilaDate, formatManilaTime } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import { isBookingStatus, buildBookingsWhere } from '@/lib/bookings-query'
 import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
@@ -13,18 +13,7 @@ import { BookingStatusPill } from '@/components/admin/StatusPill'
 const PAGE_SIZE = 25
 
 function formatSubmittedAt(createdAt: Date) {
-  const date = createdAt.toLocaleDateString('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Asia/Manila',
-  })
-  const time = createdAt.toLocaleTimeString('en-PH', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'Asia/Manila',
-  })
-  return { date, time }
+  return { date: formatManilaDate(createdAt), time: formatManilaTime(createdAt) }
 }
 
 export default async function AdminBookingsPage({

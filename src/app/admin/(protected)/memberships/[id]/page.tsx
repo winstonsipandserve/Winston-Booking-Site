@@ -10,7 +10,8 @@ import ResendActivationButton from '@/components/admin/ResendActivationButton'
 import ResendPaymentLinkButton from '@/components/admin/ResendPaymentLinkButton'
 import AddCreditButton from '@/components/admin/AddCreditButton'
 import AdminPagination from '@/components/admin/AdminPagination'
-import { formatMembershipTier, formatCentavos } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos, formatManilaDate, formatMembershipTier } from '@/lib/format'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { getRenewalEligibility, RENEWAL_WINDOW_DAYS } from '@/lib/membership-current'
 import { manilaCalendarDaysBetween } from '@/lib/manila-date'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
@@ -30,15 +31,6 @@ const HISTORY_PAGE_SIZE = 10
 function parsePage(value: string | undefined) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? Math.max(1, Math.floor(parsed)) : 1
-}
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Asia/Manila',
-  })
 }
 
 export default async function AdminMembershipApplicationDetailPage({
@@ -190,29 +182,18 @@ export default async function AdminMembershipApplicationDetailPage({
 
   return (
     <div className="flex flex-col">
-      <Link
-        href="/admin/memberships"
-        className="mb-4 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-      >
-        <span className="mr-1">&larr;</span>
-        Back to memberships
-      </Link>
-
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            {latestMembership ? application.customer.name : 'Membership Application'}
-          </h1>
-          {latestMembership ? (
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Member since {formatDate(latestMembership.startDate)}
-            </p>
-          ) : (
-            <p className="text-xs font-mono text-gray-400 dark:text-gray-500">{application.id}</p>
-          )}
-        </div>
-        <MembershipStatusPill status={displayStatus} />
-      </div>
+      <AdminPageHeader
+        backHref="/admin/memberships"
+        backLabel="Back to memberships"
+        title={application.customer.name}
+        subtitle={
+          latestMembership
+            ? `${formatMembershipTier(latestMembership.tier)} member since ${formatManilaDate(latestMembership.startDate)}`
+            : `${formatMembershipTier(application.requestedTier)} application · Submitted ${formatManilaDate(application.createdAt)}`
+        }
+        recordId={application.id}
+        aside={<MembershipStatusPill status={displayStatus} />}
+      />
 
       {!latestMembership && (
         <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -249,7 +230,7 @@ export default async function AdminMembershipApplicationDetailPage({
             <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
               <span className="text-gray-500 dark:text-gray-400">Submitted</span>
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                {application.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                {formatBookingDateTime(application.createdAt)}
               </span>
             </div>
           </section>
@@ -329,7 +310,7 @@ export default async function AdminMembershipApplicationDetailPage({
               <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
                 <span className="text-gray-500 dark:text-gray-400">Joined</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {application.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                  {formatBookingDateTime(application.createdAt)}
                 </span>
               </div>
             </section>
@@ -351,13 +332,13 @@ export default async function AdminMembershipApplicationDetailPage({
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
                 <span className="text-gray-500 dark:text-gray-400">Activated</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {latestMembership.startDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                  {formatManilaDate(latestMembership.startDate)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
                 <span className="text-gray-500 dark:text-gray-400">Expires</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {latestMembership.endDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                  {formatManilaDate(latestMembership.endDate)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
@@ -405,7 +386,7 @@ export default async function AdminMembershipApplicationDetailPage({
                 <span className="text-gray-500 dark:text-gray-400">Reviewed At</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
                   {application.reviewedAt
-                    ? application.reviewedAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
+                    ? formatBookingDateTime(application.reviewedAt)
                     : '—'}
                 </span>
               </div>
@@ -465,7 +446,7 @@ export default async function AdminMembershipApplicationDetailPage({
                       className="h-[46px] border-b border-gray-100 last:border-b-0 even:bg-gray-50/70 dark:border-gray-800 dark:even:bg-gray-800/50"
                     >
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                        {transaction.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                        {formatBookingDateTime(transaction.createdAt)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {CREDIT_TRANSACTION_REASON_LABELS[transaction.reason]}
@@ -547,7 +528,7 @@ export default async function AdminMembershipApplicationDetailPage({
                     >
                       <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{booking.id}</td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                        {booking.startTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                        {formatBookingDateTime(booking.startTime)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {booking.resource.resourceType.name} — {booking.resource.label}

@@ -26,13 +26,38 @@ export function parseCentavos(pesosInput: string): number | null {
   return Math.round(value * 100)
 }
 
-export function formatBulletinDate(date: Date): string {
+/** Short Manila calendar date — "Sep 21, 2026". The default for any date without a time. */
+export function formatManilaDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     timeZone: 'Asia/Manila',
   }).format(date)
+}
+
+export function formatBulletinDate(date: Date): string {
+  return formatManilaDate(date)
+}
+
+/** Manila clock time only — "1:00 PM". */
+export function formatManilaTime(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Manila',
+  }).format(date)
+}
+
+/**
+ * Manila slot range — "Sep 21, 2026 · 1:00 PM – 2:00 PM". Falls back to two full
+ * date-times when the slot crosses midnight.
+ */
+export function formatManilaTimeRange(start: Date, end: Date): string {
+  const sameDay = formatManilaDate(start) === formatManilaDate(end)
+  if (!sameDay) return `${formatBookingDateTime(start)} – ${formatBookingDateTime(end)}`
+  return `${formatManilaDate(start)} · ${formatManilaTime(start)} – ${formatManilaTime(end)}`
 }
 
 /** Long Manila date used wherever a membership expiry is shown (account, check-in, emails, wizard). */

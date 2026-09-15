@@ -1,11 +1,11 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { prisma } from '@/lib/prisma'
-import { formatCentavos } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos, formatManilaTimeRange } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import RescheduleSection from '@/components/admin/RescheduleSection'
 import { BookingStatusPill } from '@/components/admin/StatusPill'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
 
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -58,40 +58,35 @@ export default async function AdminBookingDetailPage({
 
   return (
     <div className="flex flex-col">
-      <Link
-        href="/admin/bookings"
-        className="mb-4 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-      >
-        <span className="mr-1">&larr;</span>
-        Back to bookings
-      </Link>
-
-      <h1 className="mb-6 text-xl font-semibold text-gray-900 dark:text-gray-100">Booking {booking.id}</h1>
+      <AdminPageHeader
+        backHref="/admin/bookings"
+        backLabel="Back to bookings"
+        title={`${booking.resource.resourceType.name} — ${booking.resource.label}`}
+        subtitle={formatManilaTimeRange(booking.startTime, booking.endTime)}
+        recordId={booking.id}
+        aside={<BookingStatusPill status={booking.status} />}
+      />
 
       <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
         <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Details</h2>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Resource</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {booking.resource.resourceType.name} — {booking.resource.label}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
             <span className="text-gray-500 dark:text-gray-400">Start</span>
             <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {booking.startTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+              {formatBookingDateTime(booking.startTime)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
             <span className="text-gray-500 dark:text-gray-400">End</span>
             <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-              {booking.endTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+              {formatBookingDateTime(booking.endTime)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-            <span className="text-gray-500 dark:text-gray-400">Status</span>
-            <BookingStatusPill status={booking.status} />
+            <span className="text-gray-500 dark:text-gray-400">Submitted</span>
+            <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+              {formatBookingDateTime(booking.createdAt)}
+            </span>
           </div>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
             <span className="text-gray-500 dark:text-gray-400">Guest count</span>
@@ -152,7 +147,7 @@ export default async function AdminBookingDetailPage({
                 label="Paid At"
                 value={
                   booking.payment.paidAt
-                    ? booking.payment.paidAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
+                    ? formatBookingDateTime(booking.payment.paidAt)
                     : '—'
                 }
               />
@@ -214,17 +209,15 @@ export default async function AdminBookingDetailPage({
                 {booking.reschedules.map((r) => (
                   <tr key={r.id} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                      {r.originalStart.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} &ndash;{' '}
-                      {r.originalEnd.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                      {formatManilaTimeRange(r.originalStart, r.originalEnd)}
                     </td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                      {r.newStart.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })} &ndash;{' '}
-                      {r.newEnd.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                      {formatManilaTimeRange(r.newStart, r.newEnd)}
                     </td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{r.reason}</td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{r.performedBy.name}</td>
                     <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                      {r.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                      {formatBookingDateTime(r.createdAt)}
                     </td>
                   </tr>
                 ))}

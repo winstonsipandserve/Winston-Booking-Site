@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { formatBookingDateTime } from '@/lib/format'
 import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
@@ -127,9 +128,9 @@ export default function AnnouncementManager({
                   </div>
                   <p className="mt-2 line-clamp-2 text-sm text-gray-600 dark:text-gray-300">{announcement.message}</p>
                   <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(announcement.startAt).toLocaleString('en-PH')}
-                    {announcement.endAt ? ` – ${new Date(announcement.endAt).toLocaleString('en-PH')}` : ' – No end date'}
-                    {announcement.announceAt && ` · Shown from ${new Date(announcement.announceAt).toLocaleString('en-PH')}`}
+                    {formatBookingDateTime(new Date(announcement.startAt))}
+                    {announcement.endAt ? ` – ${formatBookingDateTime(new Date(announcement.endAt))}` : ' – No end date'}
+                    {announcement.announceAt && ` · Shown from ${formatBookingDateTime(new Date(announcement.announceAt))}`}
                   </p>
                   {announcement.resourceNames.length > 0 && (
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">

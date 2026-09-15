@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { formatBookingDateTime } from '@/lib/format'
 import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
@@ -95,7 +96,7 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
                   <span className="rounded-full bg-gray-900 px-2 py-0.5 text-xs font-medium text-white dark:bg-gray-100 dark:text-gray-900">{publicationLabel(post)}</span>
                   {post.isFeatured && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">Featured</span>}
                 </div>
-                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">/news/{post.slug}{post.publishAt ? ` · ${new Date(post.publishAt).toLocaleString('en-PH')}` : ''}</p>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">/news/{post.slug}{post.publishAt ? ` · ${formatBookingDateTime(new Date(post.publishAt))}` : ''}</p>
               </div>
               <div className="flex shrink-0 gap-2">
                 <button type="button" onClick={() => setEditing(post)} className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</button>

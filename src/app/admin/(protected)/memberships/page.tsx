@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { formatMembershipTier } from '@/lib/format'
+import { formatManilaDate, formatMembershipTier } from '@/lib/format'
 import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
 import { MembershipStatusPill } from '@/components/admin/StatusPill'
 import { isMembershipDisplayStatusFilter, getMembershipApplicationsForFilter } from '@/lib/memberships-query'
@@ -11,33 +11,21 @@ import AdminPagination from '@/components/admin/AdminPagination'
 
 const PAGE_SIZE = 25
 
-function formatDateTime(date: Date) {
-  return date.toLocaleDateString('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Asia/Manila',
-  })
-}
-
 export default async function AdminMembershipsPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string; page?: string; search?: string }>
 }) {
-  console.time('memberships:pageTotal')
   const { status: statusParam, page: pageParam, search } = await searchParams
 
   const filter = statusParam && isMembershipDisplayStatusFilter(statusParam) ? statusParam : 'all'
   const page = Math.max(1, Number(pageParam) || 1)
   const trimmedSearch = search?.trim()
 
-  console.time('memberships:promiseAll')
   const { applications, totalCount, latestMembershipsByCustomer } = await getMembershipApplicationsForFilter(
     filter,
     { pagination: { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }, search: trimmedSearch },
   )
-  console.timeEnd('memberships:promiseAll')
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
@@ -49,7 +37,6 @@ export default async function AdminMembershipsPage({
     return `/admin/memberships?${params.toString()}`
   }
 
-  console.timeEnd('memberships:pageTotal')
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -108,7 +95,7 @@ export default async function AdminMembershipsPage({
                     })}
                   />
                 </td>
-                <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{formatDateTime(application.createdAt)}</td>
+                <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{formatManilaDate(application.createdAt)}</td>
                 <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                   {application.reviewedBy?.name ?? '—'}
                 </td>
