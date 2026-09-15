@@ -41,6 +41,7 @@ export default function DateTimeField({ value, onChange, disabled = false }: {
   const [date = '', time = ''] = value ? value.split('T') : []
   // Keep an off-grid time (e.g. 02:57 from an existing post) selectable rather than silently moving it.
   const options = time && !TIME_OPTIONS.includes(time) ? [...TIME_OPTIONS, time].sort() : TIME_OPTIONS
+  const buttonClass = 'rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800'
   const inputClass = 'min-w-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100'
 
   function update(nextDate: string, nextTime: string) {
@@ -60,9 +61,9 @@ export default function DateTimeField({ value, onChange, disabled = false }: {
           {options.map((option) => <option key={option} value={option}>{timeLabel(option)}</option>)}
         </select>
       </div>
-      <div className="flex gap-3 text-xs">
-        <button type="button" disabled={disabled} onClick={() => onChange(nowLocal())} className="font-medium text-gray-600 underline-offset-2 hover:underline disabled:opacity-60 dark:text-gray-300">Now</button>
-        {value && <button type="button" disabled={disabled} onClick={() => onChange('')} className="font-medium text-gray-600 underline-offset-2 hover:underline disabled:opacity-60 dark:text-gray-300">Clear</button>}
+      <div className="flex gap-2">
+        <button type="button" disabled={disabled} onClick={() => onChange(nowLocal())} className={buttonClass}>Now</button>
+        {value && <button type="button" disabled={disabled} onClick={() => onChange('')} className={buttonClass}>Clear</button>}
       </div>
     </div>
   )
