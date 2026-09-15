@@ -35,7 +35,7 @@ export default function AdminShell({
       />
       <div className="flex min-h-0 flex-1">
         <AdminSidebar collapsed={collapsed} onToggleSidebar={toggleSidebar} pathname={pathname} />
-        <main className="mb-4 mr-4 min-h-0 min-w-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-100 p-6 shadow-sm scrollbar-thin dark:border-gray-800">
+        <main className="mb-4 mr-4 min-h-0 min-w-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-100 p-6 shadow-sm scrollbar-thin dark:border-gray-800 dark:bg-gray-950">
           {children}
         </main>
       </div>

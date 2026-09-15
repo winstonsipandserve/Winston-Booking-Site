@@ -98,7 +98,7 @@ export default function DashboardBookingCalendar({ initialCalendar }: { initialC
   }
 
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900" aria-labelledby="booking-calendar-heading">
+    <section className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900" aria-labelledby="booking-calendar-heading">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 id="booking-calendar-heading" className="text-sm font-semibold text-gray-900 dark:text-gray-100">
           Booking Calendar

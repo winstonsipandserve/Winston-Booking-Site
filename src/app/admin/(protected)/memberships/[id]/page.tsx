@@ -192,11 +192,7 @@ export default async function AdminMembershipApplicationDetailPage({
   }
 
   return (
-    <div className="relative isolate flex flex-col">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
-      />
+    <div className="flex flex-col">
       <Link
         href="/admin/memberships"
         className="mb-4 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"

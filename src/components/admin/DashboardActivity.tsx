@@ -31,7 +31,7 @@ interface DashboardActivityProps {
 export default function DashboardActivity({ recentBookings, recentApplications }: DashboardActivityProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Recent Bookings</h2>
         {recentBookings.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">No bookings yet.</p>
@@ -52,7 +52,7 @@ export default function DashboardActivity({ recentBookings, recentApplications }
         )}
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex items-center gap-2">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Pending Membership Applications</h2>
           <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">

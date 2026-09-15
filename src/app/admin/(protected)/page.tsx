@@ -7,11 +7,7 @@ export default async function AdminPage() {
   const data = await getDashboardData()
 
   return (
-    <div className="relative isolate flex h-full flex-col gap-4">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
-      />
+    <div className="flex h-full flex-col gap-4">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-6">
           <DashboardStats stats={data.stats} />

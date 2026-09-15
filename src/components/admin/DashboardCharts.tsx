@@ -128,7 +128,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{chartTitle}</h2>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-3">

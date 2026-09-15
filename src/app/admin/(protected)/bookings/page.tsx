@@ -70,11 +70,7 @@ export default async function AdminBookingsPage({
   }
 
   return (
-    <div className="relative isolate flex h-full flex-col gap-4">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
-      />
+    <div className="flex h-full flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <BookingsFilterModal

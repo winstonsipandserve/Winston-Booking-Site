@@ -14,8 +14,7 @@ export default async function AdminNewsPage({ searchParams }: { searchParams: Pr
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE))
 
   return (
-    <div className="relative isolate flex h-full flex-col gap-4">
-      <div aria-hidden="true" className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900" />
+    <div className="flex h-full flex-col gap-4">
       <NewsManager posts={posts.map((post) => ({
         id: post.id,
         slug: post.slug,

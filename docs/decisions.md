@@ -226,13 +226,14 @@ A per-admin preference stored in browser local storage (`light` / `dark` / `syst
 
 Tailwind v4's dark variant is class-based, driven by a class on the root element set by an inline no-flash script whose literal content lives in one shared constant. A layout-effect safety net handles soft client-side navigations, since React does not execute a rendered script tag. The root element carries a hydration-warning suppression for this reason.
 
-The admin main region stays light unconditionally. A page needing its own dark background uses the **overlay pattern**: an isolated relative wrapper plus a hidden, pointer-events-none absolute sibling rendered first that appears only in dark mode.
+The admin content container is `bg-gray-100` in light mode and `dark:bg-gray-950` in dark mode, one step below the card surface in each theme so white / `gray-900` cards read as raised. Pages render directly onto it; the former per-page dark overlay layer is retired and must not be reintroduced.
 
 **Use this token mapping rather than inventing one:**
 
 | Element | Light | Dark |
 |---|---|---|
-| Page shell background | `bg-gray-50` | `dark:bg-gray-950` |
+| Page shell background (navbar + sidebar frame) | `bg-gray-50` | `dark:bg-gray-950` |
+| Content container | `bg-gray-100` | `dark:bg-gray-950` |
 | Card/panel surface | `bg-white` | `dark:bg-gray-900` |
 | Card/panel border | `border-gray-200` | `dark:border-gray-800` |
 | Nested/inset border | `border-gray-200` | `dark:border-gray-700` |
