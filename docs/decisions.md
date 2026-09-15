@@ -193,7 +193,7 @@ These are locked. Read them before any visual work rather than re-deriving a pal
 | `--color-accent` | `#d62a20` | `accent-primary` | The **one** accent — CTAs, active states, eyebrows. Never decoration |
 | `--color-accent-hover` | `#b21f17` | `accent-dark` | Hover / pressed on the accent |
 | `--color-on-accent` | `#ffffff` | `on-accent` | Text on a red fill |
-| `--color-focus-ring` | `#f4a79f` | `focus-ring` | Focus-visible outline on every interactive element |
+| `--color-focus-ring` | `#f4a79f` | `focus-ring` | Focus-visible outline on every interactive element on the **public site**. The admin panel overrides it with a 2px `gray-900` / `gray-100` (dark) ring scoped to `body:has(.admin-root)` in `globals.css`, because the salmon ring sits below 3:1 on the admin's neutral greys |
 | `--color-notice-info-*` | blue family | `notice-info-*` | Information announcement background, border, and text only |
 | `--color-notice-warning-*` | amber family | `notice-warning-*` | Warning announcement background, border, and text only |
 | `--color-notice-urgent-*` | red family | `notice-urgent-*` | Urgent announcement background, border, and text only |

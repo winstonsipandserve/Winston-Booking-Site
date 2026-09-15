@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
 interface ModalProps {
@@ -23,10 +23,46 @@ export default function Modal({
   variant = 'brand',
   closeOnBackdropClick = true,
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (!isOpen) return
+    const dialog = dialogRef.current
+    const previouslyFocused = document.activeElement as HTMLElement | null
+
+    // Move focus into the dialog on open — first field if there is one, else the dialog itself —
+    // and hand it back to the trigger on close so keyboard users don't lose their place.
+    const firstField = dialog?.querySelector<HTMLElement>(
+      'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])',
+    )
+    ;(firstField ?? dialog)?.focus()
+
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab' || !dialog) return
+      // Keep Tab cycling inside the dialog while it is open.
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+      if (focusable.length === 0) {
+        e.preventDefault()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+      if (e.shiftKey && (active === first || active === dialog)) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     const previousOverflow = document.body.style.overflow
@@ -34,6 +70,7 @@ export default function Modal({
     return () => {
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = previousOverflow
+      previouslyFocused?.focus?.()
     }
   }, [isOpen, onClose])
 
@@ -45,11 +82,13 @@ export default function Modal({
       onClick={closeOnBackdropClick ? onClose : undefined}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className={`relative my-auto w-full ${maxWidthClassName} border px-6 py-6 shadow-xl ${
+        className={`relative my-auto w-full outline-none ${maxWidthClassName} border px-6 py-6 shadow-xl ${
           variant === 'neutral'
             ? 'rounded-2xl border-gray-200 bg-white shadow-gray-900/10 dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/40'
             : 'rounded-card border-brand-dark/10 bg-brand-light shadow-brand-dark/10'

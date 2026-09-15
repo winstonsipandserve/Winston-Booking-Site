@@ -91,3 +91,22 @@ body {
 .hero-text-shadow {
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.65), 0 1px 4px rgba(0, 0, 0, 0.5);
 }
+
+/*
+  Admin focus ring. The site-wide floor in tokens.css uses the salmon brand ring, which
+  sits at ~1.6:1 against the admin's neutral greys and is overridden by any
+  `outline-none` utility. Scoping a high-contrast ring to .admin-root (set on AdminShell)
+  keeps keyboard focus visible on every control without touching each component.
+  Scoped via body:has() so modals and toasts, which portal to document.body, are covered.
+*/
+body:has(.admin-root) :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [contenteditable]):focus-visible {
+  outline: 2px solid var(--color-gray-900);
+  outline-offset: 2px;
+}
+.dark body:has(.admin-root) :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [contenteditable]):focus-visible {
+  outline-color: var(--color-gray-100);
+}
+/* Text fields already signal focus by border; keep the ring tight so it doesn't double up. */
+body:has(.admin-root) :where(input:not([type='checkbox']):not([type='radio']), textarea, select):focus-visible {
+  outline-offset: 0;
+}

@@ -28,7 +28,7 @@ export default function AdminShell({
 
   return (
     <ToastProvider>
-      <div className="flex h-screen flex-col overflow-hidden bg-gray-50 font-sans text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <div className="admin-root flex h-screen flex-col overflow-hidden bg-gray-50 font-sans text-gray-900 dark:bg-gray-950 dark:text-gray-100">
         <AdminTopbar
           email={email}
           collapsed={collapsed}
