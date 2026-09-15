@@ -20,7 +20,7 @@ export default function CheckInTabs() {
     <div className="flex w-full max-w-md flex-col items-center gap-6">
       <div className="text-center">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Check in a member</h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Type the 6-digit code from their account, or scan their QR.
         </p>
       </div>
@@ -42,7 +42,7 @@ export default function CheckInTabs() {
               className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-gray-100'
-                  : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                  : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
               }`}
             >
               {tab.label}

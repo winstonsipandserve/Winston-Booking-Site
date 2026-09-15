@@ -54,7 +54,7 @@ function ChevronIcon({ className = '' }: { className?: string }) {
 
 function ActionIconButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} className="text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300">
+    <button type="button" onClick={onClick} aria-label={label} className="-m-2 flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100">
       <PencilIcon className="h-4 w-4" />
     </button>
   )
@@ -333,10 +333,10 @@ function ResourceTypeCard({
                 <div className="flex flex-col">
                   <span className="text-gray-900 dark:text-gray-100">{resource.label}</span>
                   {!resource.isActive && resource.disabledReason === 'bulletin' && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">Disabled by announcement</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Disabled by announcement</span>
                   )}
                   {!resource.isActive && resource.disabledNote && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">{resource.disabledNote}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{resource.disabledNote}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3">

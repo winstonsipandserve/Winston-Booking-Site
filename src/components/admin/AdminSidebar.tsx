@@ -39,7 +39,7 @@ export function SidebarFoldButton({
       onClick={onClick}
       aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       aria-expanded={!collapsed}
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-200/70 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-200/70 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
     >
       <FoldIcon className={`h-4 w-4 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`} />
     </button>
@@ -64,7 +64,7 @@ export default function AdminSidebar({
       {/* When expanded the fold button lives here, level with the Menu label; when collapsed it moves up to the topbar. */}
       {!collapsed && (
         <div className="flex items-center justify-between pb-2 pl-3 pr-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
             Menu
           </span>
           <SidebarFoldButton collapsed={collapsed} onClick={onToggleSidebar} />

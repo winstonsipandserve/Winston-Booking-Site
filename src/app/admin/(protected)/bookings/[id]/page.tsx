@@ -179,7 +179,7 @@ export default async function AdminBookingDetailPage({
         <section className="h-full rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Reschedule History</h2>
-            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
               {booking.reschedules.length} {booking.reschedules.length === 1 ? 'change' : 'changes'}
             </span>
           </div>
@@ -227,7 +227,7 @@ export default async function AdminBookingDetailPage({
           ) : (
             <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/70 px-4 py-8 text-center dark:border-gray-700 dark:bg-gray-800/50">
               <p className="text-sm text-gray-500 dark:text-gray-400">No reschedules yet.</p>
-              <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">Changes to this booking will appear here.</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Changes to this booking will appear here.</p>
             </div>
           )}
         </section>

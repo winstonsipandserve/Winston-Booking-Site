@@ -27,10 +27,10 @@ export default function CopyableId({ value, label = 'ID' }: { value: string; lab
       type="button"
       onClick={copy}
       title={`Copy ${label.toLowerCase()}`}
-      className="group inline-flex max-w-full items-center gap-1.5 rounded-md text-left font-mono text-xs text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300"
+      className="group inline-flex max-w-full items-center gap-2 rounded-md text-left font-mono text-xs text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
     >
       <span className="truncate">{value}</span>
-      <span className="shrink-0 text-[11px] font-sans font-medium opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+      <span className="shrink-0 rounded border border-gray-200 px-1.5 py-0.5 font-sans text-[11px] font-medium text-gray-600 group-hover:border-gray-300 group-hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:group-hover:border-gray-600 dark:group-hover:text-gray-100">
         {copied ? 'Copied' : 'Copy'}
       </span>
     </button>

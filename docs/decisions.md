@@ -254,6 +254,10 @@ The admin content container is `bg-gray-100` in light mode and `dark:bg-gray-950
 
 A sticky table header on `bg-gray-50` aliases to the card-surface row, not a new token, since it sits inside a card rather than being the page shell.
 
+Text that sits directly on the `bg-gray-100` content well (back links, page subtitles, result counts, tab labels) uses `text-gray-600` or darker: `text-gray-500` measures 4.39:1 there and misses AA. `text-gray-500` remains the muted floor inside white cards; `text-gray-400` is for icons and placeholders only, never running text.
+
+Admin icon-only controls have a hit area of at least 32×32 (padding around a 16px glyph); the panel is tablet-and-up, so every control must be tappable.
+
 **Locked per-surface semantic exceptions** — each keeps its light colour and adds a muted dark pairing. None of these are general tokens:
 
 - The resource Active badge (green).

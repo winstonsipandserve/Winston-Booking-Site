@@ -375,7 +375,7 @@ export default async function AdminMembershipApplicationDetailPage({
         <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Review</h2>
           {!application.reviewedById ? (
-            <p className="text-sm italic text-gray-400 dark:text-gray-500">Not yet reviewed</p>
+            <p className="text-sm italic text-gray-500 dark:text-gray-400">Not yet reviewed</p>
           ) : (
             <>
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
@@ -468,7 +468,7 @@ export default async function AdminMembershipApplicationDetailPage({
                   ))}
                   {creditTransactions.length === 0 && (
                     <tr className="h-[46px] border-b border-gray-100 dark:border-gray-800">
-                      <td colSpan={4} className="px-4 py-2.5 text-sm italic text-gray-400 dark:text-gray-500">
+                      <td colSpan={4} className="px-4 py-2.5 text-sm italic text-gray-500 dark:text-gray-400">
                         No credit activity yet
                       </td>
                     </tr>
@@ -558,7 +558,7 @@ export default async function AdminMembershipApplicationDetailPage({
                   ))}
                   {recentBookings.length === 0 && (
                     <tr className="h-[46px] border-b border-gray-100 dark:border-gray-800">
-                      <td colSpan={7} className="px-4 py-2.5 text-sm italic text-gray-400 dark:text-gray-500">
+                      <td colSpan={7} className="px-4 py-2.5 text-sm italic text-gray-500 dark:text-gray-400">
                         No bookings yet
                       </td>
                     </tr>

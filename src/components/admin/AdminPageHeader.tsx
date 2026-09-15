@@ -21,7 +21,7 @@ export default function AdminPageHeader({ backHref, backLabel, title, subtitle, 
     <div className="mb-6">
       <Link
         href={backHref}
-        className="mb-3 inline-flex items-center rounded-md text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+        className="mb-3 inline-flex items-center rounded-md text-sm text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
       >
         <span className="mr-1" aria-hidden="true">
           &larr;
@@ -32,7 +32,7 @@ export default function AdminPageHeader({ backHref, backLabel, title, subtitle, 
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold leading-tight text-gray-900 dark:text-gray-100">{title}</h1>
-          {subtitle && <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>}
+          {subtitle && <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>}
           {recordId && (
             <div className="mt-1.5">
               <CopyableId value={recordId} />

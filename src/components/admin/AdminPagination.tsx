@@ -37,7 +37,7 @@ export default function AdminPagination(props: AdminPaginationProps) {
 
   if (totalPages <= 1) {
     return (
-      <p className="shrink-0 text-right text-sm text-gray-500 dark:text-gray-400" aria-live="polite">
+      <p className="shrink-0 text-right text-sm text-gray-600 dark:text-gray-400" aria-live="polite">
         {countLabel}
       </p>
     )
@@ -50,7 +50,7 @@ export default function AdminPagination(props: AdminPaginationProps) {
 
   return (
     <nav aria-label="Pagination" className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-2 text-sm">
-      <span className="text-gray-500 dark:text-gray-400">
+      <span className="text-gray-600 dark:text-gray-400">
         {first.toLocaleString('en-PH')}–{last.toLocaleString('en-PH')} of {countLabel}
         <span aria-hidden="true" className="mx-2 text-gray-300 dark:text-gray-600">
           ·

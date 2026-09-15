@@ -138,7 +138,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                   key={opt.value}
                   type="button"
                   onClick={() => handleViewChange(opt.value)}
-                  className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     view === opt.value
                       ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
                       : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
@@ -154,7 +154,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                   key={opt.value}
                   type="button"
                   onClick={() => setRange(opt.value)}
-                  className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     range === opt.value
                       ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
                       : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
@@ -170,7 +170,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                   key={opt.value}
                   type="button"
                   onClick={() => setBreakdown(opt.value)}
-                  className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     breakdown === opt.value
                       ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
                       : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
