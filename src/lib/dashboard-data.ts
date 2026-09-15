@@ -10,14 +10,25 @@ import {
   toPhMonthKey,
 } from '@/lib/business-hours'
 import { formatMembershipTier, formatShortDate } from '@/lib/format'
+import { manilaCalendarDaysBetween } from '@/lib/manila-date'
 
 export interface DashboardStats {
   bookingsToday: number
+  /** Confirmed bookings whose slot falls in the current PH week (Mon–Sun). */
+  bookingsThisWeek: number
   bookingRevenueThisMonthCentavos: number
+  bookingRevenueLastMonthCentavos: number
   membershipRevenueThisMonthCentavos: number
+  membershipRevenueLastMonthCentavos: number
   pendingApplications: number
+  /** Whole PH calendar days the oldest pending application has been waiting; null when none. */
+  oldestPendingDays: number | null
   activeMemberships: number
+  /** Active members whose current term ends within the next 30 days. */
+  membershipsExpiringSoon: number
   resourceUtilizationPct: number
+  /** Confirmed hours booked this week on active resources — the utilization numerator. */
+  bookedHoursThisWeek: number
 }
 
 export interface RevenueTrendPoint {
@@ -143,15 +154,23 @@ export async function getDashboardData(): Promise<DashboardData> {
   const monthWindow = currentPhMonthWindow()
   const weekWindow = currentPhWeekWindow()
   const twelveMonthsAgoStart = phMonthStartUtc(11)
+  const lastMonthWindow = { start: phMonthStartUtc(1), end: monthWindow.start }
   const bookingCalendarMonth = toPhMonthKey(new Date())
+  const now = new Date()
+  const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60_000)
 
   const [
     bookingsToday,
+    bookingsThisWeek,
     bookingRevenueAgg,
+    lastMonthBookingRevenueAgg,
     membershipPaymentRevenueAgg,
     membershipTopUpRevenueAgg,
+    lastMonthMembershipPaymentRevenueAgg,
+    lastMonthMembershipTopUpRevenueAgg,
     pendingApplications,
-    activeMembershipCustomers,
+    oldestPendingApplication,
+    activeMembershipRows,
     weekBookings,
     activeResourceCount,
     paymentsForRevenue,
@@ -164,9 +183,16 @@ export async function getDashboardData(): Promise<DashboardData> {
     prisma.booking.count({
       where: { status: 'confirmed', startTime: { gte: todayWindow.start, lt: todayWindow.end } },
     }),
+    prisma.booking.count({
+      where: { status: 'confirmed', startTime: { gte: weekWindow.start, lt: weekWindow.end } },
+    }),
     prisma.payment.aggregate({
       _sum: { amountCentavos: true },
       where: { status: 'paid', bookingId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
+    }),
+    prisma.payment.aggregate({
+      _sum: { amountCentavos: true },
+      where: { status: 'paid', bookingId: { not: null }, paidAt: { gte: lastMonthWindow.start, lt: lastMonthWindow.end } },
     }),
     prisma.membershipPayment.aggregate({
       _sum: { amountCentavos: true },
@@ -176,9 +202,23 @@ export async function getDashboardData(): Promise<DashboardData> {
       _sum: { amountCentavos: true },
       where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
     }),
+    prisma.membershipPayment.aggregate({
+      _sum: { amountCentavos: true },
+      where: { status: 'paid', paidAt: { gte: lastMonthWindow.start, lt: lastMonthWindow.end } },
+    }),
+    prisma.payment.aggregate({
+      _sum: { amountCentavos: true },
+      where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: lastMonthWindow.start, lt: lastMonthWindow.end } },
+    }),
     prisma.membershipApplication.count({ where: { status: 'pending' } }),
-    // Customers with a live term — an early renewal is two rows for one member.
-    prisma.membership.findMany({ where: { endDate: { gte: new Date() } }, distinct: ['customerId'], select: { customerId: true } }),
+    prisma.membershipApplication.findFirst({
+      where: { status: 'pending' },
+      orderBy: { createdAt: 'asc' },
+      select: { createdAt: true },
+    }),
+    // Every live term — an early renewal is two rows for one member, so reduce to the latest
+    // end date per customer below before counting or checking expiry.
+    prisma.membership.findMany({ where: { endDate: { gte: now } }, select: { customerId: true, endDate: true } }),
     prisma.booking.findMany({
       where: {
         status: 'confirmed',
@@ -227,15 +267,34 @@ export async function getDashboardData(): Promise<DashboardData> {
   const resourceUtilizationPct =
     utilizationDenominator > 0 ? Math.round((bookedHours / utilizationDenominator) * 100) : 0
 
+  const latestEndByCustomer = new Map<string, Date>()
+  for (const row of activeMembershipRows) {
+    const current = latestEndByCustomer.get(row.customerId)
+    if (!current || row.endDate > current) latestEndByCustomer.set(row.customerId, row.endDate)
+  }
+  const membershipsExpiringSoon = Array.from(latestEndByCustomer.values()).filter((end) => end <= thirtyDaysOut).length
+
+  const oldestPendingDays = oldestPendingApplication
+    ? Math.max(0, manilaCalendarDaysBetween(oldestPendingApplication.createdAt, now))
+    : null
+
   const stats: DashboardStats = {
     bookingsToday,
+    bookingsThisWeek,
     bookingRevenueThisMonthCentavos: bookingRevenueAgg._sum.amountCentavos ?? 0,
+    bookingRevenueLastMonthCentavos: lastMonthBookingRevenueAgg._sum.amountCentavos ?? 0,
     membershipRevenueThisMonthCentavos:
       (membershipPaymentRevenueAgg._sum.amountCentavos ?? 0) +
       (membershipTopUpRevenueAgg._sum.amountCentavos ?? 0),
+    membershipRevenueLastMonthCentavos:
+      (lastMonthMembershipPaymentRevenueAgg._sum.amountCentavos ?? 0) +
+      (lastMonthMembershipTopUpRevenueAgg._sum.amountCentavos ?? 0),
     pendingApplications,
-    activeMemberships: activeMembershipCustomers.length,
+    oldestPendingDays,
+    activeMemberships: latestEndByCustomer.size,
+    membershipsExpiringSoon,
     resourceUtilizationPct,
+    bookedHoursThisWeek: Math.round(bookedHours * 10) / 10,
   }
 
   const revenueBuckets = new Map<

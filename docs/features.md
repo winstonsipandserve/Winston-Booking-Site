@@ -94,7 +94,7 @@ Eight sections, all gated by the shared admin session check and all supporting L
 
 ### Dashboard
 
-- **Six stat cards**: Bookings Today, Booking Revenue This Month, Membership Revenue This Month, Pending Applications, Active Memberships, Resource Utilization.
+- **Six stat cards**, each linking to the list that explains it: Bookings Today (→ confirmed bookings; note shows confirmed bookings this week), Booking Revenue This Month and Membership Revenue This Month (note shows the month-over-month change against last month's figure, or words when last month was zero), Pending Applications (→ pending filter; note shows how long the oldest has waited, amber from 3 days), Active Members (→ active filter; note shows how many terms end within 30 days), Utilization This Week (→ Resources; note shows booked hours). "Active members" counts distinct customers with a live term, so an early renewal is one member, not two.
 - **Revenue Trend chart** with a Booking/Membership view toggle, a range selector (3mo / 6mo / 12mo / YTD), and per-view breakdowns — Booking: Total or By Resource Type; Membership: Total, By Tier, or Top-Ups.
 - **Booking-activity calendar** showing confirmed-booking volume per day through a five-step blue intensity scale, with previous/next month navigation.
 - **Recent Bookings** and **Pending Applications** lists.
