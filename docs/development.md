@@ -102,6 +102,8 @@ Follow [database.md](database.md) for naming, mappings, money, timestamps, relat
 
 Branch on `res.status`, not only `res.ok`, so expected outcomes such as 409 conflicts remain distinguishable from generic failures. Surface a 400 response's `error` in the UI. Use a generic inline message for network or unexpected errors; do not navigate away or throw uncaught exceptions that discard in-progress form state.
 
+In the admin panel, confirm successful mutations with `useToast().success(...)` from `src/components/admin/ToastProvider.tsx` (mounted in `AdminShell`). Toasts are for success confirmation and for failures that have no form to attach to (e.g. a one-click enable button); errors inside a modal or form stay inline as above. Never use `window.alert`.
+
 ### Authentication and the Edge Runtime
 
 Follow the three-file runtime split in [architecture.md](architecture.md). `middleware.ts` must never import the Node-only `auth.ts`, and every gated route must enforce its own authentication check rather than relying on middleware alone.

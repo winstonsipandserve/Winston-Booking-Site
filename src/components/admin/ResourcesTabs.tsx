@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/admin/ToastProvider'
 import { formatCentavos } from '@/lib/format'
 import DisableResourceModal from '@/components/admin/DisableResourceModal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
@@ -94,6 +95,7 @@ function tierLabel(tier: RateTier): string {
 
 function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations; addOnServices: AddOnService[] }) {
   const router = useRouter()
+  const toast = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [disablingResource, setDisablingResource] = useState<ResourceRow | null>(null)
   const [editingRow, setEditingRow] = useState<{ title: string; fields: PriceEditField[] } | null>(null)
@@ -154,12 +156,13 @@ function ResourceTypeCard({ rt, addOnServices }: { rt: ResourceTypeWithRelations
       })
       if (!res.ok) {
         const json = await res.json().catch(() => null)
-        alert(json?.error ?? 'Failed to enable resource.')
+        toast.error(json?.error ?? 'Failed to enable resource.')
         return
       }
       router.refresh()
+      toast.success(`${resource.label} enabled.`)
     } catch {
-      alert('Failed to enable resource.')
+      toast.error('Failed to enable resource.')
     }
   }
 

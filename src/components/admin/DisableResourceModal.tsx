@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 
 interface DisableResourceModalProps {
@@ -31,6 +32,7 @@ function DisableResourceForm({
   onClose: () => void
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -55,6 +57,7 @@ function DisableResourceForm({
       }
 
       router.refresh()
+      toast.success(`${resource.label} disabled.`)
       onClose()
     } catch {
       setError('Something went wrong. Please try again.')

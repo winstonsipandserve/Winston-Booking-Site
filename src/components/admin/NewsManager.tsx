@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
 import DateTimeField from '@/components/admin/DateTimeField'
@@ -37,6 +38,7 @@ function publicationLabel(post: AdminNewsPost): string {
 
 export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
   const router = useRouter()
+  const toast = useToast()
   const [editing, setEditing] = useState<AdminNewsPost | null | 'new'>(null)
   const [pendingDelete, setPendingDelete] = useState<AdminNewsPost | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -53,6 +55,7 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
         return
       }
       router.refresh()
+      toast.success('News post deleted.')
       setPendingDelete(null)
     } catch {
       setDeleteError('Could not delete the news post. Please try again.')
@@ -112,6 +115,7 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
 
 function NewsFormModal({ post, isOpen, onClose }: { post: AdminNewsPost | null; isOpen: boolean; onClose: () => void }) {
   const router = useRouter()
+  const toast = useToast()
   const initial = useMemo(() => ({
     title: post?.title ?? '',
     bodyHtml: post?.bodyHtml ?? '<p></p>',
@@ -182,6 +186,7 @@ function NewsFormModal({ post, isOpen, onClose }: { post: AdminNewsPost | null; 
         return
       }
       router.refresh()
+      toast.success(post ? 'News post updated.' : 'News post created.')
       onClose()
     } catch {
       setError('Could not save the news post. Please try again.')

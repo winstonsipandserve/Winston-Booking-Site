@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
 import DateTimeField from '@/components/admin/DateTimeField'
@@ -67,6 +68,7 @@ export default function AnnouncementManager({
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const router = useRouter()
+  const toast = useToast()
 
   async function deleteAnnouncement() {
     if (!pendingDelete) return
@@ -79,6 +81,7 @@ export default function AnnouncementManager({
         return
       }
       router.refresh()
+      toast.success('Announcement deleted.')
       setPendingDelete(null)
     } catch {
       setDeleteError('Could not delete the announcement. Please try again.')
@@ -180,6 +183,7 @@ function AnnouncementFormModal({
   onClose: () => void
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [title, setTitle] = useState(announcement?.title ?? '')
   const [message, setMessage] = useState(announcement?.message ?? '')
   const [urgency, setUrgency] = useState<AdminAnnouncement['urgency']>(announcement?.urgency ?? 'info')
@@ -249,6 +253,7 @@ function AnnouncementFormModal({
         return
       }
       router.refresh()
+      toast.success(announcement ? 'Announcement updated.' : 'Announcement created.')
       onClose()
     } catch {
       setError('Could not save the announcement. Please try again.')
