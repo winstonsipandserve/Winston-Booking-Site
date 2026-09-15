@@ -24,10 +24,8 @@ export default function CheckInTabs() {
               key={tab.value}
               type="button"
               onClick={() => setActiveTab(tab.value)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-                isActive
-                  ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800'
+              className={`rounded-lg px-3 py-1.5 text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200 ${
+                isActive ? 'ring-2 ring-gray-900 ring-offset-2 ring-offset-white dark:ring-gray-100 dark:ring-offset-gray-900' : ''
               }`}
             >
               {tab.label}

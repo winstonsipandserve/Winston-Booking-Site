@@ -32,7 +32,7 @@ export default function SettingsTabs({ name, email }: SettingsTabsProps) {
             aria-selected={activeTab === tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
+              activeTab === tab.key ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'text-gray-600 hover:bg-gray-200/70 dark:text-gray-300 dark:hover:bg-gray-800'
             }`}
           >
             {tab.label}

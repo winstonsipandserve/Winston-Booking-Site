@@ -17,7 +17,7 @@ export default function AdminPagination({ page, totalPages, previousHref, nextHr
         href={previousHref}
         aria-disabled={page <= 1}
         tabIndex={page <= 1 ? -1 : undefined}
-        className="rounded-lg border border-gray-200 px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+        className="rounded-lg px-3 py-1.5 font-semibold aria-disabled:pointer-events-none aria-disabled:opacity-50 bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
       >
         Previous
       </Link>
@@ -25,7 +25,7 @@ export default function AdminPagination({ page, totalPages, previousHref, nextHr
         href={nextHref}
         aria-disabled={page >= totalPages}
         tabIndex={page >= totalPages ? -1 : undefined}
-        className="rounded-lg border border-gray-200 px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+        className="rounded-lg px-3 py-1.5 font-semibold aria-disabled:pointer-events-none aria-disabled:opacity-50 bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
       >
         Next
       </Link>

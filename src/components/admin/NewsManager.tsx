@@ -66,7 +66,7 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
       <div className="flex items-center justify-end gap-4">
         <button type="button" onClick={() => setEditing('new')} className="shrink-0 rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200">+ Add News</button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-100 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+      <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
       {posts.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center dark:border-gray-700">
           <p className="font-medium text-gray-900 dark:text-gray-100">No news posts yet</p>

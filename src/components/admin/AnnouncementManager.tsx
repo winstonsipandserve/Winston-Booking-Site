@@ -87,7 +87,7 @@ export default function AnnouncementManager({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-gray-100 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+      <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
       {announcements.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 px-6 py-12 text-center dark:border-gray-700">
           <p className="font-medium text-gray-900 dark:text-gray-100">No announcements yet</p>

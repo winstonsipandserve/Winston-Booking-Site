@@ -96,7 +96,7 @@ export default async function AdminBookingsPage({
         </Suspense>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <table className="w-full min-w-[840px] border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900">
             <tr>
@@ -165,7 +165,7 @@ export default async function AdminBookingsPage({
                   <td className="px-4 py-2.5">
                     <Link
                       href={`/admin/bookings/${booking.id}`}
-                      className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      className="inline-flex items-center rounded-lg px-3 py-1 text-xs font-semibold bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
                     >
                       View
                     </Link>

@@ -90,7 +90,7 @@ export default function ActivityLogTab() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-gray-200 dark:border-gray-800">
+      <div className="min-h-0 flex-1 overflow-auto rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <table className="w-full min-w-[700px] border-collapse text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
@@ -125,7 +125,7 @@ export default function ActivityLogTab() {
             type="button"
             onClick={() => setPage((p) => p - 1)}
             disabled={page <= 1}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 bg-white dark:bg-gray-900 font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             Previous
           </button>
@@ -133,7 +133,7 @@ export default function ActivityLogTab() {
             type="button"
             onClick={() => setPage((p) => p + 1)}
             disabled={page * data.pageSize >= data.totalCount}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 bg-white dark:bg-gray-900 font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             Next
           </button>
