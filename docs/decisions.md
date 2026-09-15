@@ -260,6 +260,8 @@ A sticky table header on `bg-gray-50` aliases to the card-surface row, not a new
 - Membership status badges and the Approve/Reject buttons.
 - The four check-in result states: not-found and rate-limited (red), no-membership (grey), expired (amber).
 
+Amber and red are reserved for genuine warning and danger states (the check-in expired result, the pending-applications age note, warning announcements, destructive confirms). Neutral actions that merely happen to be collapsed — Reschedule on a booking, Change Password in Settings — use the standard white card, not warning colours.
+
 > Separately: do not use Tailwind's default green-100/800 for status badges generally. That is a different convention from the palette above.
 
 ### The navbar pattern
