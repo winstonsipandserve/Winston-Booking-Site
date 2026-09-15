@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import AdminTabs, { AdminTabPanel } from '@/components/admin/AdminTabs'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/admin/ToastProvider'
 import { formatCentavos } from '@/lib/format'
@@ -621,6 +622,7 @@ interface ResourcesTabsProps {
 
 export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnServices }: ResourcesTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('courts')
+  const idPrefix = useId()
   const [editingGuestFee, setEditingGuestFee] = useState(false)
 
   const TAB_ITEMS: { key: Tab; label: string }[] = [
@@ -631,26 +633,16 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div role="tablist" className="mb-4 flex flex-wrap gap-2">
-        {TAB_ITEMS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              activeTab === tab.key
-                ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                : 'text-gray-600 hover:bg-gray-200/70 dark:text-gray-300 dark:hover:bg-gray-800'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <AdminTabs
+        items={TAB_ITEMS}
+        value={activeTab}
+        onChange={setActiveTab}
+        label="Resource types"
+        idPrefix={idPrefix}
+        className="mb-4"
+      />
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <AdminTabPanel idPrefix={idPrefix} tabKey={activeTab} className="min-h-0 flex-1 overflow-y-auto">
         {activeTab === 'courts' && (
           <div className="space-y-6">
             {courts.map((rt, index) => (
@@ -701,7 +693,7 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
             />
           </div>
         )}
-      </div>
+      </AdminTabPanel>
     </div>
   )
 }

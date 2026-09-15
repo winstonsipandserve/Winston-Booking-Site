@@ -42,6 +42,16 @@ export default function AdminShell({
   return (
     <ToastProvider>
       <div className="admin-root flex h-screen flex-col overflow-hidden bg-gray-50 font-sans text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+        <a
+          href="#admin-main"
+          onClick={(e) => {
+            e.preventDefault()
+            document.getElementById('admin-main')?.focus()
+          }}
+          className="sr-only z-50 rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4 dark:bg-gray-100 dark:text-gray-900"
+        >
+          Skip to content
+        </a>
         <AdminTopbar
           email={email}
           collapsed={collapsed}
@@ -50,7 +60,7 @@ export default function AdminShell({
         />
         <div className="flex min-h-0 flex-1">
           <AdminSidebar collapsed={collapsed} onToggleSidebar={toggleSidebar} pathname={pathname} />
-          <main className="mb-4 mr-4 min-h-0 min-w-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-100 p-6 scrollbar-thin dark:border-gray-800 dark:bg-gray-950">
+          <main id="admin-main" tabIndex={-1} className="mb-4 mr-4 min-h-0 min-w-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-100 p-6 scrollbar-thin dark:border-gray-800 dark:bg-gray-950">
             {children}
           </main>
         </div>

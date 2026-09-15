@@ -177,6 +177,7 @@ Two daily cron jobs, both secret-authenticated:
 
 - **Loading overlay** — a shared full-screen spinner is the standard in-flight state for all customer-facing submit and redirect buttons. Buttons keep a permanent static label and are disabled while loading, rather than swapping their own text. **The admin panel is not yet wired to this.**
 - **Modal** — one shared component with a brand variant (public site) and a neutral variant (admin). A shared confirm modal backs every admin confirmation; no native browser `confirm`/`alert` remains.
+- **Admin keyboard and screen-reader support** — a "Skip to content" link is the first focusable element in the admin shell; the Settings, Resources, and Check-In tab strips are real WAI-ARIA tabs (`AdminTabs`: roving tabindex, ←/→/Home/End, `aria-controls` → `tabpanel`); check-in results render inside a polite live region so the auto-submitted lookup is announced.
 - **Admin activity log** — approve/reject, reschedule, renewal-link sends, admin credit top-ups, and every news post / announcement create, update, and delete each write an audit row (written in the same transaction as the content change).
 
 ---

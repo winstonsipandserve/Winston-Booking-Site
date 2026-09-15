@@ -97,6 +97,7 @@ Follow [database.md](database.md) for naming, mappings, money, timestamps, relat
 - Add `'use client'` only when a component uses state, effects, or browser APIs. Leave server components without it.
 - Put shared non-component helpers in `src/lib/`.
 - Format every user-facing date through `src/lib/format.ts` (`formatManilaDate`, `formatManilaTime`, `formatManilaTimeRange`, `formatBookingDateTime`, plus the existing use-case helpers) rather than calling `toLocaleString` inline, so Manila timezone and the no-seconds style stay consistent across pages and emails.
+- Admin tab strips use `AdminTabs` + `AdminTabPanel` (`src/components/admin/AdminTabs.tsx`) rather than hand-rolled `role="tab"` buttons, so keyboard movement and `aria-controls` wiring come for free.
 - Admin detail pages open with `AdminPageHeader` (back link, human title, subtitle, copyable record id, status/actions aside). Don't headline a page with a raw database id.
 - For multi-step wizards, place steps in a `steps/` subfolder, one component per step plus a step indicator. Lift all state, including the current step, to the top-level orchestrator so back/forward navigation does not reset values.
 

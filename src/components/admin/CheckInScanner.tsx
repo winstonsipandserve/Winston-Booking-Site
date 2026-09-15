@@ -130,9 +130,11 @@ export default function CheckInScanner() {
 
       {isVerifying && <p className="text-sm text-gray-500 dark:text-gray-400">Verifying…</p>}
 
-      {result && (
-        <CheckInResultCard result={result} actionLabel="Scan Next" onAction={handleScanNext} />
-      )}
+      <div role="status" aria-live="polite" className="contents">
+        {result && (
+          <CheckInResultCard result={result} actionLabel="Scan Next" onAction={handleScanNext} />
+        )}
+      </div>
     </div>
   )
 }

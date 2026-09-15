@@ -77,7 +77,7 @@ export default function CheckInCodeEntry() {
 
   if (result) {
     return (
-      <div className="flex flex-col items-center gap-4">
+      <div role="status" aria-live="polite" className="flex flex-col items-center gap-4">
         <CheckInResultCard result={result} actionLabel="Enter Another Code" onAction={handleEnterAnother} />
       </div>
     )
