@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { formatCentavos } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import RescheduleSection from '@/components/admin/RescheduleSection'
+import { BookingStatusPill } from '@/components/admin/StatusPill'
 
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -90,7 +91,7 @@ export default async function AdminBookingDetailPage({
           </div>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
             <span className="text-gray-500 dark:text-gray-400">Status</span>
-            <span className="text-right font-medium text-gray-900 dark:text-gray-100">{booking.status}</span>
+            <BookingStatusPill status={booking.status} />
           </div>
           <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
             <span className="text-gray-500 dark:text-gray-400">Guest count</span>

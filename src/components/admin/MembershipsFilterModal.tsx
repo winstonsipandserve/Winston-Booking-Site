@@ -19,7 +19,8 @@ export default function MembershipsFilterModal({ status }: { status: MembershipD
   const [isOpen, setIsOpen] = useState(false)
   const [draftStatus, setDraftStatus] = useState<MembershipDisplayStatus | 'all'>(status)
 
-  const isFilterActive = status !== 'all'
+  const activeFilterCount = status !== 'all' ? 1 : 0
+  const isFilterActive = activeFilterCount > 0
 
   function openModal() {
     setDraftStatus(status)
@@ -44,7 +45,14 @@ export default function MembershipsFilterModal({ status }: { status: MembershipD
         className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
       >
         Filter
-        {isFilterActive && <span className="h-1.5 w-1.5 rounded-full bg-gray-900 dark:bg-gray-100" aria-hidden="true" />}
+        {isFilterActive && (
+          <span
+            className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold leading-none text-gray-900 dark:bg-gray-900 dark:text-gray-100"
+            aria-label={`${activeFilterCount} active`}
+          >
+            {activeFilterCount}
+          </span>
+        )}
       </button>
 
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Filter Memberships" variant="neutral">
@@ -82,7 +90,7 @@ export default function MembershipsFilterModal({ status }: { status: MembershipD
               onClick={handleRun}
               className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
             >
-              Run
+              Apply
             </button>
           </div>
         </div>

@@ -1,11 +1,8 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { formatMembershipTier } from '@/lib/format'
-import {
-  getMembershipDisplayStatus,
-  MEMBERSHIP_DISPLAY_STATUS_LABELS,
-  MEMBERSHIP_DISPLAY_STATUS_CLASSES,
-} from '@/lib/membership-display-status'
+import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
+import { MembershipStatusPill } from '@/components/admin/StatusPill'
 import { isMembershipDisplayStatusFilter, getMembershipApplicationsForFilter } from '@/lib/memberships-query'
 import MembershipsFilterModal from '@/components/admin/MembershipsFilterModal'
 import MembershipsExportButton from '@/components/admin/MembershipsExportButton'
@@ -104,19 +101,12 @@ export default async function AdminMembershipsPage({
                 <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{application.customer.email}</td>
                 <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{formatMembershipTier(application.requestedTier)}</td>
                 <td className="px-4 py-2.5">
-                  {(() => {
-                    const displayStatus = getMembershipDisplayStatus({
+                  <MembershipStatusPill
+                    status={getMembershipDisplayStatus({
                       status: application.status,
                       latestMembership: latestMembershipsByCustomer.get(application.customerId) ?? null,
-                    })
-                    return (
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${MEMBERSHIP_DISPLAY_STATUS_CLASSES[displayStatus]}`}
-                      >
-                        {MEMBERSHIP_DISPLAY_STATUS_LABELS[displayStatus]}
-                      </span>
-                    )
-                  })()}
+                    })}
+                  />
                 </td>
                 <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{formatDateTime(application.createdAt)}</td>
                 <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">

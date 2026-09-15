@@ -14,11 +14,8 @@ import { formatMembershipTier, formatCentavos } from '@/lib/format'
 import { getRenewalEligibility, RENEWAL_WINDOW_DAYS } from '@/lib/membership-current'
 import { manilaCalendarDaysBetween } from '@/lib/manila-date'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
-import {
-  getMembershipDisplayStatus,
-  MEMBERSHIP_DISPLAY_STATUS_LABELS,
-  MEMBERSHIP_DISPLAY_STATUS_CLASSES,
-} from '@/lib/membership-display-status'
+import { getMembershipDisplayStatus, MEMBERSHIP_DISPLAY_STATUS_LABELS } from '@/lib/membership-display-status'
+import { MembershipStatusPill } from '@/components/admin/StatusPill'
 import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
 
 const CREDIT_TRANSACTION_REASON_LABELS: Record<CreditTransactionReason, string> = {
@@ -214,11 +211,7 @@ export default async function AdminMembershipApplicationDetailPage({
             <p className="text-xs font-mono text-gray-400 dark:text-gray-500">{application.id}</p>
           )}
         </div>
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${MEMBERSHIP_DISPLAY_STATUS_CLASSES[displayStatus]}`}
-        >
-          {MEMBERSHIP_DISPLAY_STATUS_LABELS[displayStatus]}
-        </span>
+        <MembershipStatusPill status={displayStatus} />
       </div>
 
       {!latestMembership && (
