@@ -26,7 +26,7 @@ export default async function AdminNewsPage({ searchParams }: { searchParams: Pr
         status: post.status,
         isFeatured: post.isFeatured,
       }))} />
-      <AdminPagination page={page} totalPages={totalPages} previousHref={`/admin/news?page=${Math.max(1, page - 1)}`} nextHref={`/admin/news?page=${Math.min(totalPages, page + 1)}`} />
+      <AdminPagination page={page} pageSize={PAGE_SIZE} totalCount={count} noun="post" previousHref={`/admin/news?page=${Math.max(1, page - 1)}`} nextHref={`/admin/news?page=${Math.min(totalPages, page + 1)}`} />
     </div>
   )
 }

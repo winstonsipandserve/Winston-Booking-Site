@@ -1,10 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import AdminSidebar, { NAV_ITEMS } from '@/components/admin/AdminSidebar'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import ToastProvider from '@/components/admin/ToastProvider'
+
+// Below Tailwind's `lg` breakpoint the sidebar starts collapsed so the content well keeps
+// its width on laptops and tablets. Crossing the breakpoint re-applies the default;
+// a manual toggle in between is respected until the next crossing.
+const SIDEBAR_AUTO_COLLAPSE_QUERY = '(max-width: 1023px)'
 
 function resolveSectionLabel(pathname: string) {
   const match = NAV_ITEMS.find((item) =>
@@ -25,6 +30,14 @@ export default function AdminShell({
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const toggleSidebar = () => setCollapsed((prev) => !prev)
+
+  useLayoutEffect(() => {
+    const mediaQuery = window.matchMedia(SIDEBAR_AUTO_COLLAPSE_QUERY)
+    const applyDefault = () => setCollapsed(mediaQuery.matches)
+    applyDefault()
+    mediaQuery.addEventListener('change', applyDefault)
+    return () => mediaQuery.removeEventListener('change', applyDefault)
+  }, [])
 
   return (
     <ToastProvider>

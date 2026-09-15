@@ -170,7 +170,9 @@ export default async function AdminBookingsPage({
 
       <AdminPagination
         page={page}
-        totalPages={totalPages}
+        pageSize={PAGE_SIZE}
+        totalCount={totalCount}
+        noun="booking"
         previousHref={pageHref(Math.max(1, page - 1))}
         nextHref={pageHref(Math.min(totalPages, page + 1))}
       />

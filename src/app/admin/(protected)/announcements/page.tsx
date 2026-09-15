@@ -37,7 +37,7 @@ export default async function AdminAnnouncementsPage({ searchParams }: { searchP
         }))}
         resources={resources.map((resource) => ({ id: resource.id, displayName: `${resource.resourceType.name} — ${resource.label}` }))}
       />
-      <AdminPagination page={page} totalPages={totalPages} previousHref={`/admin/announcements?page=${Math.max(1, page - 1)}`} nextHref={`/admin/announcements?page=${Math.min(totalPages, page + 1)}`} />
+      <AdminPagination page={page} pageSize={PAGE_SIZE} totalCount={count} noun="announcement" previousHref={`/admin/announcements?page=${Math.max(1, page - 1)}`} nextHref={`/admin/announcements?page=${Math.min(totalPages, page + 1)}`} />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import AdminPagination from '@/components/admin/AdminPagination'
 import { formatBookingDateTime } from '@/lib/format'
 
 type AdminActivityAction =
@@ -86,7 +87,6 @@ export default function ActivityLogTab() {
     return <p className="text-sm text-gray-500 dark:text-gray-400">No activity logged yet.</p>
   }
 
-  const totalPages = Math.ceil(data.totalCount / data.pageSize)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
@@ -116,29 +116,15 @@ export default function ActivityLogTab() {
         </table>
       </div>
 
-      <div className="flex shrink-0 justify-end">
-        <div className="flex items-center gap-3 text-sm">
-          <span className="text-gray-500 dark:text-gray-400">
-            Page {data.page} of {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => p - 1)}
-            disabled={page <= 1}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 bg-white dark:bg-gray-900 font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={page * data.pageSize >= data.totalCount}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 bg-white dark:bg-gray-900 font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-          >
-            Next
-          </button>
-        </div>
-      </div>
+      <AdminPagination
+        page={data.page}
+        pageSize={data.pageSize}
+        totalCount={data.totalCount}
+        noun="entry"
+        nounPlural="entries"
+        onPrevious={() => setPage((p) => p - 1)}
+        onNext={() => setPage((p) => p + 1)}
+      />
     </div>
   )
 }

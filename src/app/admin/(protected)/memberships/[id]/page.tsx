@@ -117,6 +117,8 @@ export default async function AdminMembershipApplicationDetailPage({
         return {
           creditTransactions,
           recentBookings,
+          creditTransactionCount,
+          bookingCount,
           creditPage,
           creditTotalPages,
           bookingPage,
@@ -127,6 +129,8 @@ export default async function AdminMembershipApplicationDetailPage({
     : {
         creditTransactions: [],
         recentBookings: [],
+        creditTransactionCount: 0,
+        bookingCount: 0,
         creditPage: 1,
         creditTotalPages: 1,
         bookingPage: 1,
@@ -137,6 +141,8 @@ export default async function AdminMembershipApplicationDetailPage({
   const {
     creditTransactions,
     recentBookings,
+    creditTransactionCount,
+    bookingCount,
     creditPage,
     creditTotalPages,
     bookingPage,
@@ -482,7 +488,9 @@ export default async function AdminMembershipApplicationDetailPage({
           <div className="mt-4">
             <AdminPagination
               page={creditPage}
-              totalPages={creditTotalPages}
+              pageSize={HISTORY_PAGE_SIZE}
+              totalCount={creditTransactionCount}
+              noun="transaction"
               previousHref={historyPageHref('creditPage', Math.max(1, creditPage - 1))}
               nextHref={historyPageHref('creditPage', Math.min(creditTotalPages, creditPage + 1))}
             />
@@ -570,7 +578,9 @@ export default async function AdminMembershipApplicationDetailPage({
           <div className="mt-4">
             <AdminPagination
               page={bookingPage}
-              totalPages={bookingTotalPages}
+              pageSize={HISTORY_PAGE_SIZE}
+              totalCount={bookingCount}
+              noun="booking"
               previousHref={historyPageHref('bookingPage', Math.max(1, bookingPage - 1))}
               nextHref={historyPageHref('bookingPage', Math.min(bookingTotalPages, bookingPage + 1))}
             />

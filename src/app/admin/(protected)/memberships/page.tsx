@@ -122,7 +122,9 @@ export default async function AdminMembershipsPage({
 
       <AdminPagination
         page={page}
-        totalPages={totalPages}
+        pageSize={PAGE_SIZE}
+        totalCount={totalCount}
+        noun="application"
         previousHref={pageHref(Math.max(1, page - 1))}
         nextHref={pageHref(Math.min(totalPages, page + 1))}
       />

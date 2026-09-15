@@ -1,4 +1,4 @@
-import SignOutButton from '@/components/admin/SignOutButton'
+import AdminAvatarMenu from '@/components/admin/AdminAvatarMenu'
 import {
   SIDEBAR_COLLAPSED_WIDTH_CLASS,
   SIDEBAR_WIDTH_CLASS,
@@ -16,8 +16,6 @@ export default function AdminTopbar({
   onToggleSidebar: () => void
   sectionLabel: string
 }) {
-  const initials = email.slice(0, 2).toUpperCase() || '?'
-
   return (
     <header className="flex h-16 shrink-0 items-center">
       {/* Brand column shares its width with the sidebar so the two read as one connected frame. */}
@@ -60,19 +58,8 @@ export default function AdminTopbar({
           {sectionLabel}
         </h1>
 
-        <div className="flex shrink-0 items-center justify-end gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-              {initials}
-            </div>
-            <div className="hidden leading-tight md:block">
-              <p className="max-w-[200px] truncate text-xs font-semibold text-gray-900 dark:text-gray-100">
-                {email}
-              </p>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400">Admin</p>
-            </div>
-          </div>
-          <SignOutButton />
+        <div className="flex shrink-0 items-center justify-end">
+          <AdminAvatarMenu email={email} />
         </div>
       </div>
     </header>

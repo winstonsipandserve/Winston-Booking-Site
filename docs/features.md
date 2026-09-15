@@ -90,7 +90,11 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 Eight sections, all gated by the shared admin session check and all supporting Light / Dark / System theming stored per-browser.
 
+Every paginated admin list (bookings, memberships, announcements, news, activity log, and the two history tables on a member's page) ends with a result count — "12 bookings" on its own when everything fits on one page, or "1–25 of 132 bookings · Page 1 of 6" with Previous / Next when it doesn't. Empty lists show only their table's empty state.
+
 > The admin panel is **tablet-and-up only** by decision — no mobile-width support is planned. See [decisions.md](decisions.md).
+
+The sidebar can be folded to an icon rail from the Menu row (or the topbar when folded). Below `lg` (1024px) it starts folded; crossing that breakpoint re-applies the default, and a manual toggle holds until the next crossing.
 
 ### Dashboard
 
@@ -119,7 +123,7 @@ List and detail with approve/reject. The list has a server-side search bar (appl
 
 - A **pending** application's detail page shows an identity-verification lightbox gallery and a sticky Approve/Reject bottom bar.
 - An **awaiting-payment** application's detail page shows a Resend Payment Link action.
-- An **active or expired** member's page shows a header with name and "Member since", a four-cell quick-stats row, member information and membership detail cards, a collapsible verification-documents section, and credit-transaction and booking histories (capped at 10 rows each, no pagination).
+- An **active or expired** member's page shows a header with name and "Member since", a four-cell quick-stats row, member information and membership detail cards, a collapsible verification-documents section, and credit-transaction and booking histories (10 rows per page).
 - Actions: Send Renewal Link (expired, or active and within the 14-day renewal window with nothing queued) and Add Credit (active only). "Days remaining" counts Manila calendar days.
 
 ### Announcements
@@ -138,7 +142,7 @@ Manual 6-digit code entry is the default view (input auto-focused, submits autom
 
 Three tabs:
 
-- **My Account** — change password, theme toggle.
+- **My Account** — profile card and change password. Appearance (Light / Dark / System) and Sign Out live in the topbar avatar menu, which also links here via **My account**.
 - **Admin Users** — list with Deactivate/Reactivate. **No create-new-admin UI.**
 - **Activity Log** — paginated (20 per page, newest first), read-only. **No filter UI.**
 
