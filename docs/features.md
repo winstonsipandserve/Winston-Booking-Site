@@ -90,7 +90,7 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 Eight sections, all gated by the shared admin session check and all supporting Light / Dark / System theming stored per-browser.
 
-Every paginated admin list (bookings, memberships, announcements, news, activity log, and the two history tables on a member's page) ends with a result count — "12 bookings" on its own when everything fits on one page, or "1–25 of 132 bookings · Page 1 of 6" with Previous / Next when it doesn't. Empty lists show only their table's empty state.
+Every paginated admin list (bookings, memberships, announcements, news, activity log, and the two history tables on a member's page) ends with a result count — "12 bookings" on its own when everything fits on one page, or "1–25 of 132 bookings · Page 1 of 6" with Previous / Next when it doesn't. Empty lists show only their table's empty state; on the bookings and memberships lists that state distinguishes "nothing yet" from "nothing matches these filters" and, in the filtered case, offers a **Clear filters** link back to the unfiltered list.
 
 > The admin panel is **tablet-and-up only** by decision — no mobile-width support is planned. See [decisions.md](decisions.md).
 

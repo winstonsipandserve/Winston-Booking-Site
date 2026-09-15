@@ -8,6 +8,7 @@ import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
 import BookingsSearchBar from '@/components/admin/BookingsSearchBar'
 import BookingsExportButton from '@/components/admin/BookingsExportButton'
 import AdminPagination from '@/components/admin/AdminPagination'
+import TableEmptyState from '@/components/admin/TableEmptyState'
 import { BookingStatusPill } from '@/components/admin/StatusPill'
 
 const PAGE_SIZE = 25
@@ -158,11 +159,13 @@ export default async function AdminBookingsPage({
               )
             })}
             {bookings.length === 0 && (
-              <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                  No bookings found.
-                </td>
-              </tr>
+              <TableEmptyState
+                colSpan={8}
+                noun="booking"
+                hint="Bookings appear here as soon as a customer completes checkout."
+                isFiltered={filterParams.size > 0}
+                clearHref="/admin/bookings"
+              />
             )}
           </tbody>
         </table>

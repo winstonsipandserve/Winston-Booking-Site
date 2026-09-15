@@ -8,6 +8,7 @@ import MembershipsFilterModal from '@/components/admin/MembershipsFilterModal'
 import MembershipsExportButton from '@/components/admin/MembershipsExportButton'
 import MembershipsSearchBar from '@/components/admin/MembershipsSearchBar'
 import AdminPagination from '@/components/admin/AdminPagination'
+import TableEmptyState from '@/components/admin/TableEmptyState'
 
 const PAGE_SIZE = 25
 
@@ -110,11 +111,13 @@ export default async function AdminMembershipsPage({
               </tr>
             ))}
             {applications.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                  No applications found.
-                </td>
-              </tr>
+              <TableEmptyState
+                colSpan={7}
+                noun="application"
+                hint="Membership applications appear here once customers submit them."
+                isFiltered={Boolean(statusParam || trimmedSearch)}
+                clearHref="/admin/memberships"
+              />
             )}
           </tbody>
         </table>
