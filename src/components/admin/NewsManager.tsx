@@ -6,6 +6,8 @@ import { formatBookingDateTime } from '@/lib/format'
 import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/admin/ConfirmModal'
+import RowActionsMenu from '@/components/admin/RowActionsMenu'
+import { PencilIcon, TrashIcon } from '@/components/admin/AdminIcons'
 import DateTimeField from '@/components/admin/DateTimeField'
 import ImageDropzone from '@/components/admin/ImageDropzone'
 import NewsPreview from '@/components/admin/NewsPreview'
@@ -98,9 +100,22 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
                 </div>
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">/news/{post.slug}{post.publishAt ? ` · ${formatBookingDateTime(new Date(post.publishAt))}` : ''}</p>
               </div>
-              <div className="flex shrink-0 gap-2">
-                <button type="button" onClick={() => setEditing(post)} className="text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">Edit</button>
-                <button type="button" onClick={() => { setDeleteError(null); setPendingDelete(post) }} className="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400">Delete</button>
+              <div className="-mr-1 -mt-1 shrink-0">
+                <RowActionsMenu
+                  label={`Actions for ${post.title}`}
+                  actions={[
+                    { label: 'Edit', icon: PencilIcon, onSelect: () => setEditing(post) },
+                    {
+                      label: 'Delete',
+                      icon: TrashIcon,
+                      danger: true,
+                      onSelect: () => {
+                        setDeleteError(null)
+                        setPendingDelete(post)
+                      },
+                    },
+                  ]}
+                />
               </div>
             </article>
           ))}
