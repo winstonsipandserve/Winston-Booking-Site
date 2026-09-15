@@ -1,3 +1,5 @@
+import type { SanitizedImage } from '@/lib/image-validation'
+
 function getStorageEnv() {
   const url = process.env.SUPABASE_URL
   if (!url) throw new Error('SUPABASE_URL is not set')
@@ -9,17 +11,18 @@ function getStorageEnv() {
 export async function uploadToStorage(
   bucket: string,
   path: string,
-  file: File,
+  file: File | SanitizedImage,
 ): Promise<{ path: string }> {
   const { url, serviceRoleKey } = getStorageEnv()
 
+  const isSanitizedImage = 'data' in file
   const res = await fetch(`${url}/storage/v1/object/${bucket}/${path}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${serviceRoleKey}`,
-      'Content-Type': file.type,
+      'Content-Type': isSanitizedImage ? file.contentType : file.type,
     },
-    body: await file.arrayBuffer(),
+    body: isSanitizedImage ? new Blob([Uint8Array.from(file.data)]) : await file.arrayBuffer(),
   })
 
   if (!res.ok) {

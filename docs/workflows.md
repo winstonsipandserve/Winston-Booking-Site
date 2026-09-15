@@ -101,8 +101,8 @@ The client key is stored as `Booking.holdClientHash` (an HMAC, never a raw IP). 
 
 ## Membership: application → approval → activation
 
-1. **Submit.** The applicant completes the form at `/membership/apply` with name, address, contact number, email, and three government ID images. Images are validated by declared type, size, and JPEG/PNG file signature before upload to the private bucket. A customer record is resolved or created. Staff receive a notification email.
-   - **Submissions are throttled per IP** — 3 per rolling 15 minutes (`membership_application` scope of `AuthRateLimitAttempt`), checked after field and file validation but before any customer row, upload, or staff email is created. Over budget → `429`, shown inline by the form.
+1. **Submit.** The applicant completes the form at `/membership/apply` with name, address, contact number, email, and three government ID images. Each image is limited to 5 MB, fully decoded as its declared JPEG/PNG type, limited to 25 million pixels, stripped of metadata, and re-encoded before upload to the private bucket. The multipart request is capped at 16 MB. A customer record is resolved or created. Staff receive a notification email.
+   - **Submissions are throttled per IP** — 3 per rolling 15 minutes (`membership_application` scope of `AuthRateLimitAttempt`), checked before parsing the multipart body, so invalid files cannot create unlimited expensive parsing work. Over budget → `429`, shown inline by the form.
    - **Reapplication is blocked** unless the most recent application for that email was rejected. Each blocked case returns its own distinct message, derived from the same display-status logic the admin list uses.
 2. **Review.** An admin opens the application, views the ID images through signed URLs in an admin-only lightbox, and approves or rejects. Rejection requires a non-empty reason. Either way an activity log row is written in the same transaction as the mutation.
 3. **On rejection** — a branded email is sent carrying the admin's reason. No membership is created. The customer record stays, with no membership attached.

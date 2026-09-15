@@ -17,6 +17,12 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // The membership application accepts three 5 MB files. Keep the proxy buffer
+    // above that legitimate multipart payload; the route separately rejects bodies
+    // larger than 16 MB before parsing.
+    proxyClientMaxBodySize: '16mb',
+  },
   images: {
     remotePatterns: [
       {

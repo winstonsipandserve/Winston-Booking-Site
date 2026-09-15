@@ -98,7 +98,7 @@ export default function MembershipApplicationForm() {
         setDuplicateEmailMessage(json?.error ?? 'An application is already pending for this email.')
         setShowDuplicateEmailModal(true)
         setSubmitState('idle')
-      } else if (res.status === 400 || res.status === 429) {
+      } else if (res.status === 400 || res.status === 413 || res.status === 429) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem with your application details.')
         setSubmitState('error')

@@ -4,26 +4,22 @@ import { uploadToStorage, deleteFromStorage } from '@/lib/supabase-storage'
 import { sendStaffMembershipApplicationEmail } from '@/lib/resend'
 import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
 import { getCurrentMembership } from '@/lib/membership-current'
-import { hasExpectedImageSignature } from '@/lib/image-validation'
+import { sanitizeMembershipApplicationImage, type SanitizedImage } from '@/lib/image-validation'
 import { consumeRateLimitAttempt, getClientIp, hashIdentifier } from '@/lib/auth-rate-limit'
 
 const BUCKET = 'membership-applications'
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png']
+// Three 5 MB files plus multipart boundaries and regular form fields.
+const MAX_MULTIPART_BODY_BYTES = 16 * 1024 * 1024
 const VALID_TIERS = ['three_month', 'six_month', 'twelve_month'] as const
 type MembershipTier = (typeof VALID_TIERS)[number]
 
-// Submissions per IP inside the shared 15-minute rate-limit window. Each accepted
-// submission uploads up to 15 MB, creates a customer row, and emails staff, so the
-// budget is deliberately small; validation failures do not count against it.
+// Submissions per IP inside the shared 15-minute rate-limit window. Each attempt can
+// make the server parse up to 16 MB, so the budget is deliberately small.
 const APPLICATIONS_PER_IP_PER_WINDOW = 3
 
 const RATE_LIMIT_ERROR = 'Too many applications from this connection. Please wait a few minutes and try again.'
-
-const MIME_TO_EXTENSION: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-}
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -33,7 +29,7 @@ function isValidTier(value: unknown): value is MembershipTier {
   return typeof value === 'string' && (VALID_TIERS as readonly string[]).includes(value)
 }
 
-async function validateFile(value: unknown, label: string): Promise<{ error: string } | { file: File }> {
+async function validateFile(value: unknown, label: string): Promise<{ error: string } | { image: SanitizedImage }> {
   if (!(value instanceof File) || value.size === 0) {
     return { error: `${label} is required` }
   }
@@ -43,10 +39,12 @@ async function validateFile(value: unknown, label: string): Promise<{ error: str
   if (value.size > MAX_FILE_SIZE_BYTES) {
     return { error: `${label} must be 5MB or smaller` }
   }
-  if (!(await hasExpectedImageSignature(value))) {
-    return { error: `${label} content does not match its declared file type` }
+  try {
+    return { image: await sanitizeMembershipApplicationImage(value) }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'could not be processed as an image'
+    return { error: `${label} ${message}` }
   }
-  return { file: value }
 }
 
 async function getBlockedApplicationResponse(customerId: string): Promise<Response | null> {
@@ -96,6 +94,20 @@ async function getBlockedApplicationResponse(customerId: string): Promise<Respon
 }
 
 export async function POST(request: Request) {
+  // Count every upload attempt before parsing its multipart body. Invalid files should
+  // not provide an unlimited way to make the server buffer and inspect large requests.
+  const rateLimitKeys = [
+    { identifierHash: hashIdentifier(`ip:${getClientIp(request)}`), maximumAttempts: APPLICATIONS_PER_IP_PER_WINDOW },
+  ]
+  if (!(await consumeRateLimitAttempt('membership_application', rateLimitKeys))) {
+    return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 })
+  }
+
+  const contentLength = request.headers.get('content-length')
+  if (contentLength && /^\d+$/.test(contentLength) && Number(contentLength) > MAX_MULTIPART_BODY_BYTES) {
+    return Response.json({ error: 'Application upload must be 16MB or smaller' }, { status: 413 })
+  }
+
   let formData: FormData
   try {
     formData = await request.formData()
@@ -141,16 +153,9 @@ export async function POST(request: Request) {
     return Response.json({ error: govIdSelfieResult.error }, { status: 400 })
   }
 
-  const govIdFront = govIdFrontResult.file
-  const govIdBack = govIdBackResult.file
-  const govIdSelfie = govIdSelfieResult.file
-
-  const rateLimitKeys = [
-    { identifierHash: hashIdentifier(`ip:${getClientIp(request)}`), maximumAttempts: APPLICATIONS_PER_IP_PER_WINDOW },
-  ]
-  if (!(await consumeRateLimitAttempt('membership_application', rateLimitKeys))) {
-    return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 })
-  }
+  const govIdFront = govIdFrontResult.image
+  const govIdBack = govIdBackResult.image
+  const govIdSelfie = govIdSelfieResult.image
 
   const uploadedPaths: string[] = []
 
@@ -163,15 +168,15 @@ export async function POST(request: Request) {
 
     const applicationId = crypto.randomUUID()
 
-    const frontPath = `${applicationId}/gov-id-front.${MIME_TO_EXTENSION[govIdFront.type]}`
+    const frontPath = `${applicationId}/gov-id-front.${govIdFront.extension}`
     await uploadToStorage(BUCKET, frontPath, govIdFront)
     uploadedPaths.push(frontPath)
 
-    const backPath = `${applicationId}/gov-id-back.${MIME_TO_EXTENSION[govIdBack.type]}`
+    const backPath = `${applicationId}/gov-id-back.${govIdBack.extension}`
     await uploadToStorage(BUCKET, backPath, govIdBack)
     uploadedPaths.push(backPath)
 
-    const selfiePath = `${applicationId}/gov-id-selfie.${MIME_TO_EXTENSION[govIdSelfie.type]}`
+    const selfiePath = `${applicationId}/gov-id-selfie.${govIdSelfie.extension}`
     await uploadToStorage(BUCKET, selfiePath, govIdSelfie)
     uploadedPaths.push(selfiePath)
 
