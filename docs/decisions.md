@@ -258,6 +258,8 @@ Text that sits directly on the `bg-gray-100` content well (back links, page subt
 
 Admin icon-only controls have a hit area of at least 32×32 (padding around a 16px glyph); the panel is tablet-and-up, so every control must be tappable.
 
+Dashboard charts (Recharts) take colour strings, so `DashboardCharts` references the `--color-chart-*` tokens declared in a `@theme static` block in `globals.css` (static, because no utility class uses them and `@theme` would otherwise prune them). Each token has a `-dark` twin; the chart picks per theme at runtime. Add new series colours there, never as hex in the component.
+
 **Locked per-surface semantic exceptions** — each keeps its light colour and adds a muted dark pairing. None of these are general tokens:
 
 - The resource Active badge (green).

@@ -83,7 +83,7 @@ export default function NewsManager({ posts }: { posts: AdminNewsPost[] }) {
           {posts.map((post) => (
             <article key={post.id} className="flex gap-4 rounded-xl p-4 ring-1 ring-gray-200 dark:bg-gray-900 dark:ring-gray-800 bg-white">
               {post.coverImageUrl ? (
-                <img src={post.coverImageUrl} alt="" className="h-20 w-24 shrink-0 rounded-lg object-cover" />
+                <img src={post.coverImageUrl} alt="" loading="lazy" decoding="async" className="h-20 w-24 shrink-0 rounded-lg object-cover" />
               ) : (
                 <div className="flex h-20 w-24 shrink-0 items-center justify-center rounded-lg bg-gray-200 dark:bg-gray-800" aria-hidden="true">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-8 w-8 text-gray-400 dark:text-gray-500">

@@ -16,31 +16,28 @@ import { useIsDarkMode } from '@/hooks/useIsDarkMode'
 import DashboardBookingCalendar from '@/components/admin/DashboardBookingCalendar'
 import type { BookingCalendarData, RevenueTrendPoint, MembershipRevenueTrendPoint } from '@/lib/dashboard-data'
 
-const LIGHT_PALETTE = {
-  grid: '#e5e7eb',
-  axisTick: '#6b7280',
-  axisLine: '#e5e7eb',
-  tooltipBg: '#ffffff',
-  tooltipBorder: '#e5e7eb',
-  legendText: '#6b7280',
-  revenueLine: '#111827',
-  sportColors: { tennis: '#111827', pickleball: '#6b7280', golf: '#cd1818' },
-  membershipTierColors: { threeMonth: '#2563eb', sixMonth: '#d97706', twelveMonth: '#7c3aed' },
-  topUpColor: '#059669',
+// Recharts takes colour strings, so the palette references the chart tokens declared in
+// globals.css (`@theme static`); browsers resolve `var()` in SVG presentation attributes and
+// inline styles alike, so the chart follows the token sheet instead of restating hex values.
+const token = (name: string, dark: boolean) => `var(--color-chart-${name}${dark ? '-dark' : ''})`
+
+function buildPalette(dark: boolean) {
+  return {
+    grid: token('grid', dark),
+    axisTick: token('axis', dark),
+    axisLine: token('grid', dark),
+    tooltipBg: token('surface', dark),
+    tooltipBorder: token('grid', dark),
+    legendText: token('axis', dark),
+    revenueLine: token('primary', dark),
+    sportColors: { tennis: token('primary', dark), pickleball: token('secondary', dark), golf: token('accent', dark) },
+    membershipTierColors: { threeMonth: token('tier-3mo', dark), sixMonth: token('tier-6mo', dark), twelveMonth: token('tier-12mo', dark) },
+    topUpColor: token('topup', dark),
+  }
 }
 
-const DARK_PALETTE = {
-  grid: '#374151',
-  axisTick: '#9ca3af',
-  axisLine: '#374151',
-  tooltipBg: '#1f2937',
-  tooltipBorder: '#374151',
-  legendText: '#9ca3af',
-  revenueLine: '#f3f4f6',
-  sportColors: { tennis: '#f3f4f6', pickleball: '#9ca3af', golf: '#f87171' },
-  membershipTierColors: { threeMonth: '#60a5fa', sixMonth: '#fbbf24', twelveMonth: '#a78bfa' },
-  topUpColor: '#34d399',
-}
+const LIGHT_PALETTE = buildPalette(false)
+const DARK_PALETTE = buildPalette(true)
 
 type RangeOption = '3mo' | '6mo' | '12mo' | 'ytd'
 type RevenueView = 'booking' | 'membership'

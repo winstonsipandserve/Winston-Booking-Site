@@ -8,6 +8,34 @@
   from the token sheet. The on-dark / on-light / on-accent / focus-ring
   aliases expose the semantic tokens as utilities.
 */
+/*
+  Admin dashboard chart series. Recharts needs colour strings, so DashboardCharts references
+  these by name; `static` forces them into the build even though no utility class uses them.
+  Light and dark shades are both declared here because the chart picks per theme at runtime.
+*/
+@theme static {
+  --color-chart-grid: var(--color-gray-200);
+  --color-chart-grid-dark: var(--color-gray-700);
+  --color-chart-axis: var(--color-gray-500);
+  --color-chart-axis-dark: var(--color-gray-400);
+  --color-chart-surface: var(--color-white);
+  --color-chart-surface-dark: var(--color-gray-800);
+  --color-chart-primary: var(--color-gray-900);
+  --color-chart-primary-dark: var(--color-gray-100);
+  --color-chart-secondary: var(--color-gray-500);
+  --color-chart-secondary-dark: var(--color-gray-400);
+  --color-chart-accent: var(--color-accent);
+  --color-chart-accent-dark: var(--color-red-400);
+  --color-chart-tier-3mo: var(--color-blue-600);
+  --color-chart-tier-3mo-dark: var(--color-blue-400);
+  --color-chart-tier-6mo: var(--color-amber-600);
+  --color-chart-tier-6mo-dark: var(--color-amber-400);
+  --color-chart-tier-12mo: var(--color-violet-600);
+  --color-chart-tier-12mo-dark: var(--color-violet-400);
+  --color-chart-topup: var(--color-emerald-600);
+  --color-chart-topup-dark: var(--color-emerald-400);
+}
+
 @theme inline {
   --color-background: var(--color-bg-light);
   --color-foreground: var(--color-text-on-light);
@@ -106,6 +134,17 @@ body:has(.admin-root) :where(a, button, input, select, textarea, summary, [tabin
 .dark body:has(.admin-root) :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"]), [contenteditable]):focus-visible {
   outline-color: var(--color-gray-100);
 }
+/*
+  Reduced motion in the admin panel. Every admin transition is a micro-transition whose end state
+  carries the meaning (sidebar width, chevron rotation, colour), so dropping them loses nothing;
+  animations that convey state (toast entry) already opt in with motion-safe:.
+*/
+@media (prefers-reduced-motion: reduce) {
+  body:has(.admin-root) [class*='transition-'] {
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Text fields already signal focus by border; keep the ring tight so it doesn't double up. */
 body:has(.admin-root) :where(input:not([type='checkbox']):not([type='radio']), textarea, select):focus-visible {
   outline-offset: 0;
