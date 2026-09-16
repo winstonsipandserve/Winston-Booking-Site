@@ -20,7 +20,7 @@ const NAV_LINKS = [
 
 const SCROLL_THRESHOLD = 50
 
-const FORCE_SOLID_PAGES = ['/book', '/login', '/activate', '/reset-password']
+const FORCE_SOLID_PAGES = ['/book', '/login', '/activate', '/reset-password', '/forgot-password']
 const FORCE_SOLID_PREFIXES = ['/membership/renew']
 
 function isForceSolidPage(pathname: string) {
