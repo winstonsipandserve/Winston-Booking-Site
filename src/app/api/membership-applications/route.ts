@@ -1,25 +1,22 @@
 import { prisma } from '@/lib/prisma'
 import { resolveCustomer } from '@/lib/customer-resolution'
-import { uploadToStorage, deleteFromStorage } from '@/lib/supabase-storage'
+import { deleteFromStorage, downloadFromStorage, uploadToStorage } from '@/lib/supabase-storage'
 import { sendStaffMembershipApplicationEmail } from '@/lib/resend'
 import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
 import { getCurrentMembership } from '@/lib/membership-current'
-import { sanitizeMembershipApplicationImage, type SanitizedImage } from '@/lib/image-validation'
-import { consumeRateLimitAttempt, getClientIp, hashIdentifier } from '@/lib/auth-rate-limit'
+import { sanitizeMembershipApplicationImageData, type SanitizedImage } from '@/lib/image-validation'
+import {
+  getPendingUploadPath,
+  isMembershipApplicationImageType,
+  isMembershipApplicationUploadSlot,
+  isUploadSessionId,
+  MEMBERSHIP_APPLICATION_BUCKET,
+  MEMBERSHIP_APPLICATION_UPLOADS,
+  type MembershipApplicationUploadSlot,
+} from '@/lib/membership-application-uploads'
 
-const BUCKET = 'membership-applications'
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png']
-// Three 5 MB files plus multipart boundaries and regular form fields.
-const MAX_MULTIPART_BODY_BYTES = 16 * 1024 * 1024
 const VALID_TIERS = ['three_month', 'six_month', 'twelve_month'] as const
 type MembershipTier = (typeof VALID_TIERS)[number]
-
-// Submissions per IP inside the shared 15-minute rate-limit window. Each attempt can
-// make the server parse up to 16 MB, so the budget is deliberately small.
-const APPLICATIONS_PER_IP_PER_WINDOW = 3
-
-const RATE_LIMIT_ERROR = 'Too many applications from this connection. Please wait a few minutes and try again.'
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -29,22 +26,25 @@ function isValidTier(value: unknown): value is MembershipTier {
   return typeof value === 'string' && (VALID_TIERS as readonly string[]).includes(value)
 }
 
-async function validateFile(value: unknown, label: string): Promise<{ error: string } | { image: SanitizedImage }> {
-  if (!(value instanceof File) || value.size === 0) {
-    return { error: `${label} is required` }
+type UploadedImageReference = {
+  slot: MembershipApplicationUploadSlot
+  contentType: 'image/jpeg' | 'image/png'
+}
+
+function parseUploadedImages(value: unknown): UploadedImageReference[] | null {
+  if (!Array.isArray(value) || value.length !== 3) return null
+  const seen = new Set<MembershipApplicationUploadSlot>()
+  const uploads: UploadedImageReference[] = []
+  for (const valueItem of value) {
+    if (!valueItem || typeof valueItem !== 'object') return null
+    const { slot, contentType } = valueItem as { slot?: unknown; contentType?: unknown }
+    if (!isMembershipApplicationUploadSlot(slot) || !isMembershipApplicationImageType(contentType) || seen.has(slot)) {
+      return null
+    }
+    seen.add(slot)
+    uploads.push({ slot, contentType })
   }
-  if (!ALLOWED_MIME_TYPES.includes(value.type)) {
-    return { error: `${label} must be a JPEG or PNG image` }
-  }
-  if (value.size > MAX_FILE_SIZE_BYTES) {
-    return { error: `${label} must be 5MB or smaller` }
-  }
-  try {
-    return { image: await sanitizeMembershipApplicationImage(value) }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'could not be processed as an image'
-    return { error: `${label} ${message}` }
-  }
+  return uploads
 }
 
 async function getBlockedApplicationResponse(customerId: string): Promise<Response | null> {
@@ -94,32 +94,8 @@ async function getBlockedApplicationResponse(customerId: string): Promise<Respon
 }
 
 export async function POST(request: Request) {
-  // Count every upload attempt before parsing its multipart body. Invalid files should
-  // not provide an unlimited way to make the server buffer and inspect large requests.
-  const rateLimitKeys = [
-    { identifierHash: hashIdentifier(`ip:${getClientIp(request)}`), maximumAttempts: APPLICATIONS_PER_IP_PER_WINDOW },
-  ]
-  if (!(await consumeRateLimitAttempt('membership_application', rateLimitKeys))) {
-    return Response.json({ error: RATE_LIMIT_ERROR }, { status: 429 })
-  }
-
-  const contentLength = request.headers.get('content-length')
-  if (contentLength && /^\d+$/.test(contentLength) && Number(contentLength) > MAX_MULTIPART_BODY_BYTES) {
-    return Response.json({ error: 'Application upload must be 16MB or smaller' }, { status: 413 })
-  }
-
-  let formData: FormData
-  try {
-    formData = await request.formData()
-  } catch {
-    return Response.json({ error: 'Malformed form data' }, { status: 400 })
-  }
-
-  const name = formData.get('name')
-  const email = formData.get('email')
-  const phone = formData.get('phone')
-  const address = formData.get('address')
-  const requestedTier = formData.get('requestedTier')
+  const body = await request.json().catch(() => null)
+  const { name, email, phone, address, requestedTier, uploadSessionId } = body ?? {}
 
   if (!isNonEmptyString(name)) {
     return Response.json({ error: 'Name is required' }, { status: 400 })
@@ -140,26 +116,32 @@ export async function POST(request: Request) {
     )
   }
 
-  const govIdFrontResult = await validateFile(formData.get('govIdFront'), 'Government ID (front)')
-  if ('error' in govIdFrontResult) {
-    return Response.json({ error: govIdFrontResult.error }, { status: 400 })
+  if (!isUploadSessionId(uploadSessionId)) {
+    return Response.json({ error: 'Your document upload session is invalid. Please choose the files again.' }, { status: 400 })
   }
-  const govIdBackResult = await validateFile(formData.get('govIdBack'), 'Government ID (back)')
-  if ('error' in govIdBackResult) {
-    return Response.json({ error: govIdBackResult.error }, { status: 400 })
+  const uploadedImages = parseUploadedImages(body?.uploads)
+  if (!uploadedImages) {
+    return Response.json({ error: 'All three government ID images are required.' }, { status: 400 })
   }
-  const govIdSelfieResult = await validateFile(formData.get('govIdSelfie'), 'Selfie with ID')
-  if ('error' in govIdSelfieResult) {
-    return Response.json({ error: govIdSelfieResult.error }, { status: 400 })
-  }
-
-  const govIdFront = govIdFrontResult.image
-  const govIdBack = govIdBackResult.image
-  const govIdSelfie = govIdSelfieResult.image
 
   const uploadedPaths: string[] = []
 
   try {
+    const sanitizedImages = new Map<MembershipApplicationUploadSlot, SanitizedImage>()
+    for (const { slot, contentType } of uploadedImages) {
+      const label = MEMBERSHIP_APPLICATION_UPLOADS[slot].label
+      try {
+        const data = await downloadFromStorage(
+          MEMBERSHIP_APPLICATION_BUCKET,
+          getPendingUploadPath(uploadSessionId, slot, contentType),
+        )
+        sanitizedImages.set(slot, await sanitizeMembershipApplicationImageData(data, contentType))
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'could not be processed as an image'
+        return Response.json({ error: `${label} ${message}` }, { status: 400 })
+      }
+    }
+
     // An application may create a Customer but never mutates an existing profile:
     // control of an email has not yet been verified on this public endpoint.
     const { customer } = await resolveCustomer({ name, phone, email })
@@ -168,16 +150,20 @@ export async function POST(request: Request) {
 
     const applicationId = crypto.randomUUID()
 
+    const govIdFront = sanitizedImages.get('govIdFront')!
+    const govIdBack = sanitizedImages.get('govIdBack')!
+    const govIdSelfie = sanitizedImages.get('govIdSelfie')!
+
     const frontPath = `${applicationId}/gov-id-front.${govIdFront.extension}`
-    await uploadToStorage(BUCKET, frontPath, govIdFront)
+    await uploadToStorage(MEMBERSHIP_APPLICATION_BUCKET, frontPath, govIdFront)
     uploadedPaths.push(frontPath)
 
     const backPath = `${applicationId}/gov-id-back.${govIdBack.extension}`
-    await uploadToStorage(BUCKET, backPath, govIdBack)
+    await uploadToStorage(MEMBERSHIP_APPLICATION_BUCKET, backPath, govIdBack)
     uploadedPaths.push(backPath)
 
     const selfiePath = `${applicationId}/gov-id-selfie.${govIdSelfie.extension}`
-    await uploadToStorage(BUCKET, selfiePath, govIdSelfie)
+    await uploadToStorage(MEMBERSHIP_APPLICATION_BUCKET, selfiePath, govIdSelfie)
     uploadedPaths.push(selfiePath)
 
     const application = await prisma.membershipApplication.create({
@@ -210,8 +196,13 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('Membership application creation failed', err)
     if (uploadedPaths.length > 0) {
-      await deleteFromStorage(BUCKET, uploadedPaths)
+      await deleteFromStorage(MEMBERSHIP_APPLICATION_BUCKET, uploadedPaths)
     }
     return Response.json({ error: 'Internal server error' }, { status: 500 })
+  } finally {
+    await deleteFromStorage(
+      MEMBERSHIP_APPLICATION_BUCKET,
+      uploadedImages.map(({ slot, contentType }) => getPendingUploadPath(uploadSessionId, slot, contentType)),
+    )
   }
 }

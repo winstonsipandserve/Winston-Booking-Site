@@ -20,6 +20,50 @@ export type SanitizedImage = {
   data: Buffer
 }
 
+export async function sanitizeMembershipApplicationImageData(
+  data: Buffer,
+  contentType: string,
+): Promise<SanitizedImage> {
+  if (!isSupportedImageType(contentType)) {
+    throw new Error('must be a JPEG or PNG image')
+  }
+
+  const expected = IMAGE_TYPES[contentType]
+  const image = sharp(data, {
+    failOn: 'warning',
+    limitInputPixels: MAX_IMAGE_PIXELS,
+    pages: 1,
+    sequentialRead: true,
+  })
+
+  const metadata = await image.metadata()
+  if (metadata.format !== expected.format) {
+    throw new Error('content does not match its declared file type')
+  }
+  if (!metadata.width || !metadata.height) {
+    throw new Error('could not be decoded as an image')
+  }
+  if (
+    metadata.width > MAX_IMAGE_DIMENSION ||
+    metadata.height > MAX_IMAGE_DIMENSION ||
+    metadata.width * metadata.height > MAX_IMAGE_PIXELS
+  ) {
+    throw new Error('dimensions are too large')
+  }
+
+  const normalized = image.rotate()
+  const output =
+    contentType === 'image/jpeg'
+      ? await normalized.jpeg({ quality: 90, mozjpeg: true }).toBuffer()
+      : await normalized.png({ compressionLevel: 9 }).toBuffer()
+
+  if (output.length > MAX_OUTPUT_BYTES) {
+    throw new Error('is too large after processing')
+  }
+
+  return { contentType, extension: expected.extension, data: output }
+}
+
 function isSupportedImageType(contentType: string): contentType is SupportedImageType {
   return contentType in IMAGE_TYPES
 }
@@ -44,42 +88,5 @@ export async function hasExpectedImageSignature(file: File): Promise<boolean> {
  * EXIF/XMP metadata, and ensures only known JPEG/PNG bytes reach private storage.
  */
 export async function sanitizeMembershipApplicationImage(file: File): Promise<SanitizedImage> {
-  if (!isSupportedImageType(file.type)) {
-    throw new Error('must be a JPEG or PNG image')
-  }
-
-  const expected = IMAGE_TYPES[file.type]
-  const image = sharp(Buffer.from(await file.arrayBuffer()), {
-    failOn: 'warning',
-    limitInputPixels: MAX_IMAGE_PIXELS,
-    pages: 1,
-    sequentialRead: true,
-  })
-
-  const metadata = await image.metadata()
-  if (metadata.format !== expected.format) {
-    throw new Error('content does not match its declared file type')
-  }
-  if (!metadata.width || !metadata.height) {
-    throw new Error('could not be decoded as an image')
-  }
-  if (
-    metadata.width > MAX_IMAGE_DIMENSION ||
-    metadata.height > MAX_IMAGE_DIMENSION ||
-    metadata.width * metadata.height > MAX_IMAGE_PIXELS
-  ) {
-    throw new Error('dimensions are too large')
-  }
-
-  const normalized = image.rotate()
-  const data =
-    file.type === 'image/jpeg'
-      ? await normalized.jpeg({ quality: 90, mozjpeg: true }).toBuffer()
-      : await normalized.png({ compressionLevel: 9 }).toBuffer()
-
-  if (data.length > MAX_OUTPUT_BYTES) {
-    throw new Error('is too large after processing')
-  }
-
-  return { contentType: file.type, extension: expected.extension, data }
+  return sanitizeMembershipApplicationImageData(Buffer.from(await file.arrayBuffer()), file.type)
 }

@@ -83,7 +83,8 @@ Route handlers live under `src/app/api/`, return `Response.json(...)` with expli
 | `/api/bookings/[id]` | GET, PATCH | Read booking detail / attach customer contact details and re-price |
 | `/api/checkout` | POST | Create or reuse a PayMongo Checkout Session for a booking |
 | `/api/announcements/active` | GET | Active booking announcements, ordered by urgency and start date |
-| `/api/membership-applications` | POST | Submit an application (multipart, with ID images) |
+| `/api/membership-application-uploads` | POST, DELETE | Issue or discard short-lived, single-use private ID-document uploads |
+| `/api/membership-applications` | POST | Validate staged ID images and submit an application |
 | `/api/membership-applications/[id]` | GET | Application status poller |
 | `/api/membership-payments` | POST | Create/resume checkout for an approved application |
 | `/api/membership-payments/[id]` | GET | Membership payment status poller |
@@ -160,7 +161,7 @@ PostgreSQL, Storage, and row-level security.
 
 | Bucket | Visibility | Contents |
 |---|---|---|
-| `membership-applications` | Private, admin-only via signed URLs | Government ID images |
+| `membership-applications` | Private, admin-only via signed URLs | Government ID images and short-lived, server-sanitized pending uploads; Storage enforces JPEG/PNG and 5 MB per object |
 | `bulletin-images` | Public | News cover artwork; the legacy bucket ID is retained, while new objects use `news/<post-id>/...` paths |
 | `email-assets` | Public (read-only for anon; writes service-role only) | The logo used in transactional emails, uploaded manually via the Supabase dashboard |
 

@@ -21,6 +21,14 @@ interface SuccessResult {
   id: string
 }
 
+type UploadSlot = 'govIdFront' | 'govIdBack' | 'govIdSelfie'
+
+type SignedUpload = {
+  slot: UploadSlot
+  contentType: string
+  signedUrl: string
+}
+
 function inputClassName() {
   return 'rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
 }
@@ -73,20 +81,59 @@ export default function MembershipApplicationForm() {
     setSubmitState('submitting')
     setSubmitError(null)
 
+    let uploadSessionId: string | null = null
     try {
-      const formData = new FormData()
-      formData.set('name', name)
-      formData.set('email', email)
-      formData.set('phone', phone)
-      formData.set('address', address)
-      formData.set('requestedTier', requestedTier)
-      formData.set('govIdFront', govIdFront)
-      formData.set('govIdBack', govIdBack)
-      formData.set('govIdSelfie', govIdSelfie)
+      const files: Record<UploadSlot, File> = { govIdFront, govIdBack, govIdSelfie }
+      const uploadRequest = await fetch('/api/membership-application-uploads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uploads: (Object.entries(files) as [UploadSlot, File][]).map(([slot, file]) => ({
+            slot,
+            contentType: file.type,
+            size: file.size,
+          })),
+        }),
+      })
+
+      if (uploadRequest.status !== 201) {
+        const json = await uploadRequest.json().catch(() => null)
+        setSubmitError(json?.error ?? 'Unable to prepare secure document uploads. Please try again.')
+        setSubmitState('error')
+        return
+      }
+
+      const uploadPayload = (await uploadRequest.json()) as { sessionId: string; uploads: SignedUpload[] }
+      uploadSessionId = uploadPayload.sessionId
+      await Promise.all(
+        uploadPayload.uploads.map(async ({ slot, contentType, signedUrl }) => {
+          const file = files[slot]
+          if (!file || file.type !== contentType) throw new Error('The selected document changed before upload.')
+          const upload = await fetch(signedUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': contentType,
+              'Cache-Control': 'max-age=3600',
+              'x-upsert': 'false',
+            },
+            body: file,
+          })
+          if (!upload.ok) throw new Error('Secure document upload failed.')
+        }),
+      )
 
       const res = await fetch('/api/membership-applications', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          address,
+          requestedTier,
+          uploadSessionId,
+          uploads: uploadPayload.uploads.map(({ slot, contentType }) => ({ slot, contentType })),
+        }),
       })
 
       if (res.status === 201) {
@@ -109,6 +156,13 @@ export default function MembershipApplicationForm() {
     } catch {
       setSubmitError('Something went wrong. Please try again.')
       setSubmitState('error')
+      if (uploadSessionId) {
+        void fetch('/api/membership-application-uploads', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: uploadSessionId }),
+        })
+      }
     }
   }
 

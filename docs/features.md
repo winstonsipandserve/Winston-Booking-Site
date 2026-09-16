@@ -76,7 +76,7 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 ## Membership
 
-- **Application** (`/membership/apply`) — multipart form with three government ID uploads to private storage. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Submissions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
+- **Application** (`/membership/apply`) — three government ID images upload directly to private storage through server-issued, single-use URLs, then are decoded, stripped of metadata, and re-encoded on the server before an application is created. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Upload sessions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
 - **Admin review** — approve or reject, with a mandatory rejection reason.
 - **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller. The link's `?token=` is checked before showing the checkout summary, so an invalid/superseded/expired link shows an error instead of a payment form — same pre-check pattern as `/activate`.
 - **Self-service renewal** (`/account/renew`, session-gated) and **admin-initiated renewal links** (`/membership/renew/[id]`, gated the same `?token=` way as the approval payment link — clicking "Send Renewal Link" again re-sends a fresh token for an already-queued pending payment, doubling as the resend action for an expired link).
