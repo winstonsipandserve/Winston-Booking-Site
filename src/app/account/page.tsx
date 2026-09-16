@@ -5,7 +5,8 @@ import Reveal from '@/components/ui/Reveal'
 import AccountProfile from '@/components/account/AccountProfile'
 import MembershipStatusCard from '@/components/account/MembershipStatusCard'
 import RecentBookingsList, { type BookingListItem } from '@/components/account/RecentBookingsList'
-import { formatBookingDateTime, formatMembershipExpiryDate } from '@/lib/format'
+import CreditActivityLog, { type CreditActivityItem } from '@/components/account/CreditActivityLog'
+import { formatBookingDateTime, formatCentavos, formatMembershipExpiryDate } from '@/lib/format'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
 import { buildMembershipDisplayFields } from '@/lib/membership-latest'
@@ -84,6 +85,32 @@ export default async function AccountPage() {
     status: booking.status,
   }))
 
+  // The ledger is scoped to the same term the status card shows, so its entries sum to the
+  // balance displayed above it. Redemptions carry their booking so the member can see what
+  // the credit paid for.
+  const creditTransactions = membership
+    ? await prisma.membershipCreditTransaction.findMany({
+        where: { membershipId: membership.id },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        include: {
+          booking: { include: { resource: { include: { resourceType: true } } } },
+        },
+        relationLoadStrategy: 'query',
+      })
+    : []
+
+  const creditActivityItems: CreditActivityItem[] = creditTransactions.map((tx) => ({
+    id: tx.id,
+    reason: tx.reason,
+    amountCentavos: tx.amountCentavos,
+    amountLabel: formatCentavos(Math.abs(tx.amountCentavos)),
+    dateLabel: formatBookingDateTime(tx.createdAt),
+    bookingLabel: tx.booking
+      ? `${tx.booking.resource.resourceType.name} — ${tx.booking.resource.label} · ${formatBookingDateTime(tx.booking.startTime)}`
+      : null,
+  }))
+
   const firstName = customer.name.split(' ')[0]
 
   return (
@@ -119,7 +146,12 @@ export default async function AccountPage() {
           </div>
 
           <div className="flex flex-col gap-8 md:col-span-2">
-            <Reveal delayMs={200}>
+            {membership && (
+              <Reveal delayMs={200}>
+                <CreditActivityLog entries={creditActivityItems} />
+              </Reveal>
+            )}
+            <Reveal delayMs={membership ? 300 : 200}>
               <RecentBookingsList bookings={bookingListItems} />
             </Reveal>
           </div>

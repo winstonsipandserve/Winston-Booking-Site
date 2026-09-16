@@ -19,7 +19,7 @@ interface ApplicationStatusResult {
 type FetchResult = ApplicationStatusResult | 'not_found' | 'error'
 
 const CHECK_AGAIN_BUTTON_CLASSES =
-  'rounded-none bg-accent-primary px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50'
+  'w-full rounded-none bg-accent-primary px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.08em] text-brand-light transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50'
 
 const BACK_HOME_LINK_CLASSES =
   'text-accent-primary underline underline-offset-2 hover:text-accent-dark'
@@ -111,12 +111,12 @@ export default function ConfirmationContent() {
   }
 
   if (!applicationId) {
-    return <p className="text-brand-dark/60">No application reference was provided.</p>
+    return <p className="text-center text-brand-dark/60">No application reference was provided.</p>
   }
 
   if (notFound) {
     return (
-      <div className="flex max-w-md flex-col items-center gap-3 text-center">
+      <div className="flex w-full flex-col items-center gap-3 text-center">
         <p className="text-red-600">
           We couldn&apos;t find that application. If you completed a payment, please contact us.
         </p>
@@ -130,7 +130,7 @@ export default function ConfirmationContent() {
   if (!application) {
     if (stalled) {
       return (
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="flex w-full flex-col items-center gap-3 text-center">
           <LoadingOverlay isOpen={checkingAgain} label="Checking…" />
           <p className="text-brand-dark/60">
             We&apos;re having trouble reaching the server. Please check again.
@@ -146,12 +146,12 @@ export default function ConfirmationContent() {
         </div>
       )
     }
-    return <p className="text-brand-dark/60">Loading your application…</p>
+    return <p className="text-center text-brand-dark/60">Loading your application…</p>
   }
 
   if (application.status === 'rejected') {
     return (
-      <div className="flex max-w-md flex-col items-center gap-3 text-center">
+      <div className="flex w-full flex-col items-center gap-3 text-center">
         <p className="text-red-600">
           This application isn&apos;t approved. If you completed a payment, please contact us and
           reference this application id:
@@ -165,11 +165,11 @@ export default function ConfirmationContent() {
   }
 
   if (application.hasMembership) {
-    return <MembershipPaymentConfirmation tierName={application.tierName} />
+    return <MembershipPaymentConfirmation tierName={application.tierName} bordered={false} />
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 text-center">
+    <div className="flex w-full flex-col items-center gap-3 text-center">
       <LoadingOverlay isOpen={checkingAgain} label="Checking…" />
       <p className="text-brand-dark/60">
         {stalled

@@ -53,6 +53,7 @@ Gated on a member session; anything else redirects to login.
 - **Check-in credentials** — QR code plus a 6-digit fallback code, with a regenerate action.
 - **Top Up F&B Credit** — four preset amounts in a modal, shown only for an active membership. Re-clicking resumes an unfinished top-up for the same amount instead of opening another PayMongo session.
 - **Renew Membership** — shown for an expired membership; **Renew Early** appears for an active one within 14 days of its end. A paid, queued renewal is shown as a note with its end date instead.
+- **Credit activity** — the current term's credit ledger (activation/renewal grants, top-ups, and booking redemptions with the booking each one paid for), newest first, paginated five per page. Shown only when a membership exists; its entries sum to the balance in the status card because both read the same term.
 - **Recent bookings** — the 50 most recent, with real booking data. Cancelled rows that were never paid (abandoned holds, including any a stranger created under the member's email) are hidden.
 - **Renewal and top-up confirmation pages** that poll for payment completion.
 
