@@ -11,7 +11,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https://vsmjybtidvmzvicdpkdo.supabase.co",
   "font-src 'self'",
-  "connect-src 'self'",
+  "connect-src 'self' https://vsmjybtidvmzvicdpkdo.supabase.co",
   "media-src 'self'",
   "worker-src 'self' blob:",
 ].join("; ");
