@@ -10,6 +10,11 @@ import ConfirmModal from '@/components/admin/ConfirmModal'
 import PriceEditModal, { type PriceEditField, type PriceCreateField } from '@/components/admin/PriceEditModal'
 import type { Prisma, GuestFeeRule, ResourceCategory, RateTier, AddOnService } from '@prisma/client'
 import { isValidPricingRuleCombo, isValidAddOnPricingRuleCombo } from '@/lib/pricing-rule-combos'
+import { MEMBERSHIP_TIER_ORDER, MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
+
+const tierDiscountSummary = MEMBERSHIP_TIER_ORDER.map(
+  (tier) => `${MEMBERSHIP_TIER_PLANS[tier].name} ${MEMBERSHIP_TIER_PLANS[tier].bookingDiscountPercent}%`,
+).join(' · ')
 
 type ResourceTypeWithRelations = Prisma.ResourceTypeGetPayload<{
   include: {
@@ -119,13 +124,13 @@ function ResourceTypeCard({
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
 
 
-  function openCreateRate(tier: RateTier, durationMinutes: number, rowLabel: string) {
+  function openCreateRate(durationMinutes: number, rowLabel: string) {
     setCreatingCell({
-      title: `Add ${rowLabel} ${tierLabel(tier)} rate`,
+      title: `Add ${rowLabel}`,
       createField: {
-        label: `${tierLabel(tier)} rate`,
+        label: 'Base rate',
         endpoint: '/api/admin/pricing-rules',
-        body: { resourceTypeId: rt.id, rateTier: tier, durationMinutes },
+        body: { resourceTypeId: rt.id, durationMinutes },
       },
     })
   }
@@ -178,8 +183,8 @@ function ResourceTypeCard({
     ? [60]
     : Array.from(new Set(rt.pricingRules.map((r) => r.durationMinutes))).sort((a, b) => a - b)
 
-  function findRateRule(tier: RateTier, durationMinutes: number) {
-    return rt.pricingRules.find((r) => r.rateTier === tier && r.durationMinutes === durationMinutes)
+  function findRateRule(durationMinutes: number) {
+    return rt.pricingRules.find((r) => r.durationMinutes === durationMinutes)
   }
 
   const coachingRules = rt.addOnPricingRules.filter((r) => r.addOnService.slug === 'coaching_fee')
@@ -192,29 +197,18 @@ function ResourceTypeCard({
     return findCoachingRule(tier, paxCount)?.priceCentavos
   }
 
-  function buildRateFields(rowLabel: string, durationMinutes: number): PriceEditField[] {
-    const memberRule = findRateRule('member', durationMinutes)
-    const nonMemberRule = findRateRule('non_member', durationMinutes)
-    const fields: PriceEditField[] = []
-    if (memberRule) {
-      fields.push({
-        key: 'member',
-        label: 'Member rate',
-        endpoint: `/api/admin/pricing-rules/${memberRule.id}`,
+  function buildRateFields(durationMinutes: number): PriceEditField[] {
+    const rule = findRateRule(durationMinutes)
+    if (!rule) return []
+    return [
+      {
+        key: 'base',
+        label: 'Base rate',
+        endpoint: `/api/admin/pricing-rules/${rule.id}`,
         bodyKey: 'priceCentavos',
-        currentCentavos: memberRule.priceCentavos,
-      })
-    }
-    if (nonMemberRule) {
-      fields.push({
-        key: 'nonMember',
-        label: 'Non-Member rate',
-        endpoint: `/api/admin/pricing-rules/${nonMemberRule.id}`,
-        bodyKey: 'priceCentavos',
-        currentCentavos: nonMemberRule.priceCentavos,
-      })
-    }
-    return fields
+        currentCentavos: rule.priceCentavos,
+      },
+    ]
   }
 
   function buildCoachingFields(paxCount: number | null): PriceEditField[] {
@@ -244,18 +238,12 @@ function ResourceTypeCard({
 
   // Collapsed header summary so pricing is scannable without expanding every type.
   const baseDuration = durations[0]
-  const baseMemberRate = baseDuration !== undefined ? findRateRule('member', baseDuration)?.priceCentavos : undefined
-  const baseNonMemberRate =
-    baseDuration !== undefined ? findRateRule('non_member', baseDuration)?.priceCentavos : undefined
+  const baseRate = baseDuration !== undefined ? findRateRule(baseDuration)?.priceCentavos : undefined
   const disabledCount = rt.resources.filter((r) => !r.isActive).length
   const summaryParts: string[] = []
-  if (baseMemberRate !== undefined || baseNonMemberRate !== undefined) {
+  if (baseRate !== undefined) {
     const per = isCourt ? '/hr' : `/${baseDuration}m`
-    summaryParts.push(
-      `${baseMemberRate !== undefined ? formatCentavos(baseMemberRate) : '—'} member · ${
-        baseNonMemberRate !== undefined ? formatCentavos(baseNonMemberRate) : '—'
-      } non-member${per}`,
-    )
+    summaryParts.push(`${formatCentavos(baseRate)}${per} base rate`)
   }
   if (disabledCount > 0) summaryParts.push(`${disabledCount} disabled`)
 
@@ -334,10 +322,7 @@ function ResourceTypeCard({
                     {isCourt ? 'Rate' : 'Duration'}
                   </th>
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                    Member
-                  </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                    Non-Member
+                    Base rate
                   </th>
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Actions
@@ -347,30 +332,21 @@ function ResourceTypeCard({
               <tbody>
                 {durations.map((duration) => {
                   const rowLabel = isCourt ? 'Hourly rate' : durationLabel(duration)
-                  const memberRule = findRateRule('member', duration)
-                  const nonMemberRule = findRateRule('non_member', duration)
+                  const rule = findRateRule(duration)
                   return (
                     <tr key={duration} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
                       <td className="px-3 py-2 text-gray-900 dark:text-gray-100">{rowLabel}</td>
                       <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
                         <PriceCell
-                          price={memberRule?.priceCentavos}
-                          allowed={isValidPricingRuleCombo(rt.slug, 'member', duration)}
-                          addLabel={`Add ${rowLabel} member rate`}
-                          onAdd={() => openCreateRate('member', duration, rowLabel)}
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                        <PriceCell
-                          price={nonMemberRule?.priceCentavos}
-                          allowed={isValidPricingRuleCombo(rt.slug, 'non_member', duration)}
-                          addLabel={`Add ${rowLabel} non-member rate`}
-                          onAdd={() => openCreateRate('non_member', duration, rowLabel)}
+                          price={rule?.priceCentavos}
+                          allowed={isValidPricingRuleCombo(rt.slug, duration)}
+                          addLabel={`Add ${rowLabel}`}
+                          onAdd={() => openCreateRate(duration, rowLabel)}
                         />
                       </td>
                       <td className="px-3 py-2">
                         {(() => {
-                          const fields = buildRateFields(rowLabel, duration)
+                          const fields = buildRateFields(duration)
                           return fields.length > 0 ? (
                             <ActionIconButton
                               label={`Edit ${rowLabel}`}
@@ -385,6 +361,10 @@ function ResourceTypeCard({
               </tbody>
             </table>
           </div>
+          <p className="-mt-3 mb-5 text-xs text-gray-500 dark:text-gray-400">
+            Members pay these base rates less their tier discount ({tierDiscountSummary}). The
+            discount is fixed in code, not editable here.
+          </p>
 
           <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
             <table className="w-full min-w-[500px] border-collapse text-sm">

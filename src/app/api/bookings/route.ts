@@ -4,7 +4,13 @@ import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 import { COURT_DURATION_CAP_ERROR, priceBooking } from '@/lib/booking-pricing'
-import { MAX_COURT_DURATION_MINUTES, maxGuestsForRateTier } from '@/lib/booking-limits'
+import {
+  MAX_COURT_DURATION_MINUTES,
+  NON_MEMBER_ADVANCE_BOOKING_DAYS,
+  maxGuestsForRateTier,
+} from '@/lib/booking-limits'
+import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
+import { manilaCalendarDaysBetween } from '@/lib/manila-date'
 import {
   consumeHoldCreationAttempt,
   hasReachedLiveHoldCap,
@@ -101,13 +107,26 @@ export async function POST(request: Request) {
   }
 
   const guestCount = guestCountRaw
+  // Every member benefit follows the term covering the slot (docs/business.md → Membership):
+  // the tier discount, the guest cap, and the advance-booking window. The anonymous path
+  // never has one, so it is always held to the non-member rules.
+  const tierPlan = activeMembership ? MEMBERSHIP_TIER_PLANS[activeMembership.tier] : null
+  const bookingDiscountPercent = tierPlan?.bookingDiscountPercent ?? 0
 
-  // The cap follows the same slot-covering membership as pricing (docs/business.md → Guest
-  // Fee), so the anonymous path is always held to the non-member cap.
   const maxGuests = maxGuestsForRateTier(isMember ? 'member' : 'non_member')
   if (guestCount > maxGuests) {
     return Response.json(
       { error: `Up to ${maxGuests} guests can be added to this booking` },
+      { status: 400 },
+    )
+  }
+
+  // Advance window: today (Manila) plus N calendar days. A date the member's term does not
+  // cover falls back to the non-member window (docs/business.md → Advance booking window).
+  const advanceBookingDays = tierPlan?.advanceBookingDays ?? NON_MEMBER_ADVANCE_BOOKING_DAYS
+  if (manilaCalendarDaysBetween(new Date(), parsedStartTime) > advanceBookingDays) {
+    return Response.json(
+      { error: `Bookings can be made up to ${advanceBookingDays} days in advance` },
       { status: 400 },
     )
   }
@@ -176,11 +195,18 @@ export async function POST(request: Request) {
     coaching,
     coachingPaxCount,
     isMember,
+    bookingDiscountPercent,
   })
   if ('error' in priceResult) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })
   }
-  const { totalAmountCentavos, guestFeeCentavos, addOns: selectedAddOns, addOnsTotalCentavos } = priceResult
+  const {
+    totalAmountCentavos,
+    memberDiscountCentavos,
+    guestFeeCentavos,
+    addOns: selectedAddOns,
+    addOnsTotalCentavos,
+  } = priceResult
   const grandTotalCentavos = totalAmountCentavos + addOnsTotalCentavos
   const bookingAccessToken = isMemberSession ? null : createBookingAccessToken()
 
@@ -261,6 +287,7 @@ export async function POST(request: Request) {
           status: creditCovered ? 'confirmed' : 'pending_payment',
           guestCount,
           totalAmountCentavos,
+          memberDiscountCentavos,
           guestFeeAmountCentavos: guestFeeCentavos,
           customerNameSnapshot,
           customerPhoneSnapshot,

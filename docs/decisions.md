@@ -34,7 +34,7 @@ Never a float, anywhere — storage, computation, or transport.
 
 ### Snapshot what was actually charged
 
-Several columns deliberately duplicate data that could otherwise be recomputed: the guest fee charged, each add-on's price, and the customer's name and phone at booking time.
+Several columns deliberately duplicate data that could otherwise be recomputed: the guest fee charged, the tier discount taken off, each add-on's price, and the customer's name and phone at booking time.
 
 **Why:** rates are admin-editable and customer records change. Without snapshots, editing a rate would retroactively rewrite the history of every past booking, and a later booking under a shared email could overwrite an earlier one's contact details.
 
@@ -76,7 +76,7 @@ Reschedules, credit transactions, and activity log entries have no `updatedAt` a
 
 ### Pricing lives in the database, gated by an allow-list
 
-Rates are admin-editable rows, one per explicit resource-type / rate-tier / duration combination. Invalid combinations simply have no row.
+Rates are admin-editable rows: one **base** court/simulator rate per resource-type / duration combination, and one coaching rate per resource-type / rate-tier / pax combination. Invalid combinations simply have no row.
 
 The allow-list of valid combinations is a **single source of truth in code**, enforced both server-side (invalid combinations are rejected with a 400) and client-side (no "+ Add" control is rendered for a cell the allow-list does not cover).
 
@@ -92,7 +92,7 @@ The allow-list of valid combinations is a **single source of truth in code**, en
 
 **What breaks if undone:** every base-rate edit would have to be mirrored into three member rows by hand, and a missed one silently misprices a tier. The `RateTier` dimension stays only for coaching rows.
 
-> Recorded 21 September 2026 ahead of implementation. Until the pricing code lands, member `PricingRule` rows still exist — see [roadmap.md](roadmap.md) → Client Update.
+The discount actually applied is snapshotted on the booking (`memberDiscountCentavos`) — see "Snapshot what was actually charged".
 
 ### Founding Member is a flag, not a tier
 

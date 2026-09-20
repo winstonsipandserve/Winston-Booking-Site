@@ -1,23 +1,20 @@
 import type { ResourceTypeSlug, RateTier, AddOnServiceSlug } from '@prisma/client'
 
 /**
- * Which (resourceType, rateTier, durationMinutes) combinations a PricingRule may exist for —
+ * Which (resourceType, durationMinutes) combinations a base-rate PricingRule may exist for —
  * see docs/business.md → Pricing. Court rates are hourly-flat (60 only); tennis and pickleball
- * simulators offer 30 and 60 minutes; the golf simulator offers 60 minutes only.
+ * simulators offer 30 and 60 minutes; the golf simulator offers 60 minutes only. There is no
+ * rate-tier dimension: member pricing is a percentage off the base (docs/decisions.md).
  */
-export const VALID_PRICING_RULE_DURATIONS: Record<ResourceTypeSlug, Partial<Record<RateTier, number[]>>> = {
-  pickleball_court: { member: [60], non_member: [60] },
-  tennis_sim: { member: [30, 60], non_member: [30, 60] },
-  pickleball_sim: { member: [30, 60], non_member: [30, 60] },
-  golf_sim: { member: [60], non_member: [60] },
+export const VALID_PRICING_RULE_DURATIONS: Record<ResourceTypeSlug, number[]> = {
+  pickleball_court: [60],
+  tennis_sim: [30, 60],
+  pickleball_sim: [30, 60],
+  golf_sim: [60],
 }
 
-export function isValidPricingRuleCombo(
-  resourceTypeSlug: ResourceTypeSlug,
-  rateTier: RateTier,
-  durationMinutes: number,
-): boolean {
-  return VALID_PRICING_RULE_DURATIONS[resourceTypeSlug]?.[rateTier]?.includes(durationMinutes) ?? false
+export function isValidPricingRuleCombo(resourceTypeSlug: ResourceTypeSlug, durationMinutes: number): boolean {
+  return VALID_PRICING_RULE_DURATIONS[resourceTypeSlug]?.includes(durationMinutes) ?? false
 }
 
 /**

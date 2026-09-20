@@ -54,6 +54,7 @@ export async function GET(
       startTime: booking.startTime,
       endTime: booking.endTime,
       totalAmountCentavos: booking.totalAmountCentavos,
+      memberDiscountCentavos: booking.memberDiscountCentavos,
       guestFeeAmountCentavos: booking.guestFeeAmountCentavos,
       addOns: booking.addOns.map((addOn) => ({
         service: addOn.addOnService.slug,
@@ -160,6 +161,7 @@ export async function PATCH(
     coaching: !!coachingAddOn,
     coachingPaxCount: coachingAddOn?.addOnPricingRule.paxCount ?? null,
     isMember,
+    bookingDiscountPercent: 0,
   })
   if ('error' in priceResult) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })

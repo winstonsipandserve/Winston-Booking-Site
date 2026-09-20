@@ -71,7 +71,7 @@ How far ahead a booking may be made depends on who is booking. The window is **t
 
 - **The window is judged at the slot, like every other member benefit.** A date is bookable when it falls within the window of the membership term that covers it; otherwise it must fall within the non-member window. A member whose term ends in two days therefore cannot use their tier's window to reach a date after expiry — unless a queued renewal covers that date.
 - Worked example: on 21 September a non-member can book 21, 22, 23, or 24 September; the 25th onward is disabled. A Winston Player sees 21–26; a Premier member 21–28; an Elite member 21 September – 1 October.
-- Admin reschedules are bound by the same window as the booking's customer.
+- Admin reschedules are **not** bound by the window: staff may move a booking to any future date, because reschedules are facility-side fixes (weather, maintenance), not customer choices.
 
 ---
 

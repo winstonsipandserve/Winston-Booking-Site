@@ -21,6 +21,15 @@ export const FOUNDING_MEMBER_CAP = 100
 /** Premier price for a Founding Member — on activation and on every later Premier renewal. */
 export const FOUNDING_PREMIER_PRICE_CENTAVOS = 500_000
 
+/**
+ * The tier discount on a base court/simulator amount, in centavos, rounded half-up
+ * (docs/business.md → Member discount). Never applied to the guest fee or coaching.
+ */
+export function tierDiscountCentavos(baseAmountCentavos: number, discountPercent: number): number {
+  if (discountPercent <= 0) return 0
+  return Math.round((baseAmountCentavos * discountPercent) / 100)
+}
+
 /** Standard price of a plan, ignoring Founding status. */
 export function standardTierPriceCentavos(tier: MembershipTier): number {
   return MEMBERSHIP_TIER_PLANS[tier].totalCentavos

@@ -8,6 +8,7 @@ import { formatBookingDateTime, formatMembershipExpiryDate } from '@/lib/format'
 import type { GateNotice } from '@/components/booking/AnnouncementGate'
 import type { MemberContext } from '@/components/booking/BookingPageClient'
 import { getActiveMemberSession } from '@/lib/member-session'
+import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 
 export default async function BookPage() {
   const now = new Date()
@@ -54,6 +55,9 @@ export default async function BookPage() {
           expiryDateKey: manilaDateKey(membership.endDate),
           expiryDateLabel: formatMembershipExpiryDate(membership.endDate),
           creditBalanceCentavos: membership.creditBalanceCentavos,
+          tierName: MEMBERSHIP_TIER_PLANS[membership.tier].name,
+          bookingDiscountPercent: MEMBERSHIP_TIER_PLANS[membership.tier].bookingDiscountPercent,
+          advanceBookingDays: MEMBERSHIP_TIER_PLANS[membership.tier].advanceBookingDays,
         })),
       }
     }

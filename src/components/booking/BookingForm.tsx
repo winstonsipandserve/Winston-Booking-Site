@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import StepIndicator from './steps/StepIndicator'
 import SportStep from './steps/SportStep'
 import CourtStep from './steps/CourtStep'
@@ -10,14 +10,19 @@ import ReviewStep from './steps/ReviewStep'
 import PaymentStep from './steps/PaymentStep'
 import Modal from '@/components/ui/Modal'
 import { formatCentavos } from '@/lib/format'
-import { MAX_COURT_DURATION_MINUTES, maxGuestsForRateTier } from '@/lib/booking-limits'
+import {
+  MAX_COURT_DURATION_MINUTES,
+  NON_MEMBER_ADVANCE_BOOKING_DAYS,
+  maxGuestsForRateTier,
+} from '@/lib/booking-limits'
+import { tierDiscountCentavos } from '@/lib/membership-pricing'
+import { toPhDateString } from '@/lib/business-hours'
 import type { MemberContext, MembershipCoverage } from '@/components/booking/BookingPageClient'
 
 type RateTier = 'member' | 'non_member'
 type ResourceCategory = 'court' | 'simulator'
 
 interface PricingTier {
-  rateTier: RateTier
   durationMinutes: number
   priceCentavos: number
 }
@@ -105,13 +110,25 @@ const COURT_DURATIONS_MINUTES = Array.from(
 )
 const TOTAL_STEPS = 5
 
-function getDurationOptions(resourceType: ResourceTypeOption, rateTier: RateTier): number[] {
+function getDurationOptions(resourceType: ResourceTypeOption): number[] {
   if (resourceType.category === 'court') return COURT_DURATIONS_MINUTES
-  return Array.from(
-    new Set(
-      resourceType.pricing.filter((p) => p.rateTier === rateTier).map((p) => p.durationMinutes),
-    ),
-  ).sort((a, b) => a - b)
+  return Array.from(new Set(resourceType.pricing.map((p) => p.durationMinutes))).sort((a, b) => a - b)
+}
+
+/** Whole Manila calendar days from `fromKey` to `toKey` (both `YYYY-MM-DD`). */
+function calendarDaysBetweenKeys(fromKey: string, toKey: string): number {
+  const [fy, fm, fd] = fromKey.split('-').map(Number)
+  const [ty, tm, td] = toKey.split('-').map(Number)
+  return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000)
+}
+
+/** The term covering a calendar date, by Manila date keys. */
+function findTermForDate(memberContext: MemberContext | null, dateKey: string): MembershipCoverage | null {
+  if (!memberContext) return null
+  return (
+    memberContext.coverage.find((term) => term.startDateKey <= dateKey && dateKey <= term.expiryDateKey) ??
+    null
+  )
 }
 
 /**
@@ -169,11 +186,30 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   )
   const rateTier: RateTier = coveringMembership ? 'member' : 'non_member'
   const creditBalanceCentavos = coveringMembership?.creditBalanceCentavos ?? 0
+  // The tier discount follows the term covering the slot, like every other member benefit.
+  const discountPercent = coveringMembership?.bookingDiscountPercent ?? 0
   // Shown on the date step when a member has picked a day their membership won't cover.
   const membershipCoverageNotice =
     memberContext && memberContext.coverage.length > 0 && selectedDate && !coveringMembership
-      ? `Your membership ends on ${memberContext.coverage[memberContext.coverage.length - 1].expiryDateLabel}. Dates after that are priced at non-member rates and can't use your F&B credit — renew from your account to keep member pricing.`
+      ? `Your membership ends on ${memberContext.coverage[memberContext.coverage.length - 1].expiryDateLabel}. Dates after that are priced at non-member rates and can't use your booking credit — renew from your account to keep member pricing.`
       : null
+
+  // Advance-booking window (docs/business.md): today + N days, where N comes from the term
+  // covering that date and falls back to the non-member window. Mirrors POST /api/bookings.
+  const todayKey = useMemo(() => toPhDateString(new Date()), [])
+  const isDateDisabled = useCallback(
+    (dateKey: string) => {
+      const term = findTermForDate(memberContext, dateKey)
+      const windowDays = term?.advanceBookingDays ?? NON_MEMBER_ADVANCE_BOOKING_DAYS
+      return calendarDaysBetweenKeys(todayKey, dateKey) > windowDays
+    },
+    [memberContext, todayKey],
+  )
+  const advanceWindowNote = useMemo(() => {
+    const term = memberContext?.coverage[0]
+    if (!term) return `Bookings open up to ${NON_MEMBER_ADVANCE_BOOKING_DAYS} days ahead.`
+    return `Your ${term.tierName} membership lets you book up to ${term.advanceBookingDays} days ahead. Dates your membership doesn't cover follow the ${NON_MEMBER_ADVANCE_BOOKING_DAYS}-day non-member window.`
+  }, [memberContext])
   const [guestCount, setGuestCount] = useState(0)
   const [busy, setBusy] = useState<BusyRange[]>([])
   const [availabilityLoading, setAvailabilityLoading] = useState(false)
@@ -209,8 +245,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
 
   const durationOptions = useMemo(() => {
     if (!selectedResourceType) return []
-    return getDurationOptions(selectedResourceType, rateTier)
-  }, [selectedResourceType, rateTier])
+    return getDurationOptions(selectedResourceType)
+  }, [selectedResourceType])
 
   // The guest cap follows the rate tier, which follows the chosen date (docs/business.md →
   // Guest Fee); handleDateSelect clamps the count when a date change lowers the cap.
@@ -241,7 +277,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setStartTimeLocal('')
     setAvailabilityLoading(false)
     setAvailabilityError(null)
-    const durations = nextResourceType ? getDurationOptions(nextResourceType, rateTier) : []
+    const durations = nextResourceType ? getDurationOptions(nextResourceType) : []
     setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
     setCoachingPaxCount(null)
     if (!getCoachingPricing(nextResourceType ?? null, rateTier).available) {
@@ -268,15 +304,11 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setAvailabilityError(null)
 
     // The rate tier follows the chosen date (a day past the membership's end is priced
-    // non-member), which can remove a member-only duration such as 30-minute golf.
+    // non-member), which can remove member-only coaching.
     const nextRateTier: RateTier = findCoveringMembership(memberContext, nextSelectedDate, '')
       ? 'member'
       : 'non_member'
     if (nextRateTier !== rateTier && selectedResourceType) {
-      const durations = getDurationOptions(selectedResourceType, nextRateTier)
-      if (!durations.includes(Number(durationMinutes))) {
-        setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
-      }
       if (coaching && !getCoachingPricing(selectedResourceType, nextRateTier).available) {
         setCoaching(false)
         setCoachingPaxCount(null)
@@ -323,23 +355,25 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     }
   }, [resourceId, selectedDate])
 
-  const estimateCentavos = useMemo(() => {
-    if (!selectedResourceType || !durationMinutes || !data) return null
+  // Base court/simulator amount before any discount, from the base-rate rows.
+  const baseEstimateCentavos = useMemo(() => {
+    if (!selectedResourceType || !durationMinutes) return null
     const duration = Number(durationMinutes)
-    const guestFee = guestCount * data.guestFeeCentavos
     if (isCourt) {
-      const hourlyRate = selectedResourceType.pricing.find(
-        (p) => p.rateTier === rateTier && p.durationMinutes === 60,
-      )
-      if (!hourlyRate) return null
-      const base = hourlyRate.priceCentavos * (duration / 60)
-      return base + guestFee
+      const hourlyRate = selectedResourceType.pricing.find((p) => p.durationMinutes === 60)
+      return hourlyRate ? hourlyRate.priceCentavos * (duration / 60) : null
     }
-    const tierRate = selectedResourceType.pricing.find(
-      (p) => p.rateTier === rateTier && p.durationMinutes === duration,
-    )
-    return tierRate ? tierRate.priceCentavos + guestFee : null
-  }, [selectedResourceType, durationMinutes, guestCount, isCourt, data, rateTier])
+    const tierRate = selectedResourceType.pricing.find((p) => p.durationMinutes === duration)
+    return tierRate ? tierRate.priceCentavos : null
+  }, [selectedResourceType, durationMinutes, isCourt])
+
+  // Same arithmetic as priceBooking: discount off the base only, then the guest fee.
+  const discountEstimateCentavos =
+    baseEstimateCentavos !== null ? tierDiscountCentavos(baseEstimateCentavos, discountPercent) : 0
+  const estimateCentavos = useMemo(() => {
+    if (baseEstimateCentavos === null || !data) return null
+    return baseEstimateCentavos - discountEstimateCentavos + guestCount * data.guestFeeCentavos
+  }, [baseEstimateCentavos, discountEstimateCentavos, guestCount, data])
 
   const addOnsEstimateCentavos = useMemo(() => {
     let total = 0
@@ -566,6 +600,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           resourceTypeId={resourceTypeId}
           onSelect={handleResourceTypeSelect}
           rateTier={rateTier}
+          discountPercent={discountPercent}
         />
       )}
 
@@ -593,6 +628,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           selectedSlot={startTimeLocal}
           onSelectSlot={setStartTimeLocal}
           membershipCoverageNotice={membershipCoverageNotice}
+          isDateDisabled={isDateDisabled}
+          advanceWindowNote={advanceWindowNote}
         />
       )}
 
@@ -625,6 +662,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPaxCount={coachingPaxCount}
           coachingPriceCentavos={coachingPriceCentavos}
           estimateCentavos={estimateCentavos}
+          discountEstimateCentavos={discountEstimateCentavos}
+          discountPercent={discountPercent}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           guestFeeCentavos={data.guestFeeCentavos}
           submitting={submitting}
@@ -688,6 +727,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPaxCount={coachingPaxCount}
           coachingPriceCentavos={coachingPriceCentavos}
           estimateCentavos={estimateCentavos}
+          discountEstimateCentavos={discountEstimateCentavos}
+          discountPercent={discountPercent}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           guestFeeCentavos={data.guestFeeCentavos}
           name={name}

@@ -1,6 +1,7 @@
 import { RateTier, ResourceCategory } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { MAX_COURT_DURATION_MINUTES } from '@/lib/booking-limits'
+import { tierDiscountCentavos } from '@/lib/membership-pricing'
 
 export const COURT_DURATION_CAP_ERROR = `Court bookings must be ${MAX_COURT_DURATION_MINUTES / 60} hours or shorter`
 
@@ -11,7 +12,10 @@ export interface PriceBookingInput {
   guestCount: number
   coaching: boolean
   coachingPaxCount: number | null
+  /** A membership term covers the slot: member coaching rates apply. */
   isMember: boolean
+  /** Tier discount off the base court/simulator rate (MEMBERSHIP_TIER_PLANS); 0 for non-members. */
+  bookingDiscountPercent: number
 }
 
 export interface SelectedAddOn {
@@ -23,7 +27,10 @@ export interface SelectedAddOn {
 }
 
 export interface PriceBookingResult {
+  /** Discounted base rate + guest fee (what Booking.totalAmountCentavos stores). */
   totalAmountCentavos: number
+  /** The tier discount already taken off inside totalAmountCentavos. */
+  memberDiscountCentavos: number
   guestFeeCentavos: number
   addOns: SelectedAddOn[]
   addOnsTotalCentavos: number
@@ -45,6 +52,7 @@ export async function priceBooking(
     coaching,
     coachingPaxCount,
     isMember,
+    bookingDiscountPercent,
   } = input
 
   const isCourt = category === 'court'
@@ -59,15 +67,14 @@ export async function priceBooking(
 
   const pricingRule = await prisma.pricingRule.findUnique({
     where: {
-      resourceTypeId_rateTier_durationMinutes: {
+      resourceTypeId_durationMinutes: {
         resourceTypeId,
-        rateTier,
         durationMinutes: isCourt ? 60 : durationMinutes,
       },
     },
   })
   if (!pricingRule) {
-    return { error: 'No pricing available for this resource, rate tier, and duration', status: 400 }
+    return { error: 'No pricing available for this resource and duration', status: 400 }
   }
 
   let guestFeeCentavos = 0
@@ -83,7 +90,8 @@ export async function priceBooking(
   const baseAmountCentavos = isCourt
     ? pricingRule.priceCentavos * (durationMinutes / 60)
     : pricingRule.priceCentavos
-  const totalAmountCentavos = baseAmountCentavos + guestFeeCentavos
+  const memberDiscountCentavos = tierDiscountCentavos(baseAmountCentavos, bookingDiscountPercent)
+  const totalAmountCentavos = baseAmountCentavos - memberDiscountCentavos + guestFeeCentavos
 
   const selectedAddOns: SelectedAddOn[] = []
 
@@ -115,7 +123,13 @@ export async function priceBooking(
 
   const addOnsTotalCentavos = selectedAddOns.reduce((sum, addOn) => sum + addOn.amountCentavos, 0)
 
-  return { totalAmountCentavos, guestFeeCentavos, addOns: selectedAddOns, addOnsTotalCentavos }
+  return {
+    totalAmountCentavos,
+    memberDiscountCentavos,
+    guestFeeCentavos,
+    addOns: selectedAddOns,
+    addOnsTotalCentavos,
+  }
 }
 
 // Single source of truth for a booking's actual grand total (base + guest fee + add-ons),

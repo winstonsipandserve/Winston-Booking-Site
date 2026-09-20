@@ -12,6 +12,12 @@ export interface MembershipCoverage {
   expiryDateKey: string
   expiryDateLabel: string
   creditBalanceCentavos: number
+  /** Plan name for this term, e.g. "Winston Premier". */
+  tierName: string
+  /** Tier discount off the base court/simulator rate for slots this term covers. */
+  bookingDiscountPercent: number
+  /** How many days ahead (today + N, Manila) this term lets the member book. */
+  advanceBookingDays: number
 }
 
 export interface MemberContext {

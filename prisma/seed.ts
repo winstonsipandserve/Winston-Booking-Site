@@ -48,45 +48,34 @@ async function main() {
   // Court rates are flat hourly — stored as a single durationMinutes=60 row per
   // type/tier that the booking API multiplies by (durationMinutes / 60).
   // Simulator rates are tiered by duration; only the tiers on the client's rate card
-  // (docs/business.md → Pricing) have a row.
-  //
-  // STOPGAP: the client publishes base (non-member) rates only, and member pricing becomes
-  // a percentage off that base in a later change (docs/roadmap.md → Client Update item 2).
-  // Until then the `member` rows carry the same price as `non_member`, so member bookings
-  // keep working with no discount applied.
-  const pricingRules: { slug: ResourceTypeSlug; rateTier: RateTier; durationMinutes: number; priceCentavos: number }[] = [
+  // (docs/business.md → Pricing) have a row. These are BASE rates — a member's tier takes a
+  // percentage off at booking time (src/lib/membership-pricing.ts), so there is one row per
+  // resource type and duration, never a member/non-member pair.
+  const pricingRules: { slug: ResourceTypeSlug; durationMinutes: number; priceCentavos: number }[] = [
     // Pickleball court (flat hourly)
-    { slug: ResourceTypeSlug.pickleball_court, rateTier: RateTier.member, durationMinutes: 60, priceCentavos: 75000 },
-    { slug: ResourceTypeSlug.pickleball_court, rateTier: RateTier.non_member, durationMinutes: 60, priceCentavos: 75000 },
+    { slug: ResourceTypeSlug.pickleball_court, durationMinutes: 60, priceCentavos: 75000 },
     // Tennis simulator (tiered)
-    { slug: ResourceTypeSlug.tennis_sim, rateTier: RateTier.member, durationMinutes: 30, priceCentavos: 40000 },
-    { slug: ResourceTypeSlug.tennis_sim, rateTier: RateTier.member, durationMinutes: 60, priceCentavos: 80000 },
-    { slug: ResourceTypeSlug.tennis_sim, rateTier: RateTier.non_member, durationMinutes: 30, priceCentavos: 40000 },
-    { slug: ResourceTypeSlug.tennis_sim, rateTier: RateTier.non_member, durationMinutes: 60, priceCentavos: 80000 },
+    { slug: ResourceTypeSlug.tennis_sim, durationMinutes: 30, priceCentavos: 40000 },
+    { slug: ResourceTypeSlug.tennis_sim, durationMinutes: 60, priceCentavos: 80000 },
     // Pickleball simulator (tiered)
-    { slug: ResourceTypeSlug.pickleball_sim, rateTier: RateTier.member, durationMinutes: 30, priceCentavos: 35000 },
-    { slug: ResourceTypeSlug.pickleball_sim, rateTier: RateTier.member, durationMinutes: 60, priceCentavos: 75000 },
-    { slug: ResourceTypeSlug.pickleball_sim, rateTier: RateTier.non_member, durationMinutes: 30, priceCentavos: 35000 },
-    { slug: ResourceTypeSlug.pickleball_sim, rateTier: RateTier.non_member, durationMinutes: 60, priceCentavos: 75000 },
+    { slug: ResourceTypeSlug.pickleball_sim, durationMinutes: 30, priceCentavos: 35000 },
+    { slug: ResourceTypeSlug.pickleball_sim, durationMinutes: 60, priceCentavos: 75000 },
     // Golf simulator — 60 minutes only
-    { slug: ResourceTypeSlug.golf_sim, rateTier: RateTier.member, durationMinutes: 60, priceCentavos: 120000 },
-    { slug: ResourceTypeSlug.golf_sim, rateTier: RateTier.non_member, durationMinutes: 60, priceCentavos: 120000 },
+    { slug: ResourceTypeSlug.golf_sim, durationMinutes: 60, priceCentavos: 120000 },
   ]
 
   for (const rule of pricingRules) {
     const resourceType = await prisma.resourceType.findUniqueOrThrow({ where: { slug: rule.slug } })
     await prisma.pricingRule.upsert({
       where: {
-        resourceTypeId_rateTier_durationMinutes: {
+        resourceTypeId_durationMinutes: {
           resourceTypeId: resourceType.id,
-          rateTier: rule.rateTier,
           durationMinutes: rule.durationMinutes,
         },
       },
       update: { priceCentavos: rule.priceCentavos },
       create: {
         resourceTypeId: resourceType.id,
-        rateTier: rule.rateTier,
         durationMinutes: rule.durationMinutes,
         priceCentavos: rule.priceCentavos,
       },

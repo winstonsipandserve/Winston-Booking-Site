@@ -203,17 +203,19 @@ model Resource {
 
 // ── Pricing (Decision: Pricing model) ─────────────────
 
+/// One BASE rate per resource type and duration. Member pricing is not a second set of
+/// rows: a member's tier takes a percentage off this base at booking time
+/// (MEMBERSHIP_TIER_PLANS[tier].bookingDiscountPercent, see docs/decisions.md).
 model PricingRule {
   id              String       @id @default(cuid())
   resourceTypeId  String       @map("resource_type_id")
   resourceType    ResourceType @relation(fields: [resourceTypeId], references: [id])
-  rateTier        RateTier     @map("rate_tier")
   durationMinutes Int          @map("duration_minutes")
   priceCentavos   Int          @map("price_centavos")
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
-  @@unique([resourceTypeId, rateTier, durationMinutes])
+  @@unique([resourceTypeId, durationMinutes])
   @@map("pricing_rules")
 }
 
@@ -569,8 +571,12 @@ model Booking {
   endTime                DateTime                      @map("end_time")
   status                 BookingStatus                 @default(pending_payment)
   guestCount             Int                           @default(0) @map("guest_count")
-  /// Court/sim rate + guest fee only — excludes add-ons, which are priced separately on BookingAddOn.
+  /// Discounted court/sim rate + guest fee only — excludes add-ons, which are priced separately on BookingAddOn.
   totalAmountCentavos    Int                           @map("total_amount_centavos")
+  /// Snapshot of the tier discount already taken off the base rate inside totalAmountCentavos
+  /// (0 for non-member bookings), so receipts can show "Member discount −₱x" independent of
+  /// later rate or tier changes.
+  memberDiscountCentavos Int                           @default(0) @map("member_discount_centavos")
   /// Snapshot of the guest fee actually charged at booking time, already included inside
   /// totalAmountCentavos above — this column exists only so the guest fee can be broken back
   /// out for display (e.g. the confirmation receipt), independent of any later GuestFeeRule edit.

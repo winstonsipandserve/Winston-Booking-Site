@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
 import { TennisIcon, PickleballIcon, GolfIcon } from '@/components/ui/Icons'
+import { tierDiscountCentavos } from '@/lib/membership-pricing'
 
 type ResourceCategory = 'court' | 'simulator'
 
 interface PricingRuleOption {
-  rateTier: RateTier
   durationMinutes: number
   priceCentavos: number
 }
@@ -28,6 +28,8 @@ interface SportStepProps {
   resourceTypeId: string
   onSelect: (resourceTypeId: string) => void
   rateTier: RateTier
+  /** Tier discount off the base rate for the slot being built; 0 for non-members. */
+  discountPercent: number
 }
 
 function countLabel(count: number, category: ResourceCategory): string {
@@ -45,6 +47,8 @@ const SPORT_ICONS: Record<string, (props: { className?: string }) => React.JSX.E
 interface PriceTier {
   label: string
   price: string
+  /** Discounted price when a tier discount applies. */
+  memberPrice: string | null
 }
 
 interface PricingInfo {
@@ -55,26 +59,37 @@ function formatWholePesos(centavos: number): string {
   return `₱${(centavos / 100).toLocaleString('en-PH')}`
 }
 
-function getPricingInfo(resourceType: ResourceTypeOption, rateTier: RateTier): PricingInfo | null {
-  const rules = resourceType.pricing.filter((p) => p.rateTier === rateTier)
+function getPricingInfo(resourceType: ResourceTypeOption, discountPercent: number): PricingInfo | null {
+  const rules = resourceType.pricing
   if (rules.length === 0) return null
+
+  const memberPrice = (centavos: number) =>
+    discountPercent > 0 ? formatWholePesos(centavos - tierDiscountCentavos(centavos, discountPercent)) : null
 
   if (resourceType.category === 'court') {
     const hourly = rules.find((p) => p.durationMinutes === 60)
     if (!hourly) return null
-    return { tiers: [{ label: 'Per hour', price: formatWholePesos(hourly.priceCentavos) }] }
+    return {
+      tiers: [
+        { label: 'Per hour', price: formatWholePesos(hourly.priceCentavos), memberPrice: memberPrice(hourly.priceCentavos) },
+      ],
+    }
   }
 
   const tiers = [...rules]
     .sort((a, b) => a.durationMinutes - b.durationMinutes)
-    .map((p) => ({ label: `${p.durationMinutes} minutes`, price: formatWholePesos(p.priceCentavos) }))
+    .map((p) => ({
+      label: `${p.durationMinutes} minutes`,
+      price: formatWholePesos(p.priceCentavos),
+      memberPrice: memberPrice(p.priceCentavos),
+    }))
   return { tiers }
 }
 
-export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rateTier }: SportStepProps) {
+export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rateTier, discountPercent }: SportStepProps) {
   const [pricingSlug, setPricingSlug] = useState<string | null>(null)
   const pricingResourceType = resourceTypes.find((rt) => rt.slug === pricingSlug) ?? null
-  const pricingInfo = pricingResourceType ? getPricingInfo(pricingResourceType, rateTier) : null
+  const pricingInfo = pricingResourceType ? getPricingInfo(pricingResourceType, discountPercent) : null
 
   return (
     <>
@@ -110,7 +125,7 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
               <span className="text-sm text-brand-dark/60">
                 {countLabel(rt.resources.length, rt.category)}
               </span>
-              {getPricingInfo(rt, rateTier) && (
+              {getPricingInfo(rt, discountPercent) && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -137,12 +152,19 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
             {pricingInfo.tiers.map((tier) => (
               <li key={tier.label} className="flex items-center justify-between py-2 text-sm text-brand-dark">
                 <span>{tier.label}</span>
-                <span className="font-semibold text-accent-primary">{tier.price}</span>
+                {tier.memberPrice ? (
+                  <span className="font-semibold text-accent-primary">
+                    <span className="mr-2 font-normal text-brand-dark/50 line-through">{tier.price}</span>
+                    {tier.memberPrice}
+                  </span>
+                ) : (
+                  <span className="font-semibold text-accent-primary">{tier.price}</span>
+                )}
               </li>
             ))}
           </ul>
-          {rateTier === 'member' && (
-            <p className="mt-3 text-xs text-brand-dark/50">Member rates shown.</p>
+          {rateTier === 'member' && discountPercent > 0 && (
+            <p className="mt-3 text-xs text-brand-dark/50">Your {discountPercent}% member discount is applied.</p>
           )}
         </Modal>
       )}

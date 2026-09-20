@@ -4,7 +4,7 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 `prisma/schema.prisma` is the source of truth. This document explains it — it does not replace reading it.
 
-> **Business rules changed on 21 September 2026.** The catalogue and the membership product (tiers, Founding flag, no credit grant) are built; member `PricingRule` rows still exist as a stopgap until the tier discount lands, and guest passes, advance windows, and the birthday hour have no schema yet. This document describes the schema **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
+> **Business rules changed on 21 September 2026.** The catalogue, the membership product (tiers, Founding flag, no credit grant), the tier booking discount, and the advance-booking window are built; guest passes and the birthday hour have no schema yet. This document describes the schema **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
 
 **See also:** [architecture.md](architecture.md) (how the app is built) · [decisions.md](decisions.md) (why the schema looks like this) · [business.md](business.md) (the rules the data encodes)
 
@@ -90,7 +90,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 > Naming trap: `disabledNote` is the free-text note, and `disabledReason` is the structured enum. The free-text column was originally named `disabledReason` and was renamed to free that name.
 
-**`PricingRule`** — one row per valid resource-type / rate-tier / duration combination, unique on all three. Invalid combinations simply have no row. Admin-editable.
+**`PricingRule`** — one **base** rate per valid resource-type / duration combination, unique on both. There is no rate-tier column: a member's price is the base rate less their tier's `bookingDiscountPercent` (`src/lib/membership-pricing.ts`), applied in `priceBooking`. Invalid combinations simply have no row. Admin-editable.
 
 **`AddOnService`** / **`AddOnPricingRule`** — add-on catalog and its rates. The pricing rule is unique on service + resource type + rate tier + pax count. `paxCount` is null for simulator coaching (a single flat rate); 1 or 2 for coaching on courts. Coaching is the only add-on service.
 
@@ -134,8 +134,9 @@ One difference from the other three token models: `usedAt` here means *supersede
 
 - `customerId` is **nullable** — a hold is created and its reference shown to the customer *before* name/email/phone are collected. The customer attaches in a later step.
 - `startTime` / `endTime` define the slot. `status` follows `pending_payment` → `confirmed` or `cancelled`.
-- `totalAmountCentavos` — base rate + guest fee, **excluding add-ons** (see the warning above).
+- `totalAmountCentavos` — discounted base rate + guest fee, **excluding add-ons** (see the warning above).
 - `guestFeeAmountCentavos` — a snapshot of the guest fee actually charged, already *inside* `totalAmountCentavos`. It exists only so the fee can be broken back out for display, independent of any later rate edit.
+- `memberDiscountCentavos` — a snapshot of the tier discount already taken off inside `totalAmountCentavos` (0 for non-member bookings), so receipts can show the undiscounted rate and the discount line independent of later rate or tier changes.
 - `customerNameSnapshot` / `customerPhoneSnapshot` — the name and phone actually submitted for *this specific booking*, independent of any later change to the shared customer row.
 - `accessTokenHash` / `accessTokenExpiresAt` — the SHA-256 hash and expiry of the short-lived, anonymous-browser booking capability. The raw token is sent only as an HttpOnly, SameSite cookie and is never stored in the database or URL. Member bookings use the member session instead.
 - `holdClientHash` — HMAC of the client that created the hold (member id, or request IP for anonymous bookers), used only to cap live holds per client; indexed with `status` and `createdAt`. Nullable: null on rows created before the cap existed. See [workflows.md](workflows.md) → Hold abuse controls.
@@ -280,6 +281,6 @@ Master SQL: `prisma/manual-sql/enable-rls-deny-all.sql`.
 
 ## Seed Data
 
-`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds only reference configuration: the 4 resource types, 6 resources, 12 pricing rules (the `member` rows currently equal the base rate — a stopgap until the tier discount replaces them, see [roadmap.md](roadmap.md)), the ₱100 guest fee rule, 1 add-on service, and 8 add-on pricing rules. It creates no announcements or news posts. Exact reference-data values are in [business.md](business.md).
+`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds only reference configuration: the 4 resource types, 6 resources, 6 base pricing rules, the ₱100 guest fee rule, 1 add-on service, and 8 add-on pricing rules. It creates no announcements or news posts. Exact reference-data values are in [business.md](business.md).
 
 **The seed creates no admin user.** There is no reproducible admin bootstrap — admin accounts exist only in the live database. See [roadmap.md](roadmap.md).

@@ -24,6 +24,8 @@ interface PaymentStepProps {
   coachingPaxCount: number | null
   coachingPriceCentavos: number | null
   estimateCentavos: number | null
+  discountEstimateCentavos: number
+  discountPercent: number
   addOnsEstimateCentavos: number
   guestFeeCentavos: number
   name: string
@@ -57,6 +59,8 @@ export default function PaymentStep({
   coachingPaxCount,
   coachingPriceCentavos,
   estimateCentavos,
+  discountEstimateCentavos,
+  discountPercent,
   addOnsEstimateCentavos,
   guestFeeCentavos,
   name,
@@ -104,6 +108,8 @@ export default function PaymentStep({
         coachingPaxCount={coachingPaxCount}
         coachingPriceCentavos={coachingPriceCentavos}
         estimateCentavos={estimateCentavos}
+        discountEstimateCentavos={discountEstimateCentavos}
+        discountPercent={discountPercent}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
         guestFeeCentavos={guestFeeCentavos}
         rateTier={rateTier}

@@ -20,6 +20,10 @@ interface DateTimeStepProps {
   selectedSlot: string | null
   onSelectSlot: (startTimeIso: string) => void
   membershipCoverageNotice: string | null
+  /** True for a date beyond the applicable advance-booking window. */
+  isDateDisabled: (dateKey: string) => boolean
+  /** e.g. "Non-members can book up to 3 days ahead." */
+  advanceWindowNote: string
 }
 
 export default function DateTimeStep({
@@ -36,6 +40,8 @@ export default function DateTimeStep({
   selectedSlot,
   onSelectSlot,
   membershipCoverageNotice,
+  isDateDisabled,
+  advanceWindowNote,
 }: DateTimeStepProps) {
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -66,7 +72,8 @@ export default function DateTimeStep({
 
       <div className="flex flex-col gap-1">
         <span className="text-sm font-medium text-brand-dark">Date</span>
-        <Calendar selectedDate={selectedDate} onSelectDate={onSelectDate} />
+        <Calendar selectedDate={selectedDate} onSelectDate={onSelectDate} isDateDisabled={isDateDisabled} />
+        <p className="text-sm text-brand-dark/60">{advanceWindowNote}</p>
       </div>
 
       {membershipCoverageNotice && (

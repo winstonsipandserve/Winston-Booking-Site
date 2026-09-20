@@ -13,6 +13,9 @@ interface BookingSummaryProps {
   coachingPaxCount: number | null
   coachingPriceCentavos: number | null
   estimateCentavos: number | null
+  /** Tier discount already taken off inside estimateCentavos; 0 for non-members. */
+  discountEstimateCentavos: number
+  discountPercent: number
   addOnsEstimateCentavos: number
   guestFeeCentavos: number
   rateTier: RateTier
@@ -41,6 +44,8 @@ export default function BookingSummary({
   coachingPaxCount,
   coachingPriceCentavos,
   estimateCentavos,
+  discountEstimateCentavos,
+  discountPercent,
   addOnsEstimateCentavos,
   guestFeeCentavos,
   rateTier,
@@ -49,8 +54,11 @@ export default function BookingSummary({
   bookingReference,
 }: BookingSummaryProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
+  // Undiscounted court/simulator amount: the estimate minus the guest fee, plus the discount back.
   const baseEstimateCentavos =
-    estimateCentavos !== null ? estimateCentavos - guestCount * guestFeeCentavos : null
+    estimateCentavos !== null
+      ? estimateCentavos - guestCount * guestFeeCentavos + discountEstimateCentavos
+      : null
 
   return (
     <div className="flex flex-col rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
@@ -95,6 +103,16 @@ export default function BookingSummary({
             {baseEstimateCentavos !== null ? formatCentavos(baseEstimateCentavos) : '—'}
           </dd>
         </div>
+        {discountEstimateCentavos > 0 && (
+          <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
+            <dt className="flex items-center gap-2 text-brand-dark/70">
+              Member discount — {discountPercent}%
+            </dt>
+            <dd className="text-right font-medium text-brand-dark">
+              &minus;{formatCentavos(discountEstimateCentavos)}
+            </dd>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
           <dt className="flex items-center gap-2 text-brand-dark/70">
             <RowIcon icon={GuestsIcon} show={showIcons} />

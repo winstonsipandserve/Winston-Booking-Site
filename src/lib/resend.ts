@@ -566,7 +566,10 @@ interface SendBookingConfirmationEmailInput {
   endTime: Date
   guestCount: number
   guestFeeCentavos: number
+  /** Undiscounted court/simulator rate for the duration. */
   basePriceCentavos: number
+  /** Tier discount taken off basePriceCentavos; 0 for non-member bookings. */
+  memberDiscountCentavos: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
   creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
@@ -621,6 +624,7 @@ export async function sendBookingConfirmationEmail({
   guestCount,
   guestFeeCentavos,
   basePriceCentavos,
+  memberDiscountCentavos,
   addOns,
   totalPaidCentavos,
   creditRedemption,
@@ -639,6 +643,9 @@ export async function sendBookingConfirmationEmail({
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
     ledgerRow('Price', formatCentavos(basePriceCentavos)),
+    ...(memberDiscountCentavos > 0
+      ? [ledgerRow('Member discount', `&minus;${formatCentavos(memberDiscountCentavos)}`, false, true)]
+      : []),
     ...(hasAddOnsBreakdown
       ? [
           ledgerSectionHeader('Add-ons total'),
@@ -914,7 +921,10 @@ interface SendStaffBookingNotificationEmailInput {
   endTime: Date
   guestCount: number
   guestFeeCentavos: number
+  /** Undiscounted court/simulator rate for the duration. */
   basePriceCentavos: number
+  /** Tier discount taken off basePriceCentavos; 0 for non-member bookings. */
+  memberDiscountCentavos: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
   creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
@@ -932,6 +942,7 @@ export async function sendStaffBookingNotificationEmail({
   guestCount,
   guestFeeCentavos,
   basePriceCentavos,
+  memberDiscountCentavos,
   addOns,
   totalPaidCentavos,
   creditRedemption,
@@ -950,6 +961,9 @@ export async function sendStaffBookingNotificationEmail({
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
     ledgerRow('Price', formatCentavos(basePriceCentavos)),
+    ...(memberDiscountCentavos > 0
+      ? [ledgerRow('Member discount', `&minus;${formatCentavos(memberDiscountCentavos)}`, false, true)]
+      : []),
     ...(hasAddOnsBreakdown
       ? [
           ledgerSectionHeader('Add-ons total'),

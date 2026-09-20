@@ -13,6 +13,7 @@ export interface BookingDetail {
   startTime: string
   endTime: string
   totalAmountCentavos: number
+  memberDiscountCentavos: number
   guestFeeAmountCentavos: number
   addOns: BookingAddOn[]
   addOnsTotalCentavos: number
@@ -31,8 +32,12 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
   const end = new Date(booking.endTime)
   const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
   const coachingAddOn = booking.addOns.find((a) => a.service === 'coaching_fee')
-  const baseAmountCentavos = booking.totalAmountCentavos - booking.guestFeeAmountCentavos
+  // totalAmountCentavos already has the member discount taken off; show the rate before it.
+  const baseAmountCentavos =
+    booking.totalAmountCentavos - booking.guestFeeAmountCentavos + booking.memberDiscountCentavos
   const hasAddOnsBreakdown = booking.guestCount > 0 || booking.addOns.length > 0
+  // The Price row alone is the total only when nothing else moved it.
+  const showTotal = hasAddOnsBreakdown || booking.memberDiscountCentavos > 0
 
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
@@ -95,6 +100,14 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
               {formatCentavos(baseAmountCentavos)}
             </dd>
           </div>
+          {booking.memberDiscountCentavos > 0 && (
+            <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
+              <dt className="text-brand-dark/70">Member discount</dt>
+              <dd className="text-right font-medium text-brand-dark">
+                &minus;{formatCentavos(booking.memberDiscountCentavos)}
+              </dd>
+            </div>
+          )}
           {hasAddOnsBreakdown && (
             <>
               <div className="border-t border-brand-dark/10 py-3">
@@ -120,13 +133,15 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
                   </div>
                 )}
               </div>
-              <div className="flex items-baseline justify-between gap-4 border-t border-brand-dark/10 pt-4 mt-1">
-                <dt className="font-serif text-brand-dark">Total</dt>
-                <dd className="text-2xl font-medium text-accent-primary">
-                  {formatCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)}
-                </dd>
-              </div>
             </>
+          )}
+          {showTotal && (
+            <div className="flex items-baseline justify-between gap-4 border-t border-brand-dark/10 pt-4 mt-1">
+              <dt className="font-serif text-brand-dark">Total</dt>
+              <dd className="text-2xl font-medium text-accent-primary">
+                {formatCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)}
+              </dd>
+            </div>
           )}
         </dl>
       </div>

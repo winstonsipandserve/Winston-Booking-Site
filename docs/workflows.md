@@ -2,7 +2,7 @@
 
 How the important processes actually run, end to end.
 
-> **Business rules changed on 21 September 2026.** The catalogue and the membership product (tiers, Founding Members, no credit grant) are built; the tier booking discount, per-tier advance-booking windows, guest passes, and birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
+> **Business rules changed on 21 September 2026.** The catalogue, the membership product (tiers, Founding Members, no credit grant), the tier booking discount, and the advance-booking window are built; guest passes and the birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
 
 **See also:** [business.md](business.md) (the rules these flows enforce) · [features.md](features.md) (the screens involved) · [database.md](database.md) (the records written) · [decisions.md](decisions.md) (why they work this way)
 
@@ -15,7 +15,7 @@ The default path. The customer is not logged in and may not exist in the system 
 1. **Announcement gate.** `/book` loads active announcements whose start has arrived and whose optional end is still in the future. Urgent notices appear first, then warnings and information; the customer continues past the interstitial into the wizard.
 2. **Five-step wizard** — Sport → Court → Date & Time → Add-Ons → Summary. All state, including the current step, lives in the top-level orchestrator, so navigating Back and forward again never loses an entered value.
    - The Date & Time step calls `/api/availability` to grey out occupied slots before submit.
-3. **Hold created.** On Confirm, `POST /api/bookings` creates the booking with `status: pending_payment` and `customerId: null`. Pricing here is **provisional and always at the non-member rate**, because no customer or email exists yet. The response also establishes a random 24-hour, HttpOnly, SameSite browser capability; only that browser can read the hold, attach contact details, start checkout, or poll its confirmation.
+3. **Hold created.** On Confirm, `POST /api/bookings` creates the booking with `status: pending_payment` and `customerId: null`. Pricing here is **provisional and always at the base (non-member) rate with no discount**, because no customer or email exists yet. The slot must also fall inside the non-member advance window (today + 3 days, Manila) or the API answers 400. The response also establishes a random 24-hour, HttpOnly, SameSite browser capability; only that browser can read the hold, attach contact details, start checkout, or poll its confirmation.
 4. **Payment page.** The booking reference is shown immediately. The customer enters name, phone, and email.
 5. **Customer attached and re-priced.** `PATCH /api/bookings/[id]` resolves the customer by look-up-or-create on email (never updating an existing row's name/phone — see [decisions.md](decisions.md)), attaches them, stores the name/phone snapshots, and recomputes the price — **still always at the non-member rate**, regardless of whether that email belongs to a real member. The attach is one-shot: a booking that already has a customer returns `409`.
    - The only thing that can change the total between steps 3 and 5 is an admin editing a rate in that window. The wizard surfaces any change as a confirmation-required "final price is X (was Y)" notice before checkout.
@@ -32,7 +32,7 @@ Same `/book` route, not a separate one.
 
 1. `/book` reads the session **server-side**. If the session role is `member`, it loads that customer and builds a member context (name, email, phone, active-membership flag, and the coverage window plus credit balance of every unexpired term) passed into the wizard.
 2. The wizard is pre-filled, so there is no contact-details step to complete. The rate tier follows the **chosen date**: a day outside every term's coverage is priced non-member and a notice on the date step explains why.
-3. **Single-phase pricing.** `POST /api/bookings` resolves the membership **covering the slot start** itself (`getMembershipActiveAt`), prices at the member rate only when one exists, and attaches `customerId` directly at hold creation. There is no PATCH round-trip.
+3. **Single-phase pricing.** `POST /api/bookings` resolves the membership **covering the slot start** itself (`getMembershipActiveAt`) and reads that term's tier from `MEMBERSHIP_TIER_PLANS`: the tier's `bookingDiscountPercent` comes off the base court/simulator rate (rounded half-up in centavos, never off the guest fee or coaching) and is snapshotted as `Booking.memberDiscountCentavos`; the tier's `advanceBookingDays` bounds how far ahead the slot may be (`manilaCalendarDaysBetween(now, slotStart)`), falling back to `NON_MEMBER_ADVANCE_BOOKING_DAYS` when no term covers the slot. `customerId` is attached directly at hold creation. There is no PATCH round-trip.
 4. The payment step skips straight to a "Booking under {name} ({email})" summary.
 5. Credit redemption is evaluated at this point — see below.
 

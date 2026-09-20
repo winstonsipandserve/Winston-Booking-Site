@@ -27,7 +27,6 @@ export async function GET() {
     pricing: pricingRules
       .filter((pricingRule) => pricingRule.resourceTypeId === resourceType.id)
       .map((pricingRule) => ({
-        rateTier: pricingRule.rateTier,
         durationMinutes: pricingRule.durationMinutes,
         priceCentavos: pricingRule.priceCentavos,
       })),

@@ -19,6 +19,13 @@ export const MAX_GUESTS_MEMBER = 7
 /** Additional guests on any other booking, including the anonymous path. */
 export const MAX_GUESTS_NON_MEMBER = 3
 
+/**
+ * How many days ahead a non-member may book: today (Manila) plus this many calendar days.
+ * Members use MEMBERSHIP_TIER_PLANS[tier].advanceBookingDays for dates their term covers
+ * (docs/business.md → Advance booking window).
+ */
+export const NON_MEMBER_ADVANCE_BOOKING_DAYS = 3
+
 /** Guest cap for a rate tier — see docs/business.md → Guest Fee. */
 export function maxGuestsForRateTier(rateTier: 'member' | 'non_member'): number {
   return rateTier === 'member' ? MAX_GUESTS_MEMBER : MAX_GUESTS_NON_MEMBER

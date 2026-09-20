@@ -6,6 +6,8 @@ import { toPhDateString } from '@/lib/business-hours'
 interface CalendarProps {
   selectedDate: string | null
   onSelectDate: (date: string) => void
+  /** Returns true for a `YYYY-MM-DD` Manila date that may not be booked (beyond the advance window). */
+  isDateDisabled?: (dateKey: string) => boolean
 }
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -40,7 +42,7 @@ function firstWeekday(y: number, monthIndex: number): number {
   return new Date(Date.UTC(y, monthIndex, 1)).getUTCDay()
 }
 
-export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) {
+export default function Calendar({ selectedDate, onSelectDate, isDateDisabled }: CalendarProps) {
   const todayStr = useMemo(() => toPhDateString(new Date()), [])
   const [todayYear, todayMonth] = useMemo(() => {
     const [y, m] = todayStr.split('-').map(Number)
@@ -116,19 +118,20 @@ export default function Calendar({ selectedDate, onSelectDate }: CalendarProps) 
           }
           const dateStr = toDateString(viewYear, viewMonth, day)
           const isPast = dateStr < todayStr
+          const isBlocked = isPast || (isDateDisabled?.(dateStr) ?? false)
           const isSelected = dateStr === selectedDate
 
           return (
             <button
               key={dateStr}
               type="button"
-              disabled={isPast}
-              aria-disabled={isPast}
+              disabled={isBlocked}
+              aria-disabled={isBlocked}
               onClick={() => onSelectDate(dateStr)}
               className={`rounded-none py-2 text-sm transition-colors ${
                 isSelected
                   ? 'bg-brand-dark text-brand-light hover:bg-brand-dark'
-                  : isPast
+                  : isBlocked
                     ? 'cursor-not-allowed text-brand-dark/30'
                     : 'text-brand-dark hover:bg-brand-dark/5'
               }`}

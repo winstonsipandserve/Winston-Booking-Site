@@ -4,7 +4,7 @@ What the application currently does. This is an inventory of built, working func
 
 > **Verification status:** nothing in this project is currently treated as independently verified. QA passes run under an earlier workflow were discarded along with their findings, so any prior claim that a feature was "click-through verified" no longer stands. Re-verify before relying on anything here.
 
-> **Business rules changed on 21 September 2026.** The catalogue and the membership product (Winston Player / Premier / Elite, Founding Members, no credit grant) are built; the tier booking discount, per-tier advance-booking windows, guest passes, and birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
+> **Business rules changed on 21 September 2026.** The catalogue, the membership product (Winston Player / Premier / Elite, Founding Members, no credit grant), the tier booking discount, and the per-tier advance-booking window are built; guest passes and the birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
 
 **See also:** [workflows.md](workflows.md) (how these flows run) · [business.md](business.md) (the rules behind them) · [roadmap.md](roadmap.md) (what is *not* built)
 
@@ -36,7 +36,8 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 - **Announcement gate** before the wizard, showing only active operational announcements from their advance-notice date (or their start when none is set) until their end. Notices whose start is still ahead are tagged **Upcoming** so customers can see that the affected courts remain bookable until then. Urgent, warning, and information notices sort in that order, then newest start date; three notices appear per page with an empty state when none are live.
 - **Five-step wizard** — Sport, Court, Date & Time, Add-Ons, Summary — with a step indicator and full back/forward state preservation.
 - **Live availability**: the time-slot grid greys out occupied slots before submit.
-- **Member-aware**: a logged-in member with an active membership gets member pricing and a pre-filled contact step, in a single pricing phase. Anonymous bookers are priced at the non-member rate throughout.
+- **Member-aware**: a logged-in member whose term covers the slot gets their tier's discount off the base court/simulator rate (5 / 10 / 15%), member coaching rates, and a pre-filled contact step, in a single pricing phase. The Sport step's pricing modal shows the base rate struck through beside the member price, and the summary and confirmation show a "Member discount" line. Anonymous bookers are priced at the base rate throughout.
+- **Advance-booking window**: the calendar disables dates beyond today + 3 days for non-members and today + 5 / 7 / 10 days for Player / Premier / Elite terms (a date a term does not cover falls back to the non-member window), with a note stating the window; `POST /api/bookings` rejects anything beyond it. Admin reschedules are not bound by the window.
 - **Guest count** control with the universal ₱100-per-guest fee, on every booking, capped at 7 guests when a membership term covers the slot and 3 otherwise (the **+** control disables at the cap and the API rejects anything above it).
 - **Add-ons**: coaching only (with pax selection on courts).
 - **Full-coverage credit redemption** for members whose balance covers the whole total — confirms instantly with no payment redirect.
@@ -114,7 +115,7 @@ List with a working search bar and a filter modal, both server-side and composab
 
 ### Resources & Pricing
 
-Tabbed as Courts / Simulators / Guest Fee. Each resource type is a collapsible card; the first card in a tab opens by default, and collapsed cards summarise the base member/non-member rate and any disabled resources in the header.
+Tabbed as Courts / Simulators / Guest Fee. Each resource type is a collapsible card; the first card in a tab opens by default, and collapsed cards summarise the base rate and any disabled resources in the header. Court and simulator rates have a single **Base rate** column with a caption stating the fixed tier discounts; coaching keeps Member / Non-Member columns.
 
 - Resources are **edit and disable/enable only** — no create or delete. A resource disabled by an announcement is labelled as such.
 - Pricing and add-on rows have full create/edit/delete, gated by the valid-combination allow-list, so an unoffered combination has no "+ Add" control at all.
