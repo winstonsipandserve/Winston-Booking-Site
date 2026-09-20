@@ -18,6 +18,24 @@ Never yet run under real conditions:
 
 ---
 
+## Client Update — 21 September 2026 (documented, not yet built)
+
+The client revised the membership product, rate card, inventory, and add-ons. [business.md](business.md) now states the new rules; the code still implements the old ones. Each item below is one unit of work to prioritise; update the matching sections of [features.md](features.md), [workflows.md](workflows.md), and [database.md](database.md) as it lands, and remove their banners once all are done.
+
+1. **Membership tiers and pricing.** `MembershipTier` becomes `player` / `premier` / `elite` at ₱3,500 / ₱6,500 / ₱9,500, all 12-month terms; drop the activation-fee / credit split (`Membership.activationFeeCentavos`, the `creditCentavos` plan field); add a Founding flag, a counter over paid Premier activations capped at 100, and the ₱5,000 first-year Founding price. Touches `src/lib/membership-pricing.ts`, `prisma/schema.prisma`, `src/lib/format.ts` tier labels, `TierCards.tsx`, `/membership/pay/[id]`, `/account/renew`, `/membership/renew/[id]`, `MembershipCheckoutSummary.tsx`, `src/lib/resend.ts` copy, `membership-certificate-pdf.tsx`, the `dashboard-data.ts` by-tier chart, and the check-in result cards.
+2. **Tier booking discount.** Replace member `PricingRule` rows with a percentage applied in `src/lib/booking-pricing.ts` from the tier of the term covering the slot (see [decisions.md](decisions.md)); wizard price display; `pricing-rule-combos.ts` allow-list; admin `ResourcesTabs.tsx` loses the member column for courts and simulators but keeps it for coaching.
+3. **Inventory and base rates.** Seed and schema: remove `tennis_court`; pickleball courts 3 → 2, pickleball simulators 2 → 1, tennis simulators 1 → 2, golf simulators 2 → 1; new base rates; remove the 15-minute simulator tiers and the 30- and 90-minute golf tiers. Touches `prisma/seed.ts`, the `StatsBar.tsx` constants, `Facilities.tsx`, `SportStep.tsx`, `dashboard-data.ts`, and any copy naming tennis courts. Verify the `booking_no_overlap` constraint and RLS after the migration.
+4. **Guest fee ₱100 and the 7-guest cap.** Seed value; the wizard's guest-count maximum; validation in `POST /api/bookings` and `PATCH /api/bookings/[id]`.
+5. **Ball boy removal.** `AddOnServiceSlug`, seed, `AddOnsStep.tsx`, `ReviewStep.tsx`, `PaymentStep.tsx`, `BookingSummary.tsx`, `BookingConfirmation.tsx`, `booking-confirmation.ts`, both booking emails, the admin booking detail, `ResourcesTabs.tsx`, `pricing-rule-combos.ts`.
+6. **Advance booking window.** Per-tier constants (non-member 3, Player 5, Premier 7, Elite 10 days from today, Manila); the Date & Time step disables dates outside the window; `POST /api/bookings`, `/api/availability`, and the admin reschedule lookup reject them. The window follows the term covering the slot, falling back to the non-member window.
+7. **Guest passes.** A per-term allowance and consumption record (a counter on `Membership` or a ledger), a wizard control to apply passes to a booking's guests, a snapshot of passes used on the booking, the account page balance, and the admin member detail.
+8. **Birthday-month court hour.** Date of birth on the application form, `MembershipApplication`, and `Customer`; once-per-term redemption on a slot inside the birthday month; wizard surfacing. **Blocked on the client's answer about which resources count** (Open Questions below).
+9. **Credit without a grant.** The webhook's membership branch stops writing an `activation` / `renewal` credit entry and the membership no longer starts with a balance; top-ups, redemption, and the ledger stay. Update every surface that promises F&B credit — account status card, certificate PDF, activation and renewal emails, checkout summaries, `/membership` copy. The "renewal credit is displayed as the current balance" bug below becomes moot once no grant exists.
+10. **Marketing copy.** `/membership` tier cards and perks, and Home / About / Facilities mentions of tennis courts or nine units.
+11. **Documentation follow-through.** Re-align `features.md`, `workflows.md`, and `database.md` (enum tables, seed counts, worked examples) as each item above ships.
+
+---
+
 ## Known Bugs
 
 ### Correctness
@@ -31,7 +49,7 @@ Never yet run under real conditions:
 
 - The membership approve/reject route reports its email as sent unconditionally. The underlying senders swallow send failures internally and the route never checks their result, so a real delivery failure is invisible to the admin. No fix scoped yet.
 - Several date-formatting calls in the email, webhook, and membership-lookup modules use a Philippine locale with no explicit time zone, and so fall back to the server runtime's zone. Flagged as likely correctness bugs, not yet confirmed.
-- **Renewal credit is displayed as the current balance instead of the original grant.** Membership display fields look only for an `activation` ledger row. A renewed membership whose initial row is correctly marked `renewal` showed “₱2,850 F&B credit” after a ₱650 booking instead of the original ₱3,500 grant; check-in likewise showed ₱2,850 remaining out of ₱2,850.
+- **Renewal credit is displayed as the current balance instead of the original grant.** Membership display fields look only for an `activation` ledger row. A renewed membership whose initial row is correctly marked `renewal` showed “₱2,850 F&B credit” after a ₱650 booking instead of the original ₱3,500 grant; check-in likewise showed ₱2,850 remaining out of ₱2,850. **Superseded** by Client Update item 9 — once no credit is granted there is no "original grant" to display; do not fix separately.
 
 ### Dead code
 
@@ -58,6 +76,14 @@ Each of these is a conscious scope limit, not an oversight.
 ## Open Questions
 
 Genuinely undecided, needing a business or client answer.
+
+**From the 21 September 2026 client update** (each is documented in [business.md](business.md) with the stated provisional reading):
+
+- **Birthday "court hour" scope.** The pickleball courts only, or any 60-minute booking including simulators? Documented as pickleball courts. Blocks Client Update item 8.
+- **Member guest cap.** The client stated the 7-guest maximum for non-members. Documented as applying to members too.
+- **Discount scope.** Does the 5 / 10 / 15% tier discount also apply to coaching or the guest fee? Documented as base court/simulator rate only.
+- **Founding count.** Documented as the first 100 *paid* Premier activations, counted when the webhook confirms payment, and as a permanent flag that survives a lapse and later renewal.
+- **Sip & Serve 10%.** How the café/bar discount is honoured before the POS extension exists. Documented as an offline, at-the-counter perk.
 
 - **PayMongo account provenance.** The client has not created their own PayMongo account. The keys currently in use are Arjay's personal test-mode account. The client's own **test** keys must be swapped in before promoting to staging, and **live** keys before promoting to production. This swap must be explicitly confirmed before any payment-touching promotion to production.
 - **Enabled payment methods.** Checkout requests GCash and Maya only. Verify both

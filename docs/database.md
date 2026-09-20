@@ -4,6 +4,8 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 `prisma/schema.prisma` is the source of truth. This document explains it — it does not replace reading it.
 
+> **Business rules changed on 21 September 2026** — new membership tiers and pricing, new base rates and inventory (no tennis court), per-tier advance-booking windows, guest passes, a ₱100 guest fee, and the removal of ball boy. This document describes the schema **as currently built**, which still encodes the previous rules (`MembershipTier`, `ResourceTypeSlug.tennis_court`, `AddOnServiceSlug.ball_boy`, the seed counts). [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the implementation gap. Update the affected sections here as each item lands.
+
 **See also:** [architecture.md](architecture.md) (how the app is built) · [decisions.md](decisions.md) (why the schema looks like this) · [business.md](business.md) (the rules the data encodes)
 
 ---

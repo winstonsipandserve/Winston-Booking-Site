@@ -4,6 +4,8 @@ What the application currently does. This is an inventory of built, working func
 
 > **Verification status:** nothing in this project is currently treated as independently verified. QA passes run under an earlier workflow were discarded along with their findings, so any prior claim that a feature was "click-through verified" no longer stands. Re-verify before relying on anything here.
 
+> **Business rules changed on 21 September 2026** — new membership tiers and pricing, new base rates and inventory (no tennis court), per-tier advance-booking windows, guest passes, a ₱100 guest fee, and the removal of ball boy. This document describes the application **as currently built**, which still implements the previous rules. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the implementation gap. Update the affected sections here as each item lands.
+
 **See also:** [workflows.md](workflows.md) (how these flows run) · [business.md](business.md) (the rules behind them) · [roadmap.md](roadmap.md) (what is *not* built)
 
 ---

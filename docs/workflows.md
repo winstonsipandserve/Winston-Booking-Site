@@ -2,6 +2,8 @@
 
 How the important processes actually run, end to end.
 
+> **Business rules changed on 21 September 2026** — new membership tiers and pricing, new base rates and inventory (no tennis court), per-tier advance-booking windows, guest passes, a ₱100 guest fee, and the removal of ball boy. This document describes the application **as currently built**, which still implements the previous rules. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the implementation gap. Update the affected sections here as each item lands.
+
 **See also:** [business.md](business.md) (the rules these flows enforce) · [features.md](features.md) (the screens involved) · [database.md](database.md) (the records written) · [decisions.md](decisions.md) (why they work this way)
 
 ---

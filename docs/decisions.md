@@ -82,7 +82,33 @@ The allow-list of valid combinations is a **single source of truth in code**, en
 
 **Why:** the client changes prices; that must not require a deploy. But the shape of what *can* be priced is a business decision, not a free-for-all.
 
-**Membership tier prices are the deliberate exception** — fixed in code, not admin-editable.
+**Membership tier prices, tier discount percentages, and the Founding Member cap of 100 are the deliberate exception** — fixed in code, not admin-editable.
+
+### Member pricing is a tier percentage off the base rate, not separate rows
+
+`PricingRule` holds one **base** rate per resource-type / duration combination. A member's price is derived at booking time: base rate × (1 − their tier's discount), using the tier of the membership term that covers the slot. Coaching keeps its explicit member / non-member rows and is not discounted; the guest fee is not discounted either.
+
+**Why:** the client expresses member pricing as 5% / 10% / 15% off, not as a second rate card. Three tiers × every duration as separate rows would triple the admin's editing surface and let the tiers drift apart from the base rate the client actually publishes.
+
+**What breaks if undone:** every base-rate edit would have to be mirrored into three member rows by hand, and a missed one silently misprices a tier. The `RateTier` dimension stays only for coaching rows.
+
+> Recorded 21 September 2026 ahead of implementation. Until the pricing code lands, member `PricingRule` rows still exist — see [roadmap.md](roadmap.md) → Client Update.
+
+### Founding Member is a flag, not a tier
+
+A Founding Member is a Winston Premier membership with a permanent `isFounding`-style marker, set when one of the first 100 paid Premier activations is confirmed.
+
+**Why:** every Premier rule — window, passes, discount, birthday hour, renewal price — applies unchanged. Only the first-year price and the merchandise differ, and the 100-place cap is a count over paid Premier activations. A fourth enum value would duplicate every Premier branch for two differences.
+
+**What breaks if undone:** tier-keyed logic (discount tables, reports, renewal pricing) would need a Founding case everywhere, and renewing a Founding Member into "Premier" would look like a tier change.
+
+### Tennis court and ball boy are removed, not disabled
+
+The `tennis_court` resource type, its resources and rates, and the `ball_boy` add-on are dropped from the seed and schema rather than kept as disabled rows.
+
+**Why:** the site is unpublished with no real customer data, so there is no booking history to protect. Disable-don't-delete exists to preserve history; with none, keeping dead rows and enum values only leaves traps for the allow-list, the wizard, and reporting.
+
+**What breaks if undone:** a disabled tennis court would still appear in admin pricing, the Sport step, and revenue-by-resource-type charts, and the allow-list would keep offering ball boy cells that the business no longer sells.
 
 ### The guest fee gets its own table
 
