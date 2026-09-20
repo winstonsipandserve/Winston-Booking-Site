@@ -2,12 +2,12 @@ import type { MembershipTier } from '@prisma/client'
 
 export function formatMembershipTier(tier: MembershipTier): string {
   switch (tier) {
-    case 'three_month':
-      return '3-Month'
-    case 'six_month':
-      return '6-Month'
-    case 'twelve_month':
-      return '12-Month'
+    case 'player':
+      return 'Winston Player'
+    case 'premier':
+      return 'Winston Premier'
+    case 'elite':
+      return 'Winston Elite'
   }
 }
 
@@ -16,6 +16,11 @@ export function formatCentavos(centavos: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
+}
+
+/** Whole-peso display for plan prices that never carry centavos, e.g. "₱6,500". */
+export function formatWholePesos(centavos: number): string {
+  return `₱${Math.round(centavos / 100).toLocaleString('en-PH')}`
 }
 
 export function parseCentavos(pesosInput: string): number | null {

@@ -3,9 +3,9 @@ import { formatCentavos } from '@/lib/format'
 interface MembershipCheckoutSummaryProps {
   tierLabel: string
   customerName?: string
-  activationFeeCentavos: number
-  creditCentavos: number
   totalCentavos: number
+  /** Founding Member pricing — shows the standard price this replaces. */
+  founding?: { standardCentavos: number } | null
   bordered?: boolean
   totalHighlighted?: boolean
   compact?: boolean
@@ -14,9 +14,8 @@ interface MembershipCheckoutSummaryProps {
 export default function MembershipCheckoutSummary({
   tierLabel,
   customerName,
-  activationFeeCentavos,
-  creditCentavos,
   totalCentavos,
+  founding = null,
   bordered = true,
   totalHighlighted = true,
   compact = false,
@@ -38,17 +37,18 @@ export default function MembershipCheckoutSummary({
 
       <dl className="flex flex-col divide-y divide-brand-dark/10">
         <div className={`flex justify-between gap-4 ${rowPadding}`}>
-          <dt className="text-sm text-brand-dark/65">Activation Fee</dt>
-          <dd className="text-right font-medium tabular-nums text-brand-dark/85">
-            {formatCentavos(activationFeeCentavos)}
-          </dd>
+          <dt className="text-sm text-brand-dark/65">Term</dt>
+          <dd className="text-right font-medium tabular-nums text-brand-dark/85">12 months</dd>
         </div>
-        <div className={`flex justify-between gap-4 ${rowPadding}`}>
-          <dt className="text-sm text-brand-dark/65">F&amp;B Credit</dt>
-          <dd className="text-right font-medium tabular-nums text-brand-dark/85">
-            {formatCentavos(creditCentavos)}
-          </dd>
-        </div>
+        {founding && (
+          <div className={`flex justify-between gap-4 ${rowPadding}`}>
+            <dt className="text-sm text-brand-dark/65">Founding Member price</dt>
+            <dd className="text-right font-medium tabular-nums text-brand-dark/85">
+              <span className="text-brand-dark/50 line-through">{formatCentavos(founding.standardCentavos)}</span>{' '}
+              {formatCentavos(totalCentavos)}
+            </dd>
+          </div>
+        )}
         {!totalHighlighted && (
           <div className={`flex justify-between gap-4 ${rowPadding}`}>
             <dt className="text-sm text-brand-dark/65">Total Due</dt>

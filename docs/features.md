@@ -4,7 +4,7 @@ What the application currently does. This is an inventory of built, working func
 
 > **Verification status:** nothing in this project is currently treated as independently verified. QA passes run under an earlier workflow were discarded along with their findings, so any prior claim that a feature was "click-through verified" no longer stands. Re-verify before relying on anything here.
 
-> **Business rules changed on 21 September 2026.** The catalogue (inventory, base rates, ₱100 guest fee and guest caps, ball boy removed) is built; the new membership tiers, tier booking discount, per-tier advance-booking windows, guest passes, and birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap. Update the affected sections here as each item lands.
+> **Business rules changed on 21 September 2026.** The catalogue and the membership product (Winston Player / Premier / Elite, Founding Members, no credit grant) are built; the tier booking discount, per-tier advance-booking windows, guest passes, and birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
 
 **See also:** [workflows.md](workflows.md) (how these flows run) · [business.md](business.md) (the rules behind them) · [roadmap.md](roadmap.md) (what is *not* built)
 
@@ -20,7 +20,7 @@ Six pages, all mobile-responsive.
 | **About** (`/about`) | Hero, our story, values, call to action |
 | **Café & Bar** (`/cafe-bar`) | Café/Bar mode toggle, menu highlights, gallery, speakeasy feature |
 | **News** (`/news`) | Published and scheduled-by-date editorial posts with four category filters. Featured posts sort first and the newest featured post receives the large-card treatment; cards link to full articles at `/news/[slug]` |
-| **Membership** (`/membership`) | Hero, tier cards, application process, apply call to action |
+| **Membership** (`/membership`) | Hero, tier cards (Winston Player / Premier / Elite with their perks; Premier shows the Founding Member offer and live seats-left count while seats remain), application process, apply call to action |
 | **Book Now** (`/book`) | The booking wizard |
 
 The navbar is fixed, transparent over a hero and solid on scroll for Home, About, Membership, Café & Bar, and News. `/book` has no hero and forces it permanently solid.
@@ -51,11 +51,11 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 Gated on a member session; anything else redirects to login.
 
 - **Profile** — name, email, phone.
-- **Membership status card** — tier, expiry, and current credit balance.
+- **Membership status card** — plan (with a Founding Member note where applicable), the tier's advance window / guest passes / discount, expiry, and current booking-credit balance.
 - **Check-in credentials** — QR code plus a 6-digit fallback code, with a regenerate action.
-- **Top Up F&B Credit** — four preset amounts in a modal, shown only for an active membership. Re-clicking resumes an unfinished top-up for the same amount instead of opening another PayMongo session.
+- **Top Up Booking Credit** — four preset amounts in a modal, shown only for an active membership. Re-clicking resumes an unfinished top-up for the same amount instead of opening another PayMongo session.
 - **Renew Membership** — shown for an expired membership; **Renew Early** appears for an active one within 14 days of its end. A paid, queued renewal is shown as a note with its end date instead.
-- **Credit activity** — the current term's credit ledger (activation/renewal grants, top-ups, and booking redemptions with the booking each one paid for), newest first, paginated five per page. Shown only when a membership exists; its entries sum to the balance in the status card because both read the same term.
+- **Credit activity** — the current term's credit ledger (top-ups and booking redemptions with the booking each one paid for), newest first, paginated five per page. Shown only when a membership exists; its entries sum to the balance in the status card because both read the same term.
 - **Recent bookings** — the 50 most recent, with real booking data. Cancelled rows that were never paid (abandoned holds, including any a stranger created under the member's email) are hidden.
 - **Renewal and top-up confirmation pages** that poll for payment completion.
 
@@ -78,9 +78,9 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 ## Membership
 
-- **Application** (`/membership/apply`) — three government ID images upload directly to private storage through server-issued, single-use URLs, then are decoded, stripped of metadata, and re-encoded on the server before an application is created. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Upload sessions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
+- **Application** (`/membership/apply`) — the applicant picks a plan (Premier shows the Founding price and seats left while any remain); three government ID images upload directly to private storage through server-issued, single-use URLs, then are decoded, stripped of metadata, and re-encoded on the server before an application is created. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Upload sessions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
 - **Admin review** — approve or reject, with a mandatory rejection reason.
-- **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller. The link's `?token=` is checked before showing the checkout summary, so an invalid/superseded/expired link shows an error instead of a payment form — same pre-check pattern as `/activate`.
+- **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller. The page shows the price checkout will charge — the pending payment row's snapshot, else a live Founding-aware quote — and the checkout route prices the row under the Founding seat lock (`src/lib/membership-founding.ts`). The link's `?token=` is checked before showing the checkout summary, so an invalid/superseded/expired link shows an error instead of a payment form — same pre-check pattern as `/activate`.
 - **Self-service renewal** (`/account/renew`, session-gated) and **admin-initiated renewal links** (`/membership/renew/[id]`, gated the same `?token=` way as the approval payment link — clicking "Send Renewal Link" again re-sends a fresh token for an already-queued pending payment, doubling as the resend action for an expired link).
 - **Admin-initiated activation resend** — on a member's detail page, if they've never set a password (e.g. their original activation link expired unused), an admin can issue a fresh 48-hour activation link, which retires any earlier unused one.
 - **Admin-initiated payment-link resend** — on an application's detail page, while it's awaiting payment, an admin can issue a fresh 48-hour payment link, which supersedes any earlier unused one.
@@ -106,7 +106,7 @@ The sidebar can be folded to an icon rail from the Menu row (or the topbar when 
 - **Booking-activity calendar** showing confirmed-booking volume per day through a five-step blue intensity scale, with previous/next month navigation.
 - **Recent Bookings** and **Pending Applications** lists.
 
-Booking revenue and membership revenue are counted separately and cannot overlap: booking revenue counts only payments attached to a booking, while membership revenue counts activation/renewal payments plus top-ups.
+Booking revenue and membership revenue are counted separately and cannot overlap: booking revenue counts only payments attached to a booking, while membership revenue counts activation/renewal payments (by tier: Player / Premier / Elite) plus top-ups.
 
 ### Bookings
 

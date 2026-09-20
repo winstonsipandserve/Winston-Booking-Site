@@ -31,7 +31,7 @@ function buildPalette(dark: boolean) {
     legendText: token('axis', dark),
     revenueLine: token('primary', dark),
     sportColors: { tennis: token('primary', dark), pickleball: token('secondary', dark), golf: token('accent', dark) },
-    membershipTierColors: { threeMonth: token('tier-3mo', dark), sixMonth: token('tier-6mo', dark), twelveMonth: token('tier-12mo', dark) },
+    membershipTierColors: { player: token('tier-player', dark), premier: token('tier-premier', dark), elite: token('tier-elite', dark) },
     topUpColor: token('topup', dark),
   }
 }
@@ -204,30 +204,30 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                 <Legend wrapperStyle={{ fontSize: '0.75rem', color: palette.legendText }} />
                 <Area
                   type="monotone"
-                  dataKey="threeMonthCentavos"
+                  dataKey="playerCentavos"
                   stackId="tier"
-                  stroke={palette.membershipTierColors.threeMonth}
-                  fill={palette.membershipTierColors.threeMonth}
+                  stroke={palette.membershipTierColors.player}
+                  fill={palette.membershipTierColors.player}
                   fillOpacity={0.7}
-                  name="3-Month"
+                  name="Winston Player"
                 />
                 <Area
                   type="monotone"
-                  dataKey="sixMonthCentavos"
+                  dataKey="premierCentavos"
                   stackId="tier"
-                  stroke={palette.membershipTierColors.sixMonth}
-                  fill={palette.membershipTierColors.sixMonth}
+                  stroke={palette.membershipTierColors.premier}
+                  fill={palette.membershipTierColors.premier}
                   fillOpacity={0.7}
-                  name="6-Month"
+                  name="Winston Premier"
                 />
                 <Area
                   type="monotone"
-                  dataKey="twelveMonthCentavos"
+                  dataKey="eliteCentavos"
                   stackId="tier"
-                  stroke={palette.membershipTierColors.twelveMonth}
-                  fill={palette.membershipTierColors.twelveMonth}
+                  stroke={palette.membershipTierColors.elite}
+                  fill={palette.membershipTierColors.elite}
                   fillOpacity={0.7}
-                  name="12-Month"
+                  name="Winston Elite"
                 />
               </AreaChart>
             ) : view === 'membership' && breakdown === 'top-ups' ? (

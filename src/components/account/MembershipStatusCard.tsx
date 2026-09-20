@@ -9,8 +9,20 @@ import Modal from '@/components/ui/Modal'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
 import MembershipTopUpButtons from '@/components/account/MembershipTopUpButtons'
 
-// Perks copied verbatim from PROJECT_CONTEXT.md's Membership Tiers → Perks line.
-const PERKS = ['Priority bookings', 'Facility use', 'Complimentary F&B (via credit)', 'Exclusive event access']
+// System-enforced perks come from the tier (docs/business.md → Membership); the rest is
+// honoured at the venue and listed on /membership.
+function tierPerks(membership: {
+  advanceBookingDays: number
+  guestPasses: number
+  bookingDiscountPercent: number
+}): string[] {
+  return [
+    `${membership.advanceBookingDays}-day advance booking`,
+    `${membership.guestPasses} guest passes / year`,
+    `${membership.bookingDiscountPercent}% off bookings`,
+    '10% off Sip & Serve',
+  ]
+}
 
 type MembershipStatusCardProps =
   | {
@@ -20,8 +32,10 @@ type MembershipStatusCardProps =
   | {
       membership: {
         tierName: string
-        activationCentavos: number
-        creditCentavos: number
+        isFounding: boolean
+        bookingDiscountPercent: number
+        guestPasses: number
+        advanceBookingDays: number
         remainingCreditCentavos: number
         expiryDateLabel: string
         isExpired: boolean
@@ -112,15 +126,16 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
       </div>
 
       <p className="mt-3 text-sm text-accent-light/80">
-        {formatCentavos(membership.activationCentavos)} activation +{' '}
-        {formatCentavos(membership.creditCentavos)} F&amp;B credit
+        {membership.isFounding
+          ? 'Founding Member — your Premier price is locked in for every renewal.'
+          : 'Annual membership.'}
       </p>
 
       <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-start md:justify-between md:gap-8">
         <div className="flex flex-1 flex-col">
           <div className="border-t border-brand-light/15 pt-4">
             <div className="flex items-baseline justify-between gap-4">
-              <span className="text-accent-light/70">Credit Balance</span>
+              <span className="text-accent-light/70">Booking Credit</span>
               <span className="text-lg font-medium text-neutral-100">
                 {formatCentavos(membership.remainingCreditCentavos)}
               </span>
@@ -133,7 +148,7 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-brand-light/15 pt-4">
-            {PERKS.map((perk) => (
+            {tierPerks(membership).map((perk) => (
               <span key={perk} className="flex items-center gap-1.5 text-xs text-accent-light/90">
                 <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-accent-primary">
                   <CheckIcon className="h-3 w-3" />
@@ -285,7 +300,7 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
         </div>
       </Modal>
 
-      <Modal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} title="Top Up F&B Credit">
+      <Modal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} title="Top Up Booking Credit">
         {topUpModalOpen && <MembershipTopUpButtons />}
       </Modal>
     </div>

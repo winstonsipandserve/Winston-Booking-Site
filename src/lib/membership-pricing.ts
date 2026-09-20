@@ -1,15 +1,35 @@
 import type { MembershipTier } from '@prisma/client'
 import { endOfManilaDayMonthsFrom } from '@/lib/manila-date'
 
-// Fixed plan prices (see PROJECT_CONTEXT.md → Membership Tiers). Not admin-editable —
-// unlike PricingRule/GuestFeeRule, these are flat plan prices, not DB-driven rates.
+// Fixed plan prices (docs/business.md → Membership). Not admin-editable — unlike
+// PricingRule/GuestFeeRule, these are flat plan prices, not DB-driven rates. Every plan is a
+// 12-month term and the price is the membership fee in full: no credit is granted.
 export const MEMBERSHIP_TIER_PLANS: Record<
   MembershipTier,
-  { totalCentavos: number; activationFeeCentavos: number; creditCentavos: number; months: number }
+  { name: string; totalCentavos: number; months: number; bookingDiscountPercent: number; guestPasses: number; advanceBookingDays: number }
 > = {
-  three_month: { totalCentavos: 550_000, activationFeeCentavos: 200_000, creditCentavos: 350_000, months: 3 },
-  six_month: { totalCentavos: 1_250_000, activationFeeCentavos: 600_000, creditCentavos: 650_000, months: 6 },
-  twelve_month: { totalCentavos: 2_250_000, activationFeeCentavos: 1_050_000, creditCentavos: 1_200_000, months: 12 },
+  player: { name: 'Winston Player', totalCentavos: 350_000, months: 12, bookingDiscountPercent: 5, guestPasses: 2, advanceBookingDays: 5 },
+  premier: { name: 'Winston Premier', totalCentavos: 650_000, months: 12, bookingDiscountPercent: 10, guestPasses: 4, advanceBookingDays: 7 },
+  elite: { name: 'Winston Elite', totalCentavos: 950_000, months: 12, bookingDiscountPercent: 15, guestPasses: 6, advanceBookingDays: 10 },
+}
+
+export const MEMBERSHIP_TIER_ORDER: MembershipTier[] = ['player', 'premier', 'elite']
+
+/** Founding Members: the first 100 paid Winston Premier activations. */
+export const FOUNDING_MEMBER_CAP = 100
+
+/** Premier price for a Founding Member — on activation and on every later Premier renewal. */
+export const FOUNDING_PREMIER_PRICE_CENTAVOS = 500_000
+
+/** Standard price of a plan, ignoring Founding status. */
+export function standardTierPriceCentavos(tier: MembershipTier): number {
+  return MEMBERSHIP_TIER_PLANS[tier].totalCentavos
+}
+
+/** Label for a paid tier, e.g. "Winston Premier · Founding Member". */
+export function formatMembershipPlanLabel(tier: MembershipTier, isFounding: boolean): string {
+  const name = MEMBERSHIP_TIER_PLANS[tier].name
+  return isFounding ? `${name} · Founding Member` : name
 }
 
 // A term runs from its start to 23:59:59.999 Asia/Manila on the same calendar day

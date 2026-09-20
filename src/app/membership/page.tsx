@@ -4,13 +4,18 @@ import MembershipHero from '@/components/membership/MembershipHero'
 import TierCards from '@/components/membership/TierCards'
 import ApplicationProcess from '@/components/membership/ApplicationProcess'
 import ApplyCta from '@/components/membership/ApplyCta'
+import { foundingSeatsRemaining } from '@/lib/membership-founding'
 
-export default function MembershipPage() {
+// Reads the live Founding seat count, so never prerender.
+export const dynamic = 'force-dynamic'
+
+export default async function MembershipPage() {
+  const seatsRemaining = await foundingSeatsRemaining()
   return (
     <>
       <Navbar />
       <MembershipHero />
-      <TierCards />
+      <TierCards foundingSeatsRemaining={seatsRemaining} />
       <ApplicationProcess />
       <ApplyCta />
       <Footer />

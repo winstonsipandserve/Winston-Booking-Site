@@ -1,7 +1,7 @@
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { MEMBERSHIP_TIER_PLANS, formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { quoteMembershipPrice, withFoundingSeatLock } from '@/lib/membership-founding'
 import { getRenewalEligibility } from '@/lib/membership-current'
 import { sendRenewalPaymentLinkEmail } from '@/lib/resend'
 import { logAdminActivity } from '@/lib/admin-activity-log'
@@ -65,20 +65,25 @@ export async function POST(
     orderBy: { createdAt: 'desc' },
   })
 
+  // A new row is priced under the Founding seat lock (src/lib/membership-founding.ts).
   const membershipPayment = existingPending
     ? existingPending
-    : await prisma.membershipPayment.create({
-        data: {
-          customerId: application.customerId,
-          applicationId: null,
-          tier,
-          amountCentavos: MEMBERSHIP_TIER_PLANS[tier].totalCentavos,
-          status: 'pending',
-          initiatedByAdminId: activeSession.adminUser.id,
-        },
+    : await withFoundingSeatLock(async (tx) => {
+        const quote = await quoteMembershipPrice(tx, application.customerId, tier)
+        return tx.membershipPayment.create({
+          data: {
+            customerId: application.customerId,
+            applicationId: null,
+            tier,
+            amountCentavos: quote.amountCentavos,
+            isFounding: quote.isFounding,
+            status: 'pending',
+            initiatedByAdminId: activeSession.adminUser.id,
+          },
+        })
       })
 
-  const tierName = formatMembershipTier(membershipPayment.tier)
+  const tierName = formatMembershipPlanLabel(membershipPayment.tier, membershipPayment.isFounding)
 
   const { rawToken, tokenHash, expiresAt } = generatePaymentLinkToken()
 

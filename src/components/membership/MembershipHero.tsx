@@ -11,9 +11,9 @@ export default function MembershipHero() {
         </h1>
 
         <p className="mt-6 max-w-xl text-brand-light/80">
-          Membership means priority access to the courts and bays, full run of the facility,
-          an F&amp;B credit to spend at the café and bar, and a seat at our exclusive events —
-          all bundled into one plan.
+          Membership means booking ahead of everyone else, a discount on every court and bay,
+          complimentary guest passes, 10% off at the café and bar, and a seat at our
+          exclusive events — all in one annual plan.
         </p>
       </div>
     </section>

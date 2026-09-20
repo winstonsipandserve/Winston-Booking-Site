@@ -4,7 +4,7 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 `prisma/schema.prisma` is the source of truth. This document explains it — it does not replace reading it.
 
-> **Business rules changed on 21 September 2026.** The catalogue (inventory, base rates, ₱100 guest fee, ball boy removed) is built; `MembershipTier` still carries the previous 3 / 6 / 12-month plans and member `PricingRule` rows still exist as a stopgap until the tier discount lands. This document describes the schema **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap. Update the affected sections here as each item lands.
+> **Business rules changed on 21 September 2026.** The catalogue and the membership product (tiers, Founding flag, no credit grant) are built; member `PricingRule` rows still exist as a stopgap until the tier discount lands, and guest passes, advance windows, and the birthday hour have no schema yet. This document describes the schema **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
 
 **See also:** [architecture.md](architecture.md) (how the app is built) · [decisions.md](decisions.md) (why the schema looks like this) · [business.md](business.md) (the rules the data encodes)
 
@@ -57,9 +57,8 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 | `RateTier` | `member`, `non_member` |
 | `BookingStatus` | `pending_payment`, `confirmed`, `cancelled` |
 | `ApplicationStatus` | `pending`, `approved`, `rejected` |
-| `MembershipTier` | `three_month`, `six_month`, `twelve_month` |
-| `MembershipStatus` | `active`, `expired` |
-| `CreditTransactionReason` | `activation`, `renewal`, `booking_redemption`, `top_up` |
+| `MembershipTier` | `player`, `premier`, `elite` |
+| `CreditTransactionReason` | `booking_redemption`, `top_up` |
 | `PaymentMethod` | `paymongo`, `membership_credit`, `cash`, `manual_online` |
 | `PaymentStatus` | `pending`, `paid`, `failed` |
 | `AdminRole` | `admin` (one value today, room for more) |
@@ -181,6 +180,8 @@ Because the constraint ignores `cancelled` rows only, stale pending holds must b
 
 **`MembershipPayment`** — tier activation and renewal payments, deliberately a **separate model** rather than a link off the booking-scoped `Payment`.
 
+- `isFounding` — the row was priced as a Founding Member (Premier at ₱5,000). Decided when the row is created, under the advisory lock in `src/lib/membership-founding.ts`, and copied onto the `Membership` when the webhook confirms payment. An unpaid Founding row created inside the payment-link lifetime (48 hours) holds a Founding seat.
+
 - No unique constraint on `applicationId`: multiple rows can exist per application over time, one per checkout attempt.
 - `tier` and `amountCentavos` are a **priced snapshot at creation**, independent of later changes to the tier plans.
 - `applicationId` is nullable, supporting self-service renewal (a renewal has no application).
@@ -190,7 +191,10 @@ Because the constraint ignores `cancelled` rows only, stale pending holds must b
 
 ## Membership & Credit
 
-**`Membership`** — `tier`, `status`, `startDate`, `endDate`, `activationFeeCentavos`, and `creditBalanceCentavos`.
+**`Membership`** — `tier`, `isFounding`, `startDate`, `endDate`, and `creditBalanceCentavos`.
+
+- `isFounding` — a permanent Founding Member flag on a Premier term (a flag, not a tier — see [decisions.md](decisions.md)). Set from the paying `MembershipPayment`.
+- There is no activation fee and no credit grant: the payment amount is the plan price in full, and `creditBalanceCentavos` starts at 0. Membership rows carry no `status` column; `endDate` alone decides liveness.
 
 - `applicationId` is nullable and unique — null for renewals created without an application.
 - `creditBalanceCentavos` is a **cached running total, not the source of truth.**
@@ -198,13 +202,13 @@ Because the constraint ignores `cancelled` rows only, stale pending holds must b
 
 **`MembershipCreditTransaction`** — the actual source of truth for credit. Immutable, `createdAt`-only.
 
-- `amountCentavos` is **positive for credits** (activation, renewal, top-up) and **negative for debits** (booking redemption), so `SUM(amountCentavos)` per membership always recovers the correct balance regardless of reason.
+- `amountCentavos` is **positive for credits** (top-up) and **negative for debits** (booking redemption), so `SUM(amountCentavos)` per membership always recovers the correct balance regardless of reason.
 - `bookingId` is set only on `booking_redemption` rows; null otherwise.
 - A future POS will add a further `reason` value, not a new table.
 
 ### Membership status — one rule, one module
 
-`endDate` alone decides whether a term is live. **`Membership.status` is never consulted and never written as `expired`** — it exists in the schema but is dead; do not filter on it.
+`endDate` alone decides whether a term is live. There is no status column on the row (the dead `Membership.status` column and its enum were dropped in `20260921020000_membership_tiers_reset`).
 
 All row selection goes through `src/lib/membership-current.ts`:
 

@@ -1,7 +1,7 @@
 import { getActiveMemberSession } from '@/lib/member-session'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { MEMBERSHIP_TIER_PLANS, formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { quoteMembershipPrice, withFoundingSeatLock } from '@/lib/membership-founding'
 import { getRenewalEligibility } from '@/lib/membership-current'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
 import type { MembershipTier } from '@prisma/client'
@@ -65,19 +65,24 @@ export async function POST(request: Request) {
     }
   }
 
-  const plan = MEMBERSHIP_TIER_PLANS[tier]
-  const tierName = formatMembershipTier(tier)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  const membershipPayment = await prisma.membershipPayment.create({
-    data: {
-      customerId: customer.id,
-      applicationId: null,
-      tier,
-      amountCentavos: plan.totalCentavos,
-      status: 'pending',
-    },
+  // Priced under the Founding seat lock (src/lib/membership-founding.ts): a Founding Member
+  // renewing into Premier keeps the Founding price; anyone else may still take a free seat.
+  const membershipPayment = await withFoundingSeatLock(async (tx) => {
+    const quote = await quoteMembershipPrice(tx, customer.id, tier)
+    return tx.membershipPayment.create({
+      data: {
+        customerId: customer.id,
+        applicationId: null,
+        tier,
+        amountCentavos: quote.amountCentavos,
+        isFounding: quote.isFounding,
+        status: 'pending',
+      },
+    })
   })
+  const tierName = formatMembershipPlanLabel(tier, membershipPayment.isFounding)
 
   let checkoutSession
   try {
@@ -85,7 +90,7 @@ export async function POST(request: Request) {
       lineItems: [
         {
           name: `${tierName} Membership Renewal`,
-          amount: plan.totalCentavos,
+          amount: membershipPayment.amountCentavos,
           currency: 'PHP',
           quantity: 1,
         },

@@ -5,7 +5,7 @@ import { CalendarIcon, CoffeeCupIcon, TennisIcon, PickleballIcon, GolfIcon } fro
 
 export type CreditActivityItem = {
   id: string
-  reason: 'activation' | 'renewal' | 'booking_redemption' | 'top_up'
+  reason: 'booking_redemption' | 'top_up'
   /** Positive for credit added, negative for credit spent — mirrors the ledger row. */
   amountCentavos: number
   amountLabel: string
@@ -17,8 +17,6 @@ export type CreditActivityItem = {
 const PAGE_SIZE = 5
 
 const REASON_LABELS: Record<CreditActivityItem['reason'], string> = {
-  activation: 'Membership activation credit',
-  renewal: 'Membership renewal credit',
   booking_redemption: 'Booking paid with credit',
   top_up: 'Credit top-up',
 }
@@ -41,7 +39,7 @@ export default function CreditActivityLog({ entries }: { entries: CreditActivity
     <div className="flex flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-card">
       <h2 className="font-serif text-xl text-brand-dark">Credit Activity</h2>
       <p className="mt-1 text-sm text-brand-dark/60">
-        Where your F&amp;B credit for this term came from and where it was spent.
+        Where your booking credit for this term came from and where it was spent.
       </p>
 
       <div className="mt-2 overflow-x-hidden">

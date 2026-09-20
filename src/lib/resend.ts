@@ -30,8 +30,6 @@ interface SendActivationEmailInput {
   activationUrl: string
   tierName?: string
   amountPaidCentavos?: number
-  activationFeeCentavos?: number
-  creditBalanceCentavos?: number
   expiryDateLabel?: string
   paymongoPaymentIntentId?: string | null
 }
@@ -42,8 +40,6 @@ export async function sendActivationEmail({
   activationUrl,
   tierName,
   amountPaidCentavos,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   expiryDateLabel,
   paymongoPaymentIntentId,
 }: SendActivationEmailInput): Promise<void> {
@@ -51,10 +47,7 @@ export async function sendActivationEmail({
     ? `Your ${tierName} membership is confirmed, and we can't wait to see you on the court.`
     : `We can't wait to see you on the court.`
 
-  const hasReceipt =
-    amountPaidCentavos !== undefined &&
-    activationFeeCentavos !== undefined &&
-    creditBalanceCentavos !== undefined
+  const hasReceipt = amountPaidCentavos !== undefined
 
   const isMembershipActivation = hasReceipt && !!tierName
 
@@ -64,8 +57,8 @@ export async function sendActivationEmail({
       <tr>
         <td style="padding: 20px 20px 4px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-            ${ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos))}
-            ${ledgerRow('F&amp;B Credit', formatCentavos(creditBalanceCentavos))}
+            ${ledgerRow('Plan', escapeHtml(tierName ?? 'Membership'))}
+            ${ledgerRow('Term', '12 months')}
             ${ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true)}
           </table>
         </td>
@@ -82,9 +75,9 @@ export async function sendActivationEmail({
     : `
     <div style="margin: 24px 0; padding: 20px 24px; background-color: ${ACCENT_LIGHT}; border-radius: 12px;">
       <p style="margin: 0 0 12px; font-family: ${BODY_FONT}; font-size: 15px; font-weight: 600; color: ${BRAND_DARK};">As a member, you get:</p>
-      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Priority booking on courts &amp; simulators</p>
-      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Member rates on every session</p>
-      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Access to the Speakeasy Lounge</p>
+      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Advance booking priority on courts &amp; simulators</p>
+      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Member discounts on every session</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Complimentary guest passes every year</p>
     </div>`
 
   const bodyHtml = `
@@ -118,8 +111,6 @@ export async function sendActivationEmail({
       const pdfBuffer = await renderMembershipCertificatePdf({
         customerName: name,
         tierName: tierName!,
-        activationFeeCentavos: activationFeeCentavos!,
-        creditBalanceCentavos: creditBalanceCentavos!,
         amountPaidCentavos: amountPaidCentavos!,
         expiryDateLabel,
         paymongoPaymentIntentId,
@@ -163,8 +154,6 @@ interface SendMembershipRenewalEmailInput {
   name: string
   tierName: string
   amountPaidCentavos: number
-  activationFeeCentavos: number
-  creditBalanceCentavos: number
   expiryDateLabel: string
   /** Set for an early renewal: the Manila date the new term begins (day after the current one ends). */
   startDateLabel: string | null
@@ -175,8 +164,6 @@ export async function sendMembershipRenewalEmail({
   name,
   tierName,
   amountPaidCentavos,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   expiryDateLabel,
   startDateLabel,
 }: SendMembershipRenewalEmailInput): Promise<void> {
@@ -185,8 +172,8 @@ export async function sendMembershipRenewalEmail({
       <tr>
         <td style="padding: 20px 20px 4px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-            ${ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos))}
-            ${ledgerRow('F&amp;B Credit', formatCentavos(creditBalanceCentavos))}
+            ${ledgerRow('Plan', escapeHtml(tierName))}
+            ${ledgerRow('Term', '12 months')}
             ${ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true)}
           </table>
         </td>
@@ -195,7 +182,7 @@ export async function sendMembershipRenewalEmail({
 
   const bodyHtml = `
     <p>Hi ${escapeHtml(name)},</p>
-    <p>Your ${tierName} membership at Winston Sip &amp; Serve has been renewed — your member rates, priority booking, and Speakeasy Lounge access are all still yours.</p>${receiptHtml}
+    <p>Your ${escapeHtml(tierName)} membership at Winston Sip &amp; Serve has been renewed — your member discounts, advance booking priority, and guest passes are all still yours.</p>${receiptHtml}
     ${
       startDateLabel
         ? `<p>Your current term keeps running as usual. The renewed term begins on <strong>${startDateLabel}</strong> and is active through <strong>${expiryDateLabel}</strong>.</p>`
@@ -686,7 +673,7 @@ export async function sendBookingConfirmationEmail({
     </table>
     ${creditRedemption ? `
     <div style="margin: 20px 0 0; padding: 14px 18px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
-      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK};">This booking was covered by your F&amp;B credit. You have <strong>${formatCentavos(creditRedemption.remainingBalanceCentavos)}</strong> remaining.</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK};">This booking was covered by your booking credit. You have <strong>${formatCentavos(creditRedemption.remainingBalanceCentavos)}</strong> remaining.</p>
     </div>` : ''}
     <div style="margin: 24px 0; padding: 18px 20px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 600; color: ${BRAND_DARK};">Before You Arrive</p>
@@ -978,7 +965,7 @@ export async function sendStaffBookingNotificationEmail({
   ].join('')
 
   const paymentMethodLine = creditRedemption
-    ? `Paid via F&amp;B Credit &mdash; ${formatCentavos(creditRedemption.amountCentavos)} applied, ${formatCentavos(creditRedemption.remainingBalanceCentavos)} remaining`
+    ? `Paid via Booking Credit &mdash; ${formatCentavos(creditRedemption.amountCentavos)} applied, ${formatCentavos(creditRedemption.remainingBalanceCentavos)} remaining`
     : 'Paid via PayMongo'
 
   const bodyHtml = `
@@ -1115,8 +1102,6 @@ interface SendStaffMembershipActivationEmailInput {
   customerEmail: string
   tierName: string
   amountPaidCentavos: number
-  activationFeeCentavos: number
-  creditBalanceCentavos: number
   expiryDateLabel: string
   paymongoPaymentIntentId: string | null
 }
@@ -1127,15 +1112,11 @@ export async function sendStaffMembershipActivationEmail({
   customerEmail,
   tierName,
   amountPaidCentavos,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   expiryDateLabel,
   paymongoPaymentIntentId,
 }: SendStaffMembershipActivationEmailInput): Promise<void> {
   const ledgerRows = [
-    ledgerRow('Tier', tierName),
-    ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos)),
-    ledgerRow('F&amp;B Credit Granted', formatCentavos(creditBalanceCentavos)),
+    ledgerRow('Plan', escapeHtml(tierName)),
     ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true),
     ledgerRow('PayMongo Reference', paymongoPaymentIntentId ?? 'Not available'),
   ].join('')
@@ -1195,8 +1176,6 @@ interface SendStaffMembershipRenewalEmailInput {
   customerEmail: string
   tierName: string
   amountPaidCentavos: number
-  activationFeeCentavos: number
-  creditBalanceCentavos: number
   expiryDateLabel: string
 }
 
@@ -1205,14 +1184,10 @@ export async function sendStaffMembershipRenewalEmail({
   customerEmail,
   tierName,
   amountPaidCentavos,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   expiryDateLabel,
 }: SendStaffMembershipRenewalEmailInput): Promise<void> {
   const ledgerRows = [
-    ledgerRow('Tier', tierName),
-    ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos)),
-    ledgerRow('F&amp;B Credit Granted', formatCentavos(creditBalanceCentavos)),
+    ledgerRow('Plan', escapeHtml(tierName)),
     ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true),
   ].join('')
 

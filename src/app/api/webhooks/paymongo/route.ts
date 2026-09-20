@@ -10,8 +10,8 @@ import {
 } from '@/lib/resend'
 import { getLiveMemberships } from '@/lib/membership-current'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
-import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
-import { formatMembershipTier, formatMembershipExpiryDate } from '@/lib/format'
+import { computeMembershipEndDate, formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { formatMembershipExpiryDate } from '@/lib/format'
 import { generateActivationToken } from '@/lib/member-activation'
 
 interface PaymongoWebhookEvent {
@@ -185,14 +185,16 @@ async function handleMembershipPaymentWebhook(
   }
 
   const isRenewal = membershipPayment.applicationId === null
-  const plan = MEMBERSHIP_TIER_PLANS[membershipPayment.tier]
   // An early renewal queues behind the customer's latest unexpired term instead of
   // restarting today, so no paid-for days are lost. A lapsed member starts from paidAt.
   const liveMemberships = isRenewal ? await getLiveMemberships(membershipPayment.customerId, paidAt) : []
   const latestLiveTerm = liveMemberships[liveMemberships.length - 1]
   const startDate = latestLiveTerm ? new Date(latestLiveTerm.endDate.getTime() + 1) : paidAt
   const endDate = computeMembershipEndDate(startDate, membershipPayment.tier)
-  const tierName = formatMembershipTier(membershipPayment.tier)
+  // The amount and Founding flag were fixed when the payment row was priced — see
+  // src/lib/membership-founding.ts. No credit is granted with a membership.
+  const tierName = formatMembershipPlanLabel(membershipPayment.tier, membershipPayment.isFounding)
+  const amountPaidCentavos = membershipPayment.amountCentavos
   const expiryDateLabel = formatMembershipExpiryDate(endDate)
 
   try {
@@ -206,24 +208,15 @@ async function handleMembershipPaymentWebhook(
         },
       })
 
-      const membership = await tx.membership.create({
+      await tx.membership.create({
         data: {
           customerId: membershipPayment.customerId,
           applicationId: membershipPayment.applicationId,
           tier: membershipPayment.tier,
-          status: 'active',
+          isFounding: membershipPayment.isFounding,
           startDate,
           endDate,
-          activationFeeCentavos: plan.activationFeeCentavos,
-          creditBalanceCentavos: plan.creditCentavos,
-        },
-      })
-
-      await tx.membershipCreditTransaction.create({
-        data: {
-          membershipId: membership.id,
-          amountCentavos: plan.creditCentavos,
-          reason: isRenewal ? 'renewal' : 'activation',
+          creditBalanceCentavos: 0,
         },
       })
     })
@@ -237,9 +230,7 @@ async function handleMembershipPaymentWebhook(
       to: membershipPayment.customer.email,
       name: membershipPayment.customer.name,
       tierName,
-      amountPaidCentavos: plan.totalCentavos,
-      activationFeeCentavos: plan.activationFeeCentavos,
-      creditBalanceCentavos: plan.creditCentavos,
+      amountPaidCentavos,
       expiryDateLabel,
       startDateLabel: latestLiveTerm ? formatMembershipExpiryDate(startDate) : null,
     })
@@ -247,9 +238,7 @@ async function handleMembershipPaymentWebhook(
       customerName: membershipPayment.customer.name,
       customerEmail: membershipPayment.customer.email,
       tierName,
-      amountPaidCentavos: plan.totalCentavos,
-      activationFeeCentavos: plan.activationFeeCentavos,
-      creditBalanceCentavos: plan.creditCentavos,
+      amountPaidCentavos,
       expiryDateLabel,
     })
   } else {
@@ -265,9 +254,7 @@ async function handleMembershipPaymentWebhook(
         customerName: membershipPayment.customer.name,
         customerEmail: membershipPayment.customer.email,
         tierName,
-        amountPaidCentavos: plan.totalCentavos,
-        activationFeeCentavos: plan.activationFeeCentavos,
-        creditBalanceCentavos: plan.creditCentavos,
+        amountPaidCentavos,
         expiryDateLabel,
         paymongoPaymentIntentId: paymentIntentId,
       })
@@ -284,9 +271,7 @@ async function handleMembershipPaymentWebhook(
         name: membershipPayment.customer.name,
         activationUrl,
         tierName,
-        amountPaidCentavos: plan.totalCentavos,
-        activationFeeCentavos: plan.activationFeeCentavos,
-        creditBalanceCentavos: plan.creditCentavos,
+        amountPaidCentavos,
         expiryDateLabel,
         paymongoPaymentIntentId: paymentIntentId,
       })

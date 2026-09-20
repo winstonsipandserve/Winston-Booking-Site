@@ -41,19 +41,12 @@ enum ApplicationStatus {
 }
 
 enum MembershipTier {
-  three_month
-  six_month
-  twelve_month
-}
-
-enum MembershipStatus {
-  active
-  expired
+  player
+  premier
+  elite
 }
 
 enum CreditTransactionReason {
-  activation
-  renewal
   booking_redemption
   top_up
 }
@@ -491,6 +484,9 @@ model MembershipPayment {
   customer                  Customer                     @relation(fields: [customerId], references: [id])
   tier                      MembershipTier
   amountCentavos            Int                          @map("amount_centavos")
+  /// Priced as a Founding Member (Premier at the Founding price). Decided when the row is
+  /// priced (src/lib/membership-founding.ts) and copied onto the Membership on payment.
+  isFounding                Boolean                      @default(false) @map("is_founding")
   status                    PaymentStatus                @default(pending)
   paymongoCheckoutSessionId String?                      @unique @map("paymongo_checkout_session_id")
   paymongoPaymentIntentId   String?                      @unique @map("paymongo_payment_intent_id")
@@ -518,12 +514,15 @@ model Membership {
   applicationId         String?                       @unique @map("application_id")
   application           MembershipApplication?        @relation(fields: [applicationId], references: [id])
   tier                  MembershipTier
-  status                MembershipStatus              @default(active)
+  /// Founding Member: one of the first 100 paid Premier activations, or a renewal by such a
+  /// customer. Permanent for that customer; a flag rather than a tier (docs/decisions.md).
+  isFounding            Boolean                       @default(false) @map("is_founding")
+  /// `endDate` alone decides whether a term is live (see docs/database.md).
   startDate             DateTime                      @map("start_date")
   endDate               DateTime                      @map("end_date")
-  activationFeeCentavos Int                           @map("activation_fee_centavos")
-  /// Cached running total — MembershipCreditTransaction is the source of truth.
-  creditBalanceCentavos Int                           @map("credit_balance_centavos")
+  /// Cached running total — MembershipCreditTransaction is the source of truth. Starts at
+  /// zero: no credit is granted with a membership; only top-ups add to it.
+  creditBalanceCentavos Int                           @default(0) @map("credit_balance_centavos")
   creditTransactions    MembershipCreditTransaction[]
   /// Top-up Payments only (membershipId set) — activation/renewal payments stay on MembershipPayment.
   payments              Payment[]
@@ -543,12 +542,12 @@ model MembershipCreditTransaction {
   membershipId   String                  @map("membership_id")
   membership     Membership              @relation(fields: [membershipId], references: [id])
   /// Set only for booking_redemption rows — which booking this debit paid for.
-  /// Null for activation/renewal credits, which have no associated booking.
+  /// Null for top_up credits, which have no associated booking.
   bookingId      String?                 @map("booking_id")
   booking        Booking?                @relation(fields: [bookingId], references: [id])
-  /// Positive for credits added (activation/renewal), negative for debits
-  /// (booking_redemption) — SUM(amountCentavos) per membership always recovers
-  /// the correct balance regardless of reason.
+  /// Positive for credits added (top_up), negative for debits (booking_redemption) —
+  /// SUM(amountCentavos) per membership always recovers the correct balance regardless
+  /// of reason.
   amountCentavos Int                     @map("amount_centavos")
   reason         CreditTransactionReason
   createdAt      DateTime                @default(now()) @map("created_at")

@@ -2,14 +2,17 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS, computeMembershipEndDate } from '@/lib/membership-pricing'
+import {
+  MEMBERSHIP_TIER_ORDER,
+  MEMBERSHIP_TIER_PLANS,
+  computeMembershipEndDate,
+  formatMembershipPlanLabel,
+} from '@/lib/membership-pricing'
+import { quoteMembershipPrice } from '@/lib/membership-founding'
 import { formatCentavos, formatMembershipTier, formatMembershipExpiryDate } from '@/lib/format'
 import { getRenewalEligibility } from '@/lib/membership-current'
 import RenewMembershipButton from '@/components/membership/RenewMembershipButton'
 import { getActiveMemberSession } from '@/lib/member-session'
-import type { MembershipTier } from '@prisma/client'
-
-const TIERS = Object.keys(MEMBERSHIP_TIER_PLANS) as MembershipTier[]
 
 export default async function RenewMembershipPage() {
   const memberSession = await getActiveMemberSession()
@@ -40,6 +43,15 @@ export default async function RenewMembershipPage() {
   const current = renewal.current
   const queuedStart = current ? new Date(current.endDate.getTime() + 1) : null
 
+  // Founding-aware prices per tier (a Founding Member keeps ₱5,000 on Premier).
+  const quotes = new Map(
+    await Promise.all(
+      MEMBERSHIP_TIER_ORDER.map(
+        async (tier) => [tier, await quoteMembershipPrice(prisma, customer.id, tier)] as const,
+      ),
+    ),
+  )
+
   return (
     <>
       <Navbar />
@@ -55,8 +67,8 @@ export default async function RenewMembershipPage() {
                 Renew Your Membership
               </h1>
               <p className="mt-2 text-on-light-muted">
-                Pick a term and carry on — priority bookings, full facility access, and a fresh
-                F&amp;B credit to spend at the café and bar. No reapplying, no gap.
+                Pick a plan and carry on — advance booking priority, member discounts, and a
+                fresh set of guest passes. No reapplying, no gap.
               </p>
             </div>
 
@@ -114,8 +126,9 @@ export default async function RenewMembershipPage() {
           )}
 
           <div className="mt-6 grid gap-5 md:grid-cols-3">
-            {TIERS.map((tier) => {
+            {MEMBERSHIP_TIER_ORDER.map((tier) => {
               const plan = MEMBERSHIP_TIER_PLANS[tier]
+              const quote = quotes.get(tier)!
               const isCurrentTier = current?.tier === tier
               const projectedEnd = queuedStart ? computeMembershipEndDate(queuedStart, tier) : null
 
@@ -134,10 +147,10 @@ export default async function RenewMembershipPage() {
                   )}
 
                   <p className="text-xs uppercase tracking-[0.2em] text-on-light-muted">
-                    {plan.months}-month term
+                    {formatMembershipPlanLabel(tier, quote.isFounding)}
                   </p>
                   <p className="mt-2 font-serif text-4xl tabular-nums text-on-light">
-                    {formatCentavos(plan.totalCentavos)}
+                    {formatCentavos(quote.amountCentavos)}
                   </p>
                   <p className="mt-1.5 min-h-5 text-sm text-on-light-muted">
                     {projectedEnd
@@ -147,16 +160,16 @@ export default async function RenewMembershipPage() {
 
                   <dl className="mt-5 flex flex-col divide-y divide-brand-dark/10 border-y border-brand-dark/10">
                     <div className="flex items-baseline justify-between gap-4 py-2.5">
-                      <dt className="text-sm text-on-light-muted">Activation fee</dt>
-                      <dd className="text-sm font-medium tabular-nums text-on-light">
-                        {formatCentavos(plan.activationFeeCentavos)}
-                      </dd>
+                      <dt className="text-sm text-on-light-muted">Term</dt>
+                      <dd className="text-sm font-medium tabular-nums text-on-light">{plan.months} months</dd>
                     </div>
                     <div className="flex items-baseline justify-between gap-4 py-2.5">
-                      <dt className="text-sm text-on-light-muted">F&amp;B credit</dt>
-                      <dd className="text-sm font-medium tabular-nums text-on-light">
-                        {formatCentavos(plan.creditCentavos)}
-                      </dd>
+                      <dt className="text-sm text-on-light-muted">Booking discount</dt>
+                      <dd className="text-sm font-medium tabular-nums text-on-light">{plan.bookingDiscountPercent}%</dd>
+                    </div>
+                    <div className="flex items-baseline justify-between gap-4 py-2.5">
+                      <dt className="text-sm text-on-light-muted">Guest passes</dt>
+                      <dd className="text-sm font-medium tabular-nums text-on-light">{plan.guestPasses} / year</dd>
                     </div>
                   </dl>
 
@@ -187,7 +200,7 @@ export default async function RenewMembershipPage() {
             </p>
             {current && (
               <p>
-                Each term has its own F&amp;B credit — spend what&apos;s left of your current
+                Each term has its own booking credit — spend what&apos;s left of your current
                 balance before {formatMembershipExpiryDate(current.endDate)}.
               </p>
             )}

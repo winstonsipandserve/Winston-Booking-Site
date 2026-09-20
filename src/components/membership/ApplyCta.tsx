@@ -13,8 +13,8 @@ export default function ApplyCta() {
         <div className="max-w-xl">
           <h2 className="font-serif text-4xl text-brand-light md:text-5xl">Ready to Join Winston?</h2>
           <p className="mt-4 max-w-md text-brand-light/85">
-            Lock in priority bookings, full facility access, and F&amp;B credit — pick a plan and
-            we&apos;ll take it from there.
+            Lock in advance booking priority, member discounts, and guest passes — pick a plan
+            and we&apos;ll take it from there.
           </p>
           <div className="mt-10">
             <Link

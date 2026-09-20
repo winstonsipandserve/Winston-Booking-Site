@@ -18,10 +18,9 @@ import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import { getMembershipDisplayStatus, MEMBERSHIP_DISPLAY_STATUS_LABELS } from '@/lib/membership-display-status'
 import { MembershipStatusPill } from '@/components/admin/StatusPill'
 import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
+import { formatMembershipPlanLabel } from '@/lib/membership-pricing'
 
 const CREDIT_TRANSACTION_REASON_LABELS: Record<CreditTransactionReason, string> = {
-  activation: 'Activation',
-  renewal: 'Renewal',
   booking_redemption: 'Booking Redemption',
   top_up: 'Top-Up',
 }
@@ -194,7 +193,7 @@ export default async function AdminMembershipApplicationDetailPage({
         title={application.customer.name}
         subtitle={
           latestMembership
-            ? `${formatMembershipTier(latestMembership.tier)} member since ${formatManilaDate(latestMembership.startDate)}`
+            ? `${formatMembershipPlanLabel(latestMembership.tier, latestMembership.isFounding)} member since ${formatManilaDate(latestMembership.startDate)}`
             : `${formatMembershipTier(application.requestedTier)} application · Submitted ${formatManilaDate(application.createdAt)}`
         }
         recordId={application.id}
@@ -257,9 +256,9 @@ export default async function AdminMembershipApplicationDetailPage({
         <>
           <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Tier</p>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Plan</p>
               <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {formatMembershipTier(latestMembership.tier)}
+                {formatMembershipPlanLabel(latestMembership.tier, latestMembership.isFounding)}
               </p>
             </div>
             <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -324,9 +323,9 @@ export default async function AdminMembershipApplicationDetailPage({
             <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Membership Details</h2>
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">Tier</span>
+                <span className="text-gray-500 dark:text-gray-400">Plan</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {formatMembershipTier(latestMembership.tier)}
+                  {formatMembershipPlanLabel(latestMembership.tier, latestMembership.isFounding)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">

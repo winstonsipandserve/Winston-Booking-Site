@@ -27,8 +27,10 @@ export default async function AccountPage() {
     | {
         membership: {
           tierName: string
-          activationCentavos: number
-          creditCentavos: number
+          isFounding: boolean
+          bookingDiscountPercent: number
+          guestPasses: number
+          advanceBookingDays: number
           remainingCreditCentavos: number
           expiryDateLabel: string
           isExpired: boolean
@@ -41,10 +43,8 @@ export default async function AccountPage() {
       } = { membership: null, customerId: customer.id }
 
   if (membership) {
-    const [displayFields, renewal] = await Promise.all([
-      buildMembershipDisplayFields(membership),
-      getRenewalEligibility(customer.id),
-    ])
+    const displayFields = buildMembershipDisplayFields(membership)
+    const renewal = await getRenewalEligibility(customer.id)
 
     const { token: checkInToken, code: checkInCode } = await getOrCreateCheckInToken(customer.id)
     const qrCodeDataUrl = await generateQrCodeDataUrl(checkInToken)

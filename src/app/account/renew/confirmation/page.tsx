@@ -27,8 +27,8 @@ export default function MembershipRenewalConfirmationPage() {
                 Welcome Back.
               </h2>
               <p className="mt-4 max-w-sm text-sm text-on-dark-muted">
-                Priority bookings, full facility access, and your F&amp;B credit continue without
-                interruption.
+                Your advance booking priority, member discounts, and guest passes continue
+                without interruption.
               </p>
             </div>
           </div>

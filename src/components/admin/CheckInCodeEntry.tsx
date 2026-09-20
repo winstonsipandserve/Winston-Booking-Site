@@ -45,7 +45,6 @@ export default function CheckInCodeEntry() {
           tierName: json.tierName,
           expiryDateLabel: json.expiryDateLabel,
           remainingCreditCentavos: json.remainingCreditCentavos,
-          creditCentavos: json.creditCentavos,
         })
       } else {
         setResult({ status: 'not_found' })

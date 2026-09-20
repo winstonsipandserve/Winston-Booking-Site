@@ -27,8 +27,8 @@ export default function MembershipPaymentConfirmationPage() {
                 You&apos;re All Set.
               </h2>
               <p className="mt-4 max-w-sm text-sm text-on-dark-muted">
-                Priority bookings, full facility access, and an F&amp;B credit to spend at the
-                café and bar are on their way.
+                Advance booking priority, member discounts on every court and bay, and your
+                complimentary guest passes are on their way.
               </p>
             </div>
           </div>

@@ -3,14 +3,14 @@
 import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
-
-type MembershipTier = 'three_month' | 'six_month' | 'twelve_month'
-
-const TIER_OPTIONS: { value: MembershipTier; label: string; price: string }[] = [
-  { value: 'three_month', label: '3-Month', price: '₱5,500' },
-  { value: 'six_month', label: '6-Month', price: '₱12,500' },
-  { value: 'twelve_month', label: '12-Month', price: '₱22,500' },
-]
+import { formatWholePesos } from '@/lib/format'
+import {
+  FOUNDING_MEMBER_CAP,
+  FOUNDING_PREMIER_PRICE_CENTAVOS,
+  MEMBERSHIP_TIER_ORDER,
+  MEMBERSHIP_TIER_PLANS,
+} from '@/lib/membership-pricing'
+import type { MembershipTier } from '@prisma/client'
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 const ACCEPTED_FILE_TYPES = 'image/jpeg,image/png'
@@ -33,12 +33,30 @@ function inputClassName() {
   return 'rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
 }
 
-export default function MembershipApplicationForm() {
+interface MembershipApplicationFormProps {
+  /** Founding Member seats still open (docs/business.md → Founding Members). */
+  foundingSeatsRemaining: number
+}
+
+export default function MembershipApplicationForm({ foundingSeatsRemaining }: MembershipApplicationFormProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
-  const [requestedTier, setRequestedTier] = useState<MembershipTier>('three_month')
+  const [requestedTier, setRequestedTier] = useState<MembershipTier>('player')
+
+  const tierOptions = MEMBERSHIP_TIER_ORDER.map((value) => {
+    const plan = MEMBERSHIP_TIER_PLANS[value]
+    const founding = value === 'premier' && foundingSeatsRemaining > 0
+    return {
+      value,
+      label: plan.name,
+      price: `${formatWholePesos(founding ? FOUNDING_PREMIER_PRICE_CENTAVOS : plan.totalCentavos)}/yr`,
+      note: founding
+        ? `Founding Member price · ${foundingSeatsRemaining} of ${FOUNDING_MEMBER_CAP} seats left`
+        : null,
+    }
+  })
 
   const [govIdFront, setGovIdFront] = useState<File | null>(null)
   const [govIdBack, setGovIdBack] = useState<File | null>(null)
@@ -254,7 +272,7 @@ export default function MembershipApplicationForm() {
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium text-brand-dark">Membership Tier</span>
         <div className="flex flex-col gap-2">
-          {TIER_OPTIONS.map((tier) => {
+          {tierOptions.map((tier) => {
             const isSelected = requestedTier === tier.value
             return (
               <label
@@ -274,8 +292,11 @@ export default function MembershipApplicationForm() {
                     disabled={submitting}
                     onChange={() => setRequestedTier(tier.value)}
                   />
-                  <span className={`text-brand-dark ${isSelected ? 'font-semibold' : 'font-medium'}`}>
-                    {tier.label}
+                  <span className="flex flex-col">
+                    <span className={`text-brand-dark ${isSelected ? 'font-semibold' : 'font-medium'}`}>
+                      {tier.label}
+                    </span>
+                    {tier.note && <span className="text-xs text-brand-dark/60">{tier.note}</span>}
                   </span>
                 </span>
                 <span className="text-sm font-semibold text-accent-primary">{tier.price}</span>

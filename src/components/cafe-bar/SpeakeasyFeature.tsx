@@ -31,8 +31,7 @@ export default function SpeakeasyFeature() {
           </p>
 
           <p className="mt-8 max-w-xl text-sm text-brand-light/70">
-            Members get exclusive access to the Speakeasy, plus F&amp;B credit that carries straight to
-            the bar tab.
+            Members get exclusive access to the Speakeasy, plus 10% off at Winston Sip &amp; Serve.
           </p>
 
           <Link

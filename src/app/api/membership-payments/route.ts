@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { quoteMembershipPrice, withFoundingSeatLock } from '@/lib/membership-founding'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
 import { lookupApplicationPaymentLinkToken } from '@/lib/membership-payment-link'
 
@@ -74,19 +74,24 @@ export async function POST(request: Request) {
     }
   }
 
-  const plan = MEMBERSHIP_TIER_PLANS[application.requestedTier]
-  const tierName = formatMembershipTier(application.requestedTier)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  const membershipPayment = await prisma.membershipPayment.create({
-    data: {
-      applicationId: application.id,
-      customerId: application.customerId,
-      tier: application.requestedTier,
-      amountCentavos: plan.totalCentavos,
-      status: 'pending',
-    },
+  // Priced under the Founding seat lock so the amount PayMongo charges is the amount the
+  // seat count justified at this instant (src/lib/membership-founding.ts).
+  const membershipPayment = await withFoundingSeatLock(async (tx) => {
+    const quote = await quoteMembershipPrice(tx, application.customerId, application.requestedTier)
+    return tx.membershipPayment.create({
+      data: {
+        applicationId: application.id,
+        customerId: application.customerId,
+        tier: application.requestedTier,
+        amountCentavos: quote.amountCentavos,
+        isFounding: quote.isFounding,
+        status: 'pending',
+      },
+    })
   })
+  const tierName = formatMembershipPlanLabel(membershipPayment.tier, membershipPayment.isFounding)
 
   let session
   try {
@@ -94,7 +99,7 @@ export async function POST(request: Request) {
       lineItems: [
         {
           name: `${tierName} Membership`,
-          amount: plan.totalCentavos,
+          amount: membershipPayment.amountCentavos,
           currency: 'PHP',
           quantity: 1,
         },

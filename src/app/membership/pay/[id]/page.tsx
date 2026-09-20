@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { formatMembershipPlanLabel, standardTierPriceCentavos } from '@/lib/membership-pricing'
+import { quoteMembershipPrice } from '@/lib/membership-founding'
 import CompletePaymentButton from '@/components/membership/CompletePaymentButton'
 import MembershipCheckoutSummary from '@/components/membership/MembershipCheckoutSummary'
 import { lookupApplicationPaymentLinkToken } from '@/lib/membership-payment-link'
@@ -28,6 +28,16 @@ export default async function MembershipPaymentPage({
   if (!application) {
     notFound()
   }
+
+  // Show the price checkout will charge: the pending payment row's snapshot when one exists
+  // (a resumed checkout), otherwise a live Founding-aware quote (src/lib/membership-founding.ts).
+  const pendingPayment = await prisma.membershipPayment.findFirst({
+    where: { applicationId: application.id, status: 'pending' },
+    orderBy: { createdAt: 'desc' },
+  })
+  const price = pendingPayment
+    ? { amountCentavos: pendingPayment.amountCentavos, isFounding: pendingPayment.isFounding }
+    : await quoteMembershipPrice(prisma, application.customerId, application.requestedTier)
 
   // The token only gates the still-outstanding-payment state — every other branch below
   // (already a member, still pending, rejected) is already a terminal, non-actionable page.
@@ -69,8 +79,8 @@ export default async function MembershipPaymentPage({
                 One Step from In.
               </h2>
               <p className="mt-4 max-w-sm text-sm text-on-dark-muted">
-                Settle the amount below and you&apos;re a member — priority bookings, facility
-                access, and an F&amp;B credit to spend at the café and bar.
+                Settle the amount below and you&apos;re a member — advance booking priority,
+                member discounts on every court and bay, and complimentary guest passes.
               </p>
             </div>
           </div>
@@ -116,13 +126,14 @@ export default async function MembershipPaymentPage({
                       bordered={false}
                       totalHighlighted={false}
                       compact
-                      tierLabel={formatMembershipTier(application.requestedTier)}
+                      tierLabel={formatMembershipPlanLabel(application.requestedTier, price.isFounding)}
                       customerName={application.customer.name}
-                      activationFeeCentavos={
-                        MEMBERSHIP_TIER_PLANS[application.requestedTier].activationFeeCentavos
+                      totalCentavos={price.amountCentavos}
+                      founding={
+                        price.isFounding
+                          ? { standardCentavos: standardTierPriceCentavos(application.requestedTier) }
+                          : null
                       }
-                      creditCentavos={MEMBERSHIP_TIER_PLANS[application.requestedTier].creditCentavos}
-                      totalCentavos={MEMBERSHIP_TIER_PLANS[application.requestedTier].totalCentavos}
                     />
 
                     <p className="rounded-card-inline border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-2.5 text-sm text-brand-dark/70">

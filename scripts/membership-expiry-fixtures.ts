@@ -14,7 +14,10 @@ const PLACEHOLDER_STORAGE_PATH = 'fixtures/membership-expiry-placeholder.png'
 const PLACEHOLDER_PNG_BASE64 =
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+3MxZ5wAAAABJRU5ErkJggg=='
 const manifestPath = fileURLToPath(new URL('./.membership-fixtures.json', import.meta.url))
-const plan = MEMBERSHIP_TIER_PLANS.three_month
+const plan = MEMBERSHIP_TIER_PLANS.player
+// Fixtures carry a small top-up so credit-redemption paths stay exercisable (no credit is
+// granted with a plan any more).
+const FIXTURE_TOP_UP_CENTAVOS = 100_000
 
 const fixtureDefinitions = [
   { slug: 'exp10d', endOffsetMs: 10 * 24 * 60 * 60 * 1000 },
@@ -101,7 +104,7 @@ async function createFixture(
   const application = await tx.membershipApplication.create({
     data: {
       customerId: customer.id,
-      requestedTier: 'three_month',
+      requestedTier: 'player',
       status: 'approved',
       address: 'Membership expiry fixture — development only',
       contactNumber: customer.phone,
@@ -117,7 +120,7 @@ async function createFixture(
     data: {
       applicationId: application.id,
       customerId: customer.id,
-      tier: 'three_month',
+      tier: 'player',
       amountCentavos: plan.totalCentavos,
       status: 'paid',
       paidAt: startDate,
@@ -127,19 +130,17 @@ async function createFixture(
     data: {
       customerId: customer.id,
       applicationId: application.id,
-      tier: 'three_month',
-      status: 'active',
+      tier: 'player',
       startDate,
       endDate,
-      activationFeeCentavos: plan.activationFeeCentavos,
-      creditBalanceCentavos: plan.creditCentavos,
+      creditBalanceCentavos: FIXTURE_TOP_UP_CENTAVOS,
     },
   })
   const activationCredit = await tx.membershipCreditTransaction.create({
     data: {
       membershipId: membership.id,
-      amountCentavos: plan.creditCentavos,
-      reason: 'activation',
+      amountCentavos: FIXTURE_TOP_UP_CENTAVOS,
+      reason: 'top_up',
     },
   })
 
@@ -158,7 +159,7 @@ async function createFixture(
       data: {
         applicationId: null,
         customerId: customer.id,
-        tier: 'three_month',
+        tier: 'player',
         amountCentavos: plan.totalCentavos,
         status: 'paid',
         paidAt: renewedStartDate,
@@ -168,19 +169,17 @@ async function createFixture(
       data: {
         customerId: customer.id,
         applicationId: null,
-        tier: 'three_month',
-        status: 'active',
+        tier: 'player',
         startDate: renewedStartDate,
         endDate: renewedEndDate,
-        activationFeeCentavos: plan.activationFeeCentavos,
-        creditBalanceCentavos: plan.creditCentavos,
+        creditBalanceCentavos: FIXTURE_TOP_UP_CENTAVOS,
       },
     })
     const renewalCredit = await tx.membershipCreditTransaction.create({
       data: {
         membershipId: renewedMembership.id,
-        amountCentavos: plan.creditCentavos,
-        reason: 'renewal',
+        amountCentavos: FIXTURE_TOP_UP_CENTAVOS,
+        reason: 'top_up',
       },
     })
     result.membershipPaymentIds.push(renewalPayment.id)

@@ -41,9 +41,9 @@ export interface RevenueTrendPoint {
 
 export interface MembershipRevenueTrendPoint {
   month: string
-  threeMonthCentavos: number
-  sixMonthCentavos: number
-  twelveMonthCentavos: number
+  playerCentavos: number
+  premierCentavos: number
+  eliteCentavos: number
   topUpCentavos: number
   totalCentavos: number
 }
@@ -333,9 +333,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     string,
     {
       label: string
-      threeMonthCentavos: number
-      sixMonthCentavos: number
-      twelveMonthCentavos: number
+      playerCentavos: number
+      premierCentavos: number
+      eliteCentavos: number
       topUpCentavos: number
     }
   >()
@@ -344,9 +344,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     const label = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'Asia/Manila' }).format(monthStart)
     membershipRevenueBuckets.set(toPhMonthKey(monthStart), {
       label,
-      threeMonthCentavos: 0,
-      sixMonthCentavos: 0,
-      twelveMonthCentavos: 0,
+      playerCentavos: 0,
+      premierCentavos: 0,
+      eliteCentavos: 0,
       topUpCentavos: 0,
     })
   }
@@ -354,9 +354,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (!p.paidAt) continue
     const bucket = membershipRevenueBuckets.get(toPhMonthKey(p.paidAt))
     if (!bucket) continue
-    if (p.tier === 'three_month') bucket.threeMonthCentavos += p.amountCentavos
-    else if (p.tier === 'six_month') bucket.sixMonthCentavos += p.amountCentavos
-    else if (p.tier === 'twelve_month') bucket.twelveMonthCentavos += p.amountCentavos
+    if (p.tier === 'player') bucket.playerCentavos += p.amountCentavos
+    else if (p.tier === 'premier') bucket.premierCentavos += p.amountCentavos
+    else if (p.tier === 'elite') bucket.eliteCentavos += p.amountCentavos
   }
   for (const p of membershipTopUpPaymentsForRevenue) {
     if (!p.paidAt) continue
@@ -367,11 +367,11 @@ export async function getDashboardData(): Promise<DashboardData> {
   const membershipRevenueTrend: MembershipRevenueTrendPoint[] = Array.from(membershipRevenueBuckets.values()).map(
     (b) => ({
       month: b.label,
-      threeMonthCentavos: b.threeMonthCentavos,
-      sixMonthCentavos: b.sixMonthCentavos,
-      twelveMonthCentavos: b.twelveMonthCentavos,
+      playerCentavos: b.playerCentavos,
+      premierCentavos: b.premierCentavos,
+      eliteCentavos: b.eliteCentavos,
       topUpCentavos: b.topUpCentavos,
-      totalCentavos: b.threeMonthCentavos + b.sixMonthCentavos + b.twelveMonthCentavos + b.topUpCentavos,
+      totalCentavos: b.playerCentavos + b.premierCentavos + b.eliteCentavos + b.topUpCentavos,
     }),
   )
 

@@ -1,6 +1,7 @@
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
+import { formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { quoteMembershipPrice } from '@/lib/membership-founding'
 import { formatMembershipTier } from '@/lib/format'
 import { sendMembershipPaymentEmail, sendRejectionEmail } from '@/lib/resend'
 import { logAdminActivity } from '@/lib/admin-activity-log'
@@ -112,8 +113,10 @@ export async function PATCH(
     return updatedApplication
   })
 
-  const tierName = formatMembershipTier(application.requestedTier)
-  const amountCentavos = MEMBERSHIP_TIER_PLANS[application.requestedTier].totalCentavos
+  // A quote, not a reservation: the seat is taken only when checkout creates the payment row.
+  const quote = await quoteMembershipPrice(prisma, application.customerId, application.requestedTier)
+  const tierName = formatMembershipPlanLabel(application.requestedTier, quote.isFounding)
+  const amountCentavos = quote.amountCentavos
   const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/pay/${application.id}?token=${rawToken}`
   await sendMembershipPaymentEmail({
     to: application.customer.email,

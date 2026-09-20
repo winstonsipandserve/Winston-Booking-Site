@@ -15,7 +15,7 @@ import {
   type MembershipApplicationUploadSlot,
 } from '@/lib/membership-application-uploads'
 
-const VALID_TIERS = ['three_month', 'six_month', 'twelve_month'] as const
+const VALID_TIERS = ['player', 'premier', 'elite'] as const
 type MembershipTier = (typeof VALID_TIERS)[number]
 
 function isNonEmptyString(value: unknown): value is string {
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
   }
   if (!isValidTier(requestedTier)) {
     return Response.json(
-      { error: 'requestedTier must be one of three_month, six_month, twelve_month' },
+      { error: 'requestedTier must be one of player, premier, elite' },
       { status: 400 },
     )
   }

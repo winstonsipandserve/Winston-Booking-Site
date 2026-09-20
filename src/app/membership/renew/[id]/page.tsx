@@ -3,8 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { formatMembershipPlanLabel, standardTierPriceCentavos } from '@/lib/membership-pricing'
 import CompleteRenewalPaymentButton from '@/components/membership/CompleteRenewalPaymentButton'
 import MembershipCheckoutSummary from '@/components/membership/MembershipCheckoutSummary'
 import { lookupRenewalPaymentLinkToken } from '@/lib/membership-payment-link'
@@ -68,8 +67,8 @@ export default async function MembershipRenewalPaymentPage({
                 Stay in the Game.
               </h2>
               <p className="mt-4 max-w-sm text-sm text-on-dark-muted">
-                Renew today to keep your priority bookings, facility access, and F&amp;B credit
-                active without interruption.
+                Renew today to keep your advance booking priority, member discounts, and guest
+                passes active without interruption.
               </p>
             </div>
           </div>
@@ -105,13 +104,14 @@ export default async function MembershipRenewalPaymentPage({
                       bordered={false}
                       totalHighlighted={false}
                       compact
-                      tierLabel={formatMembershipTier(membershipPayment.tier)}
+                      tierLabel={formatMembershipPlanLabel(membershipPayment.tier, membershipPayment.isFounding)}
                       customerName={membershipPayment.customer.name}
-                      activationFeeCentavos={
-                        MEMBERSHIP_TIER_PLANS[membershipPayment.tier].activationFeeCentavos
+                      totalCentavos={membershipPayment.amountCentavos}
+                      founding={
+                        membershipPayment.isFounding
+                          ? { standardCentavos: standardTierPriceCentavos(membershipPayment.tier) }
+                          : null
                       }
-                      creditCentavos={MEMBERSHIP_TIER_PLANS[membershipPayment.tier].creditCentavos}
-                      totalCentavos={MEMBERSHIP_TIER_PLANS[membershipPayment.tier].totalCentavos}
                     />
 
                     <p className="rounded-card-inline border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-2.5 text-sm text-brand-dark/70">

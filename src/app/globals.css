@@ -26,12 +26,12 @@
   --color-chart-secondary-dark: var(--color-gray-400);
   --color-chart-accent: var(--color-accent);
   --color-chart-accent-dark: var(--color-red-400);
-  --color-chart-tier-3mo: var(--color-blue-600);
-  --color-chart-tier-3mo-dark: var(--color-blue-400);
-  --color-chart-tier-6mo: var(--color-amber-600);
-  --color-chart-tier-6mo-dark: var(--color-amber-400);
-  --color-chart-tier-12mo: var(--color-violet-600);
-  --color-chart-tier-12mo-dark: var(--color-violet-400);
+  --color-chart-tier-player: var(--color-blue-600);
+  --color-chart-tier-player-dark: var(--color-blue-400);
+  --color-chart-tier-premier: var(--color-amber-600);
+  --color-chart-tier-premier-dark: var(--color-amber-400);
+  --color-chart-tier-elite: var(--color-violet-600);
+  --color-chart-tier-elite-dark: var(--color-violet-400);
   --color-chart-topup: var(--color-emerald-600);
   --color-chart-topup-dark: var(--color-emerald-400);
 }

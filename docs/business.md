@@ -172,7 +172,7 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 
 ### Founding Members
 
-- Limited to the **first 100 paid Winston Premier activations**.
+- Limited to the **first 100 paid Winston Premier activations**. A seat is taken by a paid Founding membership, and is held for an applicant whose Founding-priced payment link is still live (48 hours) so the last seat cannot be sold twice; an unpaid link that lapses releases its seat.
 - **Price ₱5,000 per year, fixed for life** instead of ₱6,500 — the Founding price applies to the first term **and to every Winston Premier renewal** that member makes afterwards.
 - Once the 100 places are filled, Premier costs ₱6,500 for everyone who joins after.
 - Founding status is a **permanent flag on a Premier membership**, not a fourth tier: the 7-day window, 4 guest passes, 10% discount, birthday court hour, and every other Premier perk apply unchanged. Founding Members additionally receive **exclusive Founding Member merchandise**.
@@ -213,7 +213,7 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 
 ### Credit rules
 
-Credit is a member's prepaid balance for bookings. **No credit is granted with a membership**; a balance exists only through top-ups.
+Credit (shown to members as **booking credit**) is a member's prepaid balance for bookings. **No credit is granted with a membership**; a balance exists only through top-ups.
 
 - Credit can be **topped up** by the member themselves and by staff at the front desk.
 - Credit is spent on bookings on a **full-coverage-only basis**: if the balance covers the entire booking total, the booking is paid entirely from credit; if it does not, credit is left untouched and the member pays the full amount by card/e-wallet. **Credit is never split with a card payment.** See [workflows.md](workflows.md).

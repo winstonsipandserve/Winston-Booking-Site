@@ -102,6 +102,8 @@ A Founding Member is a Winston Premier membership with a permanent `isFounding`-
 
 **What breaks if undone:** tier-keyed logic (discount tables, reports, renewal pricing) would need a Founding case everywhere, and renewing a Founding Member into "Premier" would look like a tier change.
 
+**Where the price is fixed:** when the `MembershipPayment` row is created, because that amount is what PayMongo charges. The seat count and the insert run under one advisory lock (`withFoundingSeatLock`), and an unpaid Founding row inside the 48-hour link lifetime counts as a taken seat. Approval and resend emails only *quote*; never reserve a seat from an email.
+
 ### Tennis court and ball boy are removed, not disabled
 
 The `tennis_court` resource type, its resources and rates, and the `ball_boy` add-on are dropped from the seed and schema rather than kept as disabled rows.

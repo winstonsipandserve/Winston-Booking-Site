@@ -2,8 +2,13 @@ import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import MembershipApplicationForm from '@/components/membership/MembershipApplicationForm'
+import { foundingSeatsRemaining } from '@/lib/membership-founding'
 
-export default function MembershipApplyPage() {
+// Reads the live Founding seat count, so never prerender.
+export const dynamic = 'force-dynamic'
+
+export default async function MembershipApplyPage() {
+  const seatsRemaining = await foundingSeatsRemaining()
   return (
     <>
       <Navbar />
@@ -29,7 +34,7 @@ export default function MembershipApplyPage() {
       </section>
 
       <div className="flex flex-1 flex-col items-center gap-8 bg-background px-6 pt-16 pb-16 md:pt-20">
-        <MembershipApplicationForm />
+        <MembershipApplicationForm foundingSeatsRemaining={seatsRemaining} />
       </div>
       <Footer />
     </>
