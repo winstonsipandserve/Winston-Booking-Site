@@ -36,7 +36,6 @@ function countLabel(count: number, category: ResourceCategory): string {
 }
 
 const SPORT_ICONS: Record<string, (props: { className?: string }) => React.JSX.Element> = {
-  tennis_court: TennisIcon,
   tennis_sim: TennisIcon,
   pickleball_court: PickleballIcon,
   pickleball_sim: PickleballIcon,

@@ -143,19 +143,6 @@ function ResourceTypeCard({
     })
   }
 
-  function openCreateBallBoy(tier: RateTier) {
-    const ballBoyService = addOnServices.find((s) => s.slug === 'ball_boy')
-    if (!ballBoyService) return
-    setCreatingCell({
-      title: `Add Ball Boy ${tierLabel(tier)} rate`,
-      createField: {
-        label: `${tierLabel(tier)} rate`,
-        endpoint: '/api/admin/add-on-pricing-rules',
-        body: { addOnServiceId: ballBoyService.id, resourceTypeId: rt.id, rateTier: tier, paxCount: null },
-      },
-    })
-  }
-
   async function doEnable(resource: ResourceRow) {
     try {
       const res = await fetch(`/api/admin/resources/${resource.id}`, {
@@ -196,7 +183,6 @@ function ResourceTypeCard({
   }
 
   const coachingRules = rt.addOnPricingRules.filter((r) => r.addOnService.slug === 'coaching_fee')
-  const ballBoyRules = rt.addOnPricingRules.filter((r) => r.addOnService.slug === 'ball_boy')
 
   function findCoachingRule(tier: RateTier, paxCount: number | null) {
     return coachingRules.find((r) => r.rateTier === tier && r.paxCount === paxCount)
@@ -204,14 +190,6 @@ function ResourceTypeCard({
 
   function findCoaching(tier: RateTier, paxCount: number | null) {
     return findCoachingRule(tier, paxCount)?.priceCentavos
-  }
-
-  function findBallBoyRule(tier: RateTier) {
-    return ballBoyRules.find((r) => r.rateTier === tier)
-  }
-
-  function findBallBoy(tier: RateTier) {
-    return findBallBoyRule(tier)?.priceCentavos
   }
 
   function buildRateFields(rowLabel: string, durationMinutes: number): PriceEditField[] {
@@ -242,31 +220,6 @@ function ResourceTypeCard({
   function buildCoachingFields(paxCount: number | null): PriceEditField[] {
     const memberRule = findCoachingRule('member', paxCount)
     const nonMemberRule = findCoachingRule('non_member', paxCount)
-    const fields: PriceEditField[] = []
-    if (memberRule) {
-      fields.push({
-        key: 'member',
-        label: 'Member rate',
-        endpoint: `/api/admin/add-on-pricing-rules/${memberRule.id}`,
-        bodyKey: 'priceCentavos',
-        currentCentavos: memberRule.priceCentavos,
-      })
-    }
-    if (nonMemberRule) {
-      fields.push({
-        key: 'nonMember',
-        label: 'Non-Member rate',
-        endpoint: `/api/admin/add-on-pricing-rules/${nonMemberRule.id}`,
-        bodyKey: 'priceCentavos',
-        currentCentavos: nonMemberRule.priceCentavos,
-      })
-    }
-    return fields
-  }
-
-  function buildBallBoyFields(): PriceEditField[] {
-    const memberRule = findBallBoyRule('member')
-    const nonMemberRule = findBallBoyRule('non_member')
     const fields: PriceEditField[] = []
     if (memberRule) {
       fields.push({
@@ -514,36 +467,6 @@ function ResourceTypeCard({
                         })()}
                       </td>
                     </tr>
-                    <tr className="last:border-b-0">
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Ball Boy</td>
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                        <PriceCell
-                          price={findBallBoy('member')}
-                          allowed={isValidAddOnPricingRuleCombo('ball_boy', rt.slug, 'member', null)}
-                          addLabel="Add Ball Boy member rate"
-                          onAdd={() => openCreateBallBoy('member')}
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                        <PriceCell
-                          price={findBallBoy('non_member')}
-                          allowed={isValidAddOnPricingRuleCombo('ball_boy', rt.slug, 'non_member', null)}
-                          addLabel="Add Ball Boy non-member rate"
-                          onAdd={() => openCreateBallBoy('non_member')}
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        {(() => {
-                          const fields = buildBallBoyFields()
-                          return fields.length > 0 ? (
-                            <ActionIconButton
-                              label="Edit Ball Boy"
-                              onClick={() => setEditingRow({ title: 'Edit Ball Boy', fields })}
-                            />
-                          ) : null
-                        })()}
-                      </td>
-                    </tr>
                   </>
                 ) : (
                   <tr className="last:border-b-0">
@@ -669,13 +592,15 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
               />
             </div>
             <div className="flex items-center justify-between gap-4 py-2 text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Non-member court guest surcharge</span>
+              <span className="text-gray-500 dark:text-gray-400">Fee per additional guest</span>
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                {formatCentavos(guestFeeRule.amountCentavos)}/hr
+                {formatCentavos(guestFeeRule.amountCentavos)}/guest
               </span>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Applies to non-member court bookings only; the booker is exempt from their own guest fee.
+              Applies to every booking, member or non-member, on courts and simulators, regardless of
+              duration; the booker is exempt from their own guest fee. Members may add up to 7 guests,
+              non-members up to 3.
             </p>
             <PriceEditModal
               isOpen={editingGuestFee}
@@ -684,7 +609,7 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
               fields={[
                 {
                   key: 'amount',
-                  label: 'Guest fee (per guest/hr)',
+                  label: 'Guest fee (per guest)',
                   endpoint: `/api/admin/guest-fee-rule/${guestFeeRule.id}`,
                   bodyKey: 'amountCentavos',
                   currentCentavos: guestFeeRule.amountCentavos,

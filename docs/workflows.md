@@ -2,7 +2,7 @@
 
 How the important processes actually run, end to end.
 
-> **Business rules changed on 21 September 2026** — new membership tiers and pricing, new base rates and inventory (no tennis court), per-tier advance-booking windows, guest passes, a ₱100 guest fee, and the removal of ball boy. This document describes the application **as currently built**, which still implements the previous rules. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the implementation gap. Update the affected sections here as each item lands.
+> **Business rules changed on 21 September 2026.** The catalogue (inventory, base rates, ₱100 guest fee and guest caps, ball boy removed) is built; the new membership tiers, tier booking discount, per-tier advance-booking windows, guest passes, and birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap. Update the affected sections here as each item lands.
 
 **See also:** [business.md](business.md) (the rules these flows enforce) · [features.md](features.md) (the screens involved) · [database.md](database.md) (the records written) · [decisions.md](decisions.md) (why they work this way)
 
@@ -36,7 +36,7 @@ Same `/book` route, not a separate one.
 4. The payment step skips straight to a "Booking under {name} ({email})" summary.
 5. Credit redemption is evaluated at this point — see below.
 
-The guest-count control and the ₱150-per-guest fee apply identically on both paths.
+The guest-count control and the ₱100-per-guest fee apply on both paths; the cap is 7 guests when a term covers the slot and 3 otherwise, and the anonymous path is always held to 3 (`maxGuestsForRateTier` in `src/lib/booking-limits.ts`, checked in `POST /api/bookings` before any write).
 
 ---
 

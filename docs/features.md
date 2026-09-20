@@ -4,7 +4,7 @@ What the application currently does. This is an inventory of built, working func
 
 > **Verification status:** nothing in this project is currently treated as independently verified. QA passes run under an earlier workflow were discarded along with their findings, so any prior claim that a feature was "click-through verified" no longer stands. Re-verify before relying on anything here.
 
-> **Business rules changed on 21 September 2026** — new membership tiers and pricing, new base rates and inventory (no tennis court), per-tier advance-booking windows, guest passes, a ₱100 guest fee, and the removal of ball boy. This document describes the application **as currently built**, which still implements the previous rules. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the implementation gap. Update the affected sections here as each item lands.
+> **Business rules changed on 21 September 2026.** The catalogue (inventory, base rates, ₱100 guest fee and guest caps, ball boy removed) is built; the new membership tiers, tier booking discount, per-tier advance-booking windows, guest passes, and birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap. Update the affected sections here as each item lands.
 
 **See also:** [workflows.md](workflows.md) (how these flows run) · [business.md](business.md) (the rules behind them) · [roadmap.md](roadmap.md) (what is *not* built)
 
@@ -37,12 +37,12 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 - **Five-step wizard** — Sport, Court, Date & Time, Add-Ons, Summary — with a step indicator and full back/forward state preservation.
 - **Live availability**: the time-slot grid greys out occupied slots before submit.
 - **Member-aware**: a logged-in member with an active membership gets member pricing and a pre-filled contact step, in a single pricing phase. Anonymous bookers are priced at the non-member rate throughout.
-- **Guest count** control with the universal ₱150-per-guest fee, on every booking.
-- **Add-ons**: ball boy (courts only) and coaching (with pax selection on courts).
+- **Guest count** control with the universal ₱100-per-guest fee, on every booking, capped at 7 guests when a membership term covers the slot and 3 otherwise (the **+** control disables at the cap and the API rejects anything above it).
+- **Add-ons**: coaching only (with pax selection on courts).
 - **Full-coverage credit redemption** for members whose balance covers the whole total — confirms instantly with no payment redirect.
 - **PayMongo Checkout** for everything else, with automatic redirect.
 - **Booking hold limits** — hold creation is throttled per client (member id, or IP for anonymous bookers) and each client may keep at most 3 unpaid holds live at once; the wizard surfaces the API's 429 message inline. Rules in [workflows.md](workflows.md) → Hold and expiry.
-- **Confirmation page** showing a booking-details card (reference, resource, date and time, duration, guests, ball boy, coaching) and a separate pricing card (base price, itemized add-ons, total). Anonymous booking follow-up is bound to a short-lived HttpOnly browser capability; member booking follow-up is bound to the member session.
+- **Confirmation page** showing a booking-details card (reference, resource, date and time, duration, guests, coaching) and a separate pricing card (base price, itemized add-ons, total). Anonymous booking follow-up is bound to a short-lived HttpOnly browser capability; member booking follow-up is bound to the member session.
 
 ---
 

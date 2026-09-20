@@ -150,7 +150,6 @@ export async function PATCH(
   const durationMinutes = Math.round(
     (booking.endTime.getTime() - booking.startTime.getTime()) / 60000,
   )
-  const ballBoyAddOn = booking.addOns.find((a) => a.addOnService.slug === 'ball_boy')
   const coachingAddOn = booking.addOns.find((a) => a.addOnService.slug === 'coaching_fee')
 
   const priceResult = await priceBooking({
@@ -158,7 +157,6 @@ export async function PATCH(
     category: booking.resource.resourceType.category,
     durationMinutes,
     guestCount: booking.guestCount,
-    ballBoy: !!ballBoyAddOn,
     coaching: !!coachingAddOn,
     coachingPaxCount: coachingAddOn?.addOnPricingRule.paxCount ?? null,
     isMember,

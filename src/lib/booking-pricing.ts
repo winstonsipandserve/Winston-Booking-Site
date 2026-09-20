@@ -9,14 +9,13 @@ export interface PriceBookingInput {
   category: ResourceCategory
   durationMinutes: number
   guestCount: number
-  ballBoy: boolean
   coaching: boolean
   coachingPaxCount: number | null
   isMember: boolean
 }
 
 export interface SelectedAddOn {
-  service: 'ball_boy' | 'coaching_fee'
+  service: 'coaching_fee'
   addOnServiceId: string
   addOnPricingRuleId: string
   paxCount: number | null
@@ -43,7 +42,6 @@ export async function priceBooking(
     category,
     durationMinutes,
     guestCount,
-    ballBoy,
     coaching,
     coachingPaxCount,
     isMember,
@@ -89,34 +87,10 @@ export async function priceBooking(
 
   const selectedAddOns: SelectedAddOn[] = []
 
-  if (ballBoy) {
-    const ballBoyService = await prisma.addOnService.findUnique({ where: { slug: 'ball_boy' } })
-    // Prisma's compound-unique input rejects null for a nullable field at runtime
-    // (known Prisma limitation), so this can't use findUnique on the compound key.
-    const ballBoyRule = ballBoyService
-      ? await prisma.addOnPricingRule.findFirst({
-          where: {
-            addOnServiceId: ballBoyService.id,
-            resourceTypeId,
-            rateTier,
-            paxCount: null,
-          },
-        })
-      : null
-    if (!ballBoyService || !ballBoyRule) {
-      return { error: 'Ball boy not available for this resource and rate tier', status: 400 }
-    }
-    selectedAddOns.push({
-      service: 'ball_boy',
-      addOnServiceId: ballBoyService.id,
-      addOnPricingRuleId: ballBoyRule.id,
-      paxCount: null,
-      amountCentavos: ballBoyRule.priceCentavos,
-    })
-  }
-
   if (coaching) {
     const coachingService = await prisma.addOnService.findUnique({ where: { slug: 'coaching_fee' } })
+    // Prisma's compound-unique input rejects null for a nullable field at runtime
+    // (known Prisma limitation), so this can't use findUnique on the compound key.
     const coachingRule = coachingService
       ? await prisma.addOnPricingRule.findFirst({
           where: {

@@ -12,7 +12,6 @@ datasource db {
 // ── Enums ──────────────────────────────────────────────
 
 enum ResourceTypeSlug {
-  tennis_court
   pickleball_court
   tennis_sim
   pickleball_sim
@@ -72,7 +71,6 @@ enum AdminRole {
 
 enum AddOnServiceSlug {
   coaching_fee
-  ball_boy
 }
 
 enum PaymentStatus {
@@ -658,7 +656,7 @@ model AddOnPricingRule {
   resourceTypeId String         @map("resource_type_id")
   resourceType   ResourceType   @relation(fields: [resourceTypeId], references: [id])
   rateTier       RateTier       @map("rate_tier")
-  /// Null for services without a pax tier (e.g. ball boy). 1 or 2 for coaching fee.
+  /// Null for simulator coaching (single flat rate). 1 or 2 for court coaching.
   paxCount       Int?           @map("pax_count")
   priceCentavos  Int            @map("price_centavos")
   bookingAddOns  BookingAddOn[]

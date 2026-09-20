@@ -1,9 +1,9 @@
 import { BUSINESS_OPEN_HOUR, BUSINESS_CLOSE_HOUR } from '@/lib/business-hours'
 
-// Mirrors the locked inventory in CLAUDE.md's Architecture Decisions (1 tennis court,
-// 3 pickleball courts, 1 tennis simulator, 2 pickleball simulators, 2 golf simulators =
-// 9 total across 3 sports). Update both places by hand if that inventory ever changes.
-const TOTAL_RESOURCES = 9
+// Mirrors the inventory in docs/business.md → Sports, Resources & Facilities (2 pickleball
+// courts, 2 tennis simulators, 1 pickleball simulator, 1 golf simulator = 6 total across
+// 3 sports). Update both places by hand if that inventory ever changes.
+const TOTAL_RESOURCES = 6
 const SPORT_COUNT = 3
 
 function formatHour12(hour: number): string {

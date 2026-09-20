@@ -7,7 +7,6 @@ import {
 } from '@/lib/resend'
 
 export const ADD_ON_EMAIL_LABELS: Record<string, string> = {
-  ball_boy: 'Ball Boy',
   coaching_fee: 'Coaching',
 }
 

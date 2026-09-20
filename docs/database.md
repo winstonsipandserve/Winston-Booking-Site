@@ -4,7 +4,7 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 `prisma/schema.prisma` is the source of truth. This document explains it — it does not replace reading it.
 
-> **Business rules changed on 21 September 2026** — new membership tiers and pricing, new base rates and inventory (no tennis court), per-tier advance-booking windows, guest passes, a ₱100 guest fee, and the removal of ball boy. This document describes the schema **as currently built**, which still encodes the previous rules (`MembershipTier`, `ResourceTypeSlug.tennis_court`, `AddOnServiceSlug.ball_boy`, the seed counts). [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the implementation gap. Update the affected sections here as each item lands.
+> **Business rules changed on 21 September 2026.** The catalogue (inventory, base rates, ₱100 guest fee, ball boy removed) is built; `MembershipTier` still carries the previous 3 / 6 / 12-month plans and member `PricingRule` rows still exist as a stopgap until the tier discount lands. This document describes the schema **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap. Update the affected sections here as each item lands.
 
 **See also:** [architecture.md](architecture.md) (how the app is built) · [decisions.md](decisions.md) (why the schema looks like this) · [business.md](business.md) (the rules the data encodes)
 
@@ -25,7 +25,7 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 The amount actually charged or redeemed is `bookingGrandTotalCentavos()` (`src/lib/booking-pricing.ts`), which is `totalAmountCentavos + sum(addOns[].amountCentavos)`.
 
-Any query, export, or report that reads `totalAmountCentavos` as "what the customer paid" is **wrong for every booking with a ball boy or coaching**. This has already caused one staff-facing display bug.
+Any query, export, or report that reads `totalAmountCentavos` as "what the customer paid" is **wrong for every booking with coaching**. This has already caused one staff-facing display bug.
 
 ### Reporting semantics
 
@@ -52,7 +52,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 | Enum | Values |
 |---|---|
-| `ResourceTypeSlug` | `tennis_court`, `pickleball_court`, `tennis_sim`, `pickleball_sim`, `golf_sim` |
+| `ResourceTypeSlug` | `pickleball_court`, `tennis_sim`, `pickleball_sim`, `golf_sim` |
 | `ResourceCategory` | `court`, `simulator` |
 | `RateTier` | `member`, `non_member` |
 | `BookingStatus` | `pending_payment`, `confirmed`, `cancelled` |
@@ -63,7 +63,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 | `PaymentMethod` | `paymongo`, `membership_credit`, `cash`, `manual_online` |
 | `PaymentStatus` | `pending`, `paid`, `failed` |
 | `AdminRole` | `admin` (one value today, room for more) |
-| `AddOnServiceSlug` | `coaching_fee`, `ball_boy` |
+| `AddOnServiceSlug` | `coaching_fee` |
 | `BulletinCategory` | `Renovation`, `Closure`, `Tournament`, `Community`, `General`, `FacilityMaintenance`, `Promotion` |
 | `BulletinCustomerEligibility` | `Everyone`, `MembersOnly`, `NewCustomers`, `ReturningCustomers`, `SpecificMembershipTier` |
 | `BulletinBookingImpact` | `NoImpact`, `LimitedAvailability`, `TemporarilyUnavailable`, `ScheduleChanges` |
@@ -81,7 +81,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 ## Resources & Pricing
 
-**`ResourceType`** — the five bookable kinds, keyed by `slug` (unique). Carries `category` (court or simulator). Parent of resources, pricing rules, and add-on pricing rules.
+**`ResourceType`** — the four bookable kinds, keyed by `slug` (unique). Carries `category` (court or simulator). Parent of resources, pricing rules, and add-on pricing rules.
 
 **`Resource`** — a specific physical unit (Court 1, Bay 2), belonging to a `ResourceType`. Bookings reference a `Resource`, never a `ResourceType`.
 
@@ -93,7 +93,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 **`PricingRule`** — one row per valid resource-type / rate-tier / duration combination, unique on all three. Invalid combinations simply have no row. Admin-editable.
 
-**`AddOnService`** / **`AddOnPricingRule`** — add-on catalog and its rates. The pricing rule is unique on service + resource type + rate tier + pax count. `paxCount` is null for services without a pax tier (ball boy); 1 or 2 for coaching on courts.
+**`AddOnService`** / **`AddOnPricingRule`** — add-on catalog and its rates. The pricing rule is unique on service + resource type + rate tier + pax count. `paxCount` is null for simulator coaching (a single flat rate); 1 or 2 for coaching on courts. Coaching is the only add-on service.
 
 **`GuestFeeRule`** — its own table holding a single row with `amountCentavos`. Edit-only by design: no create, no delete.
 
@@ -276,6 +276,6 @@ Master SQL: `prisma/manual-sql/enable-rls-deny-all.sql`.
 
 ## Seed Data
 
-`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds only reference configuration: the 5 resource types, 9 resources, 21 pricing rules, the ₱150 guest fee rule, 2 add-on services, and 16 add-on pricing rules. It creates no announcements or news posts. Exact reference-data values are in [business.md](business.md).
+`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds only reference configuration: the 4 resource types, 6 resources, 12 pricing rules (the `member` rows currently equal the base rate — a stopgap until the tier discount replaces them, see [roadmap.md](roadmap.md)), the ₱100 guest fee rule, 1 add-on service, and 8 add-on pricing rules. It creates no announcements or news posts. Exact reference-data values are in [business.md](business.md).
 
 **The seed creates no admin user.** There is no reproducible admin bootstrap — admin accounts exist only in the live database. See [roadmap.md](roadmap.md).

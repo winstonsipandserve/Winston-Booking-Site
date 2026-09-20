@@ -2,15 +2,14 @@ import type { ResourceTypeSlug, RateTier, AddOnServiceSlug } from '@prisma/clien
 
 /**
  * Which (resourceType, rateTier, durationMinutes) combinations a PricingRule may exist for —
- * see PROJECT_CONTEXT.md → Pricing. Court rates are hourly-flat (60 only); golf-sim's 30-minute
- * tier is member-only, no other resource type has an asymmetric tier list.
+ * see docs/business.md → Pricing. Court rates are hourly-flat (60 only); tennis and pickleball
+ * simulators offer 30 and 60 minutes; the golf simulator offers 60 minutes only.
  */
 export const VALID_PRICING_RULE_DURATIONS: Record<ResourceTypeSlug, Partial<Record<RateTier, number[]>>> = {
-  tennis_court: { member: [60], non_member: [60] },
   pickleball_court: { member: [60], non_member: [60] },
-  tennis_sim: { member: [15, 30, 60], non_member: [15, 30, 60] },
-  pickleball_sim: { member: [15, 30, 60], non_member: [15, 30, 60] },
-  golf_sim: { member: [30, 60, 90], non_member: [60, 90] },
+  tennis_sim: { member: [30, 60], non_member: [30, 60] },
+  pickleball_sim: { member: [30, 60], non_member: [30, 60] },
+  golf_sim: { member: [60], non_member: [60] },
 }
 
 export function isValidPricingRuleCombo(
@@ -28,20 +27,10 @@ export function isValidPricingRuleCombo(
  * sheet) — deliberately asymmetric with golf-sim, which offers both tiers.
  */
 export const VALID_COACHING_FEE_COMBOS: Record<ResourceTypeSlug, Partial<Record<RateTier, (number | null)[]>>> = {
-  tennis_court: { member: [1, 2], non_member: [1, 2] },
   pickleball_court: { member: [1, 2], non_member: [1, 2] },
   tennis_sim: { member: [null] },
   pickleball_sim: { member: [null] },
   golf_sim: { member: [null], non_member: [null] },
-}
-
-/**
- * Which (resourceType, rateTier) combinations the "ball_boy" AddOnPricingRule may exist for —
- * court-only, doesn't apply to any simulator resource type. paxCount is always null for ball boy.
- */
-export const VALID_BALL_BOY_RESOURCE_TYPES: Partial<Record<ResourceTypeSlug, RateTier[]>> = {
-  tennis_court: ['member', 'non_member'],
-  pickleball_court: ['member', 'non_member'],
 }
 
 export function isValidAddOnPricingRuleCombo(
@@ -52,9 +41,6 @@ export function isValidAddOnPricingRuleCombo(
 ): boolean {
   if (addOnServiceSlug === 'coaching_fee') {
     return VALID_COACHING_FEE_COMBOS[resourceTypeSlug]?.[rateTier]?.includes(paxCount) ?? false
-  }
-  if (addOnServiceSlug === 'ball_boy') {
-    return paxCount === null && (VALID_BALL_BOY_RESOURCE_TYPES[resourceTypeSlug]?.includes(rateTier) ?? false)
   }
   return false
 }

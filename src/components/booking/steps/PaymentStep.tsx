@@ -20,8 +20,6 @@ interface PaymentStepProps {
   durationMinutes: string
   isCourt: boolean
   guestCount: number
-  ballBoy: boolean
-  ballBoyPriceCentavos: number | null
   coaching: boolean
   coachingPaxCount: number | null
   coachingPriceCentavos: number | null
@@ -55,8 +53,6 @@ export default function PaymentStep({
   durationMinutes,
   isCourt,
   guestCount,
-  ballBoy,
-  ballBoyPriceCentavos,
   coaching,
   coachingPaxCount,
   coachingPriceCentavos,
@@ -104,8 +100,6 @@ export default function PaymentStep({
         durationMinutes={durationMinutes}
         isCourt={isCourt}
         guestCount={guestCount}
-        ballBoy={ballBoy}
-        ballBoyPriceCentavos={ballBoyPriceCentavos}
         coaching={coaching}
         coachingPaxCount={coachingPaxCount}
         coachingPriceCentavos={coachingPriceCentavos}

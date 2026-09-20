@@ -1,6 +1,6 @@
 import { RateTier } from '@prisma/client'
 import { formatCentavos } from '@/lib/format'
-import { LocationIcon, CalendarIcon, ClockIcon, GuestsIcon, BallBoyIcon, CoachingIcon } from '@/components/ui/Icons'
+import { LocationIcon, CalendarIcon, ClockIcon, GuestsIcon, CoachingIcon } from '@/components/ui/Icons'
 
 interface BookingSummaryProps {
   resourceTypeName: string
@@ -9,8 +9,6 @@ interface BookingSummaryProps {
   durationMinutes: string
   isCourt: boolean
   guestCount: number
-  ballBoy: boolean
-  ballBoyPriceCentavos: number | null
   coaching: boolean
   coachingPaxCount: number | null
   coachingPriceCentavos: number | null
@@ -39,8 +37,6 @@ export default function BookingSummary({
   durationMinutes,
   isCourt,
   guestCount,
-  ballBoy,
-  ballBoyPriceCentavos,
   coaching,
   coachingPaxCount,
   coachingPriceCentavos,
@@ -107,19 +103,6 @@ export default function BookingSummary({
           </dt>
           <dd className="text-right font-medium text-brand-dark">
             {guestCount > 0 ? formatCentavos(guestCount * guestFeeCentavos) : guestCount}
-          </dd>
-        </div>
-        <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
-          <dt className="flex items-center gap-2 text-brand-dark/70">
-            <RowIcon icon={BallBoyIcon} show={showIcons} />
-            Ball Boy
-          </dt>
-          <dd className="text-right font-medium text-brand-dark">
-            {ballBoy
-              ? ballBoyPriceCentavos !== null
-                ? formatCentavos(ballBoyPriceCentavos)
-                : 'Selected'
-              : 'Not selected'}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">

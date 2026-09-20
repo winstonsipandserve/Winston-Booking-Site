@@ -30,7 +30,6 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
   const start = new Date(booking.startTime)
   const end = new Date(booking.endTime)
   const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
-  const ballBoyAddOn = booking.addOns.find((a) => a.service === 'ball_boy')
   const coachingAddOn = booking.addOns.find((a) => a.service === 'coaching_fee')
   const baseAmountCentavos = booking.totalAmountCentavos - booking.guestFeeAmountCentavos
   const hasAddOnsBreakdown = booking.guestCount > 0 || booking.addOns.length > 0
@@ -74,12 +73,6 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
               <dd className="text-right font-medium text-brand-dark">{booking.guestCount}</dd>
             </div>
           )}
-          {ballBoyAddOn && (
-            <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-              <dt className="text-brand-dark/70">Ball Boy</dt>
-              <dd className="text-right font-medium text-brand-dark">Yes</dd>
-            </div>
-          )}
           {coachingAddOn && (
             <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
               <dt className="text-brand-dark/70">
@@ -113,14 +106,6 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
                     <dt className="text-brand-dark/70">Guests — {booking.guestCount} Pax</dt>
                     <dd className="text-right font-medium text-brand-dark">
                       {formatCentavos(booking.guestFeeAmountCentavos)}
-                    </dd>
-                  </div>
-                )}
-                {ballBoyAddOn && (
-                  <div className="flex justify-between gap-4 text-sm">
-                    <dt className="text-brand-dark/70">Ball Boy</dt>
-                    <dd className="text-right font-medium text-brand-dark">
-                      {formatCentavos(ballBoyAddOn.amountCentavos)}
                     </dd>
                   </div>
                 )}

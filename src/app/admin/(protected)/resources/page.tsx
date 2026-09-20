@@ -3,7 +3,6 @@ import { ResourceTypeSlug } from '@prisma/client'
 import ResourcesTabs from '@/components/admin/ResourcesTabs'
 
 const RESOURCE_TYPE_ORDER: ResourceTypeSlug[] = [
-  ResourceTypeSlug.tennis_court,
   ResourceTypeSlug.pickleball_court,
   ResourceTypeSlug.tennis_sim,
   ResourceTypeSlug.pickleball_sim,

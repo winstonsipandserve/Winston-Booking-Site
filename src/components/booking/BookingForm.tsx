@@ -10,7 +10,7 @@ import ReviewStep from './steps/ReviewStep'
 import PaymentStep from './steps/PaymentStep'
 import Modal from '@/components/ui/Modal'
 import { formatCentavos } from '@/lib/format'
-import { MAX_COURT_DURATION_MINUTES } from '@/lib/booking-limits'
+import { MAX_COURT_DURATION_MINUTES, maxGuestsForRateTier } from '@/lib/booking-limits'
 import type { MemberContext, MembershipCoverage } from '@/components/booking/BookingPageClient'
 
 type RateTier = 'member' | 'non_member'
@@ -44,11 +44,6 @@ interface ResourceTypeOption {
   addOnPricing: AddOnPricingTier[]
 }
 
-interface BallBoyPricing {
-  available: boolean
-  priceCentavos: number | null
-}
-
 interface CoachingPricing {
   available: boolean
   mode: 'flat' | 'paxTiered' | null
@@ -57,24 +52,12 @@ interface CoachingPricing {
   pax2PriceCentavos: number | null
 }
 
-const EMPTY_BALL_BOY_PRICING: BallBoyPricing = { available: false, priceCentavos: null }
 const EMPTY_COACHING_PRICING: CoachingPricing = {
   available: false,
   mode: null,
   flatPriceCentavos: null,
   pax1PriceCentavos: null,
   pax2PriceCentavos: null,
-}
-
-function getBallBoyPricing(
-  resourceType: ResourceTypeOption | null,
-  rateTier: RateTier,
-): BallBoyPricing {
-  if (!resourceType) return EMPTY_BALL_BOY_PRICING
-  const rule = resourceType.addOnPricing.find(
-    (a) => a.service === 'ball_boy' && a.rateTier === rateTier,
-  )
-  return rule ? { available: true, priceCentavos: rule.priceCentavos } : EMPTY_BALL_BOY_PRICING
 }
 
 function getCoachingPricing(
@@ -198,7 +181,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [ballBoy, setBallBoy] = useState(false)
   const [coaching, setCoaching] = useState(false)
   const [coachingPaxCount, setCoachingPaxCount] = useState<number | null>(null)
 
@@ -230,10 +212,10 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     return getDurationOptions(selectedResourceType, rateTier)
   }, [selectedResourceType, rateTier])
 
-  const ballBoyPricing = useMemo(
-    () => getBallBoyPricing(selectedResourceType, rateTier),
-    [selectedResourceType, rateTier],
-  )
+  // The guest cap follows the rate tier, which follows the chosen date (docs/business.md →
+  // Guest Fee); handleDateSelect clamps the count when a date change lowers the cap.
+  const maxGuests = maxGuestsForRateTier(rateTier)
+
   const coachingPricing = useMemo(
     () => getCoachingPricing(selectedResourceType, rateTier),
     [selectedResourceType, rateTier],
@@ -261,9 +243,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setAvailabilityError(null)
     const durations = nextResourceType ? getDurationOptions(nextResourceType, rateTier) : []
     setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
-    if (nextResourceType?.category !== 'court') {
-      setBallBoy(false)
-    }
     setCoachingPaxCount(null)
     if (!getCoachingPricing(nextResourceType ?? null, rateTier).available) {
       setCoaching(false)
@@ -302,6 +281,11 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
         setCoaching(false)
         setCoachingPaxCount(null)
       }
+    }
+    // A date outside every term drops the guest cap from the member to the non-member limit.
+    const nextMaxGuests = maxGuestsForRateTier(nextRateTier)
+    if (guestCount > nextMaxGuests) {
+      setGuestCount(nextMaxGuests)
     }
   }
 
@@ -359,9 +343,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
 
   const addOnsEstimateCentavos = useMemo(() => {
     let total = 0
-    if (ballBoy && ballBoyPricing.priceCentavos !== null) {
-      total += ballBoyPricing.priceCentavos
-    }
     if (coaching) {
       if (isCourt) {
         const paxPrice =
@@ -376,7 +357,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
       }
     }
     return total
-  }, [ballBoy, coaching, coachingPaxCount, isCourt, ballBoyPricing, coachingPricing])
+  }, [coaching, coachingPaxCount, isCourt, coachingPricing])
 
   const canContinue = useMemo(() => {
     switch (step) {
@@ -444,7 +425,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           startTime: new Date(startTimeLocal).toISOString(),
           durationMinutes: Number(durationMinutes),
           guestCount,
-          ballBoy,
           coaching,
           ...(coaching && isCourt && coachingPaxCount !== null ? { coachingPaxCount } : {}),
         }),
@@ -564,7 +544,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setName('')
     setEmail('')
     setPhone('')
-    setBallBoy(false)
     setCoaching(false)
     setCoachingPaxCount(null)
   }
@@ -619,12 +598,9 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
 
       {step === 4 && (
         <AddOnsStep
-          isCourt={!!isCourt}
           guestCount={guestCount}
+          maxGuests={maxGuests}
           onGuestCountChange={setGuestCount}
-          ballBoy={ballBoy}
-          onBallBoyChange={setBallBoy}
-          ballBoyPricing={ballBoyPricing}
           coaching={coaching}
           onCoachingChange={handleCoachingChange}
           coachingPricing={coachingPricing}
@@ -645,8 +621,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           durationMinutes={durationMinutes}
           isCourt={!!isCourt}
           guestCount={guestCount}
-          ballBoy={ballBoy}
-          ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}
           coachingPriceCentavos={coachingPriceCentavos}
@@ -710,8 +684,6 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           durationMinutes={durationMinutes}
           isCourt={!!isCourt}
           guestCount={guestCount}
-          ballBoy={ballBoy}
-          ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}
           coachingPriceCentavos={coachingPriceCentavos}

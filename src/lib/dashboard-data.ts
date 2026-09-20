@@ -52,7 +52,6 @@ type Sport = 'tennis' | 'pickleball' | 'golf'
 
 function sportForResourceType(slug: string): Sport | null {
   switch (slug) {
-    case 'tennis_court':
     case 'tennis_sim':
       return 'tennis'
     case 'pickleball_court':

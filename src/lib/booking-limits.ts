@@ -12,3 +12,14 @@ export const HOLD_CREATIONS_PER_IP_PER_WINDOW = 20
 
 /** Unpaid holds one client may have live at once. */
 export const MAX_LIVE_HOLDS_PER_CLIENT = 3
+
+/** Additional guests a member may add when a membership term covers the slot. */
+export const MAX_GUESTS_MEMBER = 7
+
+/** Additional guests on any other booking, including the anonymous path. */
+export const MAX_GUESTS_NON_MEMBER = 3
+
+/** Guest cap for a rate tier — see docs/business.md → Guest Fee. */
+export function maxGuestsForRateTier(rateTier: 'member' | 'non_member'): number {
+  return rateTier === 'member' ? MAX_GUESTS_MEMBER : MAX_GUESTS_NON_MEMBER
+}

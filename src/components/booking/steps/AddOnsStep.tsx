@@ -2,11 +2,6 @@
 
 import { formatCentavos } from '@/lib/format'
 
-interface BallBoyPricing {
-  available: boolean
-  priceCentavos: number | null
-}
-
 interface CoachingPricing {
   available: boolean
   mode: 'flat' | 'paxTiered' | null
@@ -16,12 +11,9 @@ interface CoachingPricing {
 }
 
 interface AddOnsStepProps {
-  isCourt: boolean
   guestCount: number
+  maxGuests: number
   onGuestCountChange: (value: number) => void
-  ballBoy: boolean
-  onBallBoyChange: (value: boolean) => void
-  ballBoyPricing: BallBoyPricing
   coaching: boolean
   onCoachingChange: (value: boolean) => void
   coachingPricing: CoachingPricing
@@ -32,12 +24,9 @@ interface AddOnsStepProps {
 }
 
 export default function AddOnsStep({
-  isCourt,
   guestCount,
+  maxGuests,
   onGuestCountChange,
-  ballBoy,
-  onBallBoyChange,
-  ballBoyPricing,
   coaching,
   onCoachingChange,
   coachingPricing,
@@ -74,53 +63,20 @@ export default function AddOnsStep({
           <button
             type="button"
             aria-label="Increase guest count"
-            onClick={() => onGuestCountChange(guestCount + 1)}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark"
+            onClick={() => onGuestCountChange(Math.min(maxGuests, guestCount + 1))}
+            disabled={guestCount >= maxGuests}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-accent-primary text-lg font-medium text-brand-light transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-40"
           >
             +
           </button>
         </div>
         <p className="text-sm text-brand-dark/60">
-          {formatCentavos(guestFeeCentavos)} fee applies per additional guest.
+          {formatCentavos(guestFeeCentavos)} fee applies per additional guest · up to {maxGuests}{' '}
+          guests.
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
-        {isCourt && (
-          <button
-            type="button"
-            onClick={() => onBallBoyChange(!ballBoy)}
-            aria-pressed={ballBoy}
-            className={`flex w-full items-center gap-3 rounded-none border px-4 py-3 text-left transition-colors ${
-              ballBoy ? 'border-accent-primary bg-accent-primary/5' : 'border-brand-dark/10'
-            }`}
-          >
-            <span
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-none border-2 ${
-                ballBoy ? 'border-accent-primary bg-accent-primary' : 'border-brand-dark/30'
-              }`}
-            >
-              {ballBoy && (
-                <svg viewBox="0 0 12 12" className="h-3 w-3 text-brand-light" fill="none">
-                  <path
-                    d="M2 6l2.5 2.5L10 3"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </span>
-            <span className="flex-1 text-sm text-brand-dark">Ball Boy</span>
-            {ballBoyPricing.priceCentavos !== null && (
-              <span className="text-sm font-medium text-brand-dark">
-                {formatCentavos(ballBoyPricing.priceCentavos)}
-              </span>
-            )}
-          </button>
-        )}
-
         {coachingPricing.available && (
           <div className="flex flex-col gap-2">
             <button

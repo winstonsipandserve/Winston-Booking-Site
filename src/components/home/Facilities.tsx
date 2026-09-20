@@ -11,7 +11,7 @@ interface FacilityTile {
 // standing in for real venue photography — swap each file (or the `image` path per facility)
 // once real photos are available.
 const FACILITIES: FacilityTile[] = [
-  { label: 'Tennis Courts', large: true, image: '/images/facilities/tennis-courts.jpg' },
+  { label: 'Tennis Simulators', large: true, image: '/images/facilities/tennis-courts.jpg' },
   { label: 'Pickleball Courts', image: '/images/facilities/pickleball-courts.jpg' },
   { label: 'Golf Simulator', image: '/images/facilities/golf-simulator.jpg' },
   { label: 'Café & Bar', image: '/images/facilities/cafe-bar.jpg' },

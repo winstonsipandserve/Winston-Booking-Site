@@ -4,7 +4,7 @@ import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
 import { COURT_DURATION_CAP_ERROR, priceBooking } from '@/lib/booking-pricing'
-import { MAX_COURT_DURATION_MINUTES } from '@/lib/booking-limits'
+import { MAX_COURT_DURATION_MINUTES, maxGuestsForRateTier } from '@/lib/booking-limits'
 import {
   consumeHoldCreationAttempt,
   hasReachedLiveHoldCap,
@@ -21,7 +21,6 @@ interface BookingRequestBody {
   startTime?: unknown
   durationMinutes?: unknown
   guestCount?: unknown
-  ballBoy?: unknown
   coaching?: unknown
   coachingPaxCount?: unknown
 }
@@ -62,7 +61,6 @@ export async function POST(request: Request) {
 
   const { resourceId, startTime, durationMinutes } = body
   const guestCountRaw = body.guestCount ?? 0
-  const ballBoyRaw = body.ballBoy ?? false
   const coachingRaw = body.coaching ?? false
 
   if (
@@ -74,13 +72,11 @@ export async function POST(request: Request) {
     typeof guestCountRaw !== 'number' ||
     !Number.isInteger(guestCountRaw) ||
     guestCountRaw < 0 ||
-    typeof ballBoyRaw !== 'boolean' ||
     typeof coachingRaw !== 'boolean'
   ) {
     return Response.json({ error: 'Missing or malformed required fields' }, { status: 400 })
   }
 
-  const ballBoy = ballBoyRaw
   const coaching = coachingRaw
 
   const parsedStartTime = new Date(startTime)
@@ -106,6 +102,16 @@ export async function POST(request: Request) {
 
   const guestCount = guestCountRaw
 
+  // The cap follows the same slot-covering membership as pricing (docs/business.md → Guest
+  // Fee), so the anonymous path is always held to the non-member cap.
+  const maxGuests = maxGuestsForRateTier(isMember ? 'member' : 'non_member')
+  if (guestCount > maxGuests) {
+    return Response.json(
+      { error: `Up to ${maxGuests} guests can be added to this booking` },
+      { status: 400 },
+    )
+  }
+
   const resource = await prisma.resource.findUnique({
     where: { id: resourceId },
     include: { resourceType: true },
@@ -116,10 +122,6 @@ export async function POST(request: Request) {
   }
   const { resourceType } = resource
   const isCourt = resourceType.category === 'court'
-
-  if (ballBoy && !isCourt) {
-    return Response.json({ error: 'Ball boy is only available for court bookings' }, { status: 400 })
-  }
 
   let coachingPaxCount: number | null = null
   if (coaching && isCourt) {
@@ -171,7 +173,6 @@ export async function POST(request: Request) {
     category: resourceType.category,
     durationMinutes,
     guestCount,
-    ballBoy,
     coaching,
     coachingPaxCount,
     isMember,
