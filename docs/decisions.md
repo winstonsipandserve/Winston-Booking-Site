@@ -98,7 +98,7 @@ The allow-list of valid combinations is a **single source of truth in code**, en
 
 A Founding Member is a Winston Premier membership with a permanent `isFounding`-style marker, set when one of the first 100 paid Premier activations is confirmed.
 
-**Why:** every Premier rule — window, passes, discount, birthday hour, renewal price — applies unchanged. Only the first-year price and the merchandise differ, and the 100-place cap is a count over paid Premier activations. A fourth enum value would duplicate every Premier branch for two differences.
+**Why:** every Premier rule — window, passes, discount, birthday hour — applies unchanged. Only the price (₱5,000 on activation and on every later Premier renewal) and the merchandise differ, and the 100-place cap is a count over paid Premier activations. A fourth enum value would duplicate every Premier branch for two differences; the flag instead feeds one branch in the Premier price lookup.
 
 **What breaks if undone:** tier-keyed logic (discount tables, reports, renewal pricing) would need a Founding case everywhere, and renewing a Founding Member into "Premier" would look like a tier change.
 

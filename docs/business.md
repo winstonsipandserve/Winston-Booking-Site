@@ -104,7 +104,7 @@ A member's tier takes a percentage off the **base court or simulator rate** of e
 | Winston Premier (including Founding Members) | 10% |
 | Winston Elite | 15% |
 
-- The discount applies to the base rate only — **not** to the guest fee and **not** to coaching. (Assumption pending client confirmation; see [roadmap.md](roadmap.md) → Open Questions.)
+- The discount applies to the court/simulator base rate only — **not** to the guest fee and **not** to coaching. Confirmed by the client.
 - Computed in centavos; every current rate divides exactly, and any future remainder rounds half-up to the nearest centavo.
 - Worked example: an Elite member booking a 60-minute golf simulator pays ₱1,200 − 15% = **₱1,020**; a Player booking two court hours pays (2 × ₱750) − 5% = **₱1,425**.
 
@@ -121,14 +121,14 @@ A flat **₱100 per additional guest**.
 - Applies to **all bookings** — every resource type (courts and simulators), members and non-members alike. It is not reduced by the member discount.
 - **Independent of booking duration.** A 30-minute simulator session and a 3-hour court booking incur the same per-guest fee.
 - **The booker is exempt from their own guest fee** — only additional guests are charged.
-- **Maximum 7 guests per booking.** Confirmed by the client for non-member bookings; members are held to the same cap until the client says otherwise (see [roadmap.md](roadmap.md) → Open Questions).
+- **Guest cap depends on who is booking:** a **member** may add up to **7** guests per booking; a **non-member** (or a member on a date no term covers) may add up to **3**. The cap follows the term covering the slot, like every other member benefit.
 - **Members may waive the fee with complimentary guest passes** — see Membership → Guest passes.
 - Charged as a **single lump sum to the booker** covering base rate + (guest fee × unwaived guest count). One payment for the whole booking, never split per guest.
 - **Admin-editable**, not hardcoded.
 
 Worked examples:
 
-- **Court**: 6-person pickleball court booking (1 booker + 5 guests), non-member — ₱750 court + (5 × ₱100) = **₱1,250**, charged to the booker.
+- **Court**: 4-person pickleball court booking (1 booker + 3 guests, the non-member maximum), non-member — ₱750 court + (3 × ₱100) = **₱1,050**, charged to the booker.
 - **Simulator**: Premier member golf-sim booking (60 min) with 2 additional guests and no passes left — (₱1,200 − 10%) + (2 × ₱100) = **₱1,280**, charged to the booker.
 
 ---
@@ -173,15 +173,16 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 ### Founding Members
 
 - Limited to the **first 100 paid Winston Premier activations**.
-- **First-year price ₱5,000** instead of ₱6,500. Renewals are at the standard Premier price of ₱6,500.
+- **Price ₱5,000 per year, fixed for life** instead of ₱6,500 — the Founding price applies to the first term **and to every Winston Premier renewal** that member makes afterwards.
 - Once the 100 places are filled, Premier costs ₱6,500 for everyone who joins after.
 - Founding status is a **permanent flag on a Premier membership**, not a fourth tier: the 7-day window, 4 guest passes, 10% discount, birthday court hour, and every other Premier perk apply unchanged. Founding Members additionally receive **exclusive Founding Member merchandise**.
+- Renewing into Player or Elite is charged at that tier's standard price; the Founding price is tied to the Premier tier.
 
 ### Which perks the system enforces
 
 | Enforced by the booking system | Honoured at the venue, outside the system |
 |---|---|
-| Advance booking window | 10% off Winston Sip & Serve (until the POS extension exists) |
+| Advance booking window | 10% off Winston Sip & Serve — staff verify the member's status at the counter (until the POS extension exists) |
 | Booking discount | Member open plays, mixers, and exclusive member events |
 | Complimentary guest passes | Priority / highest-priority registration for tournaments, leagues, and clinics |
 | Birthday-month court hour | Welcome gift, premium merchandise, Founding Member merchandise |
@@ -207,7 +208,7 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 - **A term runs through 23:59:59 Asia/Manila on its last day.** The end date is the start date plus twelve months, on the Manila calendar; members never lapse mid-day.
 - **Member benefits are judged at the slot, not at checkout.** A booking gets the tier discount, the tier's advance window, and access to guest passes and credit only when a membership term covers the booking's start time. A member two days from expiry booking next week pays non-member rates for that slot and the wizard says so.
 - **Renewal opens 14 days before expiry.** The renewed term is queued to start the day after the current one ends, so no paid-for days are lost. Outside that window a live member cannot renew, and only one renewal can be queued at a time. A lapsed member can renew at any time and the new term starts on payment.
-- **A renewal may be into any tier.** A Founding Member renews at the standard Premier price and keeps the Founding flag.
+- **A renewal may be into any tier.** A Founding Member renewing into Premier pays the Founding price of ₱5,000 and keeps the Founding flag.
 - **Each term has its own credit balance and its own guest-pass and birthday allowances.** None carry from the current term into a queued renewal.
 
 ### Credit rules
