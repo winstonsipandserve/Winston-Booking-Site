@@ -36,6 +36,11 @@ type MembershipStatusCardProps =
         bookingDiscountPercent: number
         guestPasses: number
         advanceBookingDays: number
+        /** Complimentary guest passes left this term. */
+        guestPassesRemaining: number
+        /** Birthday-month court hour: which month, and whether this term has used it. */
+        birthdayMonthLabel: string | null
+        birthdayPerkUsed: boolean
         remainingCreditCentavos: number
         expiryDateLabel: string
         isExpired: boolean
@@ -145,6 +150,24 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
           <div className="mt-4 flex items-center justify-between gap-4 border-t border-brand-light/15 pt-3">
             <span className="text-accent-light/70">Expires</span>
             <span className="font-medium text-neutral-100">{membership.expiryDateLabel}</span>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-4 border-t border-brand-light/15 pt-3">
+            <span className="text-accent-light/70">Guest passes</span>
+            <span className="font-medium text-neutral-100">
+              {membership.guestPassesRemaining} of {membership.guestPasses} left
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-4 border-t border-brand-light/15 pt-3">
+            <span className="text-accent-light/70">Birthday court hour</span>
+            <span className="font-medium text-neutral-100">
+              {membership.birthdayMonthLabel === null
+                ? 'Add your birthday to unlock'
+                : membership.birthdayPerkUsed
+                  ? 'Used this term'
+                  : `Available in ${membership.birthdayMonthLabel}`}
+            </span>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-brand-light/15 pt-4">

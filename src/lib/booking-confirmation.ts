@@ -46,6 +46,8 @@ export async function sendBookingConfirmationEmailForBooking(
 
   const guestFeeCentavos = booking.guestFeeAmountCentavos
   const memberDiscountCentavos = booking.memberDiscountCentavos
+  const memberDiscountLabel = booking.birthdayPerkApplied ? 'Birthday court hour' : 'Member discount'
+  const guestPassesUsed = booking.guestPassesUsed
   // totalAmountCentavos already has the discount taken off; show the rate before it.
   const basePriceCentavos = booking.totalAmountCentavos - guestFeeCentavos + memberDiscountCentavos
 
@@ -68,6 +70,8 @@ export async function sendBookingConfirmationEmailForBooking(
     guestFeeCentavos,
     basePriceCentavos,
     memberDiscountCentavos,
+    memberDiscountLabel,
+    guestPassesUsed,
     addOns,
     totalPaidCentavos,
     creditRedemption,
@@ -86,6 +90,8 @@ export async function sendBookingConfirmationEmailForBooking(
     guestFeeCentavos,
     basePriceCentavos,
     memberDiscountCentavos,
+    memberDiscountLabel,
+    guestPassesUsed,
     addOns,
     totalPaidCentavos,
     creditRedemption,

@@ -568,8 +568,12 @@ interface SendBookingConfirmationEmailInput {
   guestFeeCentavos: number
   /** Undiscounted court/simulator rate for the duration. */
   basePriceCentavos: number
-  /** Tier discount taken off basePriceCentavos; 0 for non-member bookings. */
+  /** Tier or birthday discount taken off basePriceCentavos; 0 for non-member bookings. */
   memberDiscountCentavos: number
+  /** "Member discount" or "Birthday court hour". */
+  memberDiscountLabel: string
+  /** Guests whose fee was waived by complimentary guest passes. */
+  guestPassesUsed: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
   creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
@@ -625,6 +629,8 @@ export async function sendBookingConfirmationEmail({
   guestFeeCentavos,
   basePriceCentavos,
   memberDiscountCentavos,
+  memberDiscountLabel,
+  guestPassesUsed,
   addOns,
   totalPaidCentavos,
   creditRedemption,
@@ -644,13 +650,20 @@ export async function sendBookingConfirmationEmail({
     ledgerRow('Duration', durationLabel),
     ledgerRow('Price', formatCentavos(basePriceCentavos)),
     ...(memberDiscountCentavos > 0
-      ? [ledgerRow('Member discount', `&minus;${formatCentavos(memberDiscountCentavos)}`, false, true)]
+      ? [ledgerRow(escapeHtml(memberDiscountLabel), `&minus;${formatCentavos(memberDiscountCentavos)}`, false, true)]
       : []),
     ...(hasAddOnsBreakdown
       ? [
           ledgerSectionHeader('Add-ons total'),
           ...(guestCount > 0
-            ? [ledgerRow(`Guests — ${guestCount} Pax`, formatCentavos(guestFeeCentavos), false, true)]
+            ? [
+                ledgerRow(
+                  `Guests — ${guestCount} Pax${guestPassesUsed > 0 ? ` (${guestPassesUsed} guest pass${guestPassesUsed === 1 ? '' : 'es'})` : ''}`,
+                  formatCentavos(guestFeeCentavos),
+                  false,
+                  true,
+                ),
+              ]
             : []),
           ...addOns.map((addOn) =>
             ledgerRow(escapeHtml(addOn.name), formatCentavos(addOn.amountCentavos), false, true),
@@ -923,8 +936,12 @@ interface SendStaffBookingNotificationEmailInput {
   guestFeeCentavos: number
   /** Undiscounted court/simulator rate for the duration. */
   basePriceCentavos: number
-  /** Tier discount taken off basePriceCentavos; 0 for non-member bookings. */
+  /** Tier or birthday discount taken off basePriceCentavos; 0 for non-member bookings. */
   memberDiscountCentavos: number
+  /** "Member discount" or "Birthday court hour". */
+  memberDiscountLabel: string
+  /** Guests whose fee was waived by complimentary guest passes. */
+  guestPassesUsed: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
   creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
@@ -943,6 +960,8 @@ export async function sendStaffBookingNotificationEmail({
   guestFeeCentavos,
   basePriceCentavos,
   memberDiscountCentavos,
+  memberDiscountLabel,
+  guestPassesUsed,
   addOns,
   totalPaidCentavos,
   creditRedemption,
@@ -962,13 +981,20 @@ export async function sendStaffBookingNotificationEmail({
     ledgerRow('Duration', durationLabel),
     ledgerRow('Price', formatCentavos(basePriceCentavos)),
     ...(memberDiscountCentavos > 0
-      ? [ledgerRow('Member discount', `&minus;${formatCentavos(memberDiscountCentavos)}`, false, true)]
+      ? [ledgerRow(escapeHtml(memberDiscountLabel), `&minus;${formatCentavos(memberDiscountCentavos)}`, false, true)]
       : []),
     ...(hasAddOnsBreakdown
       ? [
           ledgerSectionHeader('Add-ons total'),
           ...(guestCount > 0
-            ? [ledgerRow(`Guests — ${guestCount} Pax`, formatCentavos(guestFeeCentavos), false, true)]
+            ? [
+                ledgerRow(
+                  `Guests — ${guestCount} Pax${guestPassesUsed > 0 ? ` (${guestPassesUsed} guest pass${guestPassesUsed === 1 ? '' : 'es'})` : ''}`,
+                  formatCentavos(guestFeeCentavos),
+                  false,
+                  true,
+                ),
+              ]
             : []),
           ...addOns.map((addOn) =>
             ledgerRow(escapeHtml(addOn.name), formatCentavos(addOn.amountCentavos), false, true),

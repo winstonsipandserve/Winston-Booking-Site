@@ -14,7 +14,9 @@ export interface BookingDetail {
   endTime: string
   totalAmountCentavos: number
   memberDiscountCentavos: number
+  birthdayPerkApplied: boolean
   guestFeeAmountCentavos: number
+  guestPassesUsed: number
   addOns: BookingAddOn[]
   addOnsTotalCentavos: number
   resource: { typeName: string; label: string }
@@ -102,7 +104,7 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
           </div>
           {booking.memberDiscountCentavos > 0 && (
             <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-              <dt className="text-brand-dark/70">Member discount</dt>
+              <dt className="text-brand-dark/70">{booking.birthdayPerkApplied ? 'Birthday court hour' : 'Member discount'}</dt>
               <dd className="text-right font-medium text-brand-dark">
                 &minus;{formatCentavos(booking.memberDiscountCentavos)}
               </dd>
@@ -116,7 +118,11 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
               <div className="flex flex-col gap-2 border-t border-brand-dark/10 py-3 pl-4">
                 {booking.guestCount > 0 && (
                   <div className="flex justify-between gap-4 text-sm">
-                    <dt className="text-brand-dark/70">Guests — {booking.guestCount} Pax</dt>
+                    <dt className="text-brand-dark/70">
+                      Guests — {booking.guestCount} Pax
+                      {booking.guestPassesUsed > 0 &&
+                        ` (${booking.guestPassesUsed} guest pass${booking.guestPassesUsed === 1 ? '' : 'es'})`}
+                    </dt>
                     <dd className="text-right font-medium text-brand-dark">
                       {formatCentavos(booking.guestFeeAmountCentavos)}
                     </dd>

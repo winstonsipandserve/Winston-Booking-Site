@@ -22,6 +22,17 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+
+/** A real calendar date (YYYY-MM-DD) that is not in the future, as a UTC-midnight Date. */
+function parseDateOfBirth(value: unknown): Date | null {
+  if (typeof value !== 'string' || !DATE_PATTERN.test(value)) return null
+  const parsed = new Date(`${value}T00:00:00.000Z`)
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) return null
+  if (parsed.getTime() > Date.now()) return null
+  return parsed
+}
+
 function isValidTier(value: unknown): value is MembershipTier {
   return typeof value === 'string' && (VALID_TIERS as readonly string[]).includes(value)
 }
@@ -95,7 +106,7 @@ async function getBlockedApplicationResponse(customerId: string): Promise<Respon
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
-  const { name, email, phone, address, requestedTier, uploadSessionId } = body ?? {}
+  const { name, email, phone, address, dateOfBirth, requestedTier, uploadSessionId } = body ?? {}
 
   if (!isNonEmptyString(name)) {
     return Response.json({ error: 'Name is required' }, { status: 400 })
@@ -108,6 +119,10 @@ export async function POST(request: Request) {
   }
   if (!isNonEmptyString(address)) {
     return Response.json({ error: 'Address is required' }, { status: 400 })
+  }
+  const parsedDateOfBirth = parseDateOfBirth(dateOfBirth)
+  if (!parsedDateOfBirth) {
+    return Response.json({ error: 'Date of birth must be a valid past date (YYYY-MM-DD)' }, { status: 400 })
   }
   if (!isValidTier(requestedTier)) {
     return Response.json(
@@ -171,6 +186,7 @@ export async function POST(request: Request) {
         id: applicationId,
         customerId: customer.id,
         requestedTier,
+        dateOfBirth: parsedDateOfBirth,
         address,
         contactNumber: phone,
         govIdFrontUrl: frontPath,

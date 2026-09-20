@@ -2,6 +2,7 @@ import { RateTier, ResourceCategory } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { MAX_COURT_DURATION_MINUTES } from '@/lib/booking-limits'
 import { tierDiscountCentavos } from '@/lib/membership-pricing'
+import type { BirthdayPerkKind } from '@/lib/member-perks'
 
 export const COURT_DURATION_CAP_ERROR = `Court bookings must be ${MAX_COURT_DURATION_MINUTES / 60} hours or shorter`
 
@@ -16,6 +17,10 @@ export interface PriceBookingInput {
   isMember: boolean
   /** Tier discount off the base court/simulator rate (MEMBERSHIP_TIER_PLANS); 0 for non-members. */
   bookingDiscountPercent: number
+  /** Guests whose fee is waived by complimentary guest passes (already validated ≤ guestCount). */
+  guestPassesUsed?: number
+  /** Birthday-month court hour on this booking: replaces the tier discount (docs/business.md). */
+  birthdayPerk?: BirthdayPerkKind | null
 }
 
 export interface SelectedAddOn {
@@ -29,9 +34,12 @@ export interface SelectedAddOn {
 export interface PriceBookingResult {
   /** Discounted base rate + guest fee (what Booking.totalAmountCentavos stores). */
   totalAmountCentavos: number
-  /** The tier discount already taken off inside totalAmountCentavos. */
+  /** The tier (or birthday) discount already taken off inside totalAmountCentavos. */
   memberDiscountCentavos: number
+  /** Guest fee actually charged, after any guest passes. */
   guestFeeCentavos: number
+  guestPassesUsed: number
+  birthdayPerkApplied: boolean
   addOns: SelectedAddOn[]
   addOnsTotalCentavos: number
 }
@@ -53,6 +61,8 @@ export async function priceBooking(
     coachingPaxCount,
     isMember,
     bookingDiscountPercent,
+    guestPassesUsed = 0,
+    birthdayPerk = null,
   } = input
 
   const isCourt = category === 'court'
@@ -84,13 +94,18 @@ export async function priceBooking(
       console.error('GuestFeeRule table is empty — cannot price guest fee')
       return { error: 'Internal server error', status: 500 }
     }
-    guestFeeCentavos = guestCount * guestFeeRule.amountCentavos
+    guestFeeCentavos = Math.max(0, guestCount - guestPassesUsed) * guestFeeRule.amountCentavos
   }
 
   const baseAmountCentavos = isCourt
     ? pricingRule.priceCentavos * (durationMinutes / 60)
     : pricingRule.priceCentavos
-  const memberDiscountCentavos = tierDiscountCentavos(baseAmountCentavos, bookingDiscountPercent)
+  // The birthday hour replaces the tier discount on that booking, never stacks on it.
+  const memberDiscountCentavos = birthdayPerk
+    ? birthdayPerk === 'free'
+      ? baseAmountCentavos
+      : Math.round(baseAmountCentavos / 2)
+    : tierDiscountCentavos(baseAmountCentavos, bookingDiscountPercent)
   const totalAmountCentavos = baseAmountCentavos - memberDiscountCentavos + guestFeeCentavos
 
   const selectedAddOns: SelectedAddOn[] = []
@@ -127,6 +142,8 @@ export async function priceBooking(
     totalAmountCentavos,
     memberDiscountCentavos,
     guestFeeCentavos,
+    guestPassesUsed,
+    birthdayPerkApplied: birthdayPerk !== null,
     addOns: selectedAddOns,
     addOnsTotalCentavos,
   }

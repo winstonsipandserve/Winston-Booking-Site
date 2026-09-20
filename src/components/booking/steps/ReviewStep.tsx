@@ -14,7 +14,8 @@ interface ReviewStepProps {
   coachingPriceCentavos: number | null
   estimateCentavos: number | null
   discountEstimateCentavos: number
-  discountPercent: number
+  discountLabel: string
+  guestPassesApplied: number
   addOnsEstimateCentavos: number
   guestFeeCentavos: number
   submitting: boolean
@@ -37,7 +38,8 @@ export default function ReviewStep({
   coachingPriceCentavos,
   estimateCentavos,
   discountEstimateCentavos,
-  discountPercent,
+  discountLabel,
+  guestPassesApplied,
   addOnsEstimateCentavos,
   guestFeeCentavos,
   submitting,
@@ -63,7 +65,8 @@ export default function ReviewStep({
         coachingPriceCentavos={coachingPriceCentavos}
         estimateCentavos={estimateCentavos}
         discountEstimateCentavos={discountEstimateCentavos}
-        discountPercent={discountPercent}
+        discountLabel={discountLabel}
+        guestPassesApplied={guestPassesApplied}
         addOnsEstimateCentavos={addOnsEstimateCentavos}
         guestFeeCentavos={guestFeeCentavos}
         rateTier={rateTier}

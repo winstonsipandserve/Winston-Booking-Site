@@ -171,7 +171,7 @@ async function handleMembershipPaymentWebhook(
 ): Promise<Response> {
   const membershipPayment = await prisma.membershipPayment.findUnique({
     where: { id: membershipPaymentId },
-    include: { customer: true },
+    include: { customer: true, application: { select: { dateOfBirth: true } } },
     relationLoadStrategy: 'query',
   })
 
@@ -219,6 +219,15 @@ async function handleMembershipPaymentWebhook(
           creditBalanceCentavos: 0,
         },
       })
+
+      // The application's date of birth becomes the customer's once payment proves the
+      // applicant controls this membership — the public form itself never edits a customer.
+      if (membershipPayment.application) {
+        await tx.customer.update({
+          where: { id: membershipPayment.customerId },
+          data: { dateOfBirth: membershipPayment.application.dateOfBirth },
+        })
+      }
     })
   } catch (err) {
     console.error('Failed to process PayMongo membership payment webhook', membershipPaymentId, err)

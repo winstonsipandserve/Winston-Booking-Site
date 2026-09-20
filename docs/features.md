@@ -4,7 +4,7 @@ What the application currently does. This is an inventory of built, working func
 
 > **Verification status:** nothing in this project is currently treated as independently verified. QA passes run under an earlier workflow were discarded along with their findings, so any prior claim that a feature was "click-through verified" no longer stands. Re-verify before relying on anything here.
 
-> **Business rules changed on 21 September 2026.** The catalogue, the membership product (Winston Player / Premier / Elite, Founding Members, no credit grant), the tier booking discount, and the per-tier advance-booking window are built; guest passes and the birthday hour are **not yet**. This document describes the application **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
+> **Business rules changed on 21 September 2026.** Every item of the client update is now built; this document describes the application as it stands. [business.md](business.md) holds the rules.
 
 **See also:** [workflows.md](workflows.md) (how these flows run) · [business.md](business.md) (the rules behind them) · [roadmap.md](roadmap.md) (what is *not* built)
 
@@ -37,6 +37,8 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 - **Five-step wizard** — Sport, Court, Date & Time, Add-Ons, Summary — with a step indicator and full back/forward state preservation.
 - **Live availability**: the time-slot grid greys out occupied slots before submit.
 - **Member-aware**: a logged-in member whose term covers the slot gets their tier's discount off the base court/simulator rate (5 / 10 / 15%), member coaching rates, and a pre-filled contact step, in a single pricing phase. The Sport step's pricing modal shows the base rate struck through beside the member price, and the summary and confirmation show a "Member discount" line. Anonymous bookers are priced at the base rate throughout.
+- **Guest passes**: on the Add-Ons step a member whose term covers the slot sees "Use my complimentary guest passes (N left this term)", ticked by default; passes waive the ₱100 fee for up to that many guests and the summary shows "(n guest passes)" on the Guests row.
+- **Birthday court hour**: on an exactly-60-minute slot in the member's birthday month, with the perk unused this term, the Add-Ons step offers "Use my birthday court hour", ticked by default; it replaces the tier discount (50% off the base rate for Player, free for the other tiers) and the summary, confirmation, and emails label the line "Birthday court hour". A booking that comes to ₱0 (free hour, every guest on a pass) confirms immediately with no checkout.
 - **Advance-booking window**: the calendar disables dates beyond today + 3 days for non-members and today + 5 / 7 / 10 days for Player / Premier / Elite terms (a date a term does not cover falls back to the non-member window), with a note stating the window; `POST /api/bookings` rejects anything beyond it. Admin reschedules are not bound by the window.
 - **Guest count** control with the universal ₱100-per-guest fee, on every booking, capped at 7 guests when a membership term covers the slot and 3 otherwise (the **+** control disables at the cap and the API rejects anything above it).
 - **Add-ons**: coaching only (with pax selection on courts).
@@ -52,7 +54,7 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 Gated on a member session; anything else redirects to login.
 
 - **Profile** — name, email, phone.
-- **Membership status card** — plan (with a Founding Member note where applicable), the tier's advance window / guest passes / discount, expiry, and current booking-credit balance.
+- **Membership status card** — plan (with a Founding Member note where applicable), the tier's advance window / guest passes / discount, expiry, guest passes left this term, the birthday court hour's status (available in {month} / used this term / add your birthday), and current booking-credit balance.
 - **Check-in credentials** — QR code plus a 6-digit fallback code, with a regenerate action.
 - **Top Up Booking Credit** — four preset amounts in a modal, shown only for an active membership. Re-clicking resumes an unfinished top-up for the same amount instead of opening another PayMongo session.
 - **Renew Membership** — shown for an expired membership; **Renew Early** appears for an active one within 14 days of its end. A paid, queued renewal is shown as a note with its end date instead.
@@ -79,7 +81,7 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 ## Membership
 
-- **Application** (`/membership/apply`) — the applicant picks a plan (Premier shows the Founding price and seats left while any remain); three government ID images upload directly to private storage through server-issued, single-use URLs, then are decoded, stripped of metadata, and re-encoded on the server before an application is created. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Upload sessions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
+- **Application** (`/membership/apply`) — the applicant picks a plan (Premier shows the Founding price and seats left while any remain) and enters a required date of birth (a real past date; validated server-side); three government ID images upload directly to private storage through server-issued, single-use URLs, then are decoded, stripped of metadata, and re-encoded on the server before an application is created. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Upload sessions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
 - **Admin review** — approve or reject, with a mandatory rejection reason.
 - **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller. The page shows the price checkout will charge — the pending payment row's snapshot, else a live Founding-aware quote — and the checkout route prices the row under the Founding seat lock (`src/lib/membership-founding.ts`). The link's `?token=` is checked before showing the checkout summary, so an invalid/superseded/expired link shows an error instead of a payment form — same pre-check pattern as `/activate`.
 - **Self-service renewal** (`/account/renew`, session-gated) and **admin-initiated renewal links** (`/membership/renew/[id]`, gated the same `?token=` way as the approval payment link — clicking "Send Renewal Link" again re-sends a fresh token for an already-queued pending payment, doubling as the resend action for an expired link).
@@ -127,7 +129,7 @@ List and detail with approve/reject. The list has a server-side search bar (appl
 
 - A **pending** application's detail page shows an identity-verification lightbox gallery and a sticky Approve/Reject bottom bar.
 - An **awaiting-payment** application's detail page shows a Resend Payment Link action.
-- An **active or expired** member's page shows a header with name and "Member since", a four-cell quick-stats row, member information and membership detail cards, a collapsible verification-documents section, and credit-transaction and booking histories (10 rows per page).
+- An **active or expired** member's page shows a header with name and "Member since", a four-cell quick-stats row, member information (including date of birth) and membership detail cards (including guest passes used and whether the birthday court hour has been redeemed this term), a collapsible verification-documents section, and credit-transaction and booking histories (10 rows per page).
 - Actions: Send Renewal Link (expired, or active and within the 14-day renewal window with nothing queued) and Add Credit (active only). "Days remaining" counts Manila calendar days.
 
 ### Announcements

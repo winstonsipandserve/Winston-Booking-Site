@@ -10,6 +10,12 @@ import { formatBookingDateTime, formatCentavos, formatMembershipExpiryDate } fro
 import { prisma } from '@/lib/prisma'
 import { getOrCreateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
 import { buildMembershipDisplayFields } from '@/lib/membership-latest'
+import { getBirthdayPerkStatus, getGuestPassStatus } from '@/lib/member-perks'
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
 import { getCurrentMembership, getRenewalEligibility } from '@/lib/membership-current'
 import { getActiveMemberSession } from '@/lib/member-session'
 
@@ -31,6 +37,9 @@ export default async function AccountPage() {
           bookingDiscountPercent: number
           guestPasses: number
           advanceBookingDays: number
+          guestPassesRemaining: number
+          birthdayMonthLabel: string | null
+          birthdayPerkUsed: boolean
           remainingCreditCentavos: number
           expiryDateLabel: string
           isExpired: boolean
@@ -44,7 +53,11 @@ export default async function AccountPage() {
 
   if (membership) {
     const displayFields = buildMembershipDisplayFields(membership)
-    const renewal = await getRenewalEligibility(customer.id)
+    const [renewal, passes, birthday] = await Promise.all([
+      getRenewalEligibility(customer.id),
+      getGuestPassStatus(prisma, membership),
+      getBirthdayPerkStatus(prisma, membership, customer.dateOfBirth),
+    ])
 
     const { token: checkInToken, code: checkInCode } = await getOrCreateCheckInToken(customer.id)
     const qrCodeDataUrl = await generateQrCodeDataUrl(checkInToken)
@@ -52,6 +65,9 @@ export default async function AccountPage() {
     membershipStatusProps = {
       membership: {
         ...displayFields,
+        guestPassesRemaining: passes.remaining,
+        birthdayMonthLabel: birthday.birthdayMonth === null ? null : MONTH_NAMES[birthday.birthdayMonth - 1],
+        birthdayPerkUsed: birthday.used,
         canRenew: renewal.eligible,
         scheduledRenewalExpiryLabel:
           !renewal.eligible && renewal.reason === 'already_scheduled'

@@ -18,13 +18,11 @@ Never yet run under real conditions:
 
 ---
 
-## Client Update — 21 September 2026 (documented, partly built)
+## Client Update — 21 September 2026 (complete)
 
 The client revised the membership product, rate card, inventory, and add-ons. [business.md](business.md) states the new rules. **Shipped:** the tier booking discount (base-rate `PricingRule` rows, `Booking.memberDiscountCentavos` snapshot, migration `20260921030000_base_rate_pricing`) and the per-tier advance-booking window; the catalogue reset — inventory (6 units, no tennis court), base rates and simulator tiers, ball boy removed, ₱100 guest fee with the 7 / 3 guest cap (migration `20260921010000_catalogue_reset`); and the membership product — Winston Player / Premier / Elite at ₱3,500 / ₱6,500 / ₱9,500, 12-month terms, Founding Member flag with the 100-seat cap and ₱5,000 pricing, no credit grant, credit renamed "booking credit", `/membership` tier cards and marketing copy (migration `20260921020000_membership_tiers_reset`). Each remaining item below is one unit of work to prioritise; update the matching sections of [features.md](features.md), [workflows.md](workflows.md), and [database.md](database.md) as it lands, and remove their banners once all are done.
 
-7. **Guest passes.** A per-term allowance and consumption record (a counter on `Membership` or a ledger), a wizard control to apply passes to a booking's guests, a snapshot of passes used on the booking, the account page balance, and the admin member detail.
-8. **Birthday-month court hour.** Date of birth on the application form, `MembershipApplication`, and `Customer`; once-per-term redemption on a slot inside the birthday month; wizard surfacing. **Blocked on the client's answer about which resources count** (Open Questions below).
-11. **Documentation follow-through.** Re-align `features.md`, `workflows.md`, and `database.md` (enum tables, seed counts, worked examples) as each item above ships.
+Also shipped: guest passes and the birthday-month court hour (derived per-term allowances, `Booking.guestPassesUsed` / `birthdayPerkApplied`, date of birth on the application and customer; migration `20260921040000_member_perks`). Nothing from the update remains open; `features.md`, `workflows.md`, and `database.md` describe the built state.
 
 ---
 
@@ -66,10 +64,6 @@ Each of these is a conscious scope limit, not an oversight.
 ## Open Questions
 
 Genuinely undecided, needing a business or client answer.
-
-**From the 21 September 2026 client update:**
-
-- **Birthday "court hour" scope.** The pickleball courts only, or any 60-minute booking including simulators? Documented in [business.md](business.md) as pickleball courts until answered. Blocks Client Update item 8.
 
 - **PayMongo account provenance.** The client has not created their own PayMongo account. The keys currently in use are Arjay's personal test-mode account. The client's own **test** keys must be swapped in before promoting to staging, and **live** keys before promoting to production. This swap must be explicitly confirmed before any payment-touching promotion to production.
 - **Enabled payment methods.** Checkout requests GCash and Maya only. Verify both

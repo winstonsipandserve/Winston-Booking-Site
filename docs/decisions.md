@@ -34,7 +34,7 @@ Never a float, anywhere — storage, computation, or transport.
 
 ### Snapshot what was actually charged
 
-Several columns deliberately duplicate data that could otherwise be recomputed: the guest fee charged, the tier discount taken off, each add-on's price, and the customer's name and phone at booking time.
+Several columns deliberately duplicate data that could otherwise be recomputed: the guest fee charged, the tier (or birthday) discount taken off, the guest passes used, whether the birthday hour was redeemed, each add-on's price, and the customer's name and phone at booking time.
 
 **Why:** rates are admin-editable and customer records change. Without snapshots, editing a rate would retroactively rewrite the history of every past booking, and a later booking under a shared email could overwrite an earlier one's contact details.
 

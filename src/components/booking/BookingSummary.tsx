@@ -15,7 +15,10 @@ interface BookingSummaryProps {
   estimateCentavos: number | null
   /** Tier discount already taken off inside estimateCentavos; 0 for non-members. */
   discountEstimateCentavos: number
-  discountPercent: number
+  /** e.g. "Member discount — 10%" or "Birthday court hour — free". */
+  discountLabel: string
+  /** Guests whose fee is waived by complimentary guest passes. */
+  guestPassesApplied: number
   addOnsEstimateCentavos: number
   guestFeeCentavos: number
   rateTier: RateTier
@@ -45,7 +48,8 @@ export default function BookingSummary({
   coachingPriceCentavos,
   estimateCentavos,
   discountEstimateCentavos,
-  discountPercent,
+  discountLabel,
+  guestPassesApplied,
   addOnsEstimateCentavos,
   guestFeeCentavos,
   rateTier,
@@ -55,9 +59,10 @@ export default function BookingSummary({
 }: BookingSummaryProps) {
   const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
   // Undiscounted court/simulator amount: the estimate minus the guest fee, plus the discount back.
+  const chargedGuests = Math.max(0, guestCount - guestPassesApplied)
   const baseEstimateCentavos =
     estimateCentavos !== null
-      ? estimateCentavos - guestCount * guestFeeCentavos + discountEstimateCentavos
+      ? estimateCentavos - chargedGuests * guestFeeCentavos + discountEstimateCentavos
       : null
 
   return (
@@ -106,7 +111,7 @@ export default function BookingSummary({
         {discountEstimateCentavos > 0 && (
           <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">
             <dt className="flex items-center gap-2 text-brand-dark/70">
-              Member discount — {discountPercent}%
+              {discountLabel}
             </dt>
             <dd className="text-right font-medium text-brand-dark">
               &minus;{formatCentavos(discountEstimateCentavos)}
@@ -118,9 +123,11 @@ export default function BookingSummary({
             <RowIcon icon={GuestsIcon} show={showIcons} />
             Guests
             {guestCount > 0 && ` — ${guestCount}`}
+            {guestPassesApplied > 0 &&
+              ` (${guestPassesApplied} guest pass${guestPassesApplied === 1 ? '' : 'es'})`}
           </dt>
           <dd className="text-right font-medium text-brand-dark">
-            {guestCount > 0 ? formatCentavos(guestCount * guestFeeCentavos) : guestCount}
+            {guestCount > 0 ? formatCentavos(chargedGuests * guestFeeCentavos) : guestCount}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-brand-dark/10 py-3">

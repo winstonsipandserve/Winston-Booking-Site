@@ -18,6 +18,12 @@ import {
   lockHoldClient,
 } from '@/lib/booking-hold-abuse'
 import { getMembershipActiveAt } from '@/lib/membership-current'
+import {
+  birthdayPerkEligible,
+  getBirthdayPerkStatus,
+  getGuestPassStatus,
+  type BirthdayPerkKind,
+} from '@/lib/member-perks'
 import { sendBookingConfirmationEmailForBooking } from '@/lib/booking-confirmation'
 import { appendBookingAccessCookie, createBookingAccessToken } from '@/lib/booking-access'
 import { getActiveMemberSession } from '@/lib/member-session'
@@ -29,6 +35,10 @@ interface BookingRequestBody {
   guestCount?: unknown
   coaching?: unknown
   coachingPaxCount?: unknown
+  /** Members only; default true. Untick in the wizard to save passes for another booking. */
+  useGuestPasses?: unknown
+  /** Members only; default true. Untick in the wizard to save the birthday hour. */
+  useBirthdayPerk?: unknown
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -37,6 +47,12 @@ function isNonEmptyString(value: unknown): value is string {
 
 /** Thrown inside the booking transaction to roll it back when the client has too many live holds. */
 class LiveHoldCapError extends Error {}
+
+/** Thrown inside the booking transaction when a perk priced before the lock is no longer available. */
+class PerkConflictError extends Error {}
+
+const PERK_CONFLICT_ERROR =
+  'Your guest passes or birthday hour were just used by another booking. Please review the price and try again.'
 
 const HOLD_LIMIT_ERROR =
   'Too many booking attempts. Complete or wait for your pending bookings to expire, then try again.'
@@ -68,6 +84,8 @@ export async function POST(request: Request) {
   const { resourceId, startTime, durationMinutes } = body
   const guestCountRaw = body.guestCount ?? 0
   const coachingRaw = body.coaching ?? false
+  const useGuestPassesRaw = body.useGuestPasses ?? true
+  const useBirthdayPerkRaw = body.useBirthdayPerk ?? true
 
   if (
     !isNonEmptyString(resourceId) ||
@@ -78,7 +96,9 @@ export async function POST(request: Request) {
     typeof guestCountRaw !== 'number' ||
     !Number.isInteger(guestCountRaw) ||
     guestCountRaw < 0 ||
-    typeof coachingRaw !== 'boolean'
+    typeof coachingRaw !== 'boolean' ||
+    typeof useGuestPassesRaw !== 'boolean' ||
+    typeof useBirthdayPerkRaw !== 'boolean'
   ) {
     return Response.json({ error: 'Missing or malformed required fields' }, { status: 400 })
   }
@@ -187,6 +207,24 @@ export async function POST(request: Request) {
     return Response.json({ error: HOLD_LIMIT_ERROR }, { status: 429 })
   }
 
+  // Per-term perks (docs/business.md → Guest passes / Birthday-month court hour), applied by
+  // default and declined per booking. Priced here from a first read; the transaction below
+  // re-checks both under the per-client lock so two holds cannot spend the same allowance.
+  let guestPassesUsed = 0
+  let birthdayPerk: BirthdayPerkKind | null = null
+  if (activeMembership && memberSession) {
+    if (useGuestPassesRaw && guestCount > 0) {
+      const passes = await getGuestPassStatus(prisma, activeMembership)
+      guestPassesUsed = Math.min(guestCount, passes.remaining)
+    }
+    if (useBirthdayPerkRaw) {
+      const birthday = await getBirthdayPerkStatus(prisma, activeMembership, memberSession.customer.dateOfBirth)
+      if (birthdayPerkEligible(birthday, parsedStartTime, durationMinutes)) {
+        birthdayPerk = birthday.kind
+      }
+    }
+  }
+
   const priceResult = await priceBooking({
     resourceTypeId: resourceType.id,
     category: resourceType.category,
@@ -196,6 +234,8 @@ export async function POST(request: Request) {
     coachingPaxCount,
     isMember,
     bookingDiscountPercent,
+    guestPassesUsed,
+    birthdayPerk,
   })
   if ('error' in priceResult) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })
@@ -216,6 +256,18 @@ export async function POST(request: Request) {
     txResult = await prisma.$transaction(async (tx) => {
       // Serialise hold creation per client so parallel requests cannot all pass the cap.
       await lockHoldClient(tx, holdClient.clientHash)
+
+      // Re-check the perks priced above now that this client's holds are serialised.
+      if (activeMembership && (guestPassesUsed > 0 || birthdayPerk)) {
+        if (guestPassesUsed > 0) {
+          const passes = await getGuestPassStatus(tx, activeMembership)
+          if (passes.remaining < guestPassesUsed) throw new PerkConflictError()
+        }
+        if (birthdayPerk) {
+          const birthday = await getBirthdayPerkStatus(tx, activeMembership, memberSession?.customer.dateOfBirth ?? null)
+          if (birthday.used) throw new PerkConflictError()
+        }
+      }
 
       const holdCutoff = new Date(Date.now() - HOLD_MINUTES * 60000)
       const staleBookings = await tx.booking.findMany({
@@ -247,7 +299,9 @@ export async function POST(request: Request) {
 
       // If this is a member booking and their credit balance fully covers the grand
       // total, atomically decrement it and confirm the booking immediately — no
-      // PayMongo checkout needed. The `gte` filter inside updateMany (not a separate
+      // PayMongo checkout needed. A ₱0 total (a free birthday hour with every guest on a
+      // pass) takes this same path with nothing to decrement, so it confirms at once
+      // instead of opening a ₱0 checkout. The `gte` filter inside updateMany (not a separate
       // findUnique-then-update) is what makes this concurrency-safe: if two bookings
       // race for the same balance, only one update can match once the first has
       // already decremented it below the threshold.
@@ -289,6 +343,8 @@ export async function POST(request: Request) {
           totalAmountCentavos,
           memberDiscountCentavos,
           guestFeeAmountCentavos: guestFeeCentavos,
+          guestPassesUsed,
+          birthdayPerkApplied: birthdayPerk !== null,
           customerNameSnapshot,
           customerPhoneSnapshot,
           accessTokenHash: bookingAccessToken?.tokenHash,
@@ -319,14 +375,17 @@ export async function POST(request: Request) {
             paidAt: new Date(),
           },
         })
-        await tx.membershipCreditTransaction.create({
-          data: {
-            membershipId: activeMembership.id,
-            bookingId: createdBooking.id,
-            amountCentavos: -grandTotalCentavos,
-            reason: 'booking_redemption',
-          },
-        })
+        // No ledger row for a ₱0 booking — nothing moved.
+        if (grandTotalCentavos > 0) {
+          await tx.membershipCreditTransaction.create({
+            data: {
+              membershipId: activeMembership.id,
+              bookingId: createdBooking.id,
+              amountCentavos: -grandTotalCentavos,
+              reason: 'booking_redemption',
+            },
+          })
+        }
       }
 
       return { booking: createdBooking, creditCovered }
@@ -334,6 +393,9 @@ export async function POST(request: Request) {
   } catch (err) {
     if (err instanceof LiveHoldCapError) {
       return Response.json({ error: HOLD_LIMIT_ERROR }, { status: 429 })
+    }
+    if (err instanceof PerkConflictError) {
+      return Response.json({ error: PERK_CONFLICT_ERROR }, { status: 409 })
     }
     console.error('Booking creation failed', err)
     if (isExclusionViolation(err)) {
@@ -349,10 +411,15 @@ export async function POST(request: Request) {
   }
 
   if (creditCovered && activeMembership) {
-    await sendBookingConfirmationEmailForBooking(booking.id, {
-      amountCentavos: grandTotalCentavos,
-      remainingBalanceCentavos: activeMembership.creditBalanceCentavos - grandTotalCentavos,
-    })
+    await sendBookingConfirmationEmailForBooking(
+      booking.id,
+      grandTotalCentavos > 0
+        ? {
+            amountCentavos: grandTotalCentavos,
+            remainingBalanceCentavos: activeMembership.creditBalanceCentavos - grandTotalCentavos,
+          }
+        : undefined,
+    )
   }
 
   const holdExpiresAt = new Date(booking.createdAt.getTime() + HOLD_MINUTES * 60000)

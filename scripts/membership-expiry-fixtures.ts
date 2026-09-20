@@ -98,6 +98,7 @@ async function createFixture(
       email,
       phone: '+639170000000',
       passwordHash,
+      dateOfBirth: new Date('1990-06-15T00:00:00.000Z'),
     },
   })
 
@@ -105,6 +106,7 @@ async function createFixture(
     data: {
       customerId: customer.id,
       requestedTier: 'player',
+      dateOfBirth: new Date('1990-06-15T00:00:00.000Z'),
       status: 'approved',
       address: 'Membership expiry fixture — development only',
       contactNumber: customer.phone,

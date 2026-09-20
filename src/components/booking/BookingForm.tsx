@@ -219,6 +219,9 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   const [phone, setPhone] = useState('')
   const [coaching, setCoaching] = useState(false)
   const [coachingPaxCount, setCoachingPaxCount] = useState<number | null>(null)
+  // Per-term perks apply by default; the member can untick either to keep it for later.
+  const [useGuestPasses, setUseGuestPasses] = useState(true)
+  const [useBirthdayPerk, setUseBirthdayPerk] = useState(true)
 
   const [showPayment, setShowPayment] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -367,13 +370,44 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     return tierRate ? tierRate.priceCentavos : null
   }, [selectedResourceType, durationMinutes, isCourt])
 
-  // Same arithmetic as priceBooking: discount off the base only, then the guest fee.
+  // Guest passes: waive the fee for up to the term's remaining passes (docs/business.md).
+  const guestPassesRemaining = coveringMembership?.guestPassesRemaining ?? 0
+  const guestPassesApplied = useGuestPasses ? Math.min(guestCount, guestPassesRemaining) : 0
+
+  // Birthday-month court hour: any 60-minute slot in the birthday month, once per term.
+  const birthdayPerk = coveringMembership?.birthdayPerk ?? null
+  const birthdayPerkEligible =
+    !!birthdayPerk &&
+    birthdayPerk.month !== null &&
+    !birthdayPerk.used &&
+    Number(durationMinutes) === 60 &&
+    !!selectedDate &&
+    Number(selectedDate.slice(5, 7)) === birthdayPerk.month
+  const birthdayPerkApplied = birthdayPerkEligible && useBirthdayPerk
+
+  // Same arithmetic as priceBooking: the birthday hour replaces the tier discount; passes
+  // reduce the guest fee; neither touches coaching.
   const discountEstimateCentavos =
-    baseEstimateCentavos !== null ? tierDiscountCentavos(baseEstimateCentavos, discountPercent) : 0
+    baseEstimateCentavos === null
+      ? 0
+      : birthdayPerkApplied
+        ? birthdayPerk!.kind === 'free'
+          ? baseEstimateCentavos
+          : Math.round(baseEstimateCentavos / 2)
+        : tierDiscountCentavos(baseEstimateCentavos, discountPercent)
+  const discountLabel = birthdayPerkApplied
+    ? birthdayPerk!.kind === 'free'
+      ? 'Birthday court hour — free'
+      : 'Birthday court hour — 50% off'
+    : `Member discount — ${discountPercent}%`
   const estimateCentavos = useMemo(() => {
     if (baseEstimateCentavos === null || !data) return null
-    return baseEstimateCentavos - discountEstimateCentavos + guestCount * data.guestFeeCentavos
-  }, [baseEstimateCentavos, discountEstimateCentavos, guestCount, data])
+    return (
+      baseEstimateCentavos -
+      discountEstimateCentavos +
+      (guestCount - guestPassesApplied) * data.guestFeeCentavos
+    )
+  }, [baseEstimateCentavos, discountEstimateCentavos, guestCount, guestPassesApplied, data])
 
   const addOnsEstimateCentavos = useMemo(() => {
     let total = 0
@@ -461,6 +495,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           guestCount,
           coaching,
           ...(coaching && isCourt && coachingPaxCount !== null ? { coachingPaxCount } : {}),
+          useGuestPasses,
+          useBirthdayPerk,
         }),
       })
 
@@ -484,7 +520,12 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           setCustomerAttached(true)
         }
       } else if (res.status === 409) {
-        setSubmitError('That slot was just booked by someone else — please pick a different time.')
+        const json = await res.json().catch(() => null)
+        setSubmitError(
+          typeof json?.error === 'string' && json.error.includes('guest passes')
+            ? json.error
+            : 'That slot was just booked by someone else — please pick a different time.',
+        )
       } else if (res.status === 400 || res.status === 429) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem with your booking details.')
@@ -580,6 +621,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setPhone('')
     setCoaching(false)
     setCoachingPaxCount(null)
+    setUseGuestPasses(true)
+    setUseBirthdayPerk(true)
   }
 
   if (loadError) {
@@ -638,6 +681,14 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           guestCount={guestCount}
           maxGuests={maxGuests}
           onGuestCountChange={setGuestCount}
+          guestPassesRemaining={guestPassesRemaining}
+          guestPassesApplied={guestPassesApplied}
+          useGuestPasses={useGuestPasses}
+          onUseGuestPassesChange={setUseGuestPasses}
+          birthdayPerkEligible={birthdayPerkEligible}
+          birthdayPerkKind={birthdayPerk?.kind ?? null}
+          useBirthdayPerk={useBirthdayPerk}
+          onUseBirthdayPerkChange={setUseBirthdayPerk}
           coaching={coaching}
           onCoachingChange={handleCoachingChange}
           coachingPricing={coachingPricing}
@@ -663,7 +714,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPriceCentavos={coachingPriceCentavos}
           estimateCentavos={estimateCentavos}
           discountEstimateCentavos={discountEstimateCentavos}
-          discountPercent={discountPercent}
+          discountLabel={discountLabel}
+          guestPassesApplied={guestPassesApplied}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           guestFeeCentavos={data.guestFeeCentavos}
           submitting={submitting}
@@ -728,7 +780,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           coachingPriceCentavos={coachingPriceCentavos}
           estimateCentavos={estimateCentavos}
           discountEstimateCentavos={discountEstimateCentavos}
-          discountPercent={discountPercent}
+          discountLabel={discountLabel}
+          guestPassesApplied={guestPassesApplied}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           guestFeeCentavos={data.guestFeeCentavos}
           name={name}

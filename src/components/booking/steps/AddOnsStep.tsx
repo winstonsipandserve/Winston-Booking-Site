@@ -14,6 +14,16 @@ interface AddOnsStepProps {
   guestCount: number
   maxGuests: number
   onGuestCountChange: (value: number) => void
+  /** Complimentary guest passes left in the covering term; 0 for non-members. */
+  guestPassesRemaining: number
+  guestPassesApplied: number
+  useGuestPasses: boolean
+  onUseGuestPassesChange: (value: boolean) => void
+  /** The birthday-month court hour can be redeemed on the selected slot. */
+  birthdayPerkEligible: boolean
+  birthdayPerkKind: 'half' | 'free' | null
+  useBirthdayPerk: boolean
+  onUseBirthdayPerkChange: (value: boolean) => void
   coaching: boolean
   onCoachingChange: (value: boolean) => void
   coachingPricing: CoachingPricing
@@ -27,6 +37,14 @@ export default function AddOnsStep({
   guestCount,
   maxGuests,
   onGuestCountChange,
+  guestPassesRemaining,
+  guestPassesApplied,
+  useGuestPasses,
+  onUseGuestPassesChange,
+  birthdayPerkEligible,
+  birthdayPerkKind,
+  useBirthdayPerk,
+  onUseBirthdayPerkChange,
   coaching,
   onCoachingChange,
   coachingPricing,
@@ -74,7 +92,46 @@ export default function AddOnsStep({
           {formatCentavos(guestFeeCentavos)} fee applies per additional guest · up to {maxGuests}{' '}
           guests.
         </p>
+        {guestPassesRemaining > 0 && guestCount > 0 && (
+          <label className="flex cursor-pointer items-start gap-3 rounded-none border border-brand-dark/10 px-4 py-3 text-sm text-brand-dark">
+            <input
+              type="checkbox"
+              checked={useGuestPasses}
+              onChange={(e) => onUseGuestPassesChange(e.target.checked)}
+              className="mt-0.5 h-4 w-4 accent-accent-primary"
+            />
+            <span>
+              Use my complimentary guest passes
+              <span className="block text-xs text-brand-dark/60">
+                {guestPassesRemaining} left this term
+                {useGuestPasses && guestPassesApplied > 0
+                  ? ` · waives the fee for ${guestPassesApplied} guest${guestPassesApplied === 1 ? '' : 's'}`
+                  : ''}
+              </span>
+            </span>
+          </label>
+        )}
       </div>
+
+      {birthdayPerkEligible && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-none border border-accent-primary/40 bg-accent-primary/5 px-4 py-3 text-sm text-brand-dark">
+          <input
+            type="checkbox"
+            checked={useBirthdayPerk}
+            onChange={(e) => onUseBirthdayPerkChange(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-accent-primary"
+          />
+          <span>
+            Use my birthday court hour
+            <span className="block text-xs text-brand-dark/60">
+              {birthdayPerkKind === 'free'
+                ? 'This one-hour session is on us — happy birthday month!'
+                : '50% off this one-hour session — happy birthday month!'}{' '}
+              Once per membership year.
+            </span>
+          </span>
+        </label>
+      )}
 
       <div className="flex flex-col gap-3">
         {coachingPricing.available && (

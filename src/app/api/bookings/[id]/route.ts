@@ -55,7 +55,9 @@ export async function GET(
       endTime: booking.endTime,
       totalAmountCentavos: booking.totalAmountCentavos,
       memberDiscountCentavos: booking.memberDiscountCentavos,
+      birthdayPerkApplied: booking.birthdayPerkApplied,
       guestFeeAmountCentavos: booking.guestFeeAmountCentavos,
+      guestPassesUsed: booking.guestPassesUsed,
       addOns: booking.addOns.map((addOn) => ({
         service: addOn.addOnService.slug,
         paxCount: addOn.addOnPricingRule.paxCount,

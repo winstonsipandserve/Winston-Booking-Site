@@ -43,6 +43,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [address, setAddress] = useState('')
+  const [dateOfBirth, setDateOfBirth] = useState('')
   const [requestedTier, setRequestedTier] = useState<MembershipTier>('player')
 
   const tierOptions = MEMBERSHIP_TIER_ORDER.map((value) => {
@@ -88,6 +89,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
     email.trim().length > 0 &&
     phone.trim().length > 0 &&
     address.trim().length > 0 &&
+    dateOfBirth.length > 0 &&
     !!govIdFront &&
     !!govIdBack &&
     !!govIdSelfie
@@ -148,6 +150,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
           email,
           phone,
           address,
+          dateOfBirth,
           requestedTier,
           uploadSessionId,
           uploads: uploadPayload.uploads.map(({ slot, contentType }) => ({ slot, contentType })),
@@ -267,6 +270,25 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
           onChange={(e) => setAddress(e.target.value)}
           className={inputClassName()}
         />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="dateOfBirth" className="text-sm font-medium text-brand-dark">
+          Date of birth
+        </label>
+        <input
+          id="dateOfBirth"
+          type="date"
+          required
+          max={new Date().toISOString().slice(0, 10)}
+          value={dateOfBirth}
+          disabled={submitting}
+          onChange={(e) => setDateOfBirth(e.target.value)}
+          className={inputClassName()}
+        />
+        <p className="text-xs text-brand-dark/60">
+          Used for your complimentary birthday-month court hour.
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">

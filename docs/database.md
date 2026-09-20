@@ -4,7 +4,7 @@ How data is structured: models, enums, relationships, constraints, and the data-
 
 `prisma/schema.prisma` is the source of truth. This document explains it — it does not replace reading it.
 
-> **Business rules changed on 21 September 2026.** The catalogue, the membership product (tiers, Founding flag, no credit grant), the tier booking discount, and the advance-booking window are built; guest passes and the birthday hour have no schema yet. This document describes the schema **as currently built**. [business.md](business.md) holds the new rules; [roadmap.md](roadmap.md) → Client Update tracks the remaining gap.
+> **Business rules changed on 21 September 2026.** Every item of the client update is now built; this document describes the application as it stands. [business.md](business.md) holds the rules.
 
 **See also:** [architecture.md](architecture.md) (how the app is built) · [decisions.md](decisions.md) (why the schema looks like this) · [business.md](business.md) (the rules the data encodes)
 
@@ -105,6 +105,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 **`Customer`** — one row per person, unique on `email`.
 
 - `passwordHash` is **nullable** — null for a non-member row created from a booking's name/email/phone, set once a member activates. A customer with a password has a real login account.
+- `dateOfBirth` (`@db.Date`, nullable) — copied from the application when the activation payment is confirmed; drives the birthday-month court hour. Null for non-member rows. Read the month in UTC: a `DATE` comes back at UTC midnight and must never pass through a Manila conversion.
 - `passwordChangedAt` — stamped by every password-setting route; sessions issued before it are rejected (see [architecture.md](architecture.md) → Authentication). `AdminUser` carries the same column.
 - `checkInToken` (unique) and `checkInCode` (unique, 6 chars) are the front-desk check-in identifier pair. Always created and rotated **together**. Both nullable until first generated.
 - **Resolved by look-up-or-create on `email`**, never blind-inserted.
@@ -136,7 +137,8 @@ One difference from the other three token models: `usedAt` here means *supersede
 - `startTime` / `endTime` define the slot. `status` follows `pending_payment` → `confirmed` or `cancelled`.
 - `totalAmountCentavos` — discounted base rate + guest fee, **excluding add-ons** (see the warning above).
 - `guestFeeAmountCentavos` — a snapshot of the guest fee actually charged, already *inside* `totalAmountCentavos`. It exists only so the fee can be broken back out for display, independent of any later rate edit.
-- `memberDiscountCentavos` — a snapshot of the tier discount already taken off inside `totalAmountCentavos` (0 for non-member bookings), so receipts can show the undiscounted rate and the discount line independent of later rate or tier changes.
+- `memberDiscountCentavos` — a snapshot of the tier discount already taken off inside `totalAmountCentavos` (0 for non-member bookings), so receipts can show the undiscounted rate and the discount line independent of later rate or tier changes. When `birthdayPerkApplied` is true it holds the birthday reduction instead (50% or 100% of the base rate).
+- `guestPassesUsed` / `birthdayPerkApplied` — the perks redeemed on this booking. A term's remaining allowance is derived by summing/finding these over the member's slot-occupying bookings inside the term (`src/lib/member-perks.ts`); there is no counter on `Membership`, so an abandoned hold releases its perks automatically.
 - `customerNameSnapshot` / `customerPhoneSnapshot` — the name and phone actually submitted for *this specific booking*, independent of any later change to the shared customer row.
 - `accessTokenHash` / `accessTokenExpiresAt` — the SHA-256 hash and expiry of the short-lived, anonymous-browser booking capability. The raw token is sent only as an HttpOnly, SameSite cookie and is never stored in the database or URL. Member bookings use the member session instead.
 - `holdClientHash` — HMAC of the client that created the hold (member id, or request IP for anonymous bookers), used only to cap live holds per client; indexed with `status` and `createdAt`. Nullable: null on rows created before the cap existed. See [workflows.md](workflows.md) → Hold abuse controls.

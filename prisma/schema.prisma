@@ -246,6 +246,9 @@ model Customer {
   checkInToken           String?                 @unique @map("check_in_token")
   /// Zero-padded 6-digit fallback code, always created/rotated together with checkInToken.
   checkInCode            String?                 @unique @map("check_in_code") @db.VarChar(6)
+  /// Birthday for the birthday-month court hour (docs/business.md). Copied from the
+  /// application when the activation payment is confirmed; null for non-member customers.
+  dateOfBirth            DateTime?               @map("date_of_birth") @db.Date
   bookings               Booking[]
   membershipApplications MembershipApplication[]
   memberships            Membership[]
@@ -426,6 +429,8 @@ model MembershipApplication {
   customer          Customer                     @relation(fields: [customerId], references: [id])
   requestedTier     MembershipTier               @map("requested_tier")
   status            ApplicationStatus            @default(pending)
+  /// Submitted with the application; copied to Customer.dateOfBirth on activation.
+  dateOfBirth       DateTime                     @map("date_of_birth") @db.Date
   address           String
   contactNumber     String                       @map("contact_number")
   govIdFrontUrl     String                       @map("gov_id_front_url")
@@ -581,6 +586,13 @@ model Booking {
   /// totalAmountCentavos above — this column exists only so the guest fee can be broken back
   /// out for display (e.g. the confirmation receipt), independent of any later GuestFeeRule edit.
   guestFeeAmountCentavos Int                           @default(0) @map("guest_fee_amount_centavos")
+  /// Guests whose fee was waived by complimentary guest passes on this booking. Passes used
+  /// in a term are derived by summing this over the member's slot-occupying bookings inside
+  /// the term (src/lib/member-perks.ts) — there is no separate counter.
+  guestPassesUsed        Int                           @default(0) @map("guest_passes_used")
+  /// The birthday-month court hour was redeemed on this booking: memberDiscountCentavos then
+  /// holds the birthday reduction (50% or 100% of the base rate) instead of the tier discount.
+  birthdayPerkApplied    Boolean                       @default(false) @map("birthday_perk_applied")
   /// Snapshot of the name/phone actually submitted for this specific booking at
   /// customer-attach time, independent of any later change to the linked Customer row.
   customerNameSnapshot   String?                       @map("customer_name_snapshot")

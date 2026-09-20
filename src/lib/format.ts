@@ -23,6 +23,14 @@ export function formatWholePesos(centavos: number): string {
   return `₱${Math.round(centavos / 100).toLocaleString('en-PH')}`
 }
 
+/**
+ * A calendar date with no time component (a Prisma `@db.Date`, returned at UTC midnight),
+ * e.g. "June 15, 1990". Formatted in UTC on purpose so it never shifts by a day.
+ */
+export function formatDateOnly(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(date)
+}
+
 export function parseCentavos(pesosInput: string): number | null {
   const trimmed = pesosInput.trim()
   if (trimmed === '') return null

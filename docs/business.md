@@ -2,7 +2,7 @@
 
 The business rules, pricing, and domain concepts for Winston Sip and Serve, as finalized with the client. This is the *what the business does* document — it describes rules that would still be true if the software were rewritten from scratch.
 
-> **Updated 21 September 2026** to the client's revised membership product, rate card, inventory, and add-on catalogue. The application still implements the previous rules in several places; [roadmap.md](roadmap.md) → Client Update tracks the gap, and [features.md](features.md) describes the app as currently built.
+> **Updated 21 September 2026** to the client's revised membership product, rate card, inventory, and add-on catalogue. Every rule below is implemented; [features.md](features.md) describes the app as built.
 
 **See also:** [features.md](features.md) (what the app currently does) · [workflows.md](workflows.md) (how processes run) · [decisions.md](decisions.md) (why choices were made) · [roadmap.md](roadmap.md) (what is not built yet)
 
@@ -192,15 +192,17 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 
 - Each tier grants a fixed number of complimentary guest passes **per membership term** (2 / 4 / 6).
 - **One pass waives the ₱100 guest fee for one guest on one booking.** A booking with three guests and two passes remaining pays one guest fee.
-- Passes are consumed when the booking is confirmed. Because customers cannot cancel, a consumed pass is not returned; an admin reschedule keeps the passes on the moved booking.
+- A pass is reserved the moment a booking hold is created and stays used once the booking is confirmed; an abandoned hold releases it. Because customers cannot cancel, a confirmed booking's passes are never returned; an admin reschedule keeps the passes on the moved booking.
+- Passes apply automatically (up to the number of guests) and the member may untick them on the Add-Ons step to keep them for another booking.
 - **Unused passes expire with the term** and do not carry into a queued renewal, which starts with its own full allowance.
 
 ### Birthday-month court hour
 
 - Redeemable **once per membership term**, on a booking whose slot falls within the member's birthday month on the Manila calendar.
-- **Winston Player**: 50% off one court hour. **Premier, Founding, and Elite**: one court hour free.
-- Requires the member's **date of birth**, collected on the membership application.
-- Which resources count as a "court hour" — the pickleball courts only, or any 60-minute booking including simulators — is an **open client question**. Until answered, the perk is read as applying to the pickleball courts. See [roadmap.md](roadmap.md).
+- **A "court hour" is any 60-minute booking** on any court or simulator bay — a pickleball court hour, a 60-minute tennis or pickleball simulator session, or a 60-minute golf simulator session. Confirmed by the client. A longer court booking is not eligible; a member wanting the perk books exactly one hour.
+- **Winston Player**: 50% off that booking's base rate. **Premier, Founding, and Elite**: the base rate is free. The birthday perk replaces the tier discount on that booking (it is not stacked on top); the guest fee and coaching are still charged.
+- Requires the member's **date of birth**, collected on the membership application and attached to the customer once the activation payment is confirmed.
+- Applies automatically to an eligible slot; the member may untick it on the Add-Ons step to keep it for another booking. Like a guest pass, it is reserved by a live hold and released if the hold is abandoned.
 
 ### Term, expiry, and renewal
 

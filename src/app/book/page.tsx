@@ -9,6 +9,7 @@ import type { GateNotice } from '@/components/booking/AnnouncementGate'
 import type { MemberContext } from '@/components/booking/BookingPageClient'
 import { getActiveMemberSession } from '@/lib/member-session'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
+import { getBirthdayPerkStatus, getGuestPassStatus } from '@/lib/member-perks'
 
 export default async function BookPage() {
   const now = new Date()
@@ -48,17 +49,28 @@ export default async function BookPage() {
         phone: customer.phone,
         isActiveMember: !!activeNow,
         creditBalanceCentavos: activeNow?.creditBalanceCentavos ?? 0,
-        coverage: liveMemberships.map((membership) => ({
-          startsAt: membership.startDate.toISOString(),
-          endsAt: membership.endDate.toISOString(),
-          startDateKey: manilaDateKey(membership.startDate),
-          expiryDateKey: manilaDateKey(membership.endDate),
-          expiryDateLabel: formatMembershipExpiryDate(membership.endDate),
-          creditBalanceCentavos: membership.creditBalanceCentavos,
-          tierName: MEMBERSHIP_TIER_PLANS[membership.tier].name,
-          bookingDiscountPercent: MEMBERSHIP_TIER_PLANS[membership.tier].bookingDiscountPercent,
-          advanceBookingDays: MEMBERSHIP_TIER_PLANS[membership.tier].advanceBookingDays,
-        })),
+        coverage: await Promise.all(
+          liveMemberships.map(async (membership) => {
+            const [passes, birthday] = await Promise.all([
+              getGuestPassStatus(prisma, membership, now),
+              getBirthdayPerkStatus(prisma, membership, customer.dateOfBirth, now),
+            ])
+            return {
+              startsAt: membership.startDate.toISOString(),
+              endsAt: membership.endDate.toISOString(),
+              startDateKey: manilaDateKey(membership.startDate),
+              expiryDateKey: manilaDateKey(membership.endDate),
+              expiryDateLabel: formatMembershipExpiryDate(membership.endDate),
+              creditBalanceCentavos: membership.creditBalanceCentavos,
+              tierName: MEMBERSHIP_TIER_PLANS[membership.tier].name,
+              bookingDiscountPercent: MEMBERSHIP_TIER_PLANS[membership.tier].bookingDiscountPercent,
+              advanceBookingDays: MEMBERSHIP_TIER_PLANS[membership.tier].advanceBookingDays,
+              guestPassesRemaining: passes.remaining,
+              guestPassAllowance: passes.allowance,
+              birthdayPerk: { month: birthday.birthdayMonth, kind: birthday.kind, used: birthday.used },
+            }
+          }),
+        ),
       }
     }
   }

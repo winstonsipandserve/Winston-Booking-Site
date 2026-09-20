@@ -18,6 +18,12 @@ export interface MembershipCoverage {
   bookingDiscountPercent: number
   /** How many days ahead (today + N, Manila) this term lets the member book. */
   advanceBookingDays: number
+  /** Complimentary guest passes still unused in this term (docs/business.md → Guest passes). */
+  guestPassesRemaining: number
+  guestPassAllowance: number
+  /** Birthday-month court hour for this term: the member's birthday month (1–12, null when
+   *  no date of birth is on file), what it does for the tier, and whether it is already used. */
+  birthdayPerk: { month: number | null; kind: 'half' | 'free'; used: boolean }
 }
 
 export interface MemberContext {

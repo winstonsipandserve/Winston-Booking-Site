@@ -10,7 +10,7 @@ import ResendActivationButton from '@/components/admin/ResendActivationButton'
 import ResendPaymentLinkButton from '@/components/admin/ResendPaymentLinkButton'
 import AddCreditButton from '@/components/admin/AddCreditButton'
 import AdminPagination from '@/components/admin/AdminPagination'
-import { formatBookingDateTime, formatCentavos, formatManilaDate, formatMembershipTier } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos, formatDateOnly, formatManilaDate, formatMembershipTier } from '@/lib/format'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { getRenewalEligibility, RENEWAL_WINDOW_DAYS } from '@/lib/membership-current'
 import { manilaCalendarDaysBetween } from '@/lib/manila-date'
@@ -19,6 +19,7 @@ import { getMembershipDisplayStatus, MEMBERSHIP_DISPLAY_STATUS_LABELS } from '@/
 import { MembershipStatusPill } from '@/components/admin/StatusPill'
 import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
 import { formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { getBirthdayPerkStatus, getGuestPassStatus } from '@/lib/member-perks'
 
 const CREDIT_TRANSACTION_REASON_LABELS: Record<CreditTransactionReason, string> = {
   booking_redemption: 'Booking Redemption',
@@ -64,6 +65,13 @@ export default async function AdminMembershipApplicationDetailPage({
 
   const requestedCreditPage = parsePage(creditPageParam)
   const requestedBookingPage = parsePage(bookingPageParam)
+
+  const perks = latestMembership
+    ? await Promise.all([
+        getGuestPassStatus(prisma, latestMembership),
+        getBirthdayPerkStatus(prisma, latestMembership, application.customer.dateOfBirth),
+      ])
+    : null
 
   const history = latestMembership
     ? await (async () => {
@@ -229,6 +237,10 @@ export default async function AdminMembershipApplicationDetailPage({
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.address}</span>
             </div>
             <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+              <span className="text-gray-500 dark:text-gray-400">Date of Birth</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{formatDateOnly(application.dateOfBirth)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
               <span className="text-gray-500 dark:text-gray-400">Contact Number</span>
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.contactNumber}</span>
             </div>
@@ -312,6 +324,10 @@ export default async function AdminMembershipApplicationDetailPage({
                 <span className="text-gray-500 dark:text-gray-400">Address</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.address}</span>
               </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Date of Birth</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">{formatDateOnly(application.dateOfBirth)}</span>
+              </div>
               <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
                 <span className="text-gray-500 dark:text-gray-400">Joined</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
@@ -346,10 +362,22 @@ export default async function AdminMembershipApplicationDetailPage({
                   {formatManilaDate(latestMembership.endDate)}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
                 <span className="text-gray-500 dark:text-gray-400">Credit Balance</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
                   {formatCentavos(latestMembership.creditBalanceCentavos)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Guest Passes</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {perks ? `${perks[0].used} of ${perks[0].allowance} used` : '—'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+                <span className="text-gray-500 dark:text-gray-400">Birthday Court Hour</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {perks ? (perks[1].used ? 'Used this term' : 'Available') : '—'}
                 </span>
               </div>
             </section>
