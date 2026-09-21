@@ -173,9 +173,10 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 ### Founding Members
 
 - Limited to the **first 100 paid Winston Premier activations**. A seat is taken by a paid Founding membership, and is held for an applicant whose Founding-priced payment link is still live (48 hours) so the last seat cannot be sold twice; an unpaid link that lapses releases its seat.
-- **Price ₱5,000 per year, fixed for life** instead of ₱6,500 — the Founding price applies to the first term **and to every Winston Premier renewal** that member makes afterwards.
+- **Price ₱5,000 for the first year only** instead of ₱6,500. Every Premier renewal afterwards — including the Founding Member's own — is charged the standard ₱6,500.
 - Once the 100 places are filled, Premier costs ₱6,500 for everyone who joins after.
 - Founding status is a **permanent flag on a Premier membership**, not a fourth tier: the 7-day window, 4 guest passes, 10% discount, birthday court hour, and every other Premier perk apply unchanged. Founding Members additionally receive **exclusive Founding Member merchandise**.
+- **The Founding flag itself is permanent, independent of price.** A member who earned Founding status keeps the flag — and the recognition that comes with it — for life, even once their renewals are priced at the standard rate. Only the one-time discounted price is limited to the first term.
 - Renewing into Player or Elite is charged at that tier's standard price; the Founding price is tied to the Premier tier.
 
 ### Which perks the system enforces
@@ -210,7 +211,7 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 - **A term runs through 23:59:59 Asia/Manila on its last day.** The end date is the start date plus twelve months, on the Manila calendar; members never lapse mid-day.
 - **Member benefits are judged at the slot, not at checkout.** A booking gets the tier discount, the tier's advance window, and access to guest passes and credit only when a membership term covers the booking's start time. A member two days from expiry booking next week pays non-member rates for that slot and the wizard says so.
 - **Renewal opens 14 days before expiry.** The renewed term is queued to start the day after the current one ends, so no paid-for days are lost. Outside that window a live member cannot renew, and only one renewal can be queued at a time. A lapsed member can renew at any time and the new term starts on payment.
-- **A renewal may be into any tier.** A Founding Member renewing into Premier pays the Founding price of ₱5,000 and keeps the Founding flag.
+- **A renewal may be into any tier.** A Founding Member renewing into Premier pays the standard ₱6,500 — the ₱5,000 price was a first-term perk only — but keeps the Founding flag.
 - **Each term has its own credit balance and its own guest-pass and birthday allowances.** None carry from the current term into a queued renewal.
 
 ### Credit rules

@@ -183,7 +183,7 @@ Because the constraint ignores `cancelled` rows only, stale pending holds must b
 
 **`MembershipPayment`** — tier activation and renewal payments, deliberately a **separate model** rather than a link off the booking-scoped `Payment`.
 
-- `isFounding` — the row was priced as a Founding Member (Premier at ₱5,000). Decided when the row is created, under the advisory lock in `src/lib/membership-founding.ts`, and copied onto the `Membership` when the webhook confirms payment. An unpaid Founding row created inside the payment-link lifetime (48 hours) holds a Founding seat.
+- `isFounding` — this payment belongs to a Founding Member. True either because it's the qualifying first-100 Premier activation (priced at ₱5,000) or because the customer already holds Founding status from an earlier term and is renewing Premier (priced at the standard ₱6,500 — the discount is a first-term perk only, see [business.md](business.md) → Founding Members). Decided when the row is created, under the advisory lock in `src/lib/membership-founding.ts`, and copied onto the `Membership` when the webhook confirms payment. An unpaid, newly-Founding-priced row created inside the payment-link lifetime (48 hours) holds a Founding seat; an existing Founding Member's standard-priced renewal does not consume a seat, since they already hold one.
 
 - No unique constraint on `applicationId`: multiple rows can exist per application over time, one per checkout attempt.
 - `tier` and `amountCentavos` are a **priced snapshot at creation**, independent of later changes to the tier plans.
@@ -196,7 +196,7 @@ Because the constraint ignores `cancelled` rows only, stale pending holds must b
 
 **`Membership`** — `tier`, `isFounding`, `startDate`, `endDate`, and `creditBalanceCentavos`.
 
-- `isFounding` — a permanent Founding Member flag on a Premier term (a flag, not a tier — see [decisions.md](decisions.md)). Set from the paying `MembershipPayment`.
+- `isFounding` — a permanent Founding Member flag (a flag, not a tier — see [decisions.md](decisions.md)), copied from the paying `MembershipPayment`. Stays true on every later Premier term that member takes, even once renewals are priced at the standard rate — only the discounted first-term price is one-time, not the flag. A renewal into Player or Elite does not carry the flag forward.
 - There is no activation fee and no credit grant: the payment amount is the plan price in full, and `creditBalanceCentavos` starts at 0. Membership rows carry no `status` column; `endDate` alone decides liveness.
 
 - `applicationId` is nullable and unique — null for renewals created without an application.

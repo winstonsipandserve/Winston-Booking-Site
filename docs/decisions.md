@@ -98,11 +98,13 @@ The discount actually applied is snapshotted on the booking (`memberDiscountCent
 
 A Founding Member is a Winston Premier membership with a permanent `isFounding`-style marker, set when one of the first 100 paid Premier activations is confirmed.
 
-**Why:** every Premier rule — window, passes, discount, birthday hour — applies unchanged. Only the price (₱5,000 on activation and on every later Premier renewal) and the merchandise differ, and the 100-place cap is a count over paid Premier activations. A fourth enum value would duplicate every Premier branch for two differences; the flag instead feeds one branch in the Premier price lookup.
+**Why:** every Premier rule — window, passes, discount, birthday hour — applies unchanged. Only the price and the merchandise differ, and the 100-place cap is a count over paid Premier activations. A fourth enum value would duplicate every Premier branch for two differences; the flag instead feeds one branch in the Premier price lookup.
 
-**What breaks if undone:** tier-keyed logic (discount tables, reports, renewal pricing) would need a Founding case everywhere, and renewing a Founding Member into "Premier" would look like a tier change.
+**The ₱5,000 price is a one-time, first-term perk; the flag is permanent.** It applies to the qualifying activation only — every later Premier renewal, including the Founding Member's own, is priced at the standard ₱6,500. The `isFounding` flag itself is never re-priced away: once a customer has held it on any membership, every later Premier term they take (activation or renewal) is flagged Founding again, just at standard price. Renewing into Player or Elite does not carry the flag forward, matching the existing rule that Founding pricing is tied to Premier.
 
-**Where the price is fixed:** when the `MembershipPayment` row is created, because that amount is what PayMongo charges. The seat count and the insert run under one advisory lock (`withFoundingSeatLock`), and an unpaid Founding row inside the 48-hour link lifetime counts as a taken seat. Approval and resend emails only *quote*; never reserve a seat from an email.
+**What breaks if undone:** tier-keyed logic (discount tables, reports, renewal pricing) would need a Founding case everywhere, and renewing a Founding Member into "Premier" would look like a tier change. Collapsing the flag and the price back into one signal would either re-discount every renewal for life (the old, now-wrong behavior) or silently drop a paying member's permanent Founding recognition the first time they renew at standard price.
+
+**Where the price is fixed:** when the `MembershipPayment` row is created, because that amount is what PayMongo charges. The seat count and the insert run under one advisory lock (`withFoundingSeatLock`), and an unpaid Founding row inside the 48-hour link lifetime counts as a taken seat. Approval and resend emails only *quote*; never reserve a seat from an email. `quoteMembershipPrice` (`src/lib/membership-founding.ts`) is the single place this is decided — every activation, renewal, and quote-display path calls into it rather than repricing independently.
 
 ### Tennis court and ball boy are removed, not disabled
 

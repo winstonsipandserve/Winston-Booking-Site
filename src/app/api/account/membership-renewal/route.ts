@@ -68,7 +68,8 @@ export async function POST(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
   // Priced under the Founding seat lock (src/lib/membership-founding.ts): a Founding Member
-  // renewing into Premier keeps the Founding price; anyone else may still take a free seat.
+  // renewing into Premier pays the standard price but keeps the Founding flag; anyone else
+  // may still take a free seat at the discounted price.
   const membershipPayment = await withFoundingSeatLock(async (tx) => {
     const quote = await quoteMembershipPrice(tx, customer.id, tier)
     return tx.membershipPayment.create({

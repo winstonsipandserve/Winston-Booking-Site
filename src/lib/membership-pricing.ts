@@ -18,7 +18,7 @@ export const MEMBERSHIP_TIER_ORDER: MembershipTier[] = ['player', 'premier', 'el
 /** Founding Members: the first 100 paid Winston Premier activations. */
 export const FOUNDING_MEMBER_CAP = 100
 
-/** Premier price for a Founding Member — on activation and on every later Premier renewal. */
+/** Founding Member Premier price — the qualifying first-100 activation only; later Premier renewals are standard price. */
 export const FOUNDING_PREMIER_PRICE_CENTAVOS = 500_000
 
 /**

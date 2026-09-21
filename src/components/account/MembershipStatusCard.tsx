@@ -132,7 +132,7 @@ export default function MembershipStatusCard(props: MembershipStatusCardProps) {
 
       <p className="mt-3 text-sm text-accent-light/80">
         {membership.isFounding
-          ? 'Founding Member — your Premier price is locked in for every renewal.'
+          ? 'Founding Member — thank you for being one of our first 100 Premier members.'
           : 'Annual membership.'}
       </p>
 

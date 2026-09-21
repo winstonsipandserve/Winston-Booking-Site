@@ -43,7 +43,8 @@ export default async function RenewMembershipPage() {
   const current = renewal.current
   const queuedStart = current ? new Date(current.endDate.getTime() + 1) : null
 
-  // Founding-aware prices per tier (a Founding Member keeps ₱5,000 on Premier).
+  // Founding-aware prices per tier (a Founding Member's Premier renewal is standard price,
+  // but still labeled Founding — the ₱5,000 discount was a first-term-only perk).
   const quotes = new Map(
     await Promise.all(
       MEMBERSHIP_TIER_ORDER.map(

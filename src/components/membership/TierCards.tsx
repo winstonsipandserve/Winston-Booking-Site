@@ -99,7 +99,8 @@ export default function TierCards({ foundingSeatsRemaining }: TierCardsProps) {
                         first {FOUNDING_MEMBER_CAP} Premier members · {foundingSeatsRemaining} seats left
                       </p>
                       <p className="mt-2 text-sm text-neutral-700">
-                        Founding Members keep this price on every Premier renewal.
+                        This price covers your first year. Premier renews at the standard rate
+                        after that — Founding status stays with you for life.
                       </p>
                     </>
                   ) : (

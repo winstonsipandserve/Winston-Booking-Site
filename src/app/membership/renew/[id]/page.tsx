@@ -108,7 +108,10 @@ export default async function MembershipRenewalPaymentPage({
                       customerName={membershipPayment.customer.name}
                       totalCentavos={membershipPayment.amountCentavos}
                       founding={
-                        membershipPayment.isFounding
+                        // Only show the strikethrough when this price is actually discounted —
+                        // a Founding Member's own renewal is flagged Founding but priced
+                        // standard, and showing "was ₱6,500, now ₱6,500" would be confusing.
+                        membershipPayment.amountCentavos < standardTierPriceCentavos(membershipPayment.tier)
                           ? { standardCentavos: standardTierPriceCentavos(membershipPayment.tier) }
                           : null
                       }
