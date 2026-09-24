@@ -32,13 +32,16 @@ Routine, reversible implementation decisions outside those gates do not need sep
 
 ## Git and Branch Promotion
 
-Coding agents must never run `git add`, `git commit`, or `git push` in this repository. Work that is ready to commit ends with an explicit Git command block for Arjay to review and run. This applies to merges as well as ordinary changes.
+For every git action — commit, push, or merge/branch-promotion — ask Arjay first, explaining what the action is and why it's happening now, then perform it directly once he agrees. Do not make him run git commands himself.
 
-Promotion is manual, with no automated merge gates:
+- **Commit:** after a task modifies or touches files, ask ("Commit this? — because...") and on agreement run `git add` (scoped to the touched files) + `git commit` on the current branch.
+- **Push:** ask before pushing, explaining what's being pushed and to which remote branch.
+- **Merge / branch promotion** (`dev` → `staging`, `staging` → `main`): ask before merging, explaining what's being promoted and confirming local (or, for `staging` → `main`, deployed staging) verification has passed. Before any payment-touching promotion to `main`, also explicitly confirm the PayMongo key swap described in [roadmap.md](roadmap.md).
 
-- `dev` → `staging` after local verification passes.
+Each of these is a separate confirmation — agreement to commit is not agreement to push or merge. There are no automated merge gates:
+
+- `dev` → `staging` only after local verification passes.
 - `staging` → `main` only after verifying the deployed staging environment, not just the local build. `main` auto-deploys to production.
-- Before any payment-touching promotion to `main`, explicitly confirm the PayMongo key swap described in [roadmap.md](roadmap.md).
 
 ## Verification
 
