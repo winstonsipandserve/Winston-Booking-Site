@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { getInitials } from '@/components/account/AccountProfile'
@@ -18,76 +17,23 @@ const NAV_LINKS = [
   { label: 'About', href: '/about' },
 ]
 
-const SCROLL_THRESHOLD = 50
-
-const FORCE_SOLID_PAGES = [
-  '/book',
-  '/login',
-  '/activate',
-  '/reset-password',
-  '/forgot-password',
-  '/account/renew',
-  '/account/renew/confirmation',
-]
-const FORCE_SOLID_PREFIXES = ['/membership/renew', '/membership/pay']
-
-function isForceSolidPage(pathname: string) {
-  return (
-    FORCE_SOLID_PAGES.includes(pathname) ||
-    FORCE_SOLID_PREFIXES.some((prefix) => pathname.startsWith(prefix + '/'))
-  )
-}
-
 export default function Navbar() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [hasScrolled, setHasScrolled] = useState(false)
   const [signOutModalOpen, setSignOutModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const signedIn = status === 'authenticated' && session?.user?.role === 'member'
-  // Menu-open forces the same solid header treatment as scrolled — otherwise the header strip
-  // stays near-transparent (showing whatever's behind it) while the dropdown panel below is opaque,
-  // producing a visible seam. The logo's invert state has to follow the same flag: leaving it tied
-  // to `scrolled` alone would put the light/inverted logo on a now-solid light header.
-  const scrolled = isForceSolidPage(pathname) || hasScrolled
-  const headerSolid = scrolled || menuOpen
-
-  useEffect(() => {
-    if (isForceSolidPage(pathname)) return
-
-    const handleScroll = () => {
-      setHasScrolled(window.scrollY > SCROLL_THRESHOLD)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [pathname])
 
   function handleSignOut() {
     signOut({ callbackUrl: '/' })
   }
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-200 ${
-        headerSolid ? 'bg-brand-light' : 'bg-brand-light/0'
-      }`}
-    >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6">
-        <Link
-          href="/"
-          className="flex shrink-0 items-center gap-3 transition-transform hover:scale-105"
-        >
-          <Image
-            src="/images/brand/winston-logo-emblem-transparent.png"
-            alt="Winston Sip & Serve"
-            width={500}
-            height={500}
-            className={`h-11 w-auto transition-all duration-200 md:h-14 ${
-              headerSolid ? 'brightness-100 invert-0' : 'brightness-0 invert'
-            }`}
-            priority
-          />
+    <header className="sticky inset-x-0 top-0 z-50 border-b border-gray-200 bg-white">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+        <Link href="/" className="shrink-0 text-lg font-semibold text-gray-900">
+          Winston
         </Link>
 
         <ul className="hidden items-center gap-6 md:flex">
@@ -100,21 +46,11 @@ export default function Navbar() {
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className={`group relative pb-1 text-sm font-normal uppercase tracking-[0.35px] transition-colors duration-200 ${
-                    isActive
-                      ? `${scrolled ? 'text-brand-dark' : 'text-white'} after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent-primary`
-                      : scrolled
-                        ? 'text-gray-700 hover:text-brand-dark'
-                        : 'text-white/90 hover:text-white'
+                  className={`text-sm font-medium transition-colors ${
+                    isActive ? 'text-gray-900 underline underline-offset-4' : 'text-gray-500 hover:text-gray-900'
                   }`}
                 >
                   {link.label}
-                  {!isActive && (
-                    <span
-                      className="absolute left-0 right-0 -bottom-0.5 h-0.5 origin-center scale-x-0 rounded-full bg-accent-primary transition-transform duration-200 group-hover:scale-x-100"
-                      aria-hidden="true"
-                    />
-                  )}
                 </Link>
               </li>
             )
@@ -126,35 +62,30 @@ export default function Navbar() {
             <Link
               href="/account"
               aria-label="My Account"
-              className="flex h-10 w-10 items-center justify-center rounded-none bg-accent-primary/10 text-sm font-bold text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-sm font-semibold text-gray-700 hover:bg-gray-200"
             >
               {getInitials(session?.user?.name ?? '')}
             </Link>
           ) : (
             <Link
               href="/book"
-              className="inline-flex items-center gap-2 rounded-none bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+              className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
             >
               Book a Court
-              <span aria-hidden="true">→</span>
             </Link>
           )}
           {signedIn ? (
             <button
               type="button"
               onClick={() => setSignOutModalOpen(true)}
-              className={`rounded-none border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
-                scrolled ? 'border-brand-mid text-brand-dark' : 'border-white/60 text-white'
-              }`}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Sign Out
             </button>
           ) : (
             <Link
               href="/login"
-              className={`rounded-none border px-5 py-2.5 text-sm font-semibold transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light ${
-                scrolled ? 'border-brand-mid text-brand-dark' : 'border-white/60 text-white'
-              }`}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               Sign In
             </Link>
@@ -166,9 +97,7 @@ export default function Navbar() {
           aria-label="Toggle menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
-          className={`flex h-11 w-11 items-center justify-center rounded-none md:hidden ${
-            headerSolid ? 'text-brand-dark' : 'text-accent-light'
-          }`}
+          className="flex h-10 w-10 items-center justify-center text-gray-700 md:hidden"
         >
           <svg viewBox="0 0 24 24" className="h-6 w-6 fill-none stroke-current stroke-2">
             {menuOpen ? (
@@ -181,7 +110,7 @@ export default function Navbar() {
       </nav>
 
       {menuOpen && (
-        <div className="border-t border-accent-light bg-brand-light px-6 pb-6 md:hidden">
+        <div className="border-t border-gray-200 bg-white px-6 pb-6 md:hidden">
           <ul className="flex flex-col gap-4 pt-4">
             {NAV_LINKS.map((link) => {
               const isActive =
@@ -193,9 +122,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     onClick={() => setMenuOpen(false)}
-                    className={`text-base font-normal uppercase tracking-[0.35px] ${
-                      isActive ? 'text-brand-dark' : 'text-gray-700'
-                    }`}
+                    className={`text-base font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'}`}
                   >
                     {link.label}
                   </Link>
@@ -208,9 +135,9 @@ export default function Navbar() {
               <Link
                 href="/account"
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-center gap-2 rounded-none bg-accent-primary/10 px-5 py-2.5 text-sm font-medium text-accent-primary transition-colors duration-300 hover:bg-accent-primary/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
               >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-none bg-accent-primary/10 text-xs font-bold text-accent-primary">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700">
                   {getInitials(session?.user?.name ?? '')}
                 </span>
                 My Account
@@ -219,10 +146,9 @@ export default function Navbar() {
               <Link
                 href="/book"
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center justify-center gap-2 rounded-none bg-accent-primary px-5 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+                className="flex w-full items-center justify-center gap-2 rounded-md bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-700"
               >
                 Book a Court
-                <span aria-hidden="true">→</span>
               </Link>
             )}
             {signedIn ? (
@@ -232,7 +158,7 @@ export default function Navbar() {
                   setMenuOpen(false)
                   setSignOutModalOpen(true)
                 }}
-                className="block w-full rounded-none border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+                className="block w-full rounded-md border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Sign Out
               </button>
@@ -240,7 +166,7 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="block w-full rounded-none border border-brand-mid px-5 py-2.5 text-center text-sm font-semibold text-brand-dark transition-colors duration-300 hover:border-accent-primary hover:bg-accent-primary hover:text-brand-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+                className="block w-full rounded-md border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Sign In
               </Link>
@@ -251,7 +177,7 @@ export default function Navbar() {
 
       <Modal isOpen={signOutModalOpen} onClose={() => setSignOutModalOpen(false)} title="Sign Out">
         <LoadingOverlay isOpen={isPending} label="Signing Out…" />
-        <p className="text-sm text-brand-dark/70">
+        <p className="text-sm text-gray-600">
           You&apos;ll need to sign in again to access your account. Continue?
         </p>
         <div className="mt-6 flex items-center justify-end gap-3">
@@ -259,7 +185,7 @@ export default function Navbar() {
             type="button"
             onClick={() => setSignOutModalOpen(false)}
             disabled={isPending}
-            className="rounded-none border border-brand-dark/15 px-3 py-1.5 text-sm font-medium text-brand-dark/70 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
@@ -267,7 +193,7 @@ export default function Navbar() {
             type="button"
             onClick={() => startTransition(handleSignOut)}
             disabled={isPending}
-            className="rounded-none bg-accent-primary px-4 py-1.5 text-sm font-semibold text-brand-light hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-md bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Sign Out
           </button>

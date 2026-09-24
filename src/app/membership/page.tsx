@@ -1,9 +1,7 @@
+import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import MembershipHero from '@/components/membership/MembershipHero'
 import TierCards from '@/components/membership/TierCards'
-import ApplicationProcess from '@/components/membership/ApplicationProcess'
-import ApplyCta from '@/components/membership/ApplyCta'
 import { foundingSeatsRemaining } from '@/lib/membership-founding'
 
 // Reads the live Founding seat count, so never prerender.
@@ -14,10 +12,20 @@ export default async function MembershipPage() {
   return (
     <>
       <Navbar />
-      <MembershipHero />
-      <TierCards foundingSeatsRemaining={seatsRemaining} />
-      <ApplicationProcess />
-      <ApplyCta />
+      <section className="mx-auto max-w-6xl px-6 py-16">
+        <h1 className="text-3xl font-semibold text-gray-900">Membership</h1>
+        <div className="mt-10">
+          <TierCards foundingSeatsRemaining={seatsRemaining} />
+        </div>
+        <div className="mt-10 text-center">
+          <Link
+            href="/membership/apply"
+            className="inline-flex items-center justify-center rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-700"
+          >
+            Apply for Membership
+          </Link>
+        </div>
+      </section>
       <Footer />
     </>
   )

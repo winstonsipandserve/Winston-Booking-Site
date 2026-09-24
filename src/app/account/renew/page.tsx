@@ -57,17 +57,13 @@ export default async function RenewMembershipPage() {
     <>
       <Navbar />
 
-      <main className="flex min-h-screen flex-col justify-center bg-background px-6 pt-24 pb-8 md:pt-24">
+      <main className="min-h-screen bg-gray-50 px-6 py-10">
         <div className="mx-auto w-full max-w-5xl">
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="max-w-xl">
-              <span className="text-xs uppercase tracking-[0.35em] text-accent-primary">
-                Membership
-              </span>
-              <h1 className="mt-2 font-serif text-3xl text-on-light md:text-4xl lg:text-5xl">
-                Renew Your Membership
-              </h1>
-              <p className="mt-2 text-on-light-muted">
+              <p className="text-sm text-gray-500">Membership</p>
+              <h1 className="mt-1 text-3xl font-semibold text-gray-900">Renew Your Membership</h1>
+              <p className="mt-2 text-gray-500">
                 Pick a plan and carry on — advance booking priority, member discounts, and a
                 fresh set of guest passes. No reapplying, no gap.
               </p>
@@ -75,7 +71,7 @@ export default async function RenewMembershipPage() {
 
             <Link
               href="/account"
-              className="order-first inline-flex shrink-0 items-center gap-2 text-sm font-medium text-on-light-muted transition-colors hover:text-accent-primary md:order-none md:pt-1"
+              className="order-first inline-flex shrink-0 items-center gap-2 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 md:order-none md:pt-1"
             >
               <svg
                 aria-hidden="true"
@@ -94,34 +90,34 @@ export default async function RenewMembershipPage() {
           </div>
 
           {current && queuedStart ? (
-            <dl className="mt-6 grid divide-y divide-brand-dark/10 rounded-card border border-brand-dark/10 bg-brand-light shadow-card sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <dl className="mt-6 grid divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white shadow-sm sm:grid-cols-3 sm:divide-x sm:divide-y-0">
               <div className="px-6 py-4">
-                <dt className="text-xs uppercase tracking-[0.2em] text-on-light-muted">
+                <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">
                   Current tier
                 </dt>
-                <dd className="mt-1 font-serif text-xl text-on-light">
+                <dd className="mt-1 text-xl font-semibold text-gray-900">
                   {formatMembershipTier(current.tier)}
                 </dd>
               </div>
               <div className="px-6 py-4">
-                <dt className="text-xs uppercase tracking-[0.2em] text-on-light-muted">
+                <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">
                   Current term ends
                 </dt>
-                <dd className="mt-1 font-serif text-xl text-on-light">
+                <dd className="mt-1 text-xl font-semibold text-gray-900">
                   {formatMembershipExpiryDate(current.endDate)}
                 </dd>
               </div>
               <div className="px-6 py-4">
-                <dt className="text-xs uppercase tracking-[0.2em] text-on-light-muted">
+                <dt className="text-xs uppercase tracking-[0.2em] text-gray-500">
                   New term starts
                 </dt>
-                <dd className="mt-1 font-serif text-xl text-accent-primary">
+                <dd className="mt-1 text-xl font-semibold text-gray-900">
                   {formatMembershipExpiryDate(queuedStart)}
                 </dd>
               </div>
             </dl>
           ) : (
-            <p className="mt-6 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-4 text-sm text-on-light-muted shadow-card">
+            <p className="mt-6 rounded-lg border border-gray-200 bg-white px-6 py-4 text-sm text-gray-500 shadow-sm">
               Your last term has ended. The tier you pick starts the moment your payment clears.
             </p>
           )}
@@ -137,40 +133,40 @@ export default async function RenewMembershipPage() {
                 <article
                   key={tier}
                   aria-label={`${formatMembershipTier(tier)} membership`}
-                  className={`relative flex flex-col rounded-card border bg-brand-light p-6 shadow-card ${
-                    isCurrentTier ? 'border-accent-primary/60' : 'border-brand-dark/10'
+                  className={`relative flex flex-col rounded-lg border bg-white p-6 shadow-sm ${
+                    isCurrentTier ? 'border-gray-900' : 'border-gray-200'
                   }`}
                 >
                   {isCurrentTier && (
-                    <span className="absolute -top-3 left-6 rounded-full bg-accent-primary px-3 py-1 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-on-accent">
+                    <span className="absolute -top-3 left-6 rounded-full bg-gray-900 px-3 py-1 text-[0.65rem] font-medium text-white">
                       Your current tier
                     </span>
                   )}
 
-                  <p className="text-xs uppercase tracking-[0.2em] text-on-light-muted">
+                  <p className="text-xs uppercase tracking-[0.2em] text-gray-500">
                     {formatMembershipPlanLabel(tier, quote.isFounding)}
                   </p>
-                  <p className="mt-2 font-serif text-4xl tabular-nums text-on-light">
+                  <p className="mt-2 text-4xl font-bold tabular-nums text-gray-900">
                     {formatCentavos(quote.amountCentavos)}
                   </p>
-                  <p className="mt-1.5 min-h-5 text-sm text-on-light-muted">
+                  <p className="mt-1.5 min-h-5 text-sm text-gray-500">
                     {projectedEnd
                       ? `Covers you through ${formatMembershipExpiryDate(projectedEnd)}`
                       : `${plan.months} months from your payment date`}
                   </p>
 
-                  <dl className="mt-5 flex flex-col divide-y divide-brand-dark/10 border-y border-brand-dark/10">
+                  <dl className="mt-5 flex flex-col divide-y divide-gray-200 border-y border-gray-200">
                     <div className="flex items-baseline justify-between gap-4 py-2.5">
-                      <dt className="text-sm text-on-light-muted">Term</dt>
-                      <dd className="text-sm font-medium tabular-nums text-on-light">{plan.months} months</dd>
+                      <dt className="text-sm text-gray-500">Term</dt>
+                      <dd className="text-sm font-medium tabular-nums text-gray-900">{plan.months} months</dd>
                     </div>
                     <div className="flex items-baseline justify-between gap-4 py-2.5">
-                      <dt className="text-sm text-on-light-muted">Booking discount</dt>
-                      <dd className="text-sm font-medium tabular-nums text-on-light">{plan.bookingDiscountPercent}%</dd>
+                      <dt className="text-sm text-gray-500">Booking discount</dt>
+                      <dd className="text-sm font-medium tabular-nums text-gray-900">{plan.bookingDiscountPercent}%</dd>
                     </div>
                     <div className="flex items-baseline justify-between gap-4 py-2.5">
-                      <dt className="text-sm text-on-light-muted">Guest passes</dt>
-                      <dd className="text-sm font-medium tabular-nums text-on-light">{plan.guestPasses} / year</dd>
+                      <dt className="text-sm text-gray-500">Guest passes</dt>
+                      <dd className="text-sm font-medium tabular-nums text-gray-900">{plan.guestPasses} / year</dd>
                     </div>
                   </dl>
 
@@ -182,7 +178,7 @@ export default async function RenewMembershipPage() {
             })}
           </div>
 
-          <div className="mt-6 flex flex-col items-center gap-1.5 text-center text-sm text-on-light-muted">
+          <div className="mt-6 flex flex-col items-center gap-1.5 text-center text-sm text-gray-500">
             <p className="inline-flex items-center gap-2">
               <svg
                 aria-hidden="true"

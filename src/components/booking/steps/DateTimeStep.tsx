@@ -44,10 +44,10 @@ export default function DateTimeStep({
   advanceWindowNote,
 }: DateTimeStepProps) {
   return (
-    <div className="flex w-full max-w-md flex-col gap-4">
-      <h2 className="font-serif text-2xl text-brand-dark">Date & Time</h2>
+    <div className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 className="text-xl font-semibold text-gray-900">Date & Time</h2>
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-brand-dark">Duration</span>
+        <span className="text-sm font-medium text-gray-900">Duration</span>
         <div role="group" aria-label="Duration" className="flex flex-wrap gap-2">
           {durationOptions.map((d) => {
             const isSelected = String(d) === durationMinutes
@@ -57,10 +57,10 @@ export default function DateTimeStep({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => onDurationChange(String(d))}
-                className={`rounded-none px-4 py-2 text-sm text-brand-dark transition-colors ${
+                className={`rounded-md px-4 py-2 text-sm text-gray-900 transition-colors ${
                   isSelected
-                    ? 'border-2 border-accent-primary bg-accent-primary/10 font-semibold'
-                    : 'border border-brand-dark/20 bg-brand-light font-medium hover:bg-brand-dark/5'
+                    ? 'border-2 border-gray-900 bg-gray-50 font-semibold'
+                    : 'border border-gray-200 bg-white font-medium hover:bg-gray-50'
                 }`}
               >
                 {d} minutes
@@ -71,20 +71,20 @@ export default function DateTimeStep({
       </div>
 
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium text-brand-dark">Date</span>
+        <span className="text-sm font-medium text-gray-900">Date</span>
         <Calendar selectedDate={selectedDate} onSelectDate={onSelectDate} isDateDisabled={isDateDisabled} />
-        <p className="text-sm text-brand-dark/60">{advanceWindowNote}</p>
+        <p className="text-sm text-gray-500">{advanceWindowNote}</p>
       </div>
 
       {membershipCoverageNotice && (
-        <p role="status" className="border-l-4 border-accent-primary bg-accent-primary/10 px-4 py-3 text-sm text-brand-dark">
+        <p role="status" className="border-l-4 border-gray-400 bg-gray-50 px-4 py-3 text-sm text-gray-700">
           {membershipCoverageNotice}
         </p>
       )}
 
       {selectedDate && (
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium text-brand-dark">Time</span>
+          <span className="text-sm font-medium text-gray-900">Time</span>
           {availabilityError && <p className="text-sm text-red-600">{availabilityError}</p>}
           <TimeSlotGrid
             selectedDate={selectedDate}

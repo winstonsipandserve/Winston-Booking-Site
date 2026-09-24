@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import Image from 'next/image'
 import Navbar from '@/components/layout/Navbar'
 import ConfirmationContent from './ConfirmationContent'
 
@@ -8,46 +7,17 @@ export default function MembershipRenewalConfirmationPage() {
     <>
       <Navbar />
 
-      <main className="flex min-h-screen items-center justify-center bg-background px-6 pt-24 pb-8 md:pt-28">
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-card border border-brand-dark/10 bg-brand-light shadow-card md:grid-cols-2">
-          <div className="relative min-h-[220px] overflow-hidden bg-brand-dark md:min-h-[560px]">
-            <Image
-              src="/images/placeholder.jpg"
-              alt=""
-              fill
-              priority
-              className="object-cover opacity-50"
-            />
-            <div className="absolute inset-0 bg-brand-dark/70" />
-            <div className="hero-text-shadow relative z-10 flex h-full flex-col justify-end p-8 sm:p-10 lg:p-12">
-              <span className="text-xs uppercase tracking-[0.35em] text-accent-light/80">
-                Winston Sip &amp; Serve
-              </span>
-              <h2 className="mt-4 max-w-md font-serif text-3xl leading-tight text-brand-light lg:text-4xl">
-                Welcome Back.
-              </h2>
-              <p className="mt-4 max-w-sm text-sm text-on-dark-muted">
-                Your advance booking priority, member discounts, and guest passes continue
-                without interruption.
-              </p>
-            </div>
-          </div>
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6 py-10">
+        <div className="w-full max-w-md">
+          <p className="text-center text-sm text-gray-500">Membership</p>
+          <h1 className="mt-1 text-center text-3xl font-semibold text-gray-900">
+            Membership Renewal
+          </h1>
 
-          <div className="flex items-center justify-center border-t border-brand-dark/10 px-6 py-8 md:border-t-0 md:border-l md:px-12 md:py-10 lg:px-16">
-            <div className="w-full max-w-sm">
-              <span className="text-xs uppercase tracking-[0.35em] text-accent-primary">
-                Membership
-              </span>
-              <h1 className="mt-2 font-serif text-3xl text-on-light md:text-4xl">
-                Membership Renewal
-              </h1>
-
-              <div className="mt-5">
-                <Suspense fallback={<p className="text-brand-dark/60">Loading your renewal…</p>}>
-                  <ConfirmationContent />
-                </Suspense>
-              </div>
-            </div>
+          <div className="mt-6">
+            <Suspense fallback={<p className="text-center text-gray-500">Loading your renewal…</p>}>
+              <ConfirmationContent />
+            </Suspense>
           </div>
         </div>
       </main>

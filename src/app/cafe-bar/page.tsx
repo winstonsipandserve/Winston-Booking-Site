@@ -1,12 +1,12 @@
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import CafeBarPageClient from '@/components/cafe-bar/CafeBarPageClient'
+import ComingSoon from '@/components/ui/ComingSoon'
 
 export default function CafeBarPage() {
   return (
     <>
       <Navbar />
-      <CafeBarPageClient />
+      <ComingSoon title="Café & Bar" />
       <Footer />
     </>
   )

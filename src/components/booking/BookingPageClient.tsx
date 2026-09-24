@@ -70,11 +70,7 @@ export default function BookingPageClient({ memberContext, notices }: BookingPag
   }, [])
 
   return (
-    <div
-      className={`flex flex-1 flex-col items-center gap-8 bg-background px-6 ${
-        started ? 'py-16' : 'min-h-screen justify-center pt-24 pb-6'
-      }`}
-    >
+    <div className="flex flex-1 flex-col items-center gap-8 bg-gray-50 px-6 py-10">
       {started ? (
         <BookingForm data={data} loading={loading} loadError={loadError} memberContext={memberContext} />
       ) : (

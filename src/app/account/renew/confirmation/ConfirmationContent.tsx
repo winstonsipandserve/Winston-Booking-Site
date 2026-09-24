@@ -19,10 +19,10 @@ interface MembershipPaymentStatusResult {
 type FetchResult = MembershipPaymentStatusResult | 'not_found' | 'error'
 
 const CHECK_AGAIN_BUTTON_CLASSES =
-  'w-full rounded-none bg-accent-primary px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.08em] text-brand-light transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:opacity-50'
+  'w-full rounded-md bg-gray-900 px-6 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50'
 
 const BACK_HOME_LINK_CLASSES =
-  'text-accent-primary underline underline-offset-2 hover:text-accent-dark'
+  'text-gray-900 underline underline-offset-2 hover:text-gray-700'
 
 export default function ConfirmationContent() {
   const searchParams = useSearchParams()
@@ -111,7 +111,7 @@ export default function ConfirmationContent() {
   }
 
   if (!membershipPaymentId) {
-    return <p className="text-center text-brand-dark/60">No renewal reference was provided.</p>
+    return <p className="text-center text-gray-500">No renewal reference was provided.</p>
   }
 
   if (notFound) {
@@ -132,7 +132,7 @@ export default function ConfirmationContent() {
       return (
         <div className="flex w-full flex-col items-center gap-3 text-center">
           <LoadingOverlay isOpen={checkingAgain} label="Checking…" />
-          <p className="text-brand-dark/60">
+          <p className="text-gray-500">
             We&apos;re having trouble reaching the server. Please check again.
           </p>
           <button
@@ -146,7 +146,7 @@ export default function ConfirmationContent() {
         </div>
       )
     }
-    return <p className="text-center text-brand-dark/60">Loading your renewal…</p>
+    return <p className="text-center text-gray-500">Loading your renewal…</p>
   }
 
   if (membershipPayment.hasMembership) {
@@ -156,7 +156,7 @@ export default function ConfirmationContent() {
   return (
     <div className="flex w-full flex-col items-center gap-3 text-center">
       <LoadingOverlay isOpen={checkingAgain} label="Checking…" />
-      <p className="text-brand-dark/60">
+      <p className="text-gray-500">
         {stalled
           ? 'This is taking longer than expected. You can check again, or contact us if this persists.'
           : 'Confirming your payment…'}

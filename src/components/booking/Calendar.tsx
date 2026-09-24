@@ -81,29 +81,29 @@ export default function Calendar({ selectedDate, onSelectDate, isDateDisabled }:
   ]
 
   return (
-    <div className="flex w-full flex-col gap-2 rounded-card border border-brand-dark/20 bg-brand-light p-3">
+    <div className="flex w-full flex-col gap-2 rounded-md border border-gray-200 bg-white p-3">
       <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={goPrevMonth}
           disabled={isAtCurrentMonth}
-          className="rounded-none px-2 py-1 text-sm font-medium text-brand-dark hover:bg-brand-dark/5 disabled:opacity-30"
+          className="rounded-md px-2 py-1 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-30"
         >
           ← Prev
         </button>
-        <span className="text-sm font-medium text-brand-dark">
+        <span className="text-sm font-medium text-gray-900">
           {MONTH_LABELS[viewMonth]} {viewYear}
         </span>
         <button
           type="button"
           onClick={goNextMonth}
-          className="rounded-none px-2 py-1 text-sm font-medium text-brand-dark hover:bg-brand-dark/5"
+          className="rounded-md px-2 py-1 text-sm font-medium text-gray-900 hover:bg-gray-100"
         >
           Next →
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs text-brand-dark/60">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs text-gray-500">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="py-1">
             {label}
@@ -128,12 +128,12 @@ export default function Calendar({ selectedDate, onSelectDate, isDateDisabled }:
               disabled={isBlocked}
               aria-disabled={isBlocked}
               onClick={() => onSelectDate(dateStr)}
-              className={`rounded-none py-2 text-sm transition-colors ${
+              className={`rounded-md py-2 text-sm transition-colors ${
                 isSelected
-                  ? 'bg-brand-dark text-brand-light hover:bg-brand-dark'
+                  ? 'bg-gray-900 text-white hover:bg-gray-900'
                   : isBlocked
-                    ? 'cursor-not-allowed text-brand-dark/30'
-                    : 'text-brand-dark hover:bg-brand-dark/5'
+                    ? 'cursor-not-allowed text-gray-300'
+                    : 'text-gray-900 hover:bg-gray-100'
               }`}
             >
               {day}

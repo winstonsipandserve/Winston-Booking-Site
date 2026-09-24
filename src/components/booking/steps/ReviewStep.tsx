@@ -52,7 +52,7 @@ export default function ReviewStep({
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
       <LoadingOverlay isOpen={submitting} label="Creating your booking…" />
-      <h2 className="font-serif text-2xl text-brand-dark">Summary</h2>
+      <h2 className="text-xl font-semibold text-gray-900">Summary</h2>
       <BookingSummary
         resourceTypeName={resourceTypeName}
         resourceLabel={resourceLabel}
@@ -81,7 +81,7 @@ export default function ReviewStep({
           type="button"
           onClick={onBack}
           disabled={submitting}
-          className="flex-1 rounded-none border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark disabled:opacity-50"
+          className="flex-1 rounded-md border border-gray-300 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50"
         >
           Back
         </button>
@@ -89,7 +89,7 @@ export default function ReviewStep({
           type="button"
           onClick={onConfirmBooking}
           disabled={submitting}
-          className="flex-1 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+          className="flex-1 rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
         >
           Confirm Booking
         </button>

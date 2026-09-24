@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import Reveal from '@/components/ui/Reveal'
 import AccountProfile from '@/components/account/AccountProfile'
 import MembershipStatusCard from '@/components/account/MembershipStatusCard'
 import RecentBookingsList, { type BookingListItem } from '@/components/account/RecentBookingsList'
@@ -133,43 +132,31 @@ export default async function AccountPage() {
     <>
       <Navbar />
 
-      <section className="relative overflow-hidden bg-brand-dark pt-40 pb-20 md:pt-48 md:pb-28">
-        <div className="mx-auto max-w-6xl px-6 md:px-10">
-          <p className="text-sm uppercase tracking-[0.3em] text-accent-light/90">Member Portal</p>
-          <h1 className="mt-4 font-serif text-3xl text-brand-light md:text-4xl">
-            Welcome back, {firstName}
-          </h1>
+      <section className="border-b border-gray-200 bg-white px-6 py-10">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm text-gray-500">Member Portal</p>
+          <h1 className="mt-1 text-3xl font-semibold text-gray-900">Welcome back, {firstName}</h1>
         </div>
       </section>
 
-      <section className="bg-background py-12 md:py-16">
-        <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-[320px_1fr] md:px-10">
-          <div className="flex flex-col gap-8">
-            <Reveal className="h-full">
-              <AccountProfile
-                name={customer.name}
-                email={customer.email}
-                phone={customer.phone}
-                memberSince={membership?.startDate ?? null}
-              />
-            </Reveal>
+      <section className="bg-gray-50 py-10">
+        <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-[320px_1fr]">
+          <div className="flex flex-col gap-6">
+            <AccountProfile
+              name={customer.name}
+              email={customer.email}
+              phone={customer.phone}
+              memberSince={membership?.startDate ?? null}
+            />
           </div>
 
-          <div className="flex flex-col gap-8">
-            <Reveal delayMs={100}>
-              <MembershipStatusCard {...membershipStatusProps} />
-            </Reveal>
+          <div className="flex flex-col gap-6">
+            <MembershipStatusCard {...membershipStatusProps} />
           </div>
 
-          <div className="flex flex-col gap-8 md:col-span-2">
-            {membership && (
-              <Reveal delayMs={200}>
-                <CreditActivityLog entries={creditActivityItems} />
-              </Reveal>
-            )}
-            <Reveal delayMs={membership ? 300 : 200}>
-              <RecentBookingsList bookings={bookingListItems} />
-            </Reveal>
+          <div className="flex flex-col gap-6 md:col-span-2">
+            {membership && <CreditActivityLog entries={creditActivityItems} />}
+            <RecentBookingsList bookings={bookingListItems} />
           </div>
         </div>
       </section>

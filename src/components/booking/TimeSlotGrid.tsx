@@ -109,13 +109,13 @@ export default function TimeSlotGrid({
 
   if (loading) {
     return (
-      <p className="text-sm text-brand-dark/60">Loading available times…</p>
+      <p className="text-sm text-gray-500">Loading available times…</p>
     )
   }
 
   if (slots.length === 0) {
     return (
-      <p className="text-sm text-brand-dark/60">
+      <p className="text-sm text-gray-500">
         No times available this day.
       </p>
     )
@@ -131,7 +131,7 @@ export default function TimeSlotGrid({
   return (
     <div className="flex flex-col gap-2">
       {closingWarning && (
-        <div className="rounded-none border border-amber-400/60 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {closingWarning}
         </div>
       )}
@@ -153,14 +153,14 @@ export default function TimeSlotGrid({
                 }
                 onSelectSlot(slot.startIso)
               }}
-              className={`rounded-none px-2 py-2 text-sm transition-colors ${
+              className={`rounded-md px-2 py-2 text-sm transition-colors ${
                 isInSelectedRange
-                  ? 'border-2 border-accent-primary bg-accent-primary/10 font-semibold text-brand-dark'
+                  ? 'border-2 border-gray-900 bg-gray-50 font-semibold text-gray-900'
                   : slot.disabled
-                    ? 'cursor-not-allowed border border-brand-dark/20 text-brand-dark/30'
+                    ? 'cursor-not-allowed border border-gray-200 text-gray-300'
                     : slot.exceedsClosing
-                      ? 'border border-amber-500/50 text-amber-700 hover:bg-amber-500/10'
-                      : 'border border-brand-dark/20 text-brand-dark hover:bg-brand-dark/5'
+                      ? 'border border-amber-400 text-amber-700 hover:bg-amber-50'
+                      : 'border border-gray-200 text-gray-900 hover:bg-gray-50'
               } ${slot.disabled ? 'cursor-not-allowed' : ''}`}
             >
               {slot.label}

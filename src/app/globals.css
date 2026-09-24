@@ -77,7 +77,7 @@
 }
 
 body {
-  background: var(--color-bg-light);
+  background: #ffffff;
   color: var(--color-text-on-light);
   font-family: var(--font-body);
 }

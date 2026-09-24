@@ -630,11 +630,11 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   }
 
   if (loading || !data) {
-    return <p className="text-brand-dark/60">Loading booking form…</p>
+    return <p className="text-gray-500">Loading booking form…</p>
   }
 
   return (
-    <div className="flex w-full max-w-2xl flex-col items-center gap-8">
+    <div className="flex w-full max-w-2xl flex-col items-center gap-6">
       {!showPayment && <StepIndicator currentStep={step} />}
 
       {step === 1 && (
@@ -734,7 +734,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           title="Your F&B Credit Won't Cover This"
         >
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-brand-dark/80">
+            <p className="text-sm text-gray-600">
               {creditBalanceCentavos === 0
                 ? "You don't currently have any F&B credit available."
                 : `Your F&B credit balance is ${formatCentavos(creditBalanceCentavos)}, which isn't enough to cover this booking.`}
@@ -746,7 +746,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
               <button
                 type="button"
                 onClick={() => setShowInsufficientCreditModal(false)}
-                className="flex-1 rounded-none border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark"
+                className="flex-1 rounded-md border border-gray-300 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
               >
                 Go Back
               </button>
@@ -756,7 +756,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
                   setShowInsufficientCreditModal(false)
                   handleConfirmBooking()
                 }}
-                className="flex-1 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+                className="flex-1 rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700"
               >
                 Continue Booking
               </button>
@@ -811,7 +811,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
             <button
               type="button"
               onClick={() => setStep((s) => s - 1)}
-              className="flex-1 rounded-none border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark"
+              className="flex-1 rounded-md border border-gray-300 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
             >
               Back
             </button>
@@ -820,7 +820,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
             type="button"
             onClick={() => setStep((s) => Math.min(TOTAL_STEPS, s + 1))}
             disabled={!canContinue}
-            className="flex-1 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+            className="flex-1 rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
           >
             Continue
           </button>

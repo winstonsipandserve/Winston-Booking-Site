@@ -92,9 +92,9 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
   const pricingInfo = pricingResourceType ? getPricingInfo(pricingResourceType, discountPercent) : null
 
   return (
-    <>
-      <h2 className="font-serif text-2xl text-brand-dark">Sport</h2>
-      <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="w-full max-w-2xl rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 className="text-xl font-semibold text-gray-900">Sport</h2>
+      <div className="mt-4 grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
         {resourceTypes.map((rt) => {
           const isSelected = rt.id === resourceTypeId
           const SportIcon = SPORT_ICONS[rt.slug]
@@ -110,19 +110,17 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
                   onSelect(rt.id)
                 }
               }}
-              className={`flex cursor-pointer flex-col items-start gap-1 rounded-none px-4 py-3 text-left transition-colors ${
+              className={`flex cursor-pointer flex-col items-start gap-1 rounded-md px-4 py-3 text-left transition-colors ${
                 isSelected
-                  ? 'border-2 border-accent-primary bg-accent-primary/10'
-                  : 'border border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
+                  ? 'border-2 border-gray-900 bg-gray-50'
+                  : 'border border-gray-200 bg-white hover:bg-gray-50'
               }`}
             >
               {SportIcon && (
-                <SportIcon
-                  className={`h-6 w-6 ${isSelected ? 'text-accent-primary' : 'text-accent-primary/40'}`}
-                />
+                <SportIcon className={`h-6 w-6 ${isSelected ? 'text-gray-900' : 'text-gray-400'}`} />
               )}
-              <span className={`text-brand-dark ${isSelected ? 'font-semibold' : 'font-medium'}`}>{rt.name}</span>
-              <span className="text-sm text-brand-dark/60">
+              <span className={`text-gray-900 ${isSelected ? 'font-semibold' : 'font-medium'}`}>{rt.name}</span>
+              <span className="text-sm text-gray-500">
                 {countLabel(rt.resources.length, rt.category)}
               </span>
               {getPricingInfo(rt, discountPercent) && (
@@ -132,7 +130,7 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
                     e.stopPropagation()
                     setPricingSlug(rt.slug)
                   }}
-                  className="mt-1 text-sm font-medium text-accent-primary underline underline-offset-2 transition-colors hover:text-accent-dark"
+                  className="mt-1 text-sm font-medium text-gray-700 underline underline-offset-2 transition-colors hover:text-gray-900"
                 >
                   View Pricing
                 </button>
@@ -148,26 +146,26 @@ export default function SportStep({ resourceTypes, resourceTypeId, onSelect, rat
           onClose={() => setPricingSlug(null)}
           title={`${pricingResourceType?.name ?? ''} Pricing`}
         >
-          <ul className="flex flex-col divide-y divide-brand-dark/10">
+          <ul className="flex flex-col divide-y divide-gray-200">
             {pricingInfo.tiers.map((tier) => (
-              <li key={tier.label} className="flex items-center justify-between py-2 text-sm text-brand-dark">
+              <li key={tier.label} className="flex items-center justify-between py-2 text-sm text-gray-900">
                 <span>{tier.label}</span>
                 {tier.memberPrice ? (
-                  <span className="font-semibold text-accent-primary">
-                    <span className="mr-2 font-normal text-brand-dark/50 line-through">{tier.price}</span>
+                  <span className="font-semibold text-gray-900">
+                    <span className="mr-2 font-normal text-gray-400 line-through">{tier.price}</span>
                     {tier.memberPrice}
                   </span>
                 ) : (
-                  <span className="font-semibold text-accent-primary">{tier.price}</span>
+                  <span className="font-semibold text-gray-900">{tier.price}</span>
                 )}
               </li>
             ))}
           </ul>
           {rateTier === 'member' && discountPercent > 0 && (
-            <p className="mt-3 text-xs text-brand-dark/50">Your {discountPercent}% member discount is applied.</p>
+            <p className="mt-3 text-xs text-gray-400">Your {discountPercent}% member discount is applied.</p>
           )}
         </Modal>
       )}
-    </>
+    </div>
   )
 }

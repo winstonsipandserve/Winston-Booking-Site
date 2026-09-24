@@ -34,8 +34,8 @@ export default function RecentBookingsList({ bookings }: { bookings: BookingList
   const placeholderCount = PAGE_SIZE - Math.max(pageBookings.length, 1)
 
   return (
-    <div className="flex flex-col rounded-2xl border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-card">
-      <h2 className="font-serif text-xl text-brand-dark">Recent Bookings</h2>
+    <div className="flex flex-col rounded-lg border border-gray-200 bg-white px-6 py-6 shadow-sm">
+      <h2 className="text-xl font-semibold text-gray-900">Recent Bookings</h2>
 
       <div className="mt-2 overflow-x-hidden">
         <dl className="flex flex-col">
@@ -44,10 +44,10 @@ export default function RecentBookingsList({ bookings }: { bookings: BookingList
             return (
               <div
                 key={booking.id}
-                className={`-mx-2 flex h-[68px] items-center justify-between gap-4 rounded-lg px-2 py-3 transition-colors duration-300 hover:bg-brand-dark/[0.02] ${index > 0 ? 'border-t border-brand-dark/10' : ''}`}
+                className={`-mx-2 flex h-[68px] items-center justify-between gap-4 rounded-md px-2 py-3 transition-colors duration-300 hover:bg-gray-50 ${index > 0 ? 'border-t border-gray-200' : ''}`}
               >
-                <dt className="flex min-w-0 flex-1 items-center gap-3 text-brand-dark/70">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-primary/10 text-accent-primary">
+                <dt className="flex min-w-0 flex-1 items-center gap-3 text-gray-500">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600">
                     <SportIcon className="h-4 w-4" />
                   </span>
                   <span className="truncate">
@@ -55,11 +55,11 @@ export default function RecentBookingsList({ bookings }: { bookings: BookingList
                   </span>
                 </dt>
                 <dd className="flex max-w-[56%] shrink-0 flex-col items-end text-right">
-                  <span className="flex items-start gap-1.5 text-xs font-medium text-brand-dark">
-                    <CalendarIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-dark/50" />
+                  <span className="flex items-start gap-1.5 text-xs font-medium text-gray-900">
+                    <CalendarIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
                     {booking.dateLabel}
                   </span>
-                  <span className="mt-0.5 text-xs uppercase tracking-wide text-accent-primary">
+                  <span className="mt-0.5 text-xs text-gray-500">
                     {STATUS_LABELS[booking.status]}
                   </span>
                 </dd>
@@ -68,7 +68,7 @@ export default function RecentBookingsList({ bookings }: { bookings: BookingList
           })}
 
           {bookings.length === 0 && (
-            <div className="flex h-[68px] items-center px-2 text-sm text-brand-dark/60">
+            <div className="flex h-[68px] items-center px-2 text-sm text-gray-500">
               No bookings yet.
             </div>
           )}
@@ -77,29 +77,29 @@ export default function RecentBookingsList({ bookings }: { bookings: BookingList
             <div
               key={`booking-placeholder-${index}`}
               aria-hidden="true"
-              className="h-[68px] border-t border-brand-dark/10"
+              className="h-[68px] border-t border-gray-200"
             />
           ))}
         </dl>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-4 border-t border-brand-dark/10 pt-4">
+      <div className="mt-4 flex items-center justify-between gap-4 border-t border-gray-200 pt-4">
         <button
           type="button"
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={currentPage === 1}
-          className="rounded-none border border-brand-dark/20 px-4 py-2 text-sm font-medium text-brand-dark/70 transition-colors duration-300 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition-colors duration-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
         >
           Previous
         </button>
-        <span className="text-sm text-brand-dark/60">
+        <span className="text-sm text-gray-500">
           Page {currentPage} of {totalPages}
         </span>
         <button
           type="button"
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={currentPage === totalPages}
-          className="rounded-none border border-brand-dark/20 px-4 py-2 text-sm font-medium text-brand-dark/70 transition-colors duration-300 hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
+          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 transition-colors duration-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
         >
           Next
         </button>
