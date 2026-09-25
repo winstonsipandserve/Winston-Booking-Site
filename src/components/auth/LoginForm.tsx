@@ -40,7 +40,7 @@ export default function LoginForm() {
       <LoadingOverlay isOpen={isPending} label="Signing In…" />
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-brand-dark">
+          <label htmlFor="email" className="text-sm font-medium text-gray-900">
             Email
           </label>
           <input
@@ -48,7 +48,7 @@ export default function LoginForm() {
             name="email"
             type="email"
             required
-            className="rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none"
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
           />
         </div>
 
@@ -57,9 +57,9 @@ export default function LoginForm() {
           name="password"
           label="Password"
           required
-          labelClassName="flex flex-col gap-1 text-sm font-medium text-brand-dark"
-          inputClassName="w-full rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 pr-10 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none"
-          toggleClassName="absolute right-2 top-1/2 -translate-y-1/2 text-brand-dark/40 hover:text-brand-dark"
+          labelClassName="flex flex-col gap-1 text-sm font-medium text-gray-900"
+          inputClassName="w-full rounded-md border border-gray-300 bg-white px-3 py-2 pr-10 text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none"
+          toggleClassName="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         />
 
         {error && <p className="text-sm text-red-600">Invalid email or password.</p>}
@@ -67,15 +67,12 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="mt-2 rounded-none bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 rounded-md bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors duration-300 hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Sign In
         </button>
 
-        <Link
-          href="/forgot-password"
-          className="text-center text-sm text-brand-dark/50"
-        >
+        <Link href="/forgot-password" className="text-center text-sm text-gray-500">
           Forgot password?
         </Link>
       </form>

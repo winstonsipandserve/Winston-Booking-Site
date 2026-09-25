@@ -91,7 +91,7 @@ export default function Modal({
         className={`relative my-auto w-full outline-none ${maxWidthClassName} border px-6 py-6 shadow-xl ${
           variant === 'neutral'
             ? 'rounded-2xl border-gray-200 bg-white shadow-gray-900/10 dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/40'
-            : 'rounded-card border-brand-dark/10 bg-brand-light shadow-brand-dark/10'
+            : 'rounded-lg border-gray-200 bg-white shadow-gray-900/10'
         }`}
       >
         <button
@@ -101,7 +101,7 @@ export default function Modal({
           className={`absolute right-4 top-4 transition-colors ${
             variant === 'neutral'
               ? 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
-              : 'text-brand-dark/50 hover:text-brand-dark'
+              : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -109,8 +109,8 @@ export default function Modal({
           </svg>
         </button>
         <h3
-          className={`pr-6 ${
-            variant === 'neutral' ? 'text-lg font-semibold text-gray-900 dark:text-gray-100' : 'font-serif text-lg text-brand-dark'
+          className={`pr-6 text-lg font-semibold ${
+            variant === 'neutral' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-900'
           }`}
         >
           {title}

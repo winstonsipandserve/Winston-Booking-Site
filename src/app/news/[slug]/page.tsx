@@ -40,26 +40,26 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
     <>
       <Navbar />
       <main>
-        <header className="bg-brand-dark px-6 pb-14 pt-36 md:px-10 md:pb-20 md:pt-44">
+        <header className="border-b border-gray-200 bg-white px-6 py-10 md:px-10">
           <div className="mx-auto max-w-4xl">
-            <Link href="/news" className="text-sm font-medium text-brand-light/70 transition-colors hover:text-accent-light">← Back to news</Link>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <span className="rounded-full bg-accent-primary px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-wide text-white">{NEWS_CATEGORY_LABELS[post.category]}</span>
-              <time dateTime={post.publishAt.toISOString()} className="font-mono text-xs text-brand-light/60">{formatBulletinDate(post.publishAt)}</time>
+            <Link href="/news" className="text-sm font-medium text-gray-500 hover:text-gray-900">← Back to news</Link>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">{NEWS_CATEGORY_LABELS[post.category]}</span>
+              <time dateTime={post.publishAt.toISOString()} className="text-xs text-gray-400">{formatBulletinDate(post.publishAt)}</time>
             </div>
-            <h1 className="mt-5 max-w-3xl font-serif text-4xl leading-tight text-accent-light md:text-6xl">{post.title}</h1>
+            <h1 className="mt-4 max-w-3xl text-3xl font-semibold text-gray-900 md:text-4xl">{post.title}</h1>
           </div>
         </header>
 
-        <article className="bg-background px-6 py-12 md:px-10 md:py-16">
+        <article className="bg-white px-6 py-10 md:px-10">
           <div className="mx-auto max-w-4xl">
             {post.coverImageUrl && (
-              <div className="relative mb-10 aspect-[16/9] overflow-hidden rounded-card bg-brand-dark/5 shadow-card">
+              <div className="relative mb-8 aspect-[16/9] overflow-hidden rounded-lg bg-gray-100">
                 <Image src={post.coverImageUrl} alt="" fill priority sizes="(min-width: 1024px) 896px, 100vw" className="object-cover" />
               </div>
             )}
             <div
-              className="mx-auto max-w-3xl text-base leading-8 text-neutral-700 [&_a]:font-medium [&_a]:text-accent-primary [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:my-6 [&_blockquote]:border-l [&_blockquote]:border-brand-dark/25 [&_blockquote]:pl-5 [&_blockquote]:font-serif [&_blockquote]:text-xl [&_blockquote]:italic [&_h2]:mb-4 [&_h2]:mt-10 [&_h2]:font-serif [&_h2]:text-3xl [&_h2]:leading-tight [&_h2]:text-brand-dark [&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:font-serif [&_h3]:text-2xl [&_h3]:text-brand-dark [&_li]:my-2 [&_ol]:my-5 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:my-5 [&_strong]:font-semibold [&_ul]:my-5 [&_ul]:list-disc [&_ul]:pl-6"
+              className="mx-auto max-w-3xl text-base leading-8 text-gray-700 [&_a]:font-medium [&_a]:text-gray-900 [&_a]:underline [&_a]:underline-offset-2 [&_blockquote]:my-6 [&_blockquote]:border-l [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:text-xl [&_blockquote]:italic [&_h2]:mb-4 [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:leading-tight [&_h2]:text-gray-900 [&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-gray-900 [&_li]:my-2 [&_ol]:my-5 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:my-5 [&_strong]:font-semibold [&_ul]:my-5 [&_ul]:list-disc [&_ul]:pl-6"
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
           </div>

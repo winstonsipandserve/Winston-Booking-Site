@@ -9,7 +9,7 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 type CheckState = 'checking' | 'valid' | 'invalid'
 
 function inputClassName() {
-  return 'rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
+  return 'rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none disabled:opacity-50'
 }
 
 export default function ActivateForm() {
@@ -53,7 +53,7 @@ export default function ActivateForm() {
   if (!token) {
     return (
       <div className="flex w-full flex-col gap-4 text-center">
-        <p className="text-brand-dark/70">
+        <p className="text-gray-500">
           This activation link is missing its token. Please use the full link from your
           activation email.
         </p>
@@ -64,7 +64,7 @@ export default function ActivateForm() {
   if (checkState === 'checking') {
     return (
       <div className="flex w-full flex-col gap-4 text-center">
-        <p className="text-brand-dark/70">Checking your activation link…</p>
+        <p className="text-gray-500">Checking your activation link…</p>
       </div>
     )
   }
@@ -72,8 +72,8 @@ export default function ActivateForm() {
   if (checkState === 'invalid') {
     return (
       <div className="flex w-full flex-col gap-4 text-center">
-        <p className="text-brand-dark/70">{checkError}</p>
-        <p className="text-sm text-brand-dark/60">
+        <p className="text-gray-500">{checkError}</p>
+        <p className="text-sm text-gray-500">
           Please contact the club to request a new activation link.
         </p>
       </div>
@@ -83,10 +83,10 @@ export default function ActivateForm() {
   if (submitState === 'success') {
     return (
       <div className="flex w-full flex-col gap-4 text-center">
-        <h2 className="font-serif text-2xl text-brand-dark">Your account is activated</h2>
-        <p className="text-sm text-brand-dark/70">
+        <h2 className="text-xl font-semibold text-gray-900">Your account is activated</h2>
+        <p className="text-sm text-gray-500">
           You can now sign in.{' '}
-          <Link href="/login" className="font-medium text-accent-primary hover:text-brand-dark">
+          <Link href="/login" className="font-medium text-gray-900 hover:text-gray-700">
             Go to Sign In
           </Link>
         </p>
@@ -131,7 +131,7 @@ export default function ActivateForm() {
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-5">
       <LoadingOverlay isOpen={submitting} label="Activating…" />
       <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="password" className="text-sm font-medium text-gray-900">
           Password
         </label>
         <input
@@ -147,7 +147,7 @@ export default function ActivateForm() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="confirmPassword" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-900">
           Confirm Password
         </label>
         <input
@@ -167,7 +167,7 @@ export default function ActivateForm() {
       <button
         type="submit"
         disabled={!isValid || submitting}
-        className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+        className="w-full rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
       >
         Set Password
       </button>

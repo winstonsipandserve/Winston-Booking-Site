@@ -26,33 +26,33 @@ export default function MembershipCheckoutSummary({
     <div
       className={
         bordered
-          ? 'rounded-card border border-brand-dark/10 bg-brand-light px-6 py-7 shadow-card sm:px-8 sm:py-8'
+          ? 'rounded-lg border border-gray-200 bg-white px-6 py-7 shadow-sm sm:px-8 sm:py-8'
           : ''
       }
     >
-      <div className={`border-b border-brand-dark/10 ${compact ? 'pb-3' : 'pb-5'}`}>
-        <p className="font-serif text-2xl text-brand-dark">{tierLabel} Membership</p>
-        {customerName && <p className="mt-1 text-sm text-brand-dark/60">for {customerName}</p>}
+      <div className={`border-b border-gray-200 ${compact ? 'pb-3' : 'pb-5'}`}>
+        <p className="text-xl font-semibold text-gray-900">{tierLabel} Membership</p>
+        {customerName && <p className="mt-1 text-sm text-gray-500">for {customerName}</p>}
       </div>
 
-      <dl className="flex flex-col divide-y divide-brand-dark/10">
+      <dl className="flex flex-col divide-y divide-gray-200">
         <div className={`flex justify-between gap-4 ${rowPadding}`}>
-          <dt className="text-sm text-brand-dark/65">Term</dt>
-          <dd className="text-right font-medium tabular-nums text-brand-dark/85">12 months</dd>
+          <dt className="text-sm text-gray-500">Term</dt>
+          <dd className="text-right font-medium tabular-nums text-gray-900">12 months</dd>
         </div>
         {founding && (
           <div className={`flex justify-between gap-4 ${rowPadding}`}>
-            <dt className="text-sm text-brand-dark/65">Founding Member price</dt>
-            <dd className="text-right font-medium tabular-nums text-brand-dark/85">
-              <span className="text-brand-dark/50 line-through">{formatCentavos(founding.standardCentavos)}</span>{' '}
+            <dt className="text-sm text-gray-500">Founding Member price</dt>
+            <dd className="text-right font-medium tabular-nums text-gray-900">
+              <span className="text-gray-400 line-through">{formatCentavos(founding.standardCentavos)}</span>{' '}
               {formatCentavos(totalCentavos)}
             </dd>
           </div>
         )}
         {!totalHighlighted && (
           <div className={`flex justify-between gap-4 ${rowPadding}`}>
-            <dt className="text-sm text-brand-dark/65">Total Due</dt>
-            <dd className="text-right font-medium tabular-nums text-brand-dark/85">
+            <dt className="text-sm text-gray-500">Total Due</dt>
+            <dd className="text-right font-medium tabular-nums text-gray-900">
               {formatCentavos(totalCentavos)}
             </dd>
           </div>
@@ -60,11 +60,9 @@ export default function MembershipCheckoutSummary({
       </dl>
 
       {totalHighlighted && (
-        <div className="mt-5 flex items-center justify-between gap-4 rounded-card-inline bg-brand-dark px-5 py-4 text-brand-light">
-          <span className="text-sm font-medium uppercase tracking-[0.16em] text-brand-light/75">
-            Total Due
-          </span>
-          <span className="font-serif text-3xl tabular-nums text-brand-light">
+        <div className="mt-5 flex items-center justify-between gap-4 rounded-md bg-gray-900 px-5 py-4 text-white">
+          <span className="text-sm font-medium text-gray-300">Total Due</span>
+          <span className="text-2xl font-semibold tabular-nums text-white">
             {formatCentavos(totalCentavos)}
           </span>
         </div>

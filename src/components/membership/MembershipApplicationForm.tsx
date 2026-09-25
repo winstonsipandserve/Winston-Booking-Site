@@ -30,7 +30,7 @@ type SignedUpload = {
 }
 
 function inputClassName() {
-  return 'rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
+  return 'rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none disabled:opacity-50'
 }
 
 interface MembershipApplicationFormProps {
@@ -189,12 +189,12 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
 
   if (submitState === 'success' && successResult) {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
-        <h2 className="font-serif text-2xl text-brand-dark">Application Submitted</h2>
-        <p className="text-sm text-brand-dark/60">
-          Application ID: <span className="font-medium text-brand-dark">{successResult.id}</span>
+      <div className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-gray-200 bg-white px-6 py-6 text-center shadow-sm">
+        <h2 className="text-xl font-semibold text-gray-900">Application Submitted</h2>
+        <p className="text-sm text-gray-500">
+          Application ID: <span className="font-medium text-gray-900">{successResult.id}</span>
         </p>
-        <p className="text-sm text-brand-dark/70">
+        <p className="text-sm text-gray-500">
           Your application is now pending review. Our team reviews applications manually —
           we&apos;ll email you once a decision is made. There&apos;s no account or dashboard to
           check status yet.
@@ -210,10 +210,10 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
     <LoadingOverlay isOpen={submitting} label="Submitting…" />
     <form
       onSubmit={handleSubmit}
-      className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
+      className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-gray-200 bg-white px-6 py-6 shadow-sm"
     >
       <div className="flex flex-col gap-1">
-        <label htmlFor="name" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="name" className="text-sm font-medium text-gray-900">
           Name
         </label>
         <input
@@ -228,7 +228,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="email" className="text-sm font-medium text-gray-900">
           Email
         </label>
         <input
@@ -243,7 +243,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="phone" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="phone" className="text-sm font-medium text-gray-900">
           Phone
         </label>
         <input
@@ -258,7 +258,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="address" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="address" className="text-sm font-medium text-gray-900">
           Address
         </label>
         <input
@@ -273,7 +273,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="dateOfBirth" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-900">
           Date of birth
         </label>
         <input
@@ -286,23 +286,23 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
           onChange={(e) => setDateOfBirth(e.target.value)}
           className={inputClassName()}
         />
-        <p className="text-xs text-brand-dark/60">
+        <p className="text-xs text-gray-500">
           Used for your complimentary birthday-month court hour.
         </p>
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-brand-dark">Membership Tier</span>
+        <span className="text-sm font-medium text-gray-900">Membership Tier</span>
         <div className="flex flex-col gap-2">
           {tierOptions.map((tier) => {
             const isSelected = requestedTier === tier.value
             return (
               <label
                 key={tier.value}
-                className={`flex cursor-pointer items-center justify-between rounded-none px-4 py-3 text-left transition-colors ${
+                className={`flex cursor-pointer items-center justify-between rounded-md px-4 py-3 text-left transition-colors ${
                   isSelected
-                    ? 'border-2 border-accent-primary bg-accent-primary/10'
-                    : 'border border-brand-dark/20 bg-brand-light hover:bg-brand-dark/5'
+                    ? 'border-2 border-gray-900 bg-gray-50'
+                    : 'border border-gray-200 bg-white hover:bg-gray-50'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -315,13 +315,13 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
                     onChange={() => setRequestedTier(tier.value)}
                   />
                   <span className="flex flex-col">
-                    <span className={`text-brand-dark ${isSelected ? 'font-semibold' : 'font-medium'}`}>
+                    <span className={`text-gray-900 ${isSelected ? 'font-semibold' : 'font-medium'}`}>
                       {tier.label}
                     </span>
-                    {tier.note && <span className="text-xs text-brand-dark/60">{tier.note}</span>}
+                    {tier.note && <span className="text-xs text-gray-500">{tier.note}</span>}
                   </span>
                 </span>
-                <span className="text-sm font-semibold text-accent-primary">{tier.price}</span>
+                <span className="text-sm font-semibold text-gray-900">{tier.price}</span>
               </label>
             )
           })}
@@ -329,10 +329,10 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm font-medium text-brand-dark">Government ID</span>
+        <span className="text-sm font-medium text-gray-900">Government ID</span>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="govIdFront" className="text-xs text-brand-dark/60">
+          <label htmlFor="govIdFront" className="text-xs text-gray-500">
             Front
           </label>
           <input
@@ -342,12 +342,12 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
             accept={ACCEPTED_FILE_TYPES}
             disabled={submitting}
             onChange={handleFileChange('Government ID (front)', setGovIdFront)}
-            className="text-sm text-brand-dark file:mr-3 file:rounded-none file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
+            className="text-sm text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="govIdBack" className="text-xs text-brand-dark/60">
+          <label htmlFor="govIdBack" className="text-xs text-gray-500">
             Back
           </label>
           <input
@@ -357,12 +357,12 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
             accept={ACCEPTED_FILE_TYPES}
             disabled={submitting}
             onChange={handleFileChange('Government ID (back)', setGovIdBack)}
-            className="text-sm text-brand-dark file:mr-3 file:rounded-none file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
+            className="text-sm text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="govIdSelfie" className="text-xs text-brand-dark/60">
+          <label htmlFor="govIdSelfie" className="text-xs text-gray-500">
             Selfie with ID
           </label>
           <input
@@ -372,7 +372,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
             accept={ACCEPTED_FILE_TYPES}
             disabled={submitting}
             onChange={handleFileChange('Selfie with ID', setGovIdSelfie)}
-            className="text-sm text-brand-dark file:mr-3 file:rounded-none file:border-0 file:bg-accent-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-primary"
+            className="text-sm text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700"
           />
         </div>
       </div>
@@ -383,7 +383,7 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
       <button
         type="submit"
         disabled={!isValid || submitting}
-        className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+        className="w-full rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
       >
         Submit Application
       </button>
@@ -395,11 +395,11 @@ export default function MembershipApplicationForm({ foundingSeatsRemaining }: Me
       title="Application Not Submitted"
     >
       <div className="flex flex-col gap-4">
-        <p className="text-sm text-brand-dark/80">{duplicateEmailMessage}</p>
+        <p className="text-sm text-gray-600">{duplicateEmailMessage}</p>
         <button
           type="button"
           onClick={() => setShowDuplicateEmailModal(false)}
-          className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+          className="w-full rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700"
         >
           Okay
         </button>
