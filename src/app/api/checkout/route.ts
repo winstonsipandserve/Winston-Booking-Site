@@ -3,7 +3,7 @@ import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import { hasValidBookingAccessToken } from '@/lib/booking-access'
-import { auth } from '../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 
 interface CheckoutRequestBody {
   bookingId?: unknown
@@ -23,12 +23,8 @@ async function canAccessBooking(request: Request, booking: {
   accessTokenHash: string | null
   accessTokenExpiresAt: Date | null
 }): Promise<boolean> {
-  const session = await auth()
-  if (
-    session?.user?.role === 'member' &&
-    session.user.id &&
-    booking.customerId === session.user.id
-  ) {
+  const memberSession = await getActiveMemberSession()
+  if (memberSession && booking.customerId === memberSession.customer.id) {
     return true
   }
   return hasValidBookingAccessToken(request, booking)

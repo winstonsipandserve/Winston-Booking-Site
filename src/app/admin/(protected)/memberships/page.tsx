@@ -1,76 +1,65 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
-import { formatMembershipTier } from '@/lib/format'
-import {
-  getMembershipDisplayStatus,
-  MEMBERSHIP_DISPLAY_STATUS_LABELS,
-  MEMBERSHIP_DISPLAY_STATUS_CLASSES,
-} from '@/lib/membership-display-status'
+import { formatManilaDate, formatMembershipTier } from '@/lib/format'
+import { getMembershipDisplayStatus } from '@/lib/membership-display-status'
+import { MembershipStatusPill } from '@/components/admin/StatusPill'
 import { isMembershipDisplayStatusFilter, getMembershipApplicationsForFilter } from '@/lib/memberships-query'
 import MembershipsFilterModal from '@/components/admin/MembershipsFilterModal'
 import MembershipsExportButton from '@/components/admin/MembershipsExportButton'
+import MembershipsSearchBar from '@/components/admin/MembershipsSearchBar'
 import AdminPagination from '@/components/admin/AdminPagination'
+import TableEmptyState from '@/components/admin/TableEmptyState'
 
 const PAGE_SIZE = 25
-
-function formatDateTime(date: Date) {
-  return date.toLocaleDateString('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Asia/Manila',
-  })
-}
 
 export default async function AdminMembershipsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>
+  searchParams: Promise<{ status?: string; page?: string; search?: string }>
 }) {
-  console.time('memberships:pageTotal')
-  const { status: statusParam, page: pageParam } = await searchParams
+  const { status: statusParam, page: pageParam, search } = await searchParams
 
   const filter = statusParam && isMembershipDisplayStatusFilter(statusParam) ? statusParam : 'all'
   const page = Math.max(1, Number(pageParam) || 1)
+  const trimmedSearch = search?.trim()
 
-  console.time('memberships:promiseAll')
   const { applications, totalCount, latestMembershipsByCustomer } = await getMembershipApplicationsForFilter(
     filter,
-    { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE },
+    { pagination: { skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE }, search: trimmedSearch },
   )
-  console.timeEnd('memberships:promiseAll')
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
   function pageHref(targetPage: number) {
     const params = new URLSearchParams()
     if (statusParam) params.set('status', statusParam)
+    if (trimmedSearch) params.set('search', trimmedSearch)
     params.set('page', String(targetPage))
     return `/admin/memberships?${params.toString()}`
   }
 
-  console.timeEnd('memberships:pageTotal')
 
   return (
-    <div className="relative isolate flex h-full flex-col gap-4">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
-      />
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Memberships</h1>
+    <div className="flex h-full flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <MembershipsFilterModal status={filter} />
+          <MembershipsExportButton status={filter} search={trimmedSearch ?? ''} totalCount={totalCount} />
+        </div>
 
-      <div className="flex items-center gap-2">
-        <MembershipsFilterModal status={filter} />
-        <MembershipsExportButton status={filter} totalCount={totalCount} />
+        <Suspense fallback={null}>
+          <MembershipsSearchBar />
+        </Suspense>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-        <table className="w-full min-w-[900px] border-collapse text-sm">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900">
             <tr>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                 Applicant
               </th>
-              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+              <th className="hidden border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 lg:table-cell dark:border-gray-700 dark:text-gray-300">
                 Email
               </th>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
@@ -79,13 +68,13 @@ export default async function AdminMembershipsPage({
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                 Status
               </th>
-              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+              <th className="hidden border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 lg:table-cell dark:border-gray-700 dark:text-gray-300">
                 Submitted
               </th>
-              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+              <th className="hidden border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 lg:table-cell dark:border-gray-700 dark:text-gray-300">
                 Reviewed By
               </th>
-              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+              <th className="sticky right-0 border-b border-l border-gray-200 bg-gray-50 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
                 Action
               </th>
             </tr>
@@ -94,34 +83,27 @@ export default async function AdminMembershipsPage({
             {applications.map((application) => (
               <tr
                 key={application.id}
-                className="border-b border-gray-100 last:border-b-0 even:bg-gray-50/70 hover:bg-gray-100 dark:border-gray-800 dark:even:bg-gray-800/50 dark:hover:bg-gray-800"
+                className="group border-b border-gray-100 last:border-b-0 even:bg-gray-50 hover:bg-gray-100 dark:border-gray-800 dark:even:bg-gray-800 dark:hover:bg-gray-800"
               >
                 <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{application.customer.name}</td>
-                <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{application.customer.email}</td>
+                <td className="hidden px-4 py-2.5 text-gray-900 lg:table-cell dark:text-gray-100">{application.customer.email}</td>
                 <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{formatMembershipTier(application.requestedTier)}</td>
                 <td className="px-4 py-2.5">
-                  {(() => {
-                    const displayStatus = getMembershipDisplayStatus({
+                  <MembershipStatusPill
+                    status={getMembershipDisplayStatus({
                       status: application.status,
                       latestMembership: latestMembershipsByCustomer.get(application.customerId) ?? null,
-                    })
-                    return (
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${MEMBERSHIP_DISPLAY_STATUS_CLASSES[displayStatus]}`}
-                      >
-                        {MEMBERSHIP_DISPLAY_STATUS_LABELS[displayStatus]}
-                      </span>
-                    )
-                  })()}
+                    })}
+                  />
                 </td>
-                <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{formatDateTime(application.createdAt)}</td>
-                <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                <td className="hidden px-4 py-2.5 text-gray-900 lg:table-cell dark:text-gray-100">{formatManilaDate(application.createdAt)}</td>
+                <td className="hidden px-4 py-2.5 text-gray-900 lg:table-cell dark:text-gray-100">
                   {application.reviewedBy?.name ?? '—'}
                 </td>
-                <td className="px-4 py-2.5">
+                <td className="sticky right-0 border-l border-gray-100 bg-white px-4 py-2 group-even:bg-gray-50 group-hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:group-even:bg-gray-800 dark:group-hover:bg-gray-800">
                   <Link
                     href={`/admin/memberships/${application.id}`}
-                    className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                    className="inline-flex h-8 items-center rounded-lg bg-gray-900 px-3 text-xs font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
                   >
                     View
                   </Link>
@@ -129,11 +111,13 @@ export default async function AdminMembershipsPage({
               </tr>
             ))}
             {applications.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                  No applications found.
-                </td>
-              </tr>
+              <TableEmptyState
+                colSpan={7}
+                noun="application"
+                hint="Membership applications appear here once customers submit them."
+                isFiltered={Boolean(statusParam || trimmedSearch)}
+                clearHref="/admin/memberships"
+              />
             )}
           </tbody>
         </table>
@@ -141,7 +125,9 @@ export default async function AdminMembershipsPage({
 
       <AdminPagination
         page={page}
-        totalPages={totalPages}
+        pageSize={PAGE_SIZE}
+        totalCount={totalCount}
+        noun="application"
         previousHref={pageHref(Math.max(1, page - 1))}
         nextHref={pageHref(Math.min(totalPages, page + 1))}
       />

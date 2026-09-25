@@ -1,10 +1,11 @@
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
-import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
+import { MEMBERSHIP_TIER_PLANS, formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { quoteMembershipPrice, withFoundingSeatLock } from '@/lib/membership-founding'
+import { getRenewalEligibility } from '@/lib/membership-current'
 import { sendRenewalPaymentLinkEmail } from '@/lib/resend'
 import { logAdminActivity } from '@/lib/admin-activity-log'
+import { generatePaymentLinkToken } from '@/lib/membership-payment-link'
 import type { MembershipTier } from '@prisma/client'
 
 interface SendRenewalLinkRequestBody {
@@ -46,9 +47,17 @@ export async function POST(
     return Response.json({ error: 'Membership application not found' }, { status: 404 })
   }
 
-  const latestMembership = await getLatestMembershipByCustomerId(application.customerId)
-  if (!latestMembership || latestMembership.endDate >= new Date()) {
-    return Response.json({ error: "This customer's membership is not expired" }, { status: 409 })
+  const renewal = await getRenewalEligibility(application.customerId)
+  if (!renewal.eligible) {
+    return Response.json(
+      {
+        error:
+          renewal.reason === 'already_scheduled'
+            ? "This customer's renewal is already paid and scheduled"
+            : "This customer's membership is not expired or expiring soon",
+      },
+      { status: 409 },
+    )
   }
 
   const existingPending = await prisma.membershipPayment.findFirst({
@@ -56,20 +65,41 @@ export async function POST(
     orderBy: { createdAt: 'desc' },
   })
 
+  // A new row is priced under the Founding seat lock (src/lib/membership-founding.ts).
   const membershipPayment = existingPending
     ? existingPending
-    : await prisma.membershipPayment.create({
-        data: {
-          customerId: application.customerId,
-          applicationId: null,
-          tier,
-          amountCentavos: MEMBERSHIP_TIER_PLANS[tier].totalCentavos,
-          status: 'pending',
-          initiatedByAdminId: activeSession.adminUser.id,
-        },
+    : await withFoundingSeatLock(async (tx) => {
+        const quote = await quoteMembershipPrice(tx, application.customerId, tier)
+        return tx.membershipPayment.create({
+          data: {
+            customerId: application.customerId,
+            applicationId: null,
+            tier,
+            amountCentavos: quote.amountCentavos,
+            isFounding: quote.isFounding,
+            status: 'pending',
+            initiatedByAdminId: activeSession.adminUser.id,
+          },
+        })
       })
 
-  const tierName = formatMembershipTier(membershipPayment.tier)
+  const tierName = formatMembershipPlanLabel(membershipPayment.tier, membershipPayment.isFounding)
+
+  const { rawToken, tokenHash, expiresAt } = generatePaymentLinkToken()
+
+  // A newly issued link supersedes every earlier link for this payment row, same technique
+  // as the activation and application-payment-link resends — this also covers the resend
+  // case, since re-sending here reuses the same pending MembershipPayment row.
+  await prisma.$transaction(async (tx) => {
+    const now = new Date()
+    await tx.membershipPaymentLinkToken.updateMany({
+      where: { membershipPaymentId: membershipPayment.id, usedAt: null },
+      data: { usedAt: now },
+    })
+    await tx.membershipPaymentLinkToken.create({
+      data: { membershipPaymentId: membershipPayment.id, tokenHash, expiresAt },
+    })
+  })
 
   await logAdminActivity({
     adminId: activeSession.adminUser.id,
@@ -79,7 +109,7 @@ export async function POST(
     description: `Sent renewal link to ${application.customer.name} (${tierName}, ${existingPending ? 're-sent' : 'new link'})`,
     metadata: { membershipPaymentId: membershipPayment.id, tier },
   })
-  const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/renew/${membershipPayment.id}`
+  const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/renew/${membershipPayment.id}?token=${rawToken}`
   await sendRenewalPaymentLinkEmail({
     to: application.customer.email,
     name: application.customer.name,

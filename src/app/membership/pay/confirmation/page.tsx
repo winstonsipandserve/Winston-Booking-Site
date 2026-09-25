@@ -1,6 +1,5 @@
 import { Suspense } from 'react'
 import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
 import ConfirmationContent from './ConfirmationContent'
 
 export default function MembershipPaymentConfirmationPage() {
@@ -8,24 +7,20 @@ export default function MembershipPaymentConfirmationPage() {
     <>
       <Navbar />
 
-      <section className="relative overflow-hidden bg-brand-dark pt-40 pb-20 md:pt-48 md:pb-28">
-        <div className="mx-auto flex max-w-4xl flex-col items-center px-6 text-center">
-          <span className="text-xs uppercase tracking-[0.35em] text-accent-light/90 md:text-sm">
-            Membership
-          </span>
-
-          <h1 className="mt-5 font-serif text-4xl text-brand-light md:text-6xl">
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6 py-10">
+        <div className="w-full max-w-sm">
+          <p className="text-center text-sm text-gray-500">Membership</p>
+          <h1 className="mt-1 text-center text-2xl font-semibold text-gray-900">
             Membership Payment
           </h1>
-        </div>
-      </section>
 
-      <div className="flex flex-1 flex-col items-center gap-8 bg-brand-light px-6 py-16">
-        <Suspense fallback={<p className="text-brand-dark/60">Loading your application…</p>}>
-          <ConfirmationContent />
-        </Suspense>
-      </div>
-      <Footer />
+          <div className="mt-6">
+            <Suspense fallback={<p className="text-center text-gray-500">Loading your application…</p>}>
+              <ConfirmationContent />
+            </Suspense>
+          </div>
+        </div>
+      </main>
     </>
   )
 }

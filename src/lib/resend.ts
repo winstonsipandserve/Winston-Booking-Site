@@ -1,5 +1,6 @@
 import type { MembershipTier } from '@prisma/client'
 import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
+import { MEMBERSHIP_PAYMENT_LINK_TOKEN_HOURS } from './membership-payment-link'
 import { ADMIN_PASSWORD_RESET_TOKEN_HOURS } from './admin-password-reset'
 import { buildBrandedEmail, escapeHtml } from './email-templates'
 import { formatCentavos, formatMembershipTier } from './format'
@@ -29,8 +30,6 @@ interface SendActivationEmailInput {
   activationUrl: string
   tierName?: string
   amountPaidCentavos?: number
-  activationFeeCentavos?: number
-  creditBalanceCentavos?: number
   expiryDateLabel?: string
   paymongoPaymentIntentId?: string | null
 }
@@ -41,8 +40,6 @@ export async function sendActivationEmail({
   activationUrl,
   tierName,
   amountPaidCentavos,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   expiryDateLabel,
   paymongoPaymentIntentId,
 }: SendActivationEmailInput): Promise<void> {
@@ -50,10 +47,7 @@ export async function sendActivationEmail({
     ? `Your ${tierName} membership is confirmed, and we can't wait to see you on the court.`
     : `We can't wait to see you on the court.`
 
-  const hasReceipt =
-    amountPaidCentavos !== undefined &&
-    activationFeeCentavos !== undefined &&
-    creditBalanceCentavos !== undefined
+  const hasReceipt = amountPaidCentavos !== undefined
 
   const isMembershipActivation = hasReceipt && !!tierName
 
@@ -63,8 +57,8 @@ export async function sendActivationEmail({
       <tr>
         <td style="padding: 20px 20px 4px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-            ${ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos))}
-            ${ledgerRow('F&amp;B Credit', formatCentavos(creditBalanceCentavos))}
+            ${ledgerRow('Plan', escapeHtml(tierName ?? 'Membership'))}
+            ${ledgerRow('Term', '12 months')}
             ${ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true)}
           </table>
         </td>
@@ -81,9 +75,9 @@ export async function sendActivationEmail({
     : `
     <div style="margin: 24px 0; padding: 20px 24px; background-color: ${ACCENT_LIGHT}; border-radius: 12px;">
       <p style="margin: 0 0 12px; font-family: ${BODY_FONT}; font-size: 15px; font-weight: 600; color: ${BRAND_DARK};">As a member, you get:</p>
-      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Priority booking on courts &amp; simulators</p>
-      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Member rates on every session</p>
-      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Access to the Speakeasy Lounge</p>
+      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Advance booking priority on courts &amp; simulators</p>
+      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Member discounts on every session</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Complimentary guest passes every year</p>
     </div>`
 
   const bodyHtml = `
@@ -117,8 +111,6 @@ export async function sendActivationEmail({
       const pdfBuffer = await renderMembershipCertificatePdf({
         customerName: name,
         tierName: tierName!,
-        activationFeeCentavos: activationFeeCentavos!,
-        creditBalanceCentavos: creditBalanceCentavos!,
         amountPaidCentavos: amountPaidCentavos!,
         expiryDateLabel,
         paymongoPaymentIntentId,
@@ -162,9 +154,9 @@ interface SendMembershipRenewalEmailInput {
   name: string
   tierName: string
   amountPaidCentavos: number
-  activationFeeCentavos: number
-  creditBalanceCentavos: number
   expiryDateLabel: string
+  /** Set for an early renewal: the Manila date the new term begins (day after the current one ends). */
+  startDateLabel: string | null
 }
 
 export async function sendMembershipRenewalEmail({
@@ -172,17 +164,16 @@ export async function sendMembershipRenewalEmail({
   name,
   tierName,
   amountPaidCentavos,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   expiryDateLabel,
+  startDateLabel,
 }: SendMembershipRenewalEmailInput): Promise<void> {
   const receiptHtml = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
       <tr>
         <td style="padding: 20px 20px 4px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-            ${ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos))}
-            ${ledgerRow('F&amp;B Credit', formatCentavos(creditBalanceCentavos))}
+            ${ledgerRow('Plan', escapeHtml(tierName))}
+            ${ledgerRow('Term', '12 months')}
             ${ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true)}
           </table>
         </td>
@@ -191,8 +182,12 @@ export async function sendMembershipRenewalEmail({
 
   const bodyHtml = `
     <p>Hi ${escapeHtml(name)},</p>
-    <p>Your ${tierName} membership at Winston Sip &amp; Serve has been renewed — your member rates, priority booking, and Speakeasy Lounge access are all still yours.</p>${receiptHtml}
-    <p>Your membership is now active through <strong>${expiryDateLabel}</strong>.</p>
+    <p>Your ${escapeHtml(tierName)} membership at Winston Sip &amp; Serve has been renewed — your member discounts, advance booking priority, and guest passes are all still yours.</p>${receiptHtml}
+    ${
+      startDateLabel
+        ? `<p>Your current term keeps running as usual. The renewed term begins on <strong>${startDateLabel}</strong> and is active through <strong>${expiryDateLabel}</strong>.</p>`
+        : `<p>Your membership is now active through <strong>${expiryDateLabel}</strong>.</p>`
+    }
     <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you on the court,<br />— The Winston Sip &amp; Serve Team</p>
   `
 
@@ -254,6 +249,7 @@ export async function sendMembershipPaymentEmail({
       <p style="margin: 4px 0 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_MID};">${tierName} Membership</p>
     </div>
     <p>Complete your payment below to activate your membership and set your account password.</p>
+    <p>This link will expire in ${MEMBERSHIP_PAYMENT_LINK_TOKEN_HOURS} hours.</p>
   `
 
   const { html, text } = buildBrandedEmail({
@@ -314,6 +310,7 @@ export async function sendRenewalPaymentLinkEmail({
       <p style="margin: 4px 0 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_MID};">${tierName} Membership Renewal</p>
     </div>
     <p>Complete your payment below to reactivate your membership.</p>
+    <p>This link will expire in ${MEMBERSHIP_PAYMENT_LINK_TOKEN_HOURS} hours. If it expires, just ask us to resend it.</p>
   `
 
   const { html, text } = buildBrandedEmail({
@@ -395,6 +392,60 @@ export async function sendPasswordResetEmail({
     }
   } catch (err) {
     console.error('Resend sendPasswordResetEmail threw', err)
+  }
+}
+
+interface SendActivationReminderEmailInput {
+  to: string
+  name: string
+  activationUrl: string
+}
+
+/** Admin-triggered resend for a member who never finished first-time activation — unlike
+ * sendActivationEmail, this carries no congratulations copy, receipt, or certificate, since
+ * the member already joined and just needs a fresh link. */
+export async function sendActivationReminderEmail({
+  to,
+  name,
+  activationUrl,
+}: SendActivationReminderEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>Hi ${escapeHtml(name)},</p>
+    <p>It looks like you haven't finished setting up your Winston Sip &amp; Serve account login yet. Use the button below to set your password and access your account.</p>
+    <p>This link will expire in ${MEMBER_ACTIVATION_TOKEN_HOURS} hours.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: 'Finish setting up your Winston Sip & Serve account login.',
+    eyebrowText: 'ACCOUNT SETUP',
+    headingText: 'Set Up Your Account Login',
+    bodyHtml,
+    ctaText: 'Set My Password',
+    ctaUrl: activationUrl,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: 'Set Up Your Winston Sip & Serve Account Login',
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendActivationReminderEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendActivationReminderEmail threw', err)
   }
 }
 
@@ -515,7 +566,14 @@ interface SendBookingConfirmationEmailInput {
   endTime: Date
   guestCount: number
   guestFeeCentavos: number
+  /** Undiscounted court/simulator rate for the duration. */
   basePriceCentavos: number
+  /** Tier or birthday discount taken off basePriceCentavos; 0 for non-member bookings. */
+  memberDiscountCentavos: number
+  /** "Member discount" or "Birthday court hour". */
+  memberDiscountLabel: string
+  /** Guests whose fee was waived by complimentary guest passes. */
+  guestPassesUsed: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
   creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
@@ -570,6 +628,9 @@ export async function sendBookingConfirmationEmail({
   guestCount,
   guestFeeCentavos,
   basePriceCentavos,
+  memberDiscountCentavos,
+  memberDiscountLabel,
+  guestPassesUsed,
   addOns,
   totalPaidCentavos,
   creditRedemption,
@@ -588,11 +649,21 @@ export async function sendBookingConfirmationEmail({
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
     ledgerRow('Price', formatCentavos(basePriceCentavos)),
+    ...(memberDiscountCentavos > 0
+      ? [ledgerRow(escapeHtml(memberDiscountLabel), `&minus;${formatCentavos(memberDiscountCentavos)}`, false, true)]
+      : []),
     ...(hasAddOnsBreakdown
       ? [
           ledgerSectionHeader('Add-ons total'),
           ...(guestCount > 0
-            ? [ledgerRow(`Guests — ${guestCount} Pax`, formatCentavos(guestFeeCentavos), false, true)]
+            ? [
+                ledgerRow(
+                  `Non-member guests — ${guestCount} Pax${guestPassesUsed > 0 ? ` (${guestPassesUsed} guest pass${guestPassesUsed === 1 ? '' : 'es'})` : ''}`,
+                  formatCentavos(guestFeeCentavos),
+                  false,
+                  true,
+                ),
+              ]
             : []),
           ...addOns.map((addOn) =>
             ledgerRow(escapeHtml(addOn.name), formatCentavos(addOn.amountCentavos), false, true),
@@ -622,7 +693,7 @@ export async function sendBookingConfirmationEmail({
     </table>
     ${creditRedemption ? `
     <div style="margin: 20px 0 0; padding: 14px 18px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
-      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK};">This booking was covered by your F&amp;B credit. You have <strong>${formatCentavos(creditRedemption.remainingBalanceCentavos)}</strong> remaining.</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK};">This booking was covered by your booking credit. You have <strong>${formatCentavos(creditRedemption.remainingBalanceCentavos)}</strong> remaining.</p>
     </div>` : ''}
     <div style="margin: 24px 0; padding: 18px 20px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 600; color: ${BRAND_DARK};">Before You Arrive</p>
@@ -668,6 +739,190 @@ export async function sendBookingConfirmationEmail({
   }
 }
 
+interface SendBookingRescheduleEmailInput {
+  to: string
+  name: string
+  bookingReference: string
+  resourceTypeName: string
+  resourceLabel: string
+  originalStartTime: Date
+  originalEndTime: Date
+  newStartTime: Date
+  newEndTime: Date
+  reason: string
+}
+
+export async function sendBookingRescheduleEmail({
+  to,
+  name,
+  bookingReference,
+  resourceTypeName,
+  resourceLabel,
+  originalStartTime,
+  originalEndTime,
+  newStartTime,
+  newEndTime,
+  reason,
+}: SendBookingRescheduleEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>Hi ${escapeHtml(name)},</p>
+    <p>Your booking at Winston Sip &amp; Serve has been rescheduled. Please find your updated booking details below.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 24px 0; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 16px 20px; background-color: ${ACCENT_LIGHT};">
+          <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Booking Reference</p>
+          <p style="margin: 4px 0 0; font-family: ${HEADING_FONT}; font-size: 20px; font-weight: 700; color: ${BRAND_DARK};">${escapeHtml(bookingReference)}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`)}
+            ${ledgerSectionHeader('Previous slot')}
+            ${ledgerRow('Date', formatManilaDate(originalStartTime))}
+            ${ledgerRow('Time', `${formatManilaTime(originalStartTime)} &ndash; ${formatManilaTime(originalEndTime)}`)}
+            ${ledgerSectionHeader('New slot')}
+            ${ledgerRow('Date', formatManilaDate(newStartTime))}
+            ${ledgerRow('Time', `${formatManilaTime(newStartTime)} &ndash; ${formatManilaTime(newEndTime)}`)}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin: 20px 0; padding: 14px 18px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
+      <p style="margin: 0 0 6px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 600; color: ${BRAND_DARK};">Reason for the change</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK}; white-space: pre-line;">${escapeHtml(reason)}</p>
+    </div>
+    <p>If you have any questions about this change, simply reply to this email and our team will be happy to help.</p>
+    <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">See you soon,<br />&mdash; The Winston Sip &amp; Serve Team</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Your booking has moved to ${formatManilaDate(newStartTime)} at ${formatManilaTime(newStartTime)}.`,
+    eyebrowText: 'BOOKING RESCHEDULED',
+    headingText: `Your Booking Has Been Rescheduled, ${name}`,
+    bodyHtml,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `Booking Rescheduled | ${resourceLabel} | ${formatManilaDate(newStartTime)}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendBookingRescheduleEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendBookingRescheduleEmail threw', err)
+  }
+}
+
+interface SendStaffBookingRescheduleNotificationEmailInput {
+  bookingReference: string
+  customerName: string
+  customerEmail: string
+  customerPhone: string
+  performedByName: string
+  resourceTypeName: string
+  resourceLabel: string
+  originalStartTime: Date
+  originalEndTime: Date
+  newStartTime: Date
+  newEndTime: Date
+  reason: string
+}
+
+export async function sendStaffBookingRescheduleNotificationEmail({
+  bookingReference,
+  customerName,
+  customerEmail,
+  customerPhone,
+  performedByName,
+  resourceTypeName,
+  resourceLabel,
+  originalStartTime,
+  originalEndTime,
+  newStartTime,
+  newEndTime,
+  reason,
+}: SendStaffBookingRescheduleNotificationEmailInput): Promise<void> {
+  const bodyHtml = `
+    <p>A booking has been rescheduled by <strong>${escapeHtml(performedByName)}</strong>.</p>
+    <p style="margin: 20px 0 4px;"><strong>${escapeHtml(customerName)}</strong></p>
+    <p style="margin: 0 0 2px;"><a href="mailto:${escapeHtml(customerEmail)}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${escapeHtml(customerEmail)}</a></p>
+    <p style="margin: 0 0 20px;">${escapeHtml(customerPhone)}</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 16px 20px; background-color: ${ACCENT_LIGHT};">
+          <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: ${BRAND_MID};">Booking Reference</p>
+          <p style="margin: 4px 0 0; font-family: ${HEADING_FONT}; font-size: 20px; font-weight: 700; color: ${BRAND_DARK};">${escapeHtml(bookingReference)}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`)}
+            ${ledgerSectionHeader('Previous slot')}
+            ${ledgerRow('Date', formatManilaDate(originalStartTime))}
+            ${ledgerRow('Time', `${formatManilaTime(originalStartTime)} &ndash; ${formatManilaTime(originalEndTime)}`)}
+            ${ledgerSectionHeader('New slot')}
+            ${ledgerRow('Date', formatManilaDate(newStartTime))}
+            ${ledgerRow('Time', `${formatManilaTime(newStartTime)} &ndash; ${formatManilaTime(newEndTime)}`)}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin: 20px 0; padding: 14px 18px; background-color: rgba(140, 90, 60, 0.08); border-radius: 10px;">
+      <p style="margin: 0 0 6px; font-family: ${BODY_FONT}; font-size: 14px; font-weight: 600; color: ${BRAND_DARK};">Reason for the change</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 14px; color: ${BRAND_DARK}; white-space: pre-line;">${escapeHtml(reason)}</p>
+    </div>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `${customerName}'s booking was moved to ${formatManilaDate(newStartTime)} at ${formatManilaTime(newStartTime)}.`,
+    eyebrowText: 'BOOKING RESCHEDULED',
+    headingText: `Booking Rescheduled — ${resourceLabel}`,
+    bodyHtml,
+    ctaText: 'View in Admin',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/admin/bookings/${bookingReference}`,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: REPLY_TO_ADDRESS,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `Booking | Rescheduled | ${resourceLabel} | ${formatManilaDate(newStartTime)}, ${formatManilaTime(newStartTime)} | ${bookingReference}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendStaffBookingRescheduleNotificationEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendStaffBookingRescheduleNotificationEmail threw', err)
+  }
+}
+
 interface SendStaffBookingNotificationEmailInput {
   bookingReference: string
   customerName: string
@@ -679,7 +934,14 @@ interface SendStaffBookingNotificationEmailInput {
   endTime: Date
   guestCount: number
   guestFeeCentavos: number
+  /** Undiscounted court/simulator rate for the duration. */
   basePriceCentavos: number
+  /** Tier or birthday discount taken off basePriceCentavos; 0 for non-member bookings. */
+  memberDiscountCentavos: number
+  /** "Member discount" or "Birthday court hour". */
+  memberDiscountLabel: string
+  /** Guests whose fee was waived by complimentary guest passes. */
+  guestPassesUsed: number
   addOns: BookingConfirmationAddOn[]
   totalPaidCentavos: number
   creditRedemption?: { amountCentavos: number; remainingBalanceCentavos: number }
@@ -697,6 +959,9 @@ export async function sendStaffBookingNotificationEmail({
   guestCount,
   guestFeeCentavos,
   basePriceCentavos,
+  memberDiscountCentavos,
+  memberDiscountLabel,
+  guestPassesUsed,
   addOns,
   totalPaidCentavos,
   creditRedemption,
@@ -715,11 +980,21 @@ export async function sendStaffBookingNotificationEmail({
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
     ledgerRow('Price', formatCentavos(basePriceCentavos)),
+    ...(memberDiscountCentavos > 0
+      ? [ledgerRow(escapeHtml(memberDiscountLabel), `&minus;${formatCentavos(memberDiscountCentavos)}`, false, true)]
+      : []),
     ...(hasAddOnsBreakdown
       ? [
           ledgerSectionHeader('Add-ons total'),
           ...(guestCount > 0
-            ? [ledgerRow(`Guests — ${guestCount} Pax`, formatCentavos(guestFeeCentavos), false, true)]
+            ? [
+                ledgerRow(
+                  `Non-member guests — ${guestCount} Pax${guestPassesUsed > 0 ? ` (${guestPassesUsed} guest pass${guestPassesUsed === 1 ? '' : 'es'})` : ''}`,
+                  formatCentavos(guestFeeCentavos),
+                  false,
+                  true,
+                ),
+              ]
             : []),
           ...addOns.map((addOn) =>
             ledgerRow(escapeHtml(addOn.name), formatCentavos(addOn.amountCentavos), false, true),
@@ -730,7 +1005,7 @@ export async function sendStaffBookingNotificationEmail({
   ].join('')
 
   const paymentMethodLine = creditRedemption
-    ? `Paid via F&amp;B Credit &mdash; ${formatCentavos(creditRedemption.amountCentavos)} applied, ${formatCentavos(creditRedemption.remainingBalanceCentavos)} remaining`
+    ? `Paid via Booking Credit &mdash; ${formatCentavos(creditRedemption.amountCentavos)} applied, ${formatCentavos(creditRedemption.remainingBalanceCentavos)} remaining`
     : 'Paid via PayMongo'
 
   const bodyHtml = `
@@ -867,8 +1142,6 @@ interface SendStaffMembershipActivationEmailInput {
   customerEmail: string
   tierName: string
   amountPaidCentavos: number
-  activationFeeCentavos: number
-  creditBalanceCentavos: number
   expiryDateLabel: string
   paymongoPaymentIntentId: string | null
 }
@@ -879,15 +1152,11 @@ export async function sendStaffMembershipActivationEmail({
   customerEmail,
   tierName,
   amountPaidCentavos,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   expiryDateLabel,
   paymongoPaymentIntentId,
 }: SendStaffMembershipActivationEmailInput): Promise<void> {
   const ledgerRows = [
-    ledgerRow('Tier', tierName),
-    ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos)),
-    ledgerRow('F&amp;B Credit Granted', formatCentavos(creditBalanceCentavos)),
+    ledgerRow('Plan', escapeHtml(tierName)),
     ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true),
     ledgerRow('PayMongo Reference', paymongoPaymentIntentId ?? 'Not available'),
   ].join('')
@@ -947,8 +1216,6 @@ interface SendStaffMembershipRenewalEmailInput {
   customerEmail: string
   tierName: string
   amountPaidCentavos: number
-  activationFeeCentavos: number
-  creditBalanceCentavos: number
   expiryDateLabel: string
 }
 
@@ -957,14 +1224,10 @@ export async function sendStaffMembershipRenewalEmail({
   customerEmail,
   tierName,
   amountPaidCentavos,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   expiryDateLabel,
 }: SendStaffMembershipRenewalEmailInput): Promise<void> {
   const ledgerRows = [
-    ledgerRow('Tier', tierName),
-    ledgerRow('Activation Fee', formatCentavos(activationFeeCentavos)),
-    ledgerRow('F&amp;B Credit Granted', formatCentavos(creditBalanceCentavos)),
+    ledgerRow('Plan', escapeHtml(tierName)),
     ledgerRow('Total Paid', formatCentavos(amountPaidCentavos), true),
   ].join('')
 
@@ -1013,6 +1276,82 @@ export async function sendStaffMembershipRenewalEmail({
     }
   } catch (err) {
     console.error('Resend sendStaffMembershipRenewalEmail threw', err)
+  }
+}
+
+interface SendStaffTopUpAfterExpiryEmailInput {
+  customerName: string
+  customerEmail: string
+  amountCentavos: number
+  newBalanceCentavos: number
+  expiryDateLabel: string
+  paymentId: string
+}
+
+/**
+ * A top-up checkout that was started while the membership was active but paid after the
+ * term ended. The credit has already been applied; staff decide on a refund or a renewal.
+ */
+export async function sendStaffTopUpAfterExpiryEmail({
+  customerName,
+  customerEmail,
+  amountCentavos,
+  newBalanceCentavos,
+  expiryDateLabel,
+  paymentId,
+}: SendStaffTopUpAfterExpiryEmailInput): Promise<void> {
+  const ledgerRows = [
+    ledgerRow('Top-Up Paid', formatCentavos(amountCentavos)),
+    ledgerRow('Balance After Credit', formatCentavos(newBalanceCentavos)),
+    ledgerRow('Membership Ended', expiryDateLabel),
+    ledgerRow('Payment ID', escapeHtml(paymentId), true),
+  ].join('')
+
+  const bodyHtml = `
+    <p>A credit top-up was paid <strong>after</strong> the member's term had already ended. The credit has been applied to the expired membership so no payment is lost, but it cannot be spent until the member renews.</p>
+    <p style="margin: 20px 0 4px;"><strong>${escapeHtml(customerName)}</strong></p>
+    <p style="margin: 0 0 20px;"><a href="mailto:${escapeHtml(customerEmail)}" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">${escapeHtml(customerEmail)}</a></p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 0 0 20px; border: 1px solid ${ACCENT_LIGHT}; border-radius: 12px; overflow: hidden;">
+      <tr>
+        <td style="padding: 20px 20px 4px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${ledgerRows}
+          </table>
+        </td>
+      </tr>
+    </table>
+    <p style="margin: 0; font-size: 14px; color: ${BRAND_MID};">Please contact the member to arrange a refund through PayMongo or a renewal.</p>
+  `
+
+  const { html, text } = buildBrandedEmail({
+    preheaderText: `Top-up paid after expiry — ${customerName}.`,
+    eyebrowText: 'ACTION NEEDED',
+    headingText: `Top-Up After Expiry — ${customerName}`,
+    bodyHtml,
+  })
+
+  try {
+    const res = await fetch(RESEND_API_BASE, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_ADDRESS,
+        to: REPLY_TO_ADDRESS,
+        reply_to: REPLY_TO_ADDRESS,
+        subject: `Membership | Top-Up After Expiry | ${customerName} | ${formatCentavos(amountCentavos)}`,
+        html,
+        text,
+      }),
+    })
+    if (!res.ok) {
+      const errorBody = await res.text()
+      console.error('Resend sendStaffTopUpAfterExpiryEmail failed', res.status, errorBody)
+    }
+  } catch (err) {
+    console.error('Resend sendStaffTopUpAfterExpiryEmail threw', err)
   }
 }
 
@@ -1092,14 +1431,30 @@ interface ReminderMembership {
   creditBalanceCentavos: number
 }
 
+/** "today" / "tomorrow" / "in N days" for a Manila calendar-day count. */
+function describeDaysRemaining(daysRemaining: number): string {
+  if (daysRemaining <= 0) return 'today'
+  if (daysRemaining === 1) return 'tomorrow'
+  return `in ${daysRemaining} days`
+}
+
 export async function sendMembershipExpiryReminderEmail(
   customer: ReminderCustomer,
   membership: ReminderMembership,
-  daysRemaining: 14 | 3,
+  /** Whole Manila calendar days until endDate at send time — not the cron window that selected the row. */
+  daysRemaining: number,
 ): Promise<void> {
   const tierName = formatMembershipTier(membership.tier)
   const endDateLabel = formatManilaDate(membership.endDate)
-  const urgent = daysRemaining === 3
+  const urgent = daysRemaining <= 3
+  const expiresIn = describeDaysRemaining(daysRemaining)
+  const headingText = urgent
+    ? daysRemaining <= 0
+      ? `Expires Today, ${customer.name}`
+      : daysRemaining === 1
+        ? `1 Day Left, ${customer.name}`
+        : `${daysRemaining} Days Left, ${customer.name}`
+    : 'Your Membership Is Expiring Soon'
 
   const creditLine =
     membership.creditBalanceCentavos > 0
@@ -1109,22 +1464,22 @@ export async function sendMembershipExpiryReminderEmail(
   const bodyHtml = urgent
     ? `
     <p>Hi ${escapeHtml(customer.name)},</p>
-    <p>Your ${tierName} membership expires in just ${daysRemaining} days, on <strong>${endDateLabel}</strong>. Renew now to keep your member rates and perks going without a gap.</p>${creditLine}
+    <p>Your ${tierName} membership expires ${expiresIn}, on <strong>${endDateLabel}</strong>. Renew now to keep your member rates and perks going without a gap &mdash; the renewed term starts right after this one ends.</p>${creditLine}
   `
     : `
     <p>Hi ${escapeHtml(customer.name)},</p>
-    <p>Just a heads-up &mdash; your ${tierName} membership is set to expire on <strong>${endDateLabel}</strong>, ${daysRemaining} days from now. Renew any time before then to keep your priority booking, member rates, and Speakeasy Lounge access going.</p>${creditLine}
+    <p>Just a heads-up &mdash; your ${tierName} membership is set to expire on <strong>${endDateLabel}</strong>, ${expiresIn}. Renew any time before then to keep your priority booking, member rates, and Speakeasy Lounge access going &mdash; the renewed term starts right after this one ends.</p>${creditLine}
   `
 
   const { html, text } = buildBrandedEmail({
     preheaderText: urgent
-      ? `Your membership expires in ${daysRemaining} days &mdash; renew now.`
-      : `Your membership expires in ${daysRemaining} days.`,
+      ? `Your membership expires ${expiresIn} &mdash; renew now.`
+      : `Your membership expires ${expiresIn}.`,
     eyebrowText: urgent ? 'EXPIRES SOON' : 'MEMBERSHIP REMINDER',
-    headingText: urgent ? `${daysRemaining} Days Left, ${customer.name}` : 'Your Membership Is Expiring Soon',
+    headingText,
     bodyHtml,
     ctaText: 'Renew Your Membership',
-    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/membership/apply`,
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/renew`,
   })
 
   try {
@@ -1139,7 +1494,7 @@ export async function sendMembershipExpiryReminderEmail(
         to: customer.email,
         reply_to: REPLY_TO_ADDRESS,
         subject: urgent
-          ? `Your Winston Membership Expires in ${daysRemaining} Days`
+          ? `Your Winston Membership Expires ${daysRemaining <= 0 ? 'Today' : daysRemaining === 1 ? 'Tomorrow' : `in ${daysRemaining} Days`}`
           : 'Your Winston Membership Expires Soon',
         html,
         text,
@@ -1170,7 +1525,7 @@ export async function sendMembershipExpiredEmail(
     <p>Hi ${escapeHtml(customer.name)},</p>
     <p>Your ${tierName} membership expired on ${endDateLabel}.${creditNote}</p>
     <div style="margin: 24px 0; padding: 20px 24px; background-color: rgba(140, 90, 60, 0.08); border-left: 4px solid ${ACCENT_PRIMARY}; border-radius: 8px;">
-      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">You're still always welcome at Winston as a guest &mdash; book a court, simulator bay, or table at the café any time. Reapply below whenever you're ready to pick your member rates and perks back up.</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">You're still always welcome at Winston as a guest &mdash; book a court, simulator bay, or table at the café any time. Log in and renew below whenever you're ready to pick your member rates and perks back up.</p>
     </div>
   `
 
@@ -1179,8 +1534,8 @@ export async function sendMembershipExpiredEmail(
     eyebrowText: 'MEMBERSHIP EXPIRED',
     headingText: 'Your Membership Has Expired',
     bodyHtml,
-    ctaText: 'Reapply for Membership',
-    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/membership/apply`,
+    ctaText: 'Renew Your Membership',
+    ctaUrl: `${process.env.NEXT_PUBLIC_APP_URL}/account/renew`,
   })
 
   try {

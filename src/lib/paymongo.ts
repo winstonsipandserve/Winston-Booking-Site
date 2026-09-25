@@ -68,13 +68,10 @@ export async function createPaymongoCheckoutSession(
           },
           description: input.description,
           send_email_receipt: input.sendEmailReceipt,
-          // PayMongo's Checkout Sessions API rejects requests with this field omitted
-          // (confirmed live, contrary to docs implying it defaults to the account's
-          // enabled methods). All four of card/gcash/grab_pay/paymaya are confirmed
-          // live-working for Arjay's personal test account (see CLAUDE.md's Open /
-          // Not Yet Decided) — not necessarily final once the client's own PayMongo
-          // account exists.
-          payment_method_types: ['card', 'gcash', 'grab_pay', 'paymaya'],
+          // PayMongo's Checkout Sessions API rejects requests with this field omitted.
+          // Checkout is intentionally limited to the two e-wallet methods enabled
+          // for customers: GCash and Maya.
+          payment_method_types: ['gcash', 'paymaya'],
         },
       },
     }),

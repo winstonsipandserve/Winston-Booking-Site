@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
@@ -11,8 +12,8 @@ export default function ForgotPasswordForm() {
 
   if (submitState === 'success') {
     return (
-      <div className="mx-auto flex w-full max-w-md flex-col rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 text-center shadow-xl shadow-brand-dark/10">
-        <p className="text-brand-dark/80">
+      <div className="flex w-full flex-col gap-4 text-center">
+        <p className="text-gray-500">
           If that email is registered, you&apos;ll receive a reset link shortly.
         </p>
       </div>
@@ -43,11 +44,11 @@ export default function ForgotPasswordForm() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+    <div className="w-full">
       <LoadingOverlay isOpen={submitting} label="Sending…" />
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-brand-dark">
+          <label htmlFor="email" className="text-sm font-medium text-gray-900">
             Email
           </label>
           <input
@@ -58,7 +59,7 @@ export default function ForgotPasswordForm() {
             disabled={submitting}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50"
+            className="rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none disabled:opacity-50"
           />
         </div>
 
@@ -69,10 +70,14 @@ export default function ForgotPasswordForm() {
         <button
           type="submit"
           disabled={submitting}
-          className="mt-2 rounded-none bg-accent-primary px-6 py-2.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors duration-300 hover:bg-brand-mid focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+          className="mt-2 rounded-md bg-gray-900 px-6 py-2.5 text-sm font-medium text-white transition-colors duration-300 hover:bg-gray-700 disabled:opacity-50"
         >
           Send Reset Link
         </button>
+
+        <Link href="/login" className="text-center text-sm text-gray-500">
+          Back to Sign In
+        </Link>
       </form>
     </div>
   )

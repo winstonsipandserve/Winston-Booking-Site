@@ -3,7 +3,6 @@ import { ResourceTypeSlug } from '@prisma/client'
 import ResourcesTabs from '@/components/admin/ResourcesTabs'
 
 const RESOURCE_TYPE_ORDER: ResourceTypeSlug[] = [
-  ResourceTypeSlug.tennis_court,
   ResourceTypeSlug.pickleball_court,
   ResourceTypeSlug.tennis_sim,
   ResourceTypeSlug.pickleball_sim,
@@ -32,15 +31,7 @@ export default async function AdminResourcesPage() {
   const simulators = orderedResourceTypes.filter((rt) => rt.category === 'simulator')
 
   return (
-    <div className="relative isolate flex h-full flex-col gap-4">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
-      />
-      <div>
-        <h1 className="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">Resources & Pricing</h1>
-      </div>
-
+    <div className="flex h-full flex-col gap-4">
       <div className="min-h-0 flex-1">
         <ResourcesTabs
           courts={courts}

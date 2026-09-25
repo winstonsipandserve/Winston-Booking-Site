@@ -34,7 +34,7 @@ Never a float, anywhere — storage, computation, or transport.
 
 ### Snapshot what was actually charged
 
-Several columns deliberately duplicate data that could otherwise be recomputed: the guest fee charged, each add-on's price, and the customer's name and phone at booking time.
+Several columns deliberately duplicate data that could otherwise be recomputed: the guest fee charged, the tier (or birthday) discount taken off, the guest passes used, whether the birthday hour was redeemed, each add-on's price, and the customer's name and phone at booking time.
 
 **Why:** rates are admin-editable and customer records change. Without snapshots, editing a rate would retroactively rewrite the history of every past booking, and a later booking under a shared email could overwrite an earlier one's contact details.
 
@@ -44,7 +44,9 @@ Several columns deliberately duplicate data that could otherwise be recomputed: 
 
 Always look-up-or-create on the unique email.
 
-Related rule: a customer's name and phone are only overwritten on mismatch **while they have no password**. Once someone has a real login account, a mismatched anonymous booking under their email can never overwrite their profile.
+Related rule: **no unauthenticated path updates an existing customer's name or phone.** Anyone can type any email into the booking wizard or membership application, and letting either flow rewrite the shared row would let a stranger change the contact details staff see for a pending applicant. The membership application stores its submitted contact details separately for review; changing an existing customer profile requires a future authenticated flow with verified ownership.
+
+**Attachment is one-shot.** `PATCH /api/bookings/[id]` refuses a booking that already has a customer, so a hold can never be re-pointed at another person's account.
 
 ### Disable, do not delete
 
@@ -74,13 +76,43 @@ Reschedules, credit transactions, and activity log entries have no `updatedAt` a
 
 ### Pricing lives in the database, gated by an allow-list
 
-Rates are admin-editable rows, one per explicit resource-type / rate-tier / duration combination. Invalid combinations simply have no row.
+Rates are admin-editable rows: one **base** court/simulator rate per resource-type / duration combination, and one coaching rate per resource-type / rate-tier / pax combination. Invalid combinations simply have no row.
 
 The allow-list of valid combinations is a **single source of truth in code**, enforced both server-side (invalid combinations are rejected with a 400) and client-side (no "+ Add" control is rendered for a cell the allow-list does not cover).
 
 **Why:** the client changes prices; that must not require a deploy. But the shape of what *can* be priced is a business decision, not a free-for-all.
 
-**Membership tier prices are the deliberate exception** — fixed in code, not admin-editable.
+**Membership tier prices, tier discount percentages, and the Founding Member cap of 100 are the deliberate exception** — fixed in code, not admin-editable.
+
+### Member pricing is a tier percentage off the base rate, not separate rows
+
+`PricingRule` holds one **base** rate per resource-type / duration combination. A member's price is derived at booking time: base rate × (1 − their tier's discount), using the tier of the membership term that covers the slot. Coaching keeps its explicit member / non-member rows and is not discounted; the guest fee is not discounted either.
+
+**Why:** the client expresses member pricing as 5% / 10% / 15% off, not as a second rate card. Three tiers × every duration as separate rows would triple the admin's editing surface and let the tiers drift apart from the base rate the client actually publishes.
+
+**What breaks if undone:** every base-rate edit would have to be mirrored into three member rows by hand, and a missed one silently misprices a tier. The `RateTier` dimension stays only for coaching rows.
+
+The discount actually applied is snapshotted on the booking (`memberDiscountCentavos`) — see "Snapshot what was actually charged".
+
+### Founding Member is a flag, not a tier
+
+A Founding Member is a Winston Premier membership with a permanent `isFounding`-style marker, set when one of the first 100 paid Premier activations is confirmed.
+
+**Why:** every Premier rule — window, passes, discount, birthday hour — applies unchanged. Only the price and the merchandise differ, and the 100-place cap is a count over paid Premier activations. A fourth enum value would duplicate every Premier branch for two differences; the flag instead feeds one branch in the Premier price lookup.
+
+**The ₱5,000 price is a one-time, first-term perk; the flag is permanent.** It applies to the qualifying activation only — every later Premier renewal, including the Founding Member's own, is priced at the standard ₱6,500. The `isFounding` flag itself is never re-priced away: once a customer has held it on any membership, every later Premier term they take (activation or renewal) is flagged Founding again, just at standard price. Renewing into Player or Elite does not carry the flag forward, matching the existing rule that Founding pricing is tied to Premier.
+
+**What breaks if undone:** tier-keyed logic (discount tables, reports, renewal pricing) would need a Founding case everywhere, and renewing a Founding Member into "Premier" would look like a tier change. Collapsing the flag and the price back into one signal would either re-discount every renewal for life (the old, now-wrong behavior) or silently drop a paying member's permanent Founding recognition the first time they renew at standard price.
+
+**Where the price is fixed:** when the `MembershipPayment` row is created, because that amount is what PayMongo charges. The seat count and the insert run under one advisory lock (`withFoundingSeatLock`), and an unpaid Founding row inside the 48-hour link lifetime counts as a taken seat. Approval and resend emails only *quote*; never reserve a seat from an email. `quoteMembershipPrice` (`src/lib/membership-founding.ts`) is the single place this is decided — every activation, renewal, and quote-display path calls into it rather than repricing independently.
+
+### Tennis court and ball boy are removed, not disabled
+
+The `tennis_court` resource type, its resources and rates, and the `ball_boy` add-on are dropped from the seed and schema rather than kept as disabled rows.
+
+**Why:** the site is unpublished with no real customer data, so there is no booking history to protect. Disable-don't-delete exists to preserve history; with none, keeping dead rows and enum values only leaves traps for the allow-list, the wizard, and reporting.
+
+**What breaks if undone:** a disabled tennis court would still appear in admin pricing, the Sport step, and revenue-by-resource-type charts, and the allow-list would keep offering ball boy cells that the business no longer sells.
 
 ### The guest fee gets its own table
 
@@ -101,6 +133,14 @@ Rather than adding an application foreign key to the booking-scoped payment tabl
 Chosen over a polymorphic reference-type/reference-id pattern.
 
 **Why:** real database-enforced referential integrity. A future POS transaction will create a payment with no booking attached.
+
+### Booking announcements and editorial news are separate models
+
+`Announcement` owns short operational notices, operational windows with an optional separate advance-notice date, urgency, resource links, and optional automatic disabling. `NewsPost` owns long-form sanitized editorial content, stable slugs, covers, categories, publication scheduling, and featuring.
+
+**Why:** showing every club story at the `/book` entry gate interrupts customers with content unrelated to selecting a court or bay. The two content types have different validation, lifecycle, and display requirements; a nullable-field catch-all table would keep those rules coupled.
+
+**Rollout consequence:** the old `Bulletin` tables remain only through the expand/verification window. Contract cleanup must happen in a separate deployment after staging and production are confirmed on the new code.
 
 ---
 
@@ -136,7 +176,7 @@ Every admin page and API route calls the same function, which re-checks the admi
 
 ### Manual always wins over automation
 
-For resource disabling: a manual admin decision always overrides a bulletin's automatic claim, and releasing a bulletin's claim never steals back a manually disabled resource.
+For resource disabling: a manual admin decision always overrides an announcement's automatic claim, and releasing an announcement's claim never steals back a manually disabled resource.
 
 **Why:** staff acting deliberately at the venue must not be silently overridden by a scheduled rule.
 
@@ -166,18 +206,35 @@ No mobile-width support is planned. It is a staff tool used on tablets and deskt
 
 These are locked. Read them before any visual work rather than re-deriving a palette per task.
 
-### Public-site colour tokens
+### Public-site design tokens live in `src/app/tokens.css`
 
-Defined as Tailwind v4 `@theme` tokens in `globals.css`. Every component reads the tokens; **never hardcode a hex value.**
+`tokens.css` is the single source of truth for colour, type, radius, spacing, and elevation. It is imported first in `globals.css`, and the Tailwind v4 `@theme inline` block there only *aliases* onto it — so `bg-brand-dark`, `text-accent-primary`, `font-serif`, and the rest keep their class names but take their values from the sheet. Every component reads a token; **never hardcode a hex value**, and never add a value to `@theme` that is not defined in `tokens.css`.
 
-| Token | Value | Role |
-|---|---|---|
-| `--color-brand-dark` | `#321E1E` | Dominant |
-| `--color-brand-mid` | `#4E3636` | Secondary |
-| `--color-accent-primary` | `#CD1818` | Primary call-to-action — used sparingly |
-| `--color-accent-teal` | `#116D6E` | Tertiary — only the café/bar mode toggle and membership tier checkmarks |
+| Semantic token | Value | Tailwind alias | Role |
+|---|---|---|---|
+| `--color-bg-dark` | `#2a1515` | `brand-dark` | Dominant — nav, footer, hero overlay; also the text-on-light ink |
+| `--color-bg-dark-alt` | `#3a1f1c` | `brand-mid` | Lifted dark sections |
+| `--color-bg-light` | `#fbf3e9` | `background` | Primary light background, body default |
+| `--color-bg-light-alt` | `#f6ece0` | `brand-light` | Alternate light background |
+| `--color-text-on-dark` | `#f4eadb` | `on-dark`, `accent-light` | Primary text on dark |
+| `--color-text-on-dark-muted` | `#cbb6a6` | `on-dark-muted` | Muted text on dark (WCAG AA on both darks) |
+| `--color-text-on-light` | `#2a1515` | `on-light`, `foreground` | Primary text on light |
+| `--color-text-on-light-muted` | `#6b5a52` | `on-light-muted` | Muted text on light |
+| `--color-accent` | `#d62a20` | `accent-primary` | The **one** accent — CTAs, active states, eyebrows. Never decoration |
+| `--color-accent-hover` | `#b21f17` | `accent-dark` | Hover / pressed on the accent |
+| `--color-on-accent` | `#ffffff` | `on-accent` | Text on a red fill |
+| `--color-focus-ring` | `#f4a79f` | `focus-ring` | Focus-visible outline on every interactive element on the **public site**. The admin panel overrides it with a 2px `gray-900` / `gray-100` (dark) ring scoped to `body:has(.admin-root)` in `globals.css`, because the salmon ring sits below 3:1 on the admin's neutral greys |
+| `--color-notice-info-*` | blue family | `notice-info-*` | Information announcement background, border, and text only |
+| `--color-notice-warning-*` | amber family | `notice-warning-*` | Warning announcement background, border, and text only |
+| `--color-notice-urgent-*` | red family | `notice-urgent-*` | Urgent announcement background, border, and text only |
 
-`--color-brand-light` / `--color-accent-light` (cream) are unchanged. **The admin panel intentionally stays neutral grey and does not use these tokens.**
+The three announcement urgency families are the only semantic-colour exception to the one-accent public palette. They communicate operational severity in the `/book` gate, use paired background/border/text tokens for accessible contrast, and must not be reused as decorative colours elsewhere.
+
+**Naming caveat:** Tailwind owns `--text-*`, `--leading-*`, and `--radius-xs/sm/md/lg` for its own utilities, and an unlayered `:root` redefining them would silently restyle the admin panel. The sheet therefore names those groups `--type-*`, `--lh-*`, and `--radius-control/tile/card/panel`. Do not rename them back.
+
+`--color-accent-teal` (`#116D6E`) is being retired: teal is not in the palette, and its two remaining uses (café/bar toggle, membership tier checkmarks) move to the accent. Until that lands it stays in `@theme` as the one value not sourced from the sheet.
+
+**The admin panel intentionally stays neutral grey and does not use these tokens.**
 
 ### Corner-radius scale
 
@@ -199,13 +256,14 @@ A per-admin preference stored in browser local storage (`light` / `dark` / `syst
 
 Tailwind v4's dark variant is class-based, driven by a class on the root element set by an inline no-flash script whose literal content lives in one shared constant. A layout-effect safety net handles soft client-side navigations, since React does not execute a rendered script tag. The root element carries a hydration-warning suppression for this reason.
 
-The admin main region stays light unconditionally. A page needing its own dark background uses the **overlay pattern**: an isolated relative wrapper plus a hidden, pointer-events-none absolute sibling rendered first that appears only in dark mode.
+The admin content container is `bg-gray-100` in light mode and `dark:bg-gray-950` in dark mode, one step below the card surface in each theme so white / `gray-900` cards read as raised. Pages render directly onto it; the former per-page dark overlay layer is retired and must not be reintroduced.
 
 **Use this token mapping rather than inventing one:**
 
 | Element | Light | Dark |
 |---|---|---|
-| Page shell background | `bg-gray-50` | `dark:bg-gray-950` |
+| Page shell background (navbar + sidebar frame) | `bg-gray-50` | `dark:bg-gray-950` |
+| Content container | `bg-gray-100` | `dark:bg-gray-950` |
 | Card/panel surface | `bg-white` | `dark:bg-gray-900` |
 | Card/panel border | `border-gray-200` | `dark:border-gray-800` |
 | Nested/inset border | `border-gray-200` | `dark:border-gray-700` |
@@ -226,11 +284,19 @@ The admin main region stays light unconditionally. A page needing its own dark b
 
 A sticky table header on `bg-gray-50` aliases to the card-surface row, not a new token, since it sits inside a card rather than being the page shell.
 
+Text that sits directly on the `bg-gray-100` content well (back links, page subtitles, result counts, tab labels) uses `text-gray-600` or darker: `text-gray-500` measures 4.39:1 there and misses AA. `text-gray-500` remains the muted floor inside white cards; `text-gray-400` is for icons and placeholders only, never running text.
+
+Admin icon-only controls have a hit area of at least 32×32 (padding around a 16px glyph); the panel is tablet-and-up, so every control must be tappable.
+
+Dashboard charts (Recharts) take colour strings, so `DashboardCharts` references the `--color-chart-*` tokens declared in a `@theme static` block in `globals.css` (static, because no utility class uses them and `@theme` would otherwise prune them). Each token has a `-dark` twin; the chart picks per theme at runtime. Add new series colours there, never as hex in the component.
+
 **Locked per-surface semantic exceptions** — each keeps its light colour and adds a muted dark pairing. None of these are general tokens:
 
 - The resource Active badge (green).
 - Membership status badges and the Approve/Reject buttons.
 - The four check-in result states: not-found and rate-limited (red), no-membership (grey), expired (amber).
+
+Amber and red are reserved for genuine warning and danger states (the check-in expired result, the pending-applications age note, warning announcements, destructive confirms). Neutral actions that merely happen to be collapsed — Reschedule on a booking, Change Password in Settings — use the standard white card, not warning colours.
 
 > Separately: do not use Tailwind's default green-100/800 for status badges generally. That is a different convention from the palette above.
 

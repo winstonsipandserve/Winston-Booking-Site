@@ -14,13 +14,10 @@ const SOCIAL_ICONS = [
 ]
 
 interface SocialIconsProps {
-  variant?: 'dark' | 'light'
   className?: string
 }
 
-export default function SocialIcons({ variant = 'dark', className = '' }: SocialIconsProps) {
-  const isLight = variant === 'light'
-
+export default function SocialIcons({ className = '' }: SocialIconsProps) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {SOCIAL_ICONS.map((icon) => (
@@ -28,11 +25,7 @@ export default function SocialIcons({ variant = 'dark', className = '' }: Social
           key={icon.label}
           href="#"
           aria-label={icon.label}
-          className={`flex h-8 w-8 items-center justify-center rounded-none border transition-colors ${
-            isLight
-              ? 'border-white/30 text-white hover:bg-white/10'
-              : 'border-brand-mid text-brand-dark hover:bg-accent-light'
-          }`}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
             <path d={icon.path} />

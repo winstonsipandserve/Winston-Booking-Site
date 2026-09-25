@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
 interface ModalProps {
@@ -10,6 +10,8 @@ interface ModalProps {
   children: React.ReactNode
   maxWidthClassName?: string
   variant?: 'brand' | 'neutral'
+  /** When false, clicking the backdrop does nothing; only the close button (or Escape) calls onClose. */
+  closeOnBackdropClick?: boolean
 }
 
 export default function Modal({
@@ -19,11 +21,48 @@ export default function Modal({
   children,
   maxWidthClassName = 'max-w-sm',
   variant = 'brand',
+  closeOnBackdropClick = true,
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (!isOpen) return
+    const dialog = dialogRef.current
+    const previouslyFocused = document.activeElement as HTMLElement | null
+
+    // Move focus into the dialog on open — first field if there is one, else the dialog itself —
+    // and hand it back to the trigger on close so keyboard users don't lose their place.
+    const firstField = dialog?.querySelector<HTMLElement>(
+      'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])',
+    )
+    ;(firstField ?? dialog)?.focus()
+
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab' || !dialog) return
+      // Keep Tab cycling inside the dialog while it is open.
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+      if (focusable.length === 0) {
+        e.preventDefault()
+        return
+      }
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+      if (e.shiftKey && (active === first || active === dialog)) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', onKeyDown)
     const previousOverflow = document.body.style.overflow
@@ -31,6 +70,7 @@ export default function Modal({
     return () => {
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = previousOverflow
+      previouslyFocused?.focus?.()
     }
   }, [isOpen, onClose])
 
@@ -39,17 +79,19 @@ export default function Modal({
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-8"
-      onClick={onClose}
+      onClick={closeOnBackdropClick ? onClose : undefined}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className={`relative my-auto w-full ${maxWidthClassName} border px-6 py-6 shadow-xl ${
+        className={`relative my-auto w-full outline-none ${maxWidthClassName} border px-6 py-6 shadow-xl ${
           variant === 'neutral'
             ? 'rounded-2xl border-gray-200 bg-white shadow-gray-900/10 dark:border-gray-800 dark:bg-gray-900 dark:shadow-black/40'
-            : 'rounded-card border-brand-dark/10 bg-brand-light shadow-brand-dark/10'
+            : 'rounded-lg border-gray-200 bg-white shadow-gray-900/10'
         }`}
       >
         <button
@@ -59,7 +101,7 @@ export default function Modal({
           className={`absolute right-4 top-4 transition-colors ${
             variant === 'neutral'
               ? 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
-              : 'text-brand-dark/50 hover:text-brand-dark'
+              : 'text-gray-400 hover:text-gray-600'
           }`}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -67,8 +109,8 @@ export default function Modal({
           </svg>
         </button>
         <h3
-          className={`pr-6 ${
-            variant === 'neutral' ? 'text-lg font-semibold text-gray-900 dark:text-gray-100' : 'font-serif text-lg text-brand-dark'
+          className={`pr-6 text-lg font-semibold ${
+            variant === 'neutral' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-900'
           }`}
         >
           {title}

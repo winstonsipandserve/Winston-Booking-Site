@@ -22,7 +22,6 @@ How the software is built: the stack, the code layout, the external services, an
 | PDF | `@react-pdf/renderer` (membership certificate only) |
 | QR | `qrcode` (generation), `html5-qrcode` (camera scanning) |
 | Hosting | Vercel |
-| Error tracking | Sentry |
 
 ---
 
@@ -82,8 +81,9 @@ Route handlers live under `src/app/api/`, return `Response.json(...)` with expli
 | `/api/bookings` | POST | Create a booking hold (session-aware — see [workflows.md](workflows.md)) |
 | `/api/bookings/[id]` | GET, PATCH | Read booking detail / attach customer contact details and re-price |
 | `/api/checkout` | POST | Create or reuse a PayMongo Checkout Session for a booking |
-| `/api/bulletin/gate-notices` | GET | Top 3 published non-expired bulletins, excluding Promotion |
-| `/api/membership-applications` | POST | Submit an application (multipart, with ID images) |
+| `/api/announcements/active` | GET | Active booking announcements, ordered by urgency and start date |
+| `/api/membership-application-uploads` | POST, DELETE | Issue or discard short-lived, single-use private ID-document uploads |
+| `/api/membership-applications` | POST | Validate staged ID images and submit an application |
 | `/api/membership-applications/[id]` | GET | Application status poller |
 | `/api/membership-payments` | POST | Create/resume checkout for an approved application |
 | `/api/membership-payments/[id]` | GET | Membership payment status poller |
@@ -106,7 +106,7 @@ Route handlers live under `src/app/api/`, return `Response.json(...)` with expli
 
 Gated twice: `middleware.ts` matches `/admin/:path*` and `/api/admin/:path*`, and every handler independently calls `getActiveAdminSession()`. The two admin auth routes (`forgot-password`, `reset-password`) intentionally require no session.
 
-Covers: account password change, activity log, admin user list and activate/deactivate, booking reschedule and CSV export, bulletin CRUD, check-in by token and by code, guest fee edit, membership approve/reject, credit top-up, renewal link send, membership CSV export, pricing rule and add-on pricing rule CRUD, and resource edit/disable.
+Covers: account password change, activity log, admin user list and activate/deactivate, booking reschedule availability lookup, booking reschedule and CSV export, announcement CRUD, news CRUD and cover upload, check-in by token and by code, guest fee edit, membership approve/reject, credit top-up, renewal link send, membership CSV export, pricing rule and add-on pricing rule CRUD, and resource edit/disable.
 
 ### Webhook
 
@@ -118,7 +118,7 @@ Both require `Authorization: Bearer $CRON_SECRET` and return 401 otherwise, incl
 
 | Route | Schedule (UTC) | Purpose |
 |---|---|---|
-| `/api/cron/expire-bookings` | `0 0 * * *` | Expire stale holds; release and apply bulletin resource disables |
+| `/api/cron/expire-bookings` | `0 0 * * *` | Expire stale holds; release and apply announcement resource disables |
 | `/api/cron/membership-reminders` | `0 1 * * *` | 14-day and 3-day expiry reminders, plus expired notices |
 
 **There are two cron entries, not one.** Vercel's Hobby plan caps cron frequency at once per day, which is why scheduled effects can lag by up to a day.
@@ -139,9 +139,11 @@ Auth.js v5 with two Credentials providers — `credentials` for admins, `member-
 
 `middleware.ts` runs on the Edge Runtime, which cannot load Prisma or Node's `crypto` (used for password hashing). Anything touching those must live only in `auth.ts`. **`middleware.ts` must never import `auth.ts`** — that would pull Prisma and `crypto` into the Edge bundle.
 
-Admin gating goes through one shared helper, `getActiveAdminSession()` (`src/lib/admin-session.ts`), used by the protected layout and every admin API route. It re-checks the admin's active flag against the database on every request, so deactivating an admin rejects their already-open session on its next request rather than only at next login.
+Admin gating goes through one shared helper, `getActiveAdminSession()` (`src/lib/admin-session.ts`), used by the protected layout and every admin API route. It re-checks the admin's active flag against the database on every request, so deactivating an admin rejects their already-open session on its next request rather than only at next login. Member gating has the same shape: `getActiveMemberSession()` (`src/lib/member-session.ts`) is the only way member pages and routes read the session, and it returns null when the customer row is gone.
 
-Credential sign-in and password-reset requests are rate-limited for both the normalized account identifier and client IP in a rolling 15-minute window. The database stores only HMAC hashes of those identifiers, and old rows are deleted opportunistically on later requests.
+**Password changes revoke older sessions.** Every route that sets a password (member activation and reset, admin reset and self-service change) stamps `passwordChangedAt`; the JWT carries its sign-in instant (`authAt`, set in the `jwt` callback), and both session helpers reject a token issued before the stamp. Tokens from before this field existed carry `authAt = 0`, so the next password change revokes them too. The admin change-password form signs the admin out after success because its own token is revoked as well. Middleware stays database-free and only gates `/admin` by role; the helpers do the real check.
+
+Credential sign-in is rate-limited on **failures only**, in a rolling 15-minute window, across three buckets: 5 failures per (account, IP) pair, 20 per IP, and a loose 30-per-account backstop against distributed password spraying. A successful login never spends budget, and a stranger's wrong guesses from one IP cannot lock the real owner out from another. Password-reset requests are counted per request (3 per email, 10 per IP) — that per-email cap is deliberately global so nobody can flood an inbox with reset emails. Booking-hold creation shares the same counter under its own scope (see [workflows.md](workflows.md) → Hold abuse controls). The database stores only HMAC hashes of those identifiers, and old rows are deleted opportunistically on later requests.
 
 Anonymous booking holds use a separate, random, short-lived browser capability stored only in an HttpOnly, SameSite cookie. The database stores its SHA-256 hash. Follow-up booking reads, contact attachment, checkout, and confirmation polling require that capability; member bookings instead require the owning member session.
 
@@ -158,8 +160,8 @@ PostgreSQL, Storage, and row-level security.
 
 | Bucket | Visibility | Contents |
 |---|---|---|
-| `membership-applications` | Private, admin-only via signed URLs | Government ID images |
-| `bulletin-images` | Public | Bulletin artwork |
+| `membership-applications` | Private, admin-only via signed URLs | Government ID images and short-lived, server-sanitized pending uploads; Storage enforces JPEG/PNG and 5 MB per object |
+| `bulletin-images` | Public | News cover artwork; the legacy bucket ID is retained, while new objects use `news/<post-id>/...` paths |
 | `email-assets` | Public (read-only for anon; writes service-role only) | The logo used in transactional emails, uploaded manually via the Supabase dashboard |
 
 - MCP access to Supabase is **read-only**.
@@ -168,7 +170,9 @@ PostgreSQL, Storage, and row-level security.
 
 **Checkout Sessions** (hosted, redirect-based) — not raw Payment Intents with client-side Elements.
 
-- Requested payment methods: `card`, `gcash`, `grab_pay`, `paymaya`.
+- Requested payment methods: `gcash` and `paymaya` (Maya) only. Availability
+  still depends on those methods being enabled on the PayMongo account for the
+  current environment.
 - Amounts are always in centavos, matching PayMongo's native format.
 - Confirmation happens **only** via a verified `payment.paid` webhook (HMAC-SHA256 over the `Paymongo-Signature` header), never on the client-side redirect.
 - When a stale hold is cancelled, its checkout session is actively expired via PayMongo's Expire Checkout Session endpoint, closing the window where someone could pay into a released slot.
@@ -186,9 +190,9 @@ PostgreSQL, Storage, and row-level security.
 
 Transactional email, sending from `no-reply@winstonsipandserve.club` (SPF/DKIM verified; DMARC is monitor-only `p=none`) with reply-to `winstonsipandserve@gmail.com`.
 
-All transactional email shares one branded layout via `buildBrandedEmail(...)` in `src/lib/email-templates.ts` rather than each call site building its own HTML. **There are 15 senders** in `src/lib/resend.ts`: activation, membership renewal, membership payment link, renewal payment link, member password reset, admin password reset, rejection, booking confirmation, four staff notifications (booking, application, activation, renewal), credit top-up confirmation, membership expiry reminder, and membership expired.
+All transactional email shares one branded layout via `buildBrandedEmail(...)` in `src/lib/email-templates.ts` rather than each call site building its own HTML. **There are 17 senders** in `src/lib/resend.ts`: activation, membership renewal, membership payment link, renewal payment link, member password reset, admin password reset, rejection, booking confirmation, booking reschedule, five staff notifications (booking, booking reschedule, application, activation, renewal), credit top-up confirmation, membership expiry reminder, and membership expired.
 
-The four staff notifications are addressed directly to `winstonsipandserve@gmail.com` and use pipe-delimited subjects for mailbox scanning: `Booking | Confirmed | {resource} | {Manila date and time} | {booking reference}` and `Membership | {action} | {customer name} | {tier}`.
+The five staff notifications are addressed directly to `winstonsipandserve@gmail.com` and use pipe-delimited subjects for mailbox scanning: `Booking | Confirmed | {resource} | {Manila date and time} | {booking reference}`, `Booking | Rescheduled | {resource} | {Manila date and time} | {booking reference}`, and `Membership | {action} | {customer name} | {tier}`.
 
 The first-time activation email carries a generated PDF membership certificate. It is attached only on first activation — never on renewal, and never on the plain activation-link case.
 
@@ -197,7 +201,7 @@ The first-time activation email carries a generated PDF membership certificate. 
 - **Framework Preset must be "Next.js"**, not "Other". On "Other" the build reports success but routing and serverless functions never wire up and every route 404s. `dev` and `staging` are corrected; Production runs on its own pinned Production Overrides and needs this confirmed at the eventual promotion.
 - `prisma generate` is part of the `build` script itself, so a cached `node_modules` can never leave the build type-checking against a stale Prisma Client.
 - **Deployment Protection**: Vercel Authentication ("Standard Protection") is on project-wide — the only tier available on the Hobby plan. The production custom domain is auto-exempted; only non-custom-domain preview/dev/staging URLs sit behind Vercel login. A Protection Bypass for Automation secret exists for tooling that cannot authenticate interactively — send it as the `x-vercel-protection-bypass` **header**, not a query parameter. For giving a person access to a protected preview, use Vercel's Shareable Links rather than hand-building a bypass URL.
-- Function region and the Supabase project are both `syd1`.
+- Function region and the Supabase project are both Singapore (Vercel `sin1`, Supabase `ap-southeast-1`). The project was previously Sydney (`syd1`) but was recreated in Singapore in September 2026 after the original Vercel and Supabase projects were deleted; both were moved together to keep them co-located.
 
 ---
 
@@ -215,7 +219,6 @@ Names and purpose only. Real values live in `.env.local` (never committed) and V
 | `PAYMONGO_WEBHOOK_SECRET` | Verifies `payment.paid` webhook signatures |
 | `RESEND_API_KEY` | Transactional email sending |
 | `NEXT_PUBLIC_APP_URL` | Base app URL (differs per environment) |
-| `SENTRY_DSN` | Error tracking |
 | `BOOKING_HOLD_MINUTES` | Minutes a pending booking is held before being treated as abandoned (default `10`) |
 | `CRON_SECRET` | Authenticates Vercel Cron invocations |
 | `SUPABASE_URL` | Supabase project API URL, for server-side Storage REST calls |

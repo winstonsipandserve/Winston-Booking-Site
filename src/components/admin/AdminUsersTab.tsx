@@ -80,7 +80,7 @@ export default function AdminUsersTab() {
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <table className="w-full min-w-[600px] border-collapse text-sm">
         <thead className="bg-gray-50 dark:bg-gray-800">
           <tr>

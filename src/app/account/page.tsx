@@ -1,55 +1,49 @@
 import { redirect } from 'next/navigation'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
-import Reveal from '@/components/ui/Reveal'
 import AccountProfile from '@/components/account/AccountProfile'
 import MembershipStatusCard from '@/components/account/MembershipStatusCard'
 import RecentBookingsList, { type BookingListItem } from '@/components/account/RecentBookingsList'
-import { formatBookingDateTime } from '@/lib/format'
+import CreditActivityLog, { type CreditActivityItem } from '@/components/account/CreditActivityLog'
+import { formatBookingDateTime, formatCentavos, formatMembershipExpiryDate } from '@/lib/format'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
 import { buildMembershipDisplayFields } from '@/lib/membership-latest'
-import { auth } from '../../../auth'
+import { getBirthdayPerkStatus, getGuestPassStatus } from '@/lib/member-perks'
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
+import { getCurrentMembership, getRenewalEligibility } from '@/lib/membership-current'
+import { getActiveMemberSession } from '@/lib/member-session'
 
 export default async function AccountPage() {
-  const session = await auth()
-
-  if (!session?.user?.id || session.user.role !== 'member') {
+  const memberSession = await getActiveMemberSession()
+  if (!memberSession) {
     redirect('/login')
   }
+  const { customer } = memberSession
 
-  const customer = await prisma.customer.findUnique({
-    where: { id: session.user.id },
-  })
-
-  if (!customer) {
-    redirect('/login')
-  }
-
-  const now = new Date()
-
-  let membership = await prisma.membership.findFirst({
-    where: { customerId: customer.id, status: 'active', endDate: { gte: now } },
-    orderBy: { startDate: 'desc' },
-  })
-
-  if (!membership) {
-    membership = await prisma.membership.findFirst({
-      where: { customerId: customer.id },
-      orderBy: { startDate: 'desc' },
-    })
-  }
+  const membership = await getCurrentMembership(customer.id)
 
   let membershipStatusProps:
     | { membership: null; customerId: string }
     | {
         membership: {
           tierName: string
-          activationCentavos: number
-          creditCentavos: number
+          isFounding: boolean
+          bookingDiscountPercent: number
+          guestPasses: number
+          advanceBookingDays: number
+          guestPassesRemaining: number
+          birthdayMonthLabel: string | null
+          birthdayPerkUsed: boolean
           remainingCreditCentavos: number
           expiryDateLabel: string
           isExpired: boolean
+          canRenew: boolean
+          scheduledRenewalExpiryLabel: string | null
         }
         customerId: string
         qrCodeDataUrl: string
@@ -57,21 +51,41 @@ export default async function AccountPage() {
       } = { membership: null, customerId: customer.id }
 
   if (membership) {
-    const displayFields = await buildMembershipDisplayFields(membership)
+    const displayFields = buildMembershipDisplayFields(membership)
+    const [renewal, passes, birthday] = await Promise.all([
+      getRenewalEligibility(customer.id),
+      getGuestPassStatus(prisma, membership),
+      getBirthdayPerkStatus(prisma, membership, customer.dateOfBirth),
+    ])
 
     const { token: checkInToken, code: checkInCode } = await getOrCreateCheckInToken(customer.id)
     const qrCodeDataUrl = await generateQrCodeDataUrl(checkInToken)
 
     membershipStatusProps = {
-      membership: displayFields,
+      membership: {
+        ...displayFields,
+        guestPassesRemaining: passes.remaining,
+        birthdayMonthLabel: birthday.birthdayMonth === null ? null : MONTH_NAMES[birthday.birthdayMonth - 1],
+        birthdayPerkUsed: birthday.used,
+        canRenew: renewal.eligible,
+        scheduledRenewalExpiryLabel:
+          !renewal.eligible && renewal.reason === 'already_scheduled'
+            ? formatMembershipExpiryDate(renewal.current.endDate)
+            : null,
+      },
       customerId: customer.id,
       qrCodeDataUrl,
       checkInCode,
     }
   }
 
+  // A cancelled row that was never paid is an abandoned hold — including one a stranger
+  // created under this email — and has no place in the member's history.
   const bookings = await prisma.booking.findMany({
-    where: { customerId: customer.id },
+    where: {
+      customerId: customer.id,
+      OR: [{ status: { not: 'cancelled' } }, { payment: { is: { status: 'paid' } } }],
+    },
     orderBy: { startTime: 'desc' },
     take: 50,
     include: { resource: { include: { resourceType: true } } },
@@ -86,44 +100,63 @@ export default async function AccountPage() {
     status: booking.status,
   }))
 
+  // The ledger is scoped to the same term the status card shows, so its entries sum to the
+  // balance displayed above it. Redemptions carry their booking so the member can see what
+  // the credit paid for.
+  const creditTransactions = membership
+    ? await prisma.membershipCreditTransaction.findMany({
+        where: { membershipId: membership.id },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        include: {
+          booking: { include: { resource: { include: { resourceType: true } } } },
+        },
+        relationLoadStrategy: 'query',
+      })
+    : []
+
+  const creditActivityItems: CreditActivityItem[] = creditTransactions.map((tx) => ({
+    id: tx.id,
+    reason: tx.reason,
+    amountCentavos: tx.amountCentavos,
+    amountLabel: formatCentavos(Math.abs(tx.amountCentavos)),
+    dateLabel: formatBookingDateTime(tx.createdAt),
+    bookingLabel: tx.booking
+      ? `${tx.booking.resource.resourceType.name} — ${tx.booking.resource.label} · ${formatBookingDateTime(tx.booking.startTime)}`
+      : null,
+  }))
+
   const firstName = customer.name.split(' ')[0]
 
   return (
     <>
       <Navbar />
 
-      <section className="relative overflow-hidden bg-brand-dark pt-40 pb-20 md:pt-48 md:pb-28">
-        <div className="mx-auto max-w-6xl px-6 md:px-10">
-          <p className="text-sm uppercase tracking-[0.3em] text-accent-light/90">Member Portal</p>
-          <h1 className="mt-4 font-serif text-3xl text-brand-light md:text-4xl">
-            Welcome back, {firstName}
-          </h1>
+      <section className="border-b border-gray-200 bg-white px-6 py-10">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-sm text-gray-500">Member Portal</p>
+          <h1 className="mt-1 text-3xl font-semibold text-gray-900">Welcome back, {firstName}</h1>
         </div>
       </section>
 
-      <section className="bg-background py-12 md:py-16">
-        <div className="mx-auto grid max-w-6xl gap-8 px-6 md:grid-cols-[320px_1fr] md:px-10">
-          <div className="flex flex-col gap-8">
-            <Reveal className="h-full">
-              <AccountProfile
-                name={customer.name}
-                email={customer.email}
-                phone={customer.phone}
-                memberSince={membership?.startDate ?? null}
-              />
-            </Reveal>
+      <section className="bg-gray-50 py-10">
+        <div className="mx-auto grid max-w-6xl gap-6 px-6 md:grid-cols-[320px_1fr]">
+          <div className="flex flex-col gap-6">
+            <AccountProfile
+              name={customer.name}
+              email={customer.email}
+              phone={customer.phone}
+              memberSince={membership?.startDate ?? null}
+            />
           </div>
 
-          <div className="flex flex-col gap-8">
-            <Reveal delayMs={100}>
-              <MembershipStatusCard {...membershipStatusProps} />
-            </Reveal>
+          <div className="flex flex-col gap-6">
+            <MembershipStatusCard {...membershipStatusProps} />
           </div>
 
-          <div className="flex flex-col gap-8 md:col-span-2">
-            <Reveal delayMs={200}>
-              <RecentBookingsList bookings={bookingListItems} />
-            </Reveal>
+          <div className="flex flex-col gap-6 md:col-span-2">
+            {membership && <CreditActivityLog entries={creditActivityItems} />}
+            <RecentBookingsList bookings={bookingListItems} />
           </div>
         </div>
       </section>

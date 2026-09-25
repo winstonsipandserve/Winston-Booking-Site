@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Parisienne, Fraunces, Manrope } from "next/font/google";
+import { Fraunces, Manrope } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import { ADMIN_THEME_INIT_SCRIPT } from "@/lib/admin-theme-init-script";
 import "./globals.css";
 
-const parisienne = Parisienne({ variable: "--font-parisienne", subsets: ["latin"], weight: "400" });
 const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"] });
 const manrope = Manrope({ variable: "--font-manrope", subsets: ["latin"] });
 
@@ -17,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${parisienne.variable} ${fraunces.variable} ${manrope.variable} h-full antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${fraunces.variable} ${manrope.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <Script
           id="admin-theme-init"

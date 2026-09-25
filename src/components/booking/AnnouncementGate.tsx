@@ -1,12 +1,19 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { ANNOUNCEMENT_URGENCY_LABELS } from '@/lib/announcement-validation'
 
 export type GateNotice = {
-  category: string
+  id: string
   title: string
-  body: string
-  publishedAt: string
-  affectedFacility?: string
-  action?: string
+  message: string
+  urgency: 'info' | 'warning' | 'urgent'
+  /** The operational window has not started yet; the notice is advance warning. */
+  upcoming: boolean
+  startAt: string
+  endAt: string | null
+  affectedResources: string[]
 }
 
 interface AnnouncementGateProps {
@@ -14,71 +21,104 @@ interface AnnouncementGateProps {
   onContinue: () => void
 }
 
-export default function AnnouncementGate({ notices, onContinue }: AnnouncementGateProps) {
+const PAGE_SIZE = 3
+
+const URGENCY_STYLES: Record<GateNotice['urgency'], string> = {
+  info: 'border-blue-200 bg-blue-50 text-blue-800',
+  warning: 'border-amber-200 bg-amber-50 text-amber-800',
+  urgent: 'border-red-200 bg-red-50 text-red-800',
+}
+
+function PagerButton({ label, disabled, onClick, children }: {
+  label: string
+  disabled: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
   return (
-    <div className="relative w-full py-10 md:py-16">
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full text-brand-dark/[0.05]"
-        preserveAspectRatio="xMidYMid slice"
-        aria-hidden="true"
-      >
-        <defs>
-          <pattern id="gate-dot-pattern" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
-            <circle cx="34" cy="42" r="12" fill="none" stroke="currentColor" strokeWidth="1" />
-            <circle cx="150" cy="28" r="30" fill="none" stroke="currentColor" strokeWidth="1" />
-            <circle cx="170" cy="150" r="16" fill="none" stroke="currentColor" strokeWidth="1" />
-            <circle cx="55" cy="160" r="42" fill="none" stroke="currentColor" strokeWidth="1" />
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#gate-dot-pattern)" />
-      </svg>
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-500 disabled:cursor-not-allowed disabled:opacity-30"
+    >
+      {children}
+    </button>
+  )
+}
 
-      <div className="relative z-10 mx-auto flex w-full max-w-md flex-col gap-6 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
-        {notices.length > 0 && (
-          <div className="flex flex-col">
-            {notices.map((notice, index) => (
-              <div
-                key={notice.title}
-                className={`flex flex-col gap-1 py-4 ${index === 0 ? '' : 'border-t border-brand-dark/10'}`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-medium uppercase tracking-wide text-accent-primary">
-                    {notice.category}
-                  </span>
-                  <span className="text-xs uppercase tracking-wide text-neutral-700/60">
-                    {notice.publishedAt}
-                  </span>
-                </div>
-                <h3 className="font-serif text-lg text-brand-dark">{notice.title}</h3>
-                <p className="font-sans text-sm text-neutral-700">{notice.body}</p>
-                {(notice.affectedFacility || notice.action) && (
-                  <p className="mt-1 text-xs text-brand-dark/70">
-                    {notice.affectedFacility}
-                    {notice.affectedFacility && notice.action && ' — '}
-                    {notice.action}
-                  </p>
-                )}
+export default function AnnouncementGate({ notices, onContinue }: AnnouncementGateProps) {
+  const [page, setPage] = useState(0)
+  const count = notices.length
+  const pageCount = Math.max(1, Math.ceil(count / PAGE_SIZE))
+  const currentPage = Math.min(page, pageCount - 1)
+  const visible = notices.slice(currentPage * PAGE_SIZE, currentPage * PAGE_SIZE + PAGE_SIZE)
+
+  return (
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900">Before you book</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Check these current court and bay notices, then continue to choose your slot.
+        </p>
+      </div>
+
+      {count > 0 ? (
+        <ul className="flex flex-col divide-y divide-gray-200">
+          {visible.map((notice) => (
+            <li key={notice.id} className="flex flex-col gap-2 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${URGENCY_STYLES[notice.urgency]}`}>
+                  {ANNOUNCEMENT_URGENCY_LABELS[notice.urgency]}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {notice.upcoming && <span className="mr-2 font-semibold text-gray-500">Upcoming</span>}
+                  {notice.endAt ? `${notice.startAt} – ${notice.endAt}` : `From ${notice.startAt}`}
+                </span>
               </div>
-            ))}
-          </div>
-        )}
+              <h3 className="text-base font-semibold text-gray-900">{notice.title}</h3>
+              <p className="whitespace-pre-line text-sm text-gray-600">{notice.message}</p>
+              {notice.affectedResources.length > 0 && (
+                <p className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  <span className="font-semibold">Affected:</span> {notice.affectedResources.join(', ')}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-gray-500">
+          No notices right now. Everything currently listed is open and bookable.
+        </p>
+      )}
 
-        <p className="self-center text-center text-xs text-brand-dark/60">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-4">
+        <p className="text-sm text-gray-500">
           Already a member?{' '}
-          <Link href="/login" className="font-medium text-accent-primary underline underline-offset-2">
-            Sign in
-          </Link>{' '}
+          <Link href="/login" className="font-medium text-gray-900 underline underline-offset-2">Sign in</Link>{' '}
           for member rates and priority booking.
         </p>
-
-        <button
-          type="button"
-          onClick={onContinue}
-          className="self-center rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light"
-        >
-          Continue to Booking
-        </button>
+        {pageCount > 1 && (
+          <div className="flex items-center gap-2">
+            <PagerButton label="Previous notices" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </PagerButton>
+            <span className="text-xs text-gray-400">{currentPage + 1} / {pageCount}</span>
+            <PagerButton label="Next notices" disabled={currentPage === pageCount - 1} onClick={() => setPage(currentPage + 1)}>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </PagerButton>
+          </div>
+        )}
       </div>
+
+      <button
+        type="button"
+        onClick={onContinue}
+        className="w-full rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-700"
+      >
+        Continue to Booking
+      </button>
     </div>
   )
 }

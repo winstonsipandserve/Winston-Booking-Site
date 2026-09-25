@@ -1,0 +1,40 @@
+/* =============================================================================
+   DESIGN TOKENS — TRANSITIONAL
+   The public site's old branded theme has been stripped to generic Tailwind
+   neutrals ahead of the client's redesign (see docs/decisions.md for status).
+   Only the handful of tokens still read by a live component remain below —
+   everything else from the old design system (type scale, radius scale,
+   spacing scale, and the old component-decision classes) has been removed so
+   the new theme can be dropped in without old values lingering to confuse it.
+
+   The one remaining live consumer of the color tokens is the admin news
+   preview (src/components/admin/NewsPreview.tsx), which still mirrors the old
+   public design; once that is updated these can be deleted entirely.
+   ============================================================================= */
+
+:root {
+  --color-bg-dark:      #2a1515;
+  --color-bg-dark-alt:  #3a1f1c;
+  --color-bg-light:     #fbf3e9;
+  --color-bg-light-alt: #f6ece0;
+  --color-text-on-dark: #f4eadb;
+  --color-text-on-light: #111827;
+  --color-accent:       #d62a20;
+
+  /* Focus ring — accessibility floor, used on every interactive element. */
+  --color-focus-ring: #111827;
+
+  --font-display: var(--font-fraunces), "EB Garamond", Georgia, serif;
+  --font-body:    var(--font-manrope), "Inter", system-ui, sans-serif;
+
+  --shadow-card: 0 8px 24px rgba(42, 21, 21, 0.10);
+}
+
+/* Accessibility floor for the whole site */
+:where(a, button, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

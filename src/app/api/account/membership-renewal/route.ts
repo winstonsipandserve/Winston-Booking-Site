@@ -1,7 +1,8 @@
-import { auth } from '../../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { MEMBERSHIP_TIER_PLANS, formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { quoteMembershipPrice, withFoundingSeatLock } from '@/lib/membership-founding'
+import { getRenewalEligibility } from '@/lib/membership-current'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
 import type { MembershipTier } from '@prisma/client'
 
@@ -14,10 +15,11 @@ function isMembershipTier(value: unknown): value is MembershipTier {
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'member') {
+  const memberSession = await getActiveMemberSession()
+  if (!memberSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const { customer } = memberSession
 
   let body: MembershipRenewalRequestBody
   try {
@@ -31,16 +33,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'A valid tier is required' }, { status: 400 })
   }
 
-  const customer = await prisma.customer.findUnique({ where: { id: session.user.id } })
-  if (!customer) {
-    return Response.json({ error: 'Customer not found' }, { status: 404 })
-  }
-
-  const activeMembership = await prisma.membership.findFirst({
-    where: { customerId: customer.id, status: 'active', endDate: { gte: new Date() } },
-  })
-  if (activeMembership) {
-    return Response.json({ error: 'You already have an active membership' }, { status: 409 })
+  const renewal = await getRenewalEligibility(customer.id)
+  if (!renewal.eligible) {
+    return Response.json(
+      {
+        error:
+          renewal.reason === 'already_scheduled'
+            ? 'Your renewal is already paid and scheduled'
+            : 'You already have an active membership',
+      },
+      { status: 409 },
+    )
   }
 
   const existingPending = await prisma.membershipPayment.findFirst({
@@ -62,19 +65,25 @@ export async function POST(request: Request) {
     }
   }
 
-  const plan = MEMBERSHIP_TIER_PLANS[tier]
-  const tierName = formatMembershipTier(tier)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  const membershipPayment = await prisma.membershipPayment.create({
-    data: {
-      customerId: customer.id,
-      applicationId: null,
-      tier,
-      amountCentavos: plan.totalCentavos,
-      status: 'pending',
-    },
+  // Priced under the Founding seat lock (src/lib/membership-founding.ts): a Founding Member
+  // renewing into Premier pays the standard price but keeps the Founding flag; anyone else
+  // may still take a free seat at the discounted price.
+  const membershipPayment = await withFoundingSeatLock(async (tx) => {
+    const quote = await quoteMembershipPrice(tx, customer.id, tier)
+    return tx.membershipPayment.create({
+      data: {
+        customerId: customer.id,
+        applicationId: null,
+        tier,
+        amountCentavos: quote.amountCentavos,
+        isFounding: quote.isFounding,
+        status: 'pending',
+      },
+    })
   })
+  const tierName = formatMembershipPlanLabel(tier, membershipPayment.isFounding)
 
   let checkoutSession
   try {
@@ -82,7 +91,7 @@ export async function POST(request: Request) {
       lineItems: [
         {
           name: `${tierName} Membership Renewal`,
-          amount: plan.totalCentavos,
+          amount: membershipPayment.amountCentavos,
           currency: 'PHP',
           quantity: 1,
         },

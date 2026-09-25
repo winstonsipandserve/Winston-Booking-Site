@@ -18,14 +18,21 @@ Never yet run under real conditions:
 
 ---
 
+## Client Update — 21 September 2026 (complete)
+
+The client revised the membership product, rate card, inventory, and add-ons. [business.md](business.md) states the new rules. **Shipped:** the tier booking discount (base-rate `PricingRule` rows, `Booking.memberDiscountCentavos` snapshot, migration `20260921030000_base_rate_pricing`) and the per-tier advance-booking window; the catalogue reset — inventory (6 units, no tennis court), base rates and simulator tiers, ball boy removed, ₱100 guest fee with the 7 / 3 guest cap (migration `20260921010000_catalogue_reset`); and the membership product — Winston Player / Premier / Elite at ₱3,500 / ₱6,500 / ₱9,500, 12-month terms, Founding Member flag with the 100-seat cap and ₱5,000 pricing, no credit grant, credit renamed "booking credit", `/membership` tier cards and marketing copy (migration `20260921020000_membership_tiers_reset`). Each remaining item below is one unit of work to prioritise; update the matching sections of [features.md](features.md), [workflows.md](workflows.md), and [database.md](database.md) as it lands, and remove their banners once all are done.
+
+Also shipped: guest passes and the birthday-month court hour (derived per-term allowances, `Booking.guestPassesUsed` / `birthdayPerkApplied`, date of birth on the application and customer; migration `20260921040000_member_perks`). Nothing from the update remains open; `features.md`, `workflows.md`, and `database.md` describe the built state.
+
+---
+
 ## Known Bugs
 
 ### Correctness
 
 - **Business hours cannot reject a midnight-crossing booking.** The check compares minutes-of-day independently for start and end, so a 23:00 → 01:00 range satisfies both bounds and passes. The documented 6 AM–10 PM rule is enforced only for same-day ranges.
 - **The guest fee lookup has no ordering.** It fetches the first row with no `orderBy`, so the single-row assumption is unenforced. A second row would make pricing nondeterministic.
-- **`Membership.status` and `endDate` are two independent expiry rules.** One code path requires `status: 'active'` *and* an unexpired end date; another uses the end date alone. Nothing ever writes `expired`, so they agree only by accident — if an admin set a status manually, member pricing and credit redemption would stop while the badge still read "Active Member". See [database.md](database.md).
-- **A published bulletin can disable a resource ahead of its own future event start.** The event-start gate does not retroactively re-check disables that were already applied. Unpublishing or editing the bulletin brings the resource back early.
+- **Memberships created before September 2026 lapse at the exact PayMongo payment instant**, not at end of day Manila. No backfill has been run; a one-off `UPDATE` setting `end_date` to 23:59:59.999 Asia/Manila of its current date would align them, and must be reviewed before running.
 
 ### Display and reporting
 
@@ -46,10 +53,11 @@ Each of these is a conscious scope limit, not an oversight.
 - **Member Actions panel** — Extend, Suspend, and Cancel Membership, pending business-rule decisions on suspend/cancel semantics and credit forfeiture. Add Credit already shipped.
 - **Admin-panel loading indicators** — the shared loading overlay is wired across all customer-facing buttons but not the admin panel: roughly 8 text-swap buttons and 6 currently-silent buttons remain.
 - **Create-new-admin UI** — the Admin Users tab is read plus deactivate/reactivate only.
-- **Member-versus-non-member revenue breakdown** — bookings do not capture which rate tier applied at the time, so historical rows cannot be reclassified. This would need a new forward-only column.
+- **Member-versus-non-member revenue breakdown** — `Booking.memberDiscountCentavos` now records the discount applied (0 for non-member bookings), which is enough to split future rows; no report reads it yet.
 - **Reconciling dashboard revenue against net-of-fee amounts** — the PayMongo fee is captured but surfaced only on the booking detail page.
 - **A `www` variant/redirect and a staging subdomain** — revisit if either becomes useful.
 - **Parallelizing the credit-redemption transaction** — there are candidate groups of independent writes. Revisit only if the transaction timeout margin proves insufficient.
+- **Exact-time announcement resource scheduling** — the current daily cron can apply or release a scheduled resource disable up to one day late. Public announcement visibility is request-time accurate; increasing cron frequency requires a hosting-plan change.
 
 ---
 
@@ -58,15 +66,18 @@ Each of these is a conscious scope limit, not an oversight.
 Genuinely undecided, needing a business or client answer.
 
 - **PayMongo account provenance.** The client has not created their own PayMongo account. The keys currently in use are Arjay's personal test-mode account. The client's own **test** keys must be swapped in before promoting to staging, and **live** keys before promoting to production. This swap must be explicitly confirmed before any payment-touching promotion to production.
-- **Enabled payment methods.** Checkout currently requests card, GCash, GrabPay, and Maya — confirmed enabled on the personal test account. The client's own account may have a different set; re-verify at the same swap point.
+- **Enabled payment methods.** Checkout requests GCash and Maya only. Verify both
+  are enabled on the target PayMongo account before promotion.
 - **Does "Booking Revenue This Month" mean services rendered or cash collected?** It sums every paid booking payment regardless of method, so a credit-covered booking counts identically to a fresh card charge. Not a bug — the question has not been put to the client. Revisit if the number is ever used for real financial reporting.
+- **An expired member stays authenticated on member routes.** Deliberate: the session is what lets them reach `/account/renew`, and bookings already fall back to non-member pricing. Revisit only if a member-only surface appears that must not be reachable after lapse.
+- **A top-up paid after expiry is credited to the lapsed term and flagged to staff** rather than refunded automatically. A refund flow (PayMongo refund API + ledger reversal) has not been built.
 
 ---
 
 ## Test Data Gaps
 
-- **No expired-membership fixture exists** in the dev dataset. The expired branch of the display-status logic, the admin detail layout for it, and its reapplication-blocking message have never been exercised against a real row. Supabase MCP access is read-only, so creating one needs a script or the admin UI.
-- **No test-data reset script exists.** The previous one was deleted. Write a fresh, ID-scoped one when a reset is next needed — read the throwaway-script data-safety convention in [development.md](development.md) first.
+- **Membership expiry coverage remains manual.** `scripts/membership-expiry-fixtures.ts` now creates an ID-scoped near-expiry, expired, and renewed-member dataset and cleans it up from its manifest, but the walkthrough is not automated.
+- **No content lifecycle fixture set exists.** The reset utility safely removes announcement and news data, but repeatable fixtures for scheduled/expired notices, overlapping resource claims, and draft/scheduled news still need to be added to automated tests.
 - **No reproducible admin bootstrap.** The seed creates reference data only and no admin user, so admin accounts exist only in the live dev database. A fresh environment currently has no way to create the first admin.
 
 ---
@@ -75,18 +86,23 @@ Genuinely undecided, needing a business or client answer.
 
 - **Supabase is still on the Free tier.** Pro is required before launch for backups and a higher connection limit. Not yet actioned.
 - **Vercel two-factor authentication is inactive.** Strongly recommended, no target date.
+- **Prisma CLI's `deepmerge-ts@7.1.5` dependency carries CVE-2026-40345.** It is a dev-tooling-only stack-exhaustion risk requiring crafted cyclic configuration objects, not a production request path. Prisma has not released a compatible upgrade: current releases still pin v7, while the upstream v8 bump remains open. Do not force an override or downgrade Prisma; re-run `npm audit --omit=dev` when Prisma ships a supported fix.
+- **Admin forgot/reset password vs. middleware on Vercel — unverified.** `middleware.ts` exempts only `/admin/login`, yet `/api/admin/auth/forgot-password` and `reset-password` must work without a session. Locally the middleware never executes so the routes answer normally; on a deployment where it does run, the matcher would redirect them to the login page and the forms would show a false "link sent" message. Check on staging; if it reproduces, exempt `/api/admin/auth/*` (and `/admin/forgot-password`, `/admin/reset-password`) in the matcher.
 - **Staging re-verification needed** — the region fix and the Vercel Auth re-enable were only ever applied by redeploying `dev`.
 - **Production overrides need confirming** at the eventual staging-to-production promotion. The custom domain is connected to Production and currently returns 404s because of the framework-preset issue described in [architecture.md](architecture.md).
 - **Connection priming floor** of roughly 300 ms per admin navigation on a fresh pooled connection. Reducing it project-wide — via Prisma Accelerate, a different pooling strategy, or Vercel Fluid Compute — is an open investigation.
 - The Supabase MCP role cannot terminate backend connections; killing the local Node process is the actual fix when the session-mode pooler hits its connection cap.
+- **Membership applications do not verify the applicant controls the email.** A stranger can submit under someone else's address, which blocks that person from applying until staff reject the fake one (and staff must review bogus ID images). The per-IP throttle bounds the volume; the real fix is a pre-submission email verification code (new token model, email, and form step). Not yet scheduled.
+- **Booking hold spam from many IPs is not mitigated.** The per-client hold limits in [workflows.md](workflows.md) stop a single script; a distributed attacker can still tie up slots. The backstop options are bot protection on the hold step (e.g. Cloudflare Turnstile — a new dependency) or Vercel WAF rate limiting (Pro plan). Not yet decided.
+- **Bulletin contract cleanup is intentionally pending.** After staging and production verification on the new Announcement/News code, apply a separate migration that removes the legacy bulletin tables/enums and renames the internal resource-disable reason from `bulletin` to `announcement`.
 
 ---
 
 ## Content
 
 - **Facility photography** — the facilities section uses local placeholder photos. Swapping in real venue photography means replacing those five files directly.
-- **Copy pending client input** — Home hero copy, About's Our Story, footer contact details, and News social links.
-- `/book` and `/news` currently have no hero. If either gets one back, revisit whether it still needs to force the navbar solid.
+- **Copy pending client input** — Home hero copy, About's Our Story, and footer contact details.
+- `/book` currently has no hero. If it gets one back, revisit whether it still needs to force the navbar solid.
 
 ---
 

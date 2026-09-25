@@ -1,18 +1,48 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import PasswordInput from '@/components/ui/PasswordInput'
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
+type CheckState = 'checking' | 'valid' | 'invalid'
 
 export default function AdminResetPasswordForm() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
+  const [checkState, setCheckState] = useState<CheckState>('checking')
+  const [checkError, setCheckError] = useState<string | null>(null)
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+
+    let cancelled = false
+
+    fetch(`/api/admin/auth/reset-password?token=${encodeURIComponent(token)}`)
+      .then(async (res) => {
+        if (cancelled) return
+        if (res.ok) {
+          setCheckState('valid')
+          return
+        }
+        const json = await res.json().catch(() => null)
+        setCheckError(json?.error ?? 'This reset link is no longer valid.')
+        setCheckState('invalid')
+      })
+      .catch(() => {
+        if (cancelled) return
+        setCheckError('This reset link is no longer valid.')
+        setCheckState('invalid')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   if (!token) {
     return (
@@ -20,6 +50,24 @@ export default function AdminResetPasswordForm() {
         This reset link is missing its token. Please use the full link from your password
         reset email.
       </p>
+    )
+  }
+
+  if (checkState === 'checking') {
+    return <p className="mt-6 text-sm text-gray-600 dark:text-gray-300">Checking your reset link…</p>
+  }
+
+  if (checkState === 'invalid') {
+    return (
+      <div className="mt-6">
+        <p className="text-sm text-gray-600 dark:text-gray-300">{checkError}</p>
+        <Link
+          href="/admin/forgot-password"
+          className="mt-2 inline-block text-sm font-medium text-gray-900 hover:underline dark:text-gray-100"
+        >
+          Request a new reset link
+        </Link>
+      </div>
     )
   }
 

@@ -1,54 +1,42 @@
-import { prisma } from '@/lib/prisma'
 import type { Membership } from '@prisma/client'
-import { formatMembershipTier } from '@/lib/format'
+import { MEMBERSHIP_TIER_PLANS, formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { getCurrentMembership, getCurrentMembershipsByCustomerIds } from '@/lib/membership-current'
 
+// "Latest" here means the customer's current row as defined in membership-current.ts:
+// the term covering now, else the one with the latest endDate.
 export async function getLatestMembershipsByCustomerIds(
   customerIds: string[],
 ): Promise<Map<string, Membership>> {
-  const memberships = await prisma.membership.findMany({
-    where: { customerId: { in: customerIds } },
-    orderBy: { startDate: 'desc' },
-  })
-
-  const latestByCustomerId = new Map<string, Membership>()
-  for (const membership of memberships) {
-    if (!latestByCustomerId.has(membership.customerId)) {
-      latestByCustomerId.set(membership.customerId, membership)
-    }
-  }
-  return latestByCustomerId
+  return getCurrentMembershipsByCustomerIds(customerIds)
 }
 
 export async function getLatestMembershipByCustomerId(
   customerId: string,
 ): Promise<Membership | null> {
-  const latestByCustomerId = await getLatestMembershipsByCustomerIds([customerId])
-  return latestByCustomerId.get(customerId) ?? null
+  return getCurrentMembership(customerId)
 }
 
 export interface MembershipDisplayFields {
+  /** Plan name, with "· Founding Member" appended when applicable. */
   tierName: string
-  activationCentavos: number
-  creditCentavos: number
+  isFounding: boolean
+  bookingDiscountPercent: number
+  guestPasses: number
+  advanceBookingDays: number
+  /** Current booking-credit balance (top-ups only — no credit is granted with a plan). */
   remainingCreditCentavos: number
   expiryDateLabel: string
   isExpired: boolean
 }
 
-export async function buildMembershipDisplayFields(
-  membership: Membership,
-): Promise<MembershipDisplayFields> {
-  const activationTransaction = await prisma.membershipCreditTransaction.findFirst({
-    where: { membershipId: membership.id, reason: 'activation' },
-    orderBy: { createdAt: 'asc' },
-  })
-
-  const creditCentavos = activationTransaction?.amountCentavos ?? membership.creditBalanceCentavos
-
+export function buildMembershipDisplayFields(membership: Membership): MembershipDisplayFields {
+  const plan = MEMBERSHIP_TIER_PLANS[membership.tier]
   return {
-    tierName: formatMembershipTier(membership.tier),
-    activationCentavos: membership.activationFeeCentavos,
-    creditCentavos,
+    tierName: formatMembershipPlanLabel(membership.tier, membership.isFounding),
+    isFounding: membership.isFounding,
+    bookingDiscountPercent: plan.bookingDiscountPercent,
+    guestPasses: plan.guestPasses,
+    advanceBookingDays: plan.advanceBookingDays,
     remainingCreditCentavos: membership.creditBalanceCentavos,
     expiryDateLabel: new Intl.DateTimeFormat('en-US', {
       month: 'long',

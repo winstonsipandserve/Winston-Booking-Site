@@ -31,6 +31,8 @@ export default function IdentityVerificationGallery({
                 <img
                   src={image.url}
                   alt={`Government ID — ${image.label.toLowerCase()}`}
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full cursor-zoom-in object-cover transition-opacity hover:opacity-90"
                 />
               </div>

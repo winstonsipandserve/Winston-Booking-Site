@@ -3,6 +3,12 @@
 import { useState } from 'react'
 import PasswordInput from '@/components/ui/PasswordInput'
 import ConfirmModal from '@/components/admin/ConfirmModal'
+import { ChevronDownIcon, LockIcon } from '@/components/admin/AdminIcons'
+import { adminSignOut } from '@/lib/actions/admin-auth-actions'
+
+// Changing the password revokes every session issued before it — including this one — so
+// the admin is signed out shortly after the success message (docs/architecture.md → Authentication).
+const SIGN_OUT_DELAY_MS = 2500
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -34,6 +40,9 @@ export default function ChangePasswordForm() {
       if (res.status === 200) {
         setSubmitState('success')
         setFormKey((k) => k + 1)
+        setTimeout(() => {
+          void adminSignOut()
+        }, SIGN_OUT_DELAY_MS)
       } else if (res.status === 400) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem changing your password.')
@@ -53,22 +62,17 @@ export default function ChangePasswordForm() {
 
   return (
     <>
-      <details className="group rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40">
+      <details className="group rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
         <summary className="flex cursor-pointer list-none items-start gap-3 p-5 text-left marker:hidden [&::-webkit-details-marker]:hidden">
-          <svg viewBox="0 0 24 24" fill="none" className="mt-0.5 h-5 w-5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true">
-            <path d="M12 3 2.8 20h18.4L12 3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-            <path d="M12 9v5M12 17.5v.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
+          <LockIcon className="mt-0.5 h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
           <span className="min-w-0 flex-1">
-            <span className="block text-base font-semibold text-amber-900 dark:text-amber-200">Change Password</span>
-            <span className="mt-1 block text-sm text-amber-800 dark:text-amber-300">Use this only if you need to update your admin sign-in password.</span>
+            <span className="block text-base font-semibold text-gray-900 dark:text-gray-100">Change Password</span>
+            <span className="mt-1 block text-sm text-gray-500 dark:text-gray-400">Update the password you use to sign in to the admin panel.</span>
           </span>
-          <svg viewBox="0 0 24 24" fill="none" className="mt-1 h-4 w-4 shrink-0 text-amber-700 transition-transform group-open:rotate-180 dark:text-amber-400" aria-hidden="true">
-            <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <ChevronDownIcon className="mt-1 h-4 w-4 shrink-0 text-gray-500 transition-transform group-open:rotate-180 dark:text-gray-400" />
         </summary>
 
-        <div className="border-t border-amber-200/80 px-5 pb-5 pt-4 dark:border-amber-900/50">
+        <div className="border-t border-gray-100 px-5 pb-5 pt-4 dark:border-gray-800">
           <form key={formKey} onSubmit={handleSubmit} className="flex flex-col gap-4">
           <PasswordInput
             id="currentPassword"
@@ -93,7 +97,7 @@ export default function ChangePasswordForm() {
           />
 
           {submitState === 'success' && (
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Password changed successfully.</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Password changed successfully. Signing you out — please sign in again with your new password.</p>
           )}
 
           <button

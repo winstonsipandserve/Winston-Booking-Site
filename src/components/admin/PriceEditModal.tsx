@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 import { parseCentavos } from '@/lib/format'
 
@@ -38,6 +39,7 @@ export default function PriceEditModal({ isOpen, onClose, title, fields, createF
 
 function PriceCreateForm({ createField, onClose }: { createField: PriceCreateField; onClose: () => void }) {
   const router = useRouter()
+  const toast = useToast()
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -67,6 +69,7 @@ function PriceCreateForm({ createField, onClose }: { createField: PriceCreateFie
         return
       }
       router.refresh()
+      toast.success('Rate added.')
       onClose()
     } catch {
       setError('Something went wrong. Please try again.')
@@ -110,6 +113,7 @@ function PriceCreateForm({ createField, onClose }: { createField: PriceCreateFie
 
 function PriceEditForm({ fields, onClose }: { fields: PriceEditField[]; onClose: () => void }) {
   const router = useRouter()
+  const toast = useToast()
   const initialValues = Object.fromEntries(
     fields.map((f) => [f.key, (f.currentCentavos / 100).toFixed(2)]),
   )
@@ -169,6 +173,7 @@ function PriceEditForm({ fields, onClose }: { fields: PriceEditField[]; onClose:
       }
 
       router.refresh()
+      toast.success('Rates updated.')
       onClose()
     } catch {
       setFieldErrors(

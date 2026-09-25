@@ -4,24 +4,48 @@ import { useEffect, useState } from 'react'
 import AnnouncementGate, { type GateNotice } from '@/components/booking/AnnouncementGate'
 import BookingForm, { type ResourcesResponse } from '@/components/booking/BookingForm'
 
-interface MemberContext {
+export interface MembershipCoverage {
+  startsAt: string
+  endsAt: string
+  /** Manila `YYYY-MM-DD` of the term's first and last day — compared against the calendar's date keys. */
+  startDateKey: string
+  expiryDateKey: string
+  expiryDateLabel: string
+  creditBalanceCentavos: number
+  /** Plan name for this term, e.g. "Winston Premier". */
+  tierName: string
+  /** Tier discount off the base court/simulator rate for slots this term covers. */
+  bookingDiscountPercent: number
+  /** How many days ahead (today + N, Manila) this term lets the member book. */
+  advanceBookingDays: number
+  /** Complimentary guest passes still unused in this term (docs/business.md → Guest passes). */
+  guestPassesRemaining: number
+  guestPassAllowance: number
+  /** Birthday-month court hour for this term: the member's birthday month (1–12, null when
+   *  no date of birth is on file), what it does for the tier, and whether it is already used. */
+  birthdayPerk: { month: number | null; kind: 'half' | 'free'; used: boolean }
+}
+
+export interface MemberContext {
   name: string
   email: string
   phone: string
   isActiveMember: boolean
   creditBalanceCentavos: number
+  /** Unexpired terms, earliest first. Empty for a lapsed member. */
+  coverage: MembershipCoverage[]
 }
 
 interface BookingPageClientProps {
   memberContext: MemberContext | null
+  notices: GateNotice[]
 }
 
-export default function BookingPageClient({ memberContext }: BookingPageClientProps) {
+export default function BookingPageClient({ memberContext, notices }: BookingPageClientProps) {
   const [started, setStarted] = useState(false)
   const [data, setData] = useState<ResourcesResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [notices, setNotices] = useState<GateNotice[]>([])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -45,31 +69,8 @@ export default function BookingPageClient({ memberContext }: BookingPageClientPr
     }
   }, [])
 
-  useEffect(() => {
-    const controller = new AbortController()
-    fetch('/api/bulletin/gate-notices', { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to load notices')
-        return res.json() as Promise<{ notices: GateNotice[] }>
-      })
-      .then((json) => {
-        setNotices(json.notices)
-      })
-      .catch((err) => {
-        if ((err as Error).name === 'AbortError') return
-        setNotices([])
-      })
-    return () => {
-      controller.abort()
-    }
-  }, [])
-
   return (
-    <div
-      className={`flex flex-1 flex-col items-center gap-8 bg-background px-6 py-16 ${
-        started ? '' : 'justify-center'
-      }`}
-    >
+    <div className="flex flex-1 flex-col items-center gap-8 bg-gray-50 px-6 py-10">
       {started ? (
         <BookingForm data={data} loading={loading} loadError={loadError} memberContext={memberContext} />
       ) : (

@@ -20,10 +20,10 @@ interface TopUpStatusResult {
 type FetchResult = TopUpStatusResult | 'not_found' | 'error'
 
 const CHECK_AGAIN_BUTTON_CLASSES =
-  'rounded-none bg-accent-primary px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark disabled:opacity-50'
+  'rounded-md bg-gray-900 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50'
 
 const BACK_ACCOUNT_LINK_CLASSES =
-  'text-accent-primary underline underline-offset-2 hover:text-accent-dark'
+  'text-gray-900 underline underline-offset-2 hover:text-gray-700'
 
 export default function ConfirmationContent() {
   const searchParams = useSearchParams()
@@ -112,7 +112,7 @@ export default function ConfirmationContent() {
   }
 
   if (!topUpPaymentId) {
-    return <p className="text-brand-dark/60">No top-up reference was provided.</p>
+    return <p className="text-gray-500">No top-up reference was provided.</p>
   }
 
   if (notFound) {
@@ -133,7 +133,7 @@ export default function ConfirmationContent() {
       return (
         <div className="flex flex-col items-center gap-3 text-center">
           <LoadingOverlay isOpen={checkingAgain} label="Checking…" />
-          <p className="text-brand-dark/60">
+          <p className="text-gray-500">
             We&apos;re having trouble reaching the server. Please check again.
           </p>
           <button
@@ -147,28 +147,28 @@ export default function ConfirmationContent() {
         </div>
       )
     }
-    return <p className="text-brand-dark/60">Loading your top-up…</p>
+    return <p className="text-gray-500">Loading your top-up…</p>
   }
 
   if (payment.hasCompleted) {
     return (
       <div className="flex w-full max-w-md flex-col gap-4">
         <div className="flex flex-col gap-1 text-center">
-          <h2 className="font-serif text-2xl text-brand-dark">Your credit has been topped up!</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Your credit has been topped up!</h2>
         </div>
 
-        <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
+        <div className="rounded-lg border border-gray-200 bg-white px-6 py-6 shadow-sm">
           <dl className="flex flex-col">
             <div className="flex justify-between gap-4 py-3">
-              <dt className="text-brand-dark/70">Amount Added</dt>
-              <dd className="text-right font-medium text-brand-dark">
+              <dt className="text-gray-500">Amount Added</dt>
+              <dd className="text-right font-medium text-gray-900">
                 {formatCentavos(payment.amountCentavos)}
               </dd>
             </div>
             {payment.newBalanceCentavos !== null && (
-              <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-                <dt className="text-brand-dark/70">New Credit Balance</dt>
-                <dd className="text-right font-medium text-brand-dark">
+              <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
+                <dt className="text-gray-500">New Credit Balance</dt>
+                <dd className="text-right font-medium text-gray-900">
                   {formatCentavos(payment.newBalanceCentavos)}
                 </dd>
               </div>
@@ -178,7 +178,7 @@ export default function ConfirmationContent() {
 
         <Link
           href="/account"
-          className="rounded-none bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+          className="rounded-md bg-gray-900 px-6 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-gray-700"
         >
           Go to My Account
         </Link>
@@ -189,7 +189,7 @@ export default function ConfirmationContent() {
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <LoadingOverlay isOpen={checkingAgain} label="Checking…" />
-      <p className="text-brand-dark/60">
+      <p className="text-gray-500">
         {stalled
           ? 'This is taking longer than expected. You can check again, or contact us if this persists.'
           : 'Confirming your payment…'}

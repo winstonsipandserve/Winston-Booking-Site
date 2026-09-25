@@ -6,20 +6,22 @@ import { getSignedUrl } from '@/lib/supabase-storage'
 import MembershipReviewActions from '@/components/admin/MembershipReviewActions'
 import IdentityVerificationGallery from '@/components/admin/IdentityVerificationGallery'
 import SendRenewalLinkButton from '@/components/admin/SendRenewalLinkButton'
+import ResendActivationButton from '@/components/admin/ResendActivationButton'
+import ResendPaymentLinkButton from '@/components/admin/ResendPaymentLinkButton'
 import AddCreditButton from '@/components/admin/AddCreditButton'
 import AdminPagination from '@/components/admin/AdminPagination'
-import { formatMembershipTier, formatCentavos } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos, formatDateOnly, formatManilaDate, formatMembershipTier } from '@/lib/format'
+import AdminPageHeader from '@/components/admin/AdminPageHeader'
+import { getRenewalEligibility, RENEWAL_WINDOW_DAYS } from '@/lib/membership-current'
+import { manilaCalendarDaysBetween } from '@/lib/manila-date'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
-import {
-  getMembershipDisplayStatus,
-  MEMBERSHIP_DISPLAY_STATUS_LABELS,
-  MEMBERSHIP_DISPLAY_STATUS_CLASSES,
-} from '@/lib/membership-display-status'
+import { getMembershipDisplayStatus, MEMBERSHIP_DISPLAY_STATUS_LABELS } from '@/lib/membership-display-status'
+import { MembershipStatusPill } from '@/components/admin/StatusPill'
 import { getLatestMembershipByCustomerId } from '@/lib/membership-latest'
+import { formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { getBirthdayPerkStatus, getGuestPassStatus } from '@/lib/member-perks'
 
 const CREDIT_TRANSACTION_REASON_LABELS: Record<CreditTransactionReason, string> = {
-  activation: 'Activation',
-  renewal: 'Renewal',
   booking_redemption: 'Booking Redemption',
   top_up: 'Top-Up',
 }
@@ -29,15 +31,6 @@ const HISTORY_PAGE_SIZE = 10
 function parsePage(value: string | undefined) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? Math.max(1, Math.floor(parsed)) : 1
-}
-
-function formatDate(date: Date) {
-  return date.toLocaleDateString('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Asia/Manila',
-  })
 }
 
 export default async function AdminMembershipApplicationDetailPage({
@@ -60,11 +53,25 @@ export default async function AdminMembershipApplicationDetailPage({
     notFound()
   }
 
-  const latestMembership = await getLatestMembershipByCustomerId(application.customerId)
+  const [latestMembership, renewal] = await Promise.all([
+    getLatestMembershipByCustomerId(application.customerId),
+    getRenewalEligibility(application.customerId),
+  ])
   const displayStatus = getMembershipDisplayStatus({ status: application.status, latestMembership })
+  // Renewal links follow the same window as self-service renewal: expired, or the single
+  // live term ends within RENEWAL_WINDOW_DAYS and nothing is queued behind it.
+  const canSendRenewalLink = displayStatus !== 'awaiting_payment' && latestMembership !== null && renewal.eligible
+  const needsActivation = latestMembership !== null && !application.customer.passwordHash
 
   const requestedCreditPage = parsePage(creditPageParam)
   const requestedBookingPage = parsePage(bookingPageParam)
+
+  const perks = latestMembership
+    ? await Promise.all([
+        getGuestPassStatus(prisma, latestMembership),
+        getBirthdayPerkStatus(prisma, latestMembership, application.customer.dateOfBirth),
+      ])
+    : null
 
   const history = latestMembership
     ? await (async () => {
@@ -117,6 +124,8 @@ export default async function AdminMembershipApplicationDetailPage({
         return {
           creditTransactions,
           recentBookings,
+          creditTransactionCount,
+          bookingCount,
           creditPage,
           creditTotalPages,
           bookingPage,
@@ -127,6 +136,8 @@ export default async function AdminMembershipApplicationDetailPage({
     : {
         creditTransactions: [],
         recentBookings: [],
+        creditTransactionCount: 0,
+        bookingCount: 0,
         creditPage: 1,
         creditTotalPages: 1,
         bookingPage: 1,
@@ -137,6 +148,8 @@ export default async function AdminMembershipApplicationDetailPage({
   const {
     creditTransactions,
     recentBookings,
+    creditTransactionCount,
+    bookingCount,
     creditPage,
     creditTotalPages,
     bookingPage,
@@ -154,7 +167,7 @@ export default async function AdminMembershipApplicationDetailPage({
   ])
 
   const daysRemaining = latestMembership
-    ? Math.max(0, Math.ceil((latestMembership.endDate.getTime() - new Date().getTime()) / 86400000))
+    ? Math.max(0, manilaCalendarDaysBetween(new Date(), latestMembership.endDate))
     : 0
 
   const startingBalance = (latestMembership?.creditBalanceCentavos ?? 0) - history.newerTransactionAmount
@@ -181,38 +194,19 @@ export default async function AdminMembershipApplicationDetailPage({
   }
 
   return (
-    <div className="relative isolate flex flex-col">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
+    <div className="flex flex-col">
+      <AdminPageHeader
+        backHref="/admin/memberships"
+        backLabel="Back to memberships"
+        title={application.customer.name}
+        subtitle={
+          latestMembership
+            ? `${formatMembershipPlanLabel(latestMembership.tier, latestMembership.isFounding)} member since ${formatManilaDate(latestMembership.startDate)}`
+            : `${formatMembershipTier(application.requestedTier)} application · Submitted ${formatManilaDate(application.createdAt)}`
+        }
+        recordId={application.id}
+        aside={<MembershipStatusPill status={displayStatus} />}
       />
-      <Link
-        href="/admin/memberships"
-        className="mb-4 inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-      >
-        <span className="mr-1">&larr;</span>
-        Back to memberships
-      </Link>
-
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-            {latestMembership ? application.customer.name : 'Membership Application'}
-          </h1>
-          {latestMembership ? (
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Member since {formatDate(latestMembership.startDate)}
-            </p>
-          ) : (
-            <p className="text-xs font-mono text-gray-400 dark:text-gray-500">{application.id}</p>
-          )}
-        </div>
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${MEMBERSHIP_DISPLAY_STATUS_CLASSES[displayStatus]}`}
-        >
-          {MEMBERSHIP_DISPLAY_STATUS_LABELS[displayStatus]}
-        </span>
-      </div>
 
       {!latestMembership && (
         <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -243,16 +237,30 @@ export default async function AdminMembershipApplicationDetailPage({
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.address}</span>
             </div>
             <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+              <span className="text-gray-500 dark:text-gray-400">Date of Birth</span>
+              <span className="text-right font-medium text-gray-900 dark:text-gray-100">{formatDateOnly(application.dateOfBirth)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
               <span className="text-gray-500 dark:text-gray-400">Contact Number</span>
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.contactNumber}</span>
             </div>
             <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
               <span className="text-gray-500 dark:text-gray-400">Submitted</span>
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                {application.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                {formatBookingDateTime(application.createdAt)}
               </span>
             </div>
           </section>
+        </div>
+      )}
+
+      {displayStatus === 'awaiting_payment' && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-300 bg-blue-50 p-4 dark:border-blue-700/60 dark:bg-blue-950/40">
+          <p className="text-sm text-blue-900 dark:text-blue-200">
+            This applicant hasn&apos;t completed payment yet. If their link expired, send a new
+            one.
+          </p>
+          <ResendPaymentLinkButton applicationId={application.id} email={application.customer.email} />
         </div>
       )}
 
@@ -260,9 +268,9 @@ export default async function AdminMembershipApplicationDetailPage({
         <>
           <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Tier</p>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Plan</p>
               <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                {formatMembershipTier(latestMembership.tier)}
+                {formatMembershipPlanLabel(latestMembership.tier, latestMembership.isFounding)}
               </p>
             </div>
             <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -288,6 +296,15 @@ export default async function AdminMembershipApplicationDetailPage({
             </div>
           </div>
 
+          {needsActivation && (
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/60 dark:bg-amber-950/40">
+              <p className="text-sm text-amber-900 dark:text-amber-200">
+                This member has never set a password and can&apos;t sign in.
+              </p>
+              <ResendActivationButton applicationId={application.id} email={application.customer.email} />
+            </div>
+          )}
+
           <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
             <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Member Information</h2>
@@ -307,10 +324,14 @@ export default async function AdminMembershipApplicationDetailPage({
                 <span className="text-gray-500 dark:text-gray-400">Address</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">{application.address}</span>
               </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Date of Birth</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">{formatDateOnly(application.dateOfBirth)}</span>
+              </div>
               <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
                 <span className="text-gray-500 dark:text-gray-400">Joined</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {application.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                  {formatBookingDateTime(application.createdAt)}
                 </span>
               </div>
             </section>
@@ -318,9 +339,9 @@ export default async function AdminMembershipApplicationDetailPage({
             <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
               <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Membership Details</h2>
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
-                <span className="text-gray-500 dark:text-gray-400">Tier</span>
+                <span className="text-gray-500 dark:text-gray-400">Plan</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {formatMembershipTier(latestMembership.tier)}
+                  {formatMembershipPlanLabel(latestMembership.tier, latestMembership.isFounding)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
@@ -332,19 +353,31 @@ export default async function AdminMembershipApplicationDetailPage({
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
                 <span className="text-gray-500 dark:text-gray-400">Activated</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {latestMembership.startDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                  {formatManilaDate(latestMembership.startDate)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
                 <span className="text-gray-500 dark:text-gray-400">Expires</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                  {latestMembership.endDate.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                  {formatManilaDate(latestMembership.endDate)}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
                 <span className="text-gray-500 dark:text-gray-400">Credit Balance</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
                   {formatCentavos(latestMembership.creditBalanceCentavos)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
+                <span className="text-gray-500 dark:text-gray-400">Guest Passes</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {perks ? `${perks[0].used} of ${perks[0].allowance} used` : '—'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between gap-4 py-2 text-sm last:border-0">
+                <span className="text-gray-500 dark:text-gray-400">Birthday Court Hour</span>
+                <span className="text-right font-medium text-gray-900 dark:text-gray-100">
+                  {perks ? (perks[1].used ? 'Used this term' : 'Available') : '—'}
                 </span>
               </div>
             </section>
@@ -369,7 +402,7 @@ export default async function AdminMembershipApplicationDetailPage({
         <section className="mb-6 rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Review</h2>
           {!application.reviewedById ? (
-            <p className="text-sm italic text-gray-400 dark:text-gray-500">Not yet reviewed</p>
+            <p className="text-sm italic text-gray-500 dark:text-gray-400">Not yet reviewed</p>
           ) : (
             <>
               <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-2 text-sm dark:border-gray-800">
@@ -386,7 +419,7 @@ export default async function AdminMembershipApplicationDetailPage({
                 <span className="text-gray-500 dark:text-gray-400">Reviewed At</span>
                 <span className="text-right font-medium text-gray-900 dark:text-gray-100">
                   {application.reviewedAt
-                    ? application.reviewedAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })
+                    ? formatBookingDateTime(application.reviewedAt)
                     : '—'}
                 </span>
               </div>
@@ -446,7 +479,7 @@ export default async function AdminMembershipApplicationDetailPage({
                       className="h-[46px] border-b border-gray-100 last:border-b-0 even:bg-gray-50/70 dark:border-gray-800 dark:even:bg-gray-800/50"
                     >
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                        {transaction.createdAt.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                        {formatBookingDateTime(transaction.createdAt)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {CREDIT_TRANSACTION_REASON_LABELS[transaction.reason]}
@@ -462,7 +495,7 @@ export default async function AdminMembershipApplicationDetailPage({
                   ))}
                   {creditTransactions.length === 0 && (
                     <tr className="h-[46px] border-b border-gray-100 dark:border-gray-800">
-                      <td colSpan={4} className="px-4 py-2.5 text-sm italic text-gray-400 dark:text-gray-500">
+                      <td colSpan={4} className="px-4 py-2.5 text-sm italic text-gray-500 dark:text-gray-400">
                         No credit activity yet
                       </td>
                     </tr>
@@ -482,7 +515,9 @@ export default async function AdminMembershipApplicationDetailPage({
           <div className="mt-4">
             <AdminPagination
               page={creditPage}
-              totalPages={creditTotalPages}
+              pageSize={HISTORY_PAGE_SIZE}
+              totalCount={creditTransactionCount}
+              noun="transaction"
               previousHref={historyPageHref('creditPage', Math.max(1, creditPage - 1))}
               nextHref={historyPageHref('creditPage', Math.min(creditTotalPages, creditPage + 1))}
             />
@@ -507,7 +542,7 @@ export default async function AdminMembershipApplicationDetailPage({
                       Resource
                     </th>
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                      Guests
+                      Non-member guests
                     </th>
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Status
@@ -528,7 +563,7 @@ export default async function AdminMembershipApplicationDetailPage({
                     >
                       <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{booking.id}</td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                        {booking.startTime.toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}
+                        {formatBookingDateTime(booking.startTime)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                         {booking.resource.resourceType.name} — {booking.resource.label}
@@ -550,7 +585,7 @@ export default async function AdminMembershipApplicationDetailPage({
                   ))}
                   {recentBookings.length === 0 && (
                     <tr className="h-[46px] border-b border-gray-100 dark:border-gray-800">
-                      <td colSpan={7} className="px-4 py-2.5 text-sm italic text-gray-400 dark:text-gray-500">
+                      <td colSpan={7} className="px-4 py-2.5 text-sm italic text-gray-500 dark:text-gray-400">
                         No bookings yet
                       </td>
                     </tr>
@@ -570,7 +605,9 @@ export default async function AdminMembershipApplicationDetailPage({
           <div className="mt-4">
             <AdminPagination
               page={bookingPage}
-              totalPages={bookingTotalPages}
+              pageSize={HISTORY_PAGE_SIZE}
+              totalCount={bookingCount}
+              noun="booking"
               previousHref={historyPageHref('bookingPage', Math.max(1, bookingPage - 1))}
               nextHref={historyPageHref('bookingPage', Math.min(bookingTotalPages, bookingPage + 1))}
             />
@@ -582,10 +619,23 @@ export default async function AdminMembershipApplicationDetailPage({
         <MembershipReviewActions applicationId={application.id} applicantName={application.customer.name} />
       )}
 
-      {displayStatus === 'expired' && (
+      {canSendRenewalLink && (
         <section className="mt-6">
           <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Renewal</h2>
+          {displayStatus === 'active' && (
+            <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+              This membership ends within the next {RENEWAL_WINDOW_DAYS} days. A renewal paid now starts the day after the current term ends.
+            </p>
+          )}
           <SendRenewalLinkButton applicationId={application.id} />
+        </section>
+      )}
+      {!renewal.eligible && renewal.reason === 'already_scheduled' && (
+        <section className="mt-6">
+          <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-gray-100">Renewal</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            A renewal is already paid and scheduled to start when the current term ends.
+          </p>
         </section>
       )}
     </div>

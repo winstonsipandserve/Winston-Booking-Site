@@ -5,9 +5,10 @@ import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 interface CompletePaymentButtonProps {
   applicationId: string
+  token: string
 }
 
-export default function CompletePaymentButton({ applicationId }: CompletePaymentButtonProps) {
+export default function CompletePaymentButton({ applicationId, token }: CompletePaymentButtonProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -19,7 +20,7 @@ export default function CompletePaymentButton({ applicationId }: CompletePayment
       const res = await fetch('/api/membership-payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ applicationId }),
+        body: JSON.stringify({ applicationId, token }),
       })
 
       if (res.ok) {
@@ -45,7 +46,7 @@ export default function CompletePaymentButton({ applicationId }: CompletePayment
         type="button"
         onClick={handleClick}
         disabled={submitting}
-        className="w-full rounded-none bg-accent-primary px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.08em] text-brand-light transition-[background-color,box-shadow] duration-200 hover:bg-accent-dark hover:shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-primary disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-md bg-gray-900 px-6 py-3 text-center text-sm font-medium text-white transition-colors duration-200 hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Complete Payment
       </button>

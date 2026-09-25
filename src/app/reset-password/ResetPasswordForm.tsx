@@ -1,29 +1,59 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import LoadingOverlay from '@/components/ui/LoadingOverlay'
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
+type CheckState = 'checking' | 'valid' | 'invalid'
 
 function inputClassName() {
-  return 'rounded-input border border-brand-dark/20 bg-brand-light px-3 py-2 text-brand-dark placeholder:text-brand-dark/40 focus:border-accent-primary focus:outline-none disabled:opacity-50'
+  return 'rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none disabled:opacity-50'
 }
 
 export default function ResetPasswordForm() {
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
 
+  const [checkState, setCheckState] = useState<CheckState>('checking')
+  const [checkError, setCheckError] = useState<string | null>(null)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!token) return
+
+    let cancelled = false
+
+    fetch(`/api/auth/reset-password?token=${encodeURIComponent(token)}`)
+      .then(async (res) => {
+        if (cancelled) return
+        if (res.ok) {
+          setCheckState('valid')
+          return
+        }
+        const json = await res.json().catch(() => null)
+        setCheckError(json?.error ?? 'This reset link is no longer valid.')
+        setCheckState('invalid')
+      })
+      .catch(() => {
+        if (cancelled) return
+        setCheckError('This reset link is no longer valid.')
+        setCheckState('invalid')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
   if (!token) {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
-        <p className="text-brand-dark/70">
+      <div className="flex w-full flex-col gap-4 text-center">
+        <p className="text-gray-500">
           This reset link is missing its token. Please use the full link from your password
           reset email.
         </p>
@@ -31,13 +61,34 @@ export default function ResetPasswordForm() {
     )
   }
 
+  if (checkState === 'checking') {
+    return (
+      <div className="flex w-full flex-col gap-4 text-center">
+        <p className="text-gray-500">Checking your reset link…</p>
+      </div>
+    )
+  }
+
+  if (checkState === 'invalid') {
+    return (
+      <div className="flex w-full flex-col gap-4 text-center">
+        <p className="text-gray-500">{checkError}</p>
+        <p className="text-sm text-gray-500">
+          <Link href="/forgot-password" className="font-medium text-gray-900 hover:text-gray-700">
+            Request a new reset link
+          </Link>
+        </p>
+      </div>
+    )
+  }
+
   if (submitState === 'success') {
     return (
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 text-center shadow-xl shadow-brand-dark/10">
-        <h2 className="font-serif text-2xl text-brand-dark">Your password has been reset</h2>
-        <p className="text-sm text-brand-dark/70">
+      <div className="flex w-full flex-col gap-4 text-center">
+        <h2 className="text-xl font-semibold text-gray-900">Your password has been reset</h2>
+        <p className="text-sm text-gray-500">
           You can now sign in.{' '}
-          <Link href="/login" className="font-medium text-accent-primary hover:text-brand-dark">
+          <Link href="/login" className="font-medium text-gray-900 hover:text-gray-700">
             Go to Sign In
           </Link>
         </p>
@@ -79,13 +130,10 @@ export default function ResetPasswordForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex w-full max-w-md flex-col gap-4 rounded-card border border-brand-dark/10 bg-brand-light px-6 py-6 shadow-xl shadow-brand-dark/10"
-    >
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-5">
       <LoadingOverlay isOpen={submitting} label="Resetting…" />
       <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="password" className="text-sm font-medium text-gray-900">
           New Password
         </label>
         <input
@@ -101,7 +149,7 @@ export default function ResetPasswordForm() {
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="confirmPassword" className="text-sm font-medium text-brand-dark">
+        <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-900">
           Confirm New Password
         </label>
         <input
@@ -121,7 +169,7 @@ export default function ResetPasswordForm() {
       <button
         type="submit"
         disabled={!isValid || submitting}
-        className="w-full rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+        className="w-full rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
       >
         Reset Password
       </button>

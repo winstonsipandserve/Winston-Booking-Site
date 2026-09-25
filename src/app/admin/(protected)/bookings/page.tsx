@@ -1,29 +1,20 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { prisma } from '@/lib/prisma'
-import { formatCentavos } from '@/lib/format'
+import { formatCentavos, formatManilaDate, formatManilaTime } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import { isBookingStatus, buildBookingsWhere } from '@/lib/bookings-query'
 import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
 import BookingsSearchBar from '@/components/admin/BookingsSearchBar'
 import BookingsExportButton from '@/components/admin/BookingsExportButton'
 import AdminPagination from '@/components/admin/AdminPagination'
+import TableEmptyState from '@/components/admin/TableEmptyState'
+import { BookingStatusPill } from '@/components/admin/StatusPill'
 
 const PAGE_SIZE = 25
 
 function formatSubmittedAt(createdAt: Date) {
-  const date = createdAt.toLocaleDateString('en-PH', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Asia/Manila',
-  })
-  const time = createdAt.toLocaleTimeString('en-PH', {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'Asia/Manila',
-  })
-  return { date, time }
+  return { date: formatManilaDate(createdAt), time: formatManilaTime(createdAt) }
 }
 
 export default async function AdminBookingsPage({
@@ -45,7 +36,7 @@ export default async function AdminBookingsPage({
       include: {
         resource: { include: { resourceType: true } },
         addOns: { select: { amountCentavos: true } },
-        payment: { select: { paymongoPaymentId: true, paymongoNetAmountCentavos: true } },
+        payment: { select: { paymongoNetAmountCentavos: true } },
       },
       relationLoadStrategy: 'query',
       orderBy: { startTime: 'asc' },
@@ -70,13 +61,7 @@ export default async function AdminBookingsPage({
   }
 
   return (
-    <div className="relative isolate flex h-full flex-col gap-4">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -inset-6 hidden -z-10 dark:block dark:rounded-2xl dark:bg-gray-900"
-      />
-      <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Bookings</h1>
-
+    <div className="flex h-full flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <BookingsFilterModal
@@ -98,8 +83,8 @@ export default async function AdminBookingsPage({
         </Suspense>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-        <table className="w-full min-w-[840px] border-collapse text-sm">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-auto rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <table className="w-full border-collapse text-sm">
           <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900">
             <tr>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
@@ -111,7 +96,7 @@ export default async function AdminBookingsPage({
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                 Customer
               </th>
-              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+              <th className="hidden border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 lg:table-cell dark:border-gray-700 dark:text-gray-300">
                 Submitted
               </th>
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
@@ -120,13 +105,10 @@ export default async function AdminBookingsPage({
               <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                 Total
               </th>
-              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+              <th className="hidden border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 lg:table-cell dark:border-gray-700 dark:text-gray-300">
                 Net
               </th>
-              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                PayMongo Payment ID
-              </th>
-              <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+              <th className="sticky right-0 border-b border-l border-gray-200 bg-gray-50 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
                 Action
               </th>
             </tr>
@@ -137,10 +119,12 @@ export default async function AdminBookingsPage({
               return (
                 <tr
                   key={booking.id}
-                  className="border-b border-gray-100 last:border-b-0 even:bg-gray-50/70 hover:bg-gray-100 dark:border-gray-800 dark:even:bg-gray-800/50 dark:hover:bg-gray-800"
+                  className="group border-b border-gray-100 last:border-b-0 even:bg-gray-50 hover:bg-gray-100 dark:border-gray-800 dark:even:bg-gray-800 dark:hover:bg-gray-800"
                 >
-                  <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">{booking.id}</td>
-                  <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                  <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">
+                    <span title={booking.id}>…{booking.id.slice(-8)}</span>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     {booking.resource.resourceType.name} — {booking.resource.label}
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
@@ -148,26 +132,25 @@ export default async function AdminBookingsPage({
                       {booking.customerNameSnapshot ?? '—'}
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                  <td className="hidden whitespace-nowrap px-4 py-2.5 text-gray-900 lg:table-cell dark:text-gray-100">
                     <div>{date}</div>
                     <div className="text-gray-500 dark:text-gray-400">{time}</div>
                   </td>
-                  <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.status}</td>
-                  <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                  <td className="px-4 py-2.5">
+                    <BookingStatusPill status={booking.status} />
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     {formatCentavos(bookingGrandTotalCentavos(booking))}
                   </td>
-                  <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
+                  <td className="hidden whitespace-nowrap px-4 py-2.5 text-gray-900 lg:table-cell dark:text-gray-100">
                     {booking.payment?.paymongoNetAmountCentavos != null
                       ? formatCentavos(booking.payment.paymongoNetAmountCentavos)
                       : '—'}
                   </td>
-                  <td className="px-4 py-2.5 font-mono text-xs text-gray-500 dark:text-gray-400">
-                    {booking.payment?.paymongoPaymentId ?? '—'}
-                  </td>
-                  <td className="px-4 py-2.5">
+                  <td className="sticky right-0 border-l border-gray-100 bg-white px-4 py-2 group-even:bg-gray-50 group-hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:group-even:bg-gray-800 dark:group-hover:bg-gray-800">
                     <Link
                       href={`/admin/bookings/${booking.id}`}
-                      className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      className="inline-flex h-8 items-center rounded-lg bg-gray-900 px-3 text-xs font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
                     >
                       View
                     </Link>
@@ -176,11 +159,13 @@ export default async function AdminBookingsPage({
               )
             })}
             {bookings.length === 0 && (
-              <tr>
-                <td colSpan={9} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
-                  No bookings found.
-                </td>
-              </tr>
+              <TableEmptyState
+                colSpan={8}
+                noun="booking"
+                hint="Bookings appear here as soon as a customer completes checkout."
+                isFiltered={filterParams.size > 0}
+                clearHref="/admin/bookings"
+              />
             )}
           </tbody>
         </table>
@@ -188,7 +173,9 @@ export default async function AdminBookingsPage({
 
       <AdminPagination
         page={page}
-        totalPages={totalPages}
+        pageSize={PAGE_SIZE}
+        totalCount={totalCount}
+        noun="booking"
         previousHref={pageHref(Math.max(1, page - 1))}
         nextHref={pageHref(Math.min(totalPages, page + 1))}
       />

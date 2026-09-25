@@ -7,7 +7,7 @@ export async function resolveAdminCheckInResult(customer: Customer) {
     return { found: true as const, hasMembership: false as const, name: customer.name }
   }
 
-  const displayFields = await buildMembershipDisplayFields(latestMembership)
+  const displayFields = buildMembershipDisplayFields(latestMembership)
 
   return {
     found: true as const,
@@ -18,6 +18,5 @@ export async function resolveAdminCheckInResult(customer: Customer) {
     isExpired: displayFields.isExpired,
     expiryDateLabel: displayFields.expiryDateLabel,
     remainingCreditCentavos: displayFields.remainingCreditCentavos,
-    creditCentavos: displayFields.creditCentavos,
   }
 }

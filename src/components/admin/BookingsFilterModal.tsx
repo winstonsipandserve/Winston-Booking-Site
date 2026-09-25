@@ -27,7 +27,9 @@ export default function BookingsFilterModal({
   const [draftStartDate, setDraftStartDate] = useState(startDate)
   const [draftEndDate, setDraftEndDate] = useState(endDate)
 
-  const isFilterActive = status !== 'all' || startDate !== '' || endDate !== ''
+  // Date range counts as one filter regardless of whether one or both bounds are set.
+  const activeFilterCount = (status !== 'all' ? 1 : 0) + (startDate !== '' || endDate !== '' ? 1 : 0)
+  const isFilterActive = activeFilterCount > 0
 
   function openModal() {
     setDraftStatus(status)
@@ -56,11 +58,16 @@ export default function BookingsFilterModal({
       <button
         type="button"
         onClick={openModal}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+        className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold bg-gray-900 text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
       >
         Filter
         {isFilterActive && (
-          <span className="h-1.5 w-1.5 rounded-full bg-gray-900 dark:bg-gray-100" aria-hidden="true" />
+          <span
+            className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold leading-none text-gray-900 dark:bg-gray-900 dark:text-gray-100"
+            aria-label={`${activeFilterCount} active`}
+          >
+            {activeFilterCount}
+          </span>
         )}
       </button>
 
@@ -125,7 +132,7 @@ export default function BookingsFilterModal({
               onClick={handleRun}
               className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
             >
-              Run
+              Apply
             </button>
           </div>
         </div>

@@ -1,7 +1,7 @@
-import { auth } from '../../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 import { prisma } from '@/lib/prisma'
 import { getActiveMembership } from '@/lib/customer-resolution'
-import { createPaymongoCheckoutSession } from '@/lib/paymongo'
+import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
 import { formatCentavos } from '@/lib/format'
 import { isValidTopUpPresetCentavos } from '@/lib/membership-topup'
 
@@ -10,10 +10,11 @@ interface MembershipTopUpRequestBody {
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
-  if (!session?.user?.id || session.user.role !== 'member') {
+  const memberSession = await getActiveMemberSession()
+  if (!memberSession) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const { customer } = memberSession
 
   let body: MembershipTopUpRequestBody
   try {
@@ -27,14 +28,25 @@ export async function POST(request: Request) {
     return Response.json({ error: 'A valid top-up amount is required' }, { status: 400 })
   }
 
-  const customer = await prisma.customer.findUnique({ where: { id: session.user.id } })
-  if (!customer) {
-    return Response.json({ error: 'Customer not found' }, { status: 404 })
-  }
-
   const membership = await getActiveMembership(customer.id)
   if (!membership) {
     return Response.json({ error: 'You do not have an active membership' }, { status: 400 })
+  }
+
+  // Resume an unfinished top-up for the same amount instead of minting another Payment
+  // row and PayMongo session on every click (same pattern as the renewal route).
+  const existingPending = await prisma.payment.findFirst({
+    where: { membershipId: membership.id, bookingId: null, status: 'pending', amountCentavos },
+    orderBy: { createdAt: 'desc' },
+  })
+  if (existingPending?.paymongoCheckoutSessionId) {
+    try {
+      const existingSession = await retrievePaymongoCheckoutSession(existingPending.paymongoCheckoutSessionId)
+      return Response.json({ checkoutUrl: existingSession.checkoutUrl }, { status: 200 })
+    } catch (err) {
+      console.error('Failed to retrieve existing PayMongo top-up session', existingPending.id, err)
+      return Response.json({ error: 'Unable to resume checkout for this top-up' }, { status: 502 })
+    }
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL

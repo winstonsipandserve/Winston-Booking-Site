@@ -2,6 +2,8 @@ import type { ApplicationStatus } from '@prisma/client'
 
 export type MembershipDisplayStatus = 'pending' | 'awaiting_payment' | 'active' | 'expired' | 'rejected'
 
+// `latestMembership` must be the customer's current row from membership-current.ts.
+// `endDate >= now` is the only expiry rule in the codebase — `Membership.status` is not consulted.
 export function getMembershipDisplayStatus(application: {
   status: ApplicationStatus
   latestMembership: { endDate: Date } | null

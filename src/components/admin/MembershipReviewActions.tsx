@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 
 export default function MembershipReviewActions({
@@ -12,6 +13,7 @@ export default function MembershipReviewActions({
   applicantName: string
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [isApproving, setIsApproving] = useState(false)
   const [isApproveModalOpen, setIsApproveModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
@@ -33,6 +35,7 @@ export default function MembershipReviewActions({
         return
       }
       router.refresh()
+      toast.success('Application approved. Payment link sent to the applicant.')
     } catch {
       setError('Something went wrong. Please try again.')
       setIsApproving(false)
@@ -174,6 +177,7 @@ function RejectModal({
   onClose: () => void
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -199,6 +203,7 @@ function RejectModal({
         return
       }
       router.refresh()
+      toast.success('Application rejected.')
       onClose()
     } catch {
       setError('Something went wrong. Please try again.')

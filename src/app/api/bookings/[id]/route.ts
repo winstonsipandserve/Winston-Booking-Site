@@ -3,7 +3,7 @@ import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { resolveCustomer } from '@/lib/customer-resolution'
 import { priceBooking } from '@/lib/booking-pricing'
 import { hasValidBookingAccessToken } from '@/lib/booking-access'
-import { auth } from '../../../../../auth'
+import { getActiveMemberSession } from '@/lib/member-session'
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
@@ -15,12 +15,8 @@ async function canAccessBooking(request: Request, booking: {
   accessTokenHash: string | null
   accessTokenExpiresAt: Date | null
 }): Promise<boolean> {
-  const session = await auth()
-  if (
-    session?.user?.role === 'member' &&
-    session.user.id &&
-    booking.customerId === session.user.id
-  ) {
+  const memberSession = await getActiveMemberSession()
+  if (memberSession && booking.customerId === memberSession.customer.id) {
     return true
   }
   return hasValidBookingAccessToken(request, booking)
@@ -58,7 +54,10 @@ export async function GET(
       startTime: booking.startTime,
       endTime: booking.endTime,
       totalAmountCentavos: booking.totalAmountCentavos,
+      memberDiscountCentavos: booking.memberDiscountCentavos,
+      birthdayPerkApplied: booking.birthdayPerkApplied,
       guestFeeAmountCentavos: booking.guestFeeAmountCentavos,
+      guestPassesUsed: booking.guestPassesUsed,
       addOns: booking.addOns.map((addOn) => ({
         service: addOn.addOnService.slug,
         paxCount: addOn.addOnPricingRule.paxCount,
@@ -131,6 +130,16 @@ export async function PATCH(
     )
   }
 
+  // Attachment is one-shot. Member holds are attached at creation, and an anonymous hold
+  // is attached exactly once by the wizard, so a second PATCH can only be an attempt to
+  // re-point a booking at someone else's account.
+  if (booking.customerId !== null) {
+    return Response.json(
+      { error: 'Contact details are already attached to this booking' },
+      { status: 409 },
+    )
+  }
+
   const { customer } = await resolveCustomer({ name, phone, email })
 
   // Deliberate: the anonymous booking path never grants member rate or F&B
@@ -144,7 +153,6 @@ export async function PATCH(
   const durationMinutes = Math.round(
     (booking.endTime.getTime() - booking.startTime.getTime()) / 60000,
   )
-  const ballBoyAddOn = booking.addOns.find((a) => a.addOnService.slug === 'ball_boy')
   const coachingAddOn = booking.addOns.find((a) => a.addOnService.slug === 'coaching_fee')
 
   const priceResult = await priceBooking({
@@ -152,10 +160,10 @@ export async function PATCH(
     category: booking.resource.resourceType.category,
     durationMinutes,
     guestCount: booking.guestCount,
-    ballBoy: !!ballBoyAddOn,
     coaching: !!coachingAddOn,
     coachingPaxCount: coachingAddOn?.addOnPricingRule.paxCount ?? null,
     isMember,
+    bookingDiscountPercent: 0,
   })
   if ('error' in priceResult) {
     return Response.json({ error: priceResult.error }, { status: priceResult.status })

@@ -10,14 +10,25 @@ import {
   toPhMonthKey,
 } from '@/lib/business-hours'
 import { formatMembershipTier, formatShortDate } from '@/lib/format'
+import { manilaCalendarDaysBetween } from '@/lib/manila-date'
 
 export interface DashboardStats {
   bookingsToday: number
+  /** Confirmed bookings whose slot falls in the current PH week (Mon–Sun). */
+  bookingsThisWeek: number
   bookingRevenueThisMonthCentavos: number
+  bookingRevenueLastMonthCentavos: number
   membershipRevenueThisMonthCentavos: number
+  membershipRevenueLastMonthCentavos: number
   pendingApplications: number
+  /** Whole PH calendar days the oldest pending application has been waiting; null when none. */
+  oldestPendingDays: number | null
   activeMemberships: number
+  /** Active members whose current term ends within the next 30 days. */
+  membershipsExpiringSoon: number
   resourceUtilizationPct: number
+  /** Confirmed hours booked this week on active resources — the utilization numerator. */
+  bookedHoursThisWeek: number
 }
 
 export interface RevenueTrendPoint {
@@ -30,9 +41,9 @@ export interface RevenueTrendPoint {
 
 export interface MembershipRevenueTrendPoint {
   month: string
-  threeMonthCentavos: number
-  sixMonthCentavos: number
-  twelveMonthCentavos: number
+  playerCentavos: number
+  premierCentavos: number
+  eliteCentavos: number
   topUpCentavos: number
   totalCentavos: number
 }
@@ -41,7 +52,6 @@ type Sport = 'tennis' | 'pickleball' | 'golf'
 
 function sportForResourceType(slug: string): Sport | null {
   switch (slug) {
-    case 'tennis_court':
     case 'tennis_sim':
       return 'tennis'
     case 'pickleball_court':
@@ -54,9 +64,14 @@ function sportForResourceType(slug: string): Sport | null {
   }
 }
 
-export interface ResourceBreakdownEntry {
-  resourceType: string
+export interface BookingCalendarEntry {
+  date: string
   count: number
+}
+
+export interface BookingCalendarData {
+  month: string
+  bookings: BookingCalendarEntry[]
 }
 
 export interface RecentBooking {
@@ -77,9 +92,51 @@ export interface DashboardData {
   stats: DashboardStats
   revenueTrend: RevenueTrendPoint[]
   membershipRevenueTrend: MembershipRevenueTrendPoint[]
-  resourceBreakdown: ResourceBreakdownEntry[]
+  bookingCalendar: BookingCalendarData
   recentBookings: RecentBooking[]
   recentApplications: RecentApplication[]
+}
+
+const PH_MONTH_PATTERN = /^([1-9]\d{3})-(0[1-9]|1[0-2])$/
+
+export function isPhMonthKey(value: string): boolean {
+  return PH_MONTH_PATTERN.test(value)
+}
+
+function phMonthWindowForKey(month: string): { start: Date; end: Date } {
+  const match = PH_MONTH_PATTERN.exec(month)
+  if (!match) throw new Error('month must be in YYYY-MM format')
+
+  const year = Number(match[1])
+  const monthIndex = Number(match[2]) - 1
+  return {
+    start: new Date(Date.UTC(year, monthIndex, 1, -8, 0, 0)),
+    end: new Date(Date.UTC(year, monthIndex + 1, 1, -8, 0, 0)),
+  }
+}
+
+export async function getConfirmedBookingCalendar(month: string): Promise<BookingCalendarData> {
+  const window = phMonthWindowForKey(month)
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status: 'confirmed',
+      startTime: { gte: window.start, lt: window.end },
+    },
+    select: { startTime: true },
+  })
+
+  const countsByDate = new Map<string, number>()
+  for (const booking of bookings) {
+    const date = toPhDateString(booking.startTime)
+    countsByDate.set(date, (countsByDate.get(date) ?? 0) + 1)
+  }
+
+  return {
+    month,
+    bookings: Array.from(countsByDate.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date)),
+  }
 }
 
 function formatTimeOnly(date: Date): string {
@@ -96,29 +153,45 @@ export async function getDashboardData(): Promise<DashboardData> {
   const monthWindow = currentPhMonthWindow()
   const weekWindow = currentPhWeekWindow()
   const twelveMonthsAgoStart = phMonthStartUtc(11)
+  const lastMonthWindow = { start: phMonthStartUtc(1), end: monthWindow.start }
+  const bookingCalendarMonth = toPhMonthKey(new Date())
+  const now = new Date()
+  const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60_000)
 
   const [
     bookingsToday,
+    bookingsThisWeek,
     bookingRevenueAgg,
+    lastMonthBookingRevenueAgg,
     membershipPaymentRevenueAgg,
     membershipTopUpRevenueAgg,
+    lastMonthMembershipPaymentRevenueAgg,
+    lastMonthMembershipTopUpRevenueAgg,
     pendingApplications,
-    activeMemberships,
+    oldestPendingApplication,
+    activeMembershipRows,
     weekBookings,
     activeResourceCount,
     paymentsForRevenue,
     membershipPaymentsForRevenue,
     membershipTopUpPaymentsForRevenue,
-    resourceGroupBy,
+    bookingCalendar,
     recentBookingsRaw,
     recentApplicationsRaw,
   ] = await Promise.all([
     prisma.booking.count({
       where: { status: 'confirmed', startTime: { gte: todayWindow.start, lt: todayWindow.end } },
     }),
+    prisma.booking.count({
+      where: { status: 'confirmed', startTime: { gte: weekWindow.start, lt: weekWindow.end } },
+    }),
     prisma.payment.aggregate({
       _sum: { amountCentavos: true },
       where: { status: 'paid', bookingId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
+    }),
+    prisma.payment.aggregate({
+      _sum: { amountCentavos: true },
+      where: { status: 'paid', bookingId: { not: null }, paidAt: { gte: lastMonthWindow.start, lt: lastMonthWindow.end } },
     }),
     prisma.membershipPayment.aggregate({
       _sum: { amountCentavos: true },
@@ -128,8 +201,23 @@ export async function getDashboardData(): Promise<DashboardData> {
       _sum: { amountCentavos: true },
       where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: monthWindow.start, lt: monthWindow.end } },
     }),
+    prisma.membershipPayment.aggregate({
+      _sum: { amountCentavos: true },
+      where: { status: 'paid', paidAt: { gte: lastMonthWindow.start, lt: lastMonthWindow.end } },
+    }),
+    prisma.payment.aggregate({
+      _sum: { amountCentavos: true },
+      where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: lastMonthWindow.start, lt: lastMonthWindow.end } },
+    }),
     prisma.membershipApplication.count({ where: { status: 'pending' } }),
-    prisma.membership.count({ where: { endDate: { gte: new Date() } } }),
+    prisma.membershipApplication.findFirst({
+      where: { status: 'pending' },
+      orderBy: { createdAt: 'asc' },
+      select: { createdAt: true },
+    }),
+    // Every live term — an early renewal is two rows for one member, so reduce to the latest
+    // end date per customer below before counting or checking expiry.
+    prisma.membership.findMany({ where: { endDate: { gte: now } }, select: { customerId: true, endDate: true } }),
     prisma.booking.findMany({
       where: {
         status: 'confirmed',
@@ -155,11 +243,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       where: { status: 'paid', membershipId: { not: null }, paidAt: { gte: twelveMonthsAgoStart } },
       select: { amountCentavos: true, paidAt: true },
     }),
-    prisma.booking.groupBy({
-      by: ['resourceId'],
-      where: { status: 'confirmed' },
-      _count: { _all: true },
-    }),
+    getConfirmedBookingCalendar(bookingCalendarMonth),
     prisma.booking.findMany({
       orderBy: { createdAt: 'desc' },
       take: 5,
@@ -182,15 +266,34 @@ export async function getDashboardData(): Promise<DashboardData> {
   const resourceUtilizationPct =
     utilizationDenominator > 0 ? Math.round((bookedHours / utilizationDenominator) * 100) : 0
 
+  const latestEndByCustomer = new Map<string, Date>()
+  for (const row of activeMembershipRows) {
+    const current = latestEndByCustomer.get(row.customerId)
+    if (!current || row.endDate > current) latestEndByCustomer.set(row.customerId, row.endDate)
+  }
+  const membershipsExpiringSoon = Array.from(latestEndByCustomer.values()).filter((end) => end <= thirtyDaysOut).length
+
+  const oldestPendingDays = oldestPendingApplication
+    ? Math.max(0, manilaCalendarDaysBetween(oldestPendingApplication.createdAt, now))
+    : null
+
   const stats: DashboardStats = {
     bookingsToday,
+    bookingsThisWeek,
     bookingRevenueThisMonthCentavos: bookingRevenueAgg._sum.amountCentavos ?? 0,
+    bookingRevenueLastMonthCentavos: lastMonthBookingRevenueAgg._sum.amountCentavos ?? 0,
     membershipRevenueThisMonthCentavos:
       (membershipPaymentRevenueAgg._sum.amountCentavos ?? 0) +
       (membershipTopUpRevenueAgg._sum.amountCentavos ?? 0),
+    membershipRevenueLastMonthCentavos:
+      (lastMonthMembershipPaymentRevenueAgg._sum.amountCentavos ?? 0) +
+      (lastMonthMembershipTopUpRevenueAgg._sum.amountCentavos ?? 0),
     pendingApplications,
-    activeMemberships,
+    oldestPendingDays,
+    activeMemberships: latestEndByCustomer.size,
+    membershipsExpiringSoon,
     resourceUtilizationPct,
+    bookedHoursThisWeek: Math.round(bookedHours * 10) / 10,
   }
 
   const revenueBuckets = new Map<
@@ -230,9 +333,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     string,
     {
       label: string
-      threeMonthCentavos: number
-      sixMonthCentavos: number
-      twelveMonthCentavos: number
+      playerCentavos: number
+      premierCentavos: number
+      eliteCentavos: number
       topUpCentavos: number
     }
   >()
@@ -241,9 +344,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     const label = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'Asia/Manila' }).format(monthStart)
     membershipRevenueBuckets.set(toPhMonthKey(monthStart), {
       label,
-      threeMonthCentavos: 0,
-      sixMonthCentavos: 0,
-      twelveMonthCentavos: 0,
+      playerCentavos: 0,
+      premierCentavos: 0,
+      eliteCentavos: 0,
       topUpCentavos: 0,
     })
   }
@@ -251,9 +354,9 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (!p.paidAt) continue
     const bucket = membershipRevenueBuckets.get(toPhMonthKey(p.paidAt))
     if (!bucket) continue
-    if (p.tier === 'three_month') bucket.threeMonthCentavos += p.amountCentavos
-    else if (p.tier === 'six_month') bucket.sixMonthCentavos += p.amountCentavos
-    else if (p.tier === 'twelve_month') bucket.twelveMonthCentavos += p.amountCentavos
+    if (p.tier === 'player') bucket.playerCentavos += p.amountCentavos
+    else if (p.tier === 'premier') bucket.premierCentavos += p.amountCentavos
+    else if (p.tier === 'elite') bucket.eliteCentavos += p.amountCentavos
   }
   for (const p of membershipTopUpPaymentsForRevenue) {
     if (!p.paidAt) continue
@@ -264,32 +367,13 @@ export async function getDashboardData(): Promise<DashboardData> {
   const membershipRevenueTrend: MembershipRevenueTrendPoint[] = Array.from(membershipRevenueBuckets.values()).map(
     (b) => ({
       month: b.label,
-      threeMonthCentavos: b.threeMonthCentavos,
-      sixMonthCentavos: b.sixMonthCentavos,
-      twelveMonthCentavos: b.twelveMonthCentavos,
+      playerCentavos: b.playerCentavos,
+      premierCentavos: b.premierCentavos,
+      eliteCentavos: b.eliteCentavos,
       topUpCentavos: b.topUpCentavos,
-      totalCentavos: b.threeMonthCentavos + b.sixMonthCentavos + b.twelveMonthCentavos + b.topUpCentavos,
+      totalCentavos: b.playerCentavos + b.premierCentavos + b.eliteCentavos + b.topUpCentavos,
     }),
   )
-
-  const resourceIds = resourceGroupBy.map((g) => g.resourceId)
-  const resources = resourceIds.length
-    ? await prisma.resource.findMany({
-        where: { id: { in: resourceIds } },
-        include: { resourceType: true },
-        relationLoadStrategy: 'join',
-      })
-    : []
-  const resourceTypeNameById = new Map(resources.map((r) => [r.id, r.resourceType.name]))
-  const breakdownCounts = new Map<string, number>()
-  for (const g of resourceGroupBy) {
-    const typeName = resourceTypeNameById.get(g.resourceId)
-    if (!typeName) continue
-    breakdownCounts.set(typeName, (breakdownCounts.get(typeName) ?? 0) + g._count._all)
-  }
-  const resourceBreakdown: ResourceBreakdownEntry[] = Array.from(breakdownCounts.entries())
-    .map(([resourceType, count]) => ({ resourceType, count }))
-    .sort((a, b) => b.count - a.count)
 
   const recentBookings: RecentBooking[] = recentBookingsRaw.map((b) => ({
     reference: b.id,
@@ -305,5 +389,5 @@ export async function getDashboardData(): Promise<DashboardData> {
     submitted: formatShortDate(a.createdAt),
   }))
 
-  return { stats, revenueTrend, membershipRevenueTrend, resourceBreakdown, recentBookings, recentApplications }
+  return { stats, revenueTrend, membershipRevenueTrend, bookingCalendar, recentBookings, recentApplications }
 }

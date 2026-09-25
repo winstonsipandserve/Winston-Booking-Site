@@ -1,5 +1,6 @@
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
+import { membershipCoversInstant } from '@/lib/membership-current'
 import { logAdminActivity } from '@/lib/admin-activity-log'
 import { formatCentavos } from '@/lib/format'
 import { adminTopUpConfirmationText, ADMIN_TOPUP_MIN_CENTAVOS } from '@/lib/membership-topup'
@@ -72,7 +73,7 @@ export async function POST(
   if (!membership) {
     return Response.json({ error: 'Membership not found' }, { status: 404 })
   }
-  if (membership.status !== 'active' || membership.endDate < new Date()) {
+  if (!membershipCoversInstant(membership, new Date())) {
     return Response.json({ error: 'This membership is not currently active' }, { status: 400 })
   }
 

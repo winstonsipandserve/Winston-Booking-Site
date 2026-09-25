@@ -1,29 +1,66 @@
-import Image from 'next/image'
-import SignOutButton from '@/components/admin/SignOutButton'
+import AdminAvatarMenu from '@/components/admin/AdminAvatarMenu'
+import {
+  SIDEBAR_COLLAPSED_WIDTH_CLASS,
+  SIDEBAR_WIDTH_CLASS,
+  SidebarFoldButton,
+} from '@/components/admin/AdminSidebar'
 
-export default function AdminTopbar({ email }: { email: string }) {
-  const initials = email.slice(0, 2).toUpperCase() || '?'
-
+export default function AdminTopbar({
+  email,
+  collapsed,
+  onToggleSidebar,
+  sectionLabel,
+}: {
+  email: string
+  collapsed: boolean
+  onToggleSidebar: () => void
+  sectionLabel: string
+}) {
   return (
-    <header className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white px-5 py-3 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-      <div className="flex items-center gap-2">
-        <Image
-          src="/images/brand/winston-logo-emblem-transparent.png"
-          alt="Winston Sip & Serve"
-          width={500}
-          height={500}
-          className="h-8 w-auto dark:brightness-125 dark:saturate-75"
+    <header className="flex h-16 shrink-0 items-center">
+      {/* Brand column shares its width with the sidebar so the two read as one connected frame. */}
+      <div
+        className={`flex h-full shrink-0 items-center gap-2.5 overflow-hidden transition-[width] duration-200 ${
+          collapsed
+            ? `${SIDEBAR_COLLAPSED_WIDTH_CLASS} justify-center`
+            : `${SIDEBAR_WIDTH_CLASS} px-5`
+        }`}
+      >
+        <span
+          role="img"
+          aria-label="Winston Sip & Serve"
+          className="h-8 w-8 shrink-0 bg-gray-900 dark:bg-gray-100"
+          style={{
+            WebkitMaskImage: 'url(/images/brand/winston-logo-emblem-transparent.png)',
+            maskImage: 'url(/images/brand/winston-logo-emblem-transparent.png)',
+            WebkitMaskRepeat: 'no-repeat',
+            maskRepeat: 'no-repeat',
+            WebkitMaskSize: 'contain',
+            maskSize: 'contain',
+            WebkitMaskPosition: 'center',
+            maskPosition: 'center',
+          }}
         />
-        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">Winston Admin</span>
+        {!collapsed && (
+          <span className="whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Winston Admin
+          </span>
+        )}
       </div>
-      <div className="flex items-center gap-3">
-        <div
-          title={email}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200"
-        >
-          {initials}
+
+      <div className="grid min-w-0 flex-1 grid-cols-[1fr_auto_1fr] items-center pr-4">
+        {/* Fold button only sits here while collapsed; expanded, it lives in the sidebar's Menu row. */}
+        <div className="flex items-center">
+          {collapsed && <SidebarFoldButton collapsed={collapsed} onClick={onToggleSidebar} />}
         </div>
-        <SignOutButton />
+
+        <h1 className="truncate text-center text-base font-semibold text-gray-900 dark:text-gray-100">
+          {sectionLabel}
+        </h1>
+
+        <div className="flex shrink-0 items-center justify-end">
+          <AdminAvatarMenu email={email} />
+        </div>
       </div>
     </header>
   )

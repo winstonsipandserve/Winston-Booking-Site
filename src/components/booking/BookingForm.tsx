@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import StepIndicator from './steps/StepIndicator'
 import SportStep from './steps/SportStep'
 import CourtStep from './steps/CourtStep'
@@ -10,12 +10,19 @@ import ReviewStep from './steps/ReviewStep'
 import PaymentStep from './steps/PaymentStep'
 import Modal from '@/components/ui/Modal'
 import { formatCentavos } from '@/lib/format'
+import {
+  MAX_COURT_DURATION_MINUTES,
+  NON_MEMBER_ADVANCE_BOOKING_DAYS,
+  maxNonMemberGuestsForRateTier,
+} from '@/lib/booking-limits'
+import { tierDiscountCentavos } from '@/lib/membership-pricing'
+import { toPhDateString } from '@/lib/business-hours'
+import type { MemberContext, MembershipCoverage } from '@/components/booking/BookingPageClient'
 
 type RateTier = 'member' | 'non_member'
 type ResourceCategory = 'court' | 'simulator'
 
 interface PricingTier {
-  rateTier: RateTier
   durationMinutes: number
   priceCentavos: number
 }
@@ -42,11 +49,6 @@ interface ResourceTypeOption {
   addOnPricing: AddOnPricingTier[]
 }
 
-interface BallBoyPricing {
-  available: boolean
-  priceCentavos: number | null
-}
-
 interface CoachingPricing {
   available: boolean
   mode: 'flat' | 'paxTiered' | null
@@ -55,24 +57,12 @@ interface CoachingPricing {
   pax2PriceCentavos: number | null
 }
 
-const EMPTY_BALL_BOY_PRICING: BallBoyPricing = { available: false, priceCentavos: null }
 const EMPTY_COACHING_PRICING: CoachingPricing = {
   available: false,
   mode: null,
   flatPriceCentavos: null,
   pax1PriceCentavos: null,
   pax2PriceCentavos: null,
-}
-
-function getBallBoyPricing(
-  resourceType: ResourceTypeOption | null,
-  rateTier: RateTier,
-): BallBoyPricing {
-  if (!resourceType) return EMPTY_BALL_BOY_PRICING
-  const rule = resourceType.addOnPricing.find(
-    (a) => a.service === 'ball_boy' && a.rateTier === rateTier,
-  )
-  return rule ? { available: true, priceCentavos: rule.priceCentavos } : EMPTY_BALL_BOY_PRICING
 }
 
 function getCoachingPricing(
@@ -113,24 +103,65 @@ interface BusyRange {
   end: string
 }
 
-const COURT_DURATIONS_MINUTES = [60, 120, 180, 240]
+// Whole hours up to the server-enforced cap (src/lib/booking-limits.ts).
+const COURT_DURATIONS_MINUTES = Array.from(
+  { length: MAX_COURT_DURATION_MINUTES / 60 },
+  (_, i) => (i + 1) * 60,
+)
 const TOTAL_STEPS = 5
 
-function getDurationOptions(resourceType: ResourceTypeOption, rateTier: RateTier): number[] {
+function getDurationOptions(resourceType: ResourceTypeOption): number[] {
   if (resourceType.category === 'court') return COURT_DURATIONS_MINUTES
-  return Array.from(
-    new Set(
-      resourceType.pricing.filter((p) => p.rateTier === rateTier).map((p) => p.durationMinutes),
-    ),
-  ).sort((a, b) => a - b)
+  return Array.from(new Set(resourceType.pricing.map((p) => p.durationMinutes))).sort((a, b) => a - b)
 }
 
-interface MemberContext {
-  name: string
-  email: string
-  phone: string
-  isActiveMember: boolean
-  creditBalanceCentavos: number
+/** Whole Manila calendar days from `fromKey` to `toKey` (both `YYYY-MM-DD`). */
+function calendarDaysBetweenKeys(fromKey: string, toKey: string): number {
+  const [fy, fm, fd] = fromKey.split('-').map(Number)
+  const [ty, tm, td] = toKey.split('-').map(Number)
+  return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000)
+}
+
+/** The term covering a calendar date, by Manila date keys. */
+function findTermForDate(memberContext: MemberContext | null, dateKey: string): MembershipCoverage | null {
+  if (!memberContext) return null
+  return (
+    memberContext.coverage.find((term) => term.startDateKey <= dateKey && dateKey <= term.expiryDateKey) ??
+    null
+  )
+}
+
+/**
+ * The term that covers the slot being built. Falls back to date-level matching before a
+ * time is picked, and to the term covering now before a date is picked.
+ */
+function findCoveringMembership(
+  memberContext: MemberContext | null,
+  selectedDate: string | null,
+  startTimeLocal: string,
+): MembershipCoverage | null {
+  if (!memberContext) return null
+  if (startTimeLocal) {
+    const slotStart = new Date(startTimeLocal)
+    return (
+      memberContext.coverage.find(
+        (term) => new Date(term.startsAt) <= slotStart && slotStart <= new Date(term.endsAt),
+      ) ?? null
+    )
+  }
+  if (selectedDate) {
+    return (
+      memberContext.coverage.find(
+        (term) => term.startDateKey <= selectedDate && selectedDate <= term.expiryDateKey,
+      ) ?? null
+    )
+  }
+  if (!memberContext.isActiveMember) return null
+  const now = new Date()
+  return (
+    memberContext.coverage.find((term) => new Date(term.startsAt) <= now && now <= new Date(term.endsAt)) ??
+    null
+  )
 }
 
 interface BookingFormProps {
@@ -143,13 +174,42 @@ interface BookingFormProps {
 export default function BookingForm({ data, loading, loadError, memberContext }: BookingFormProps) {
   const [step, setStep] = useState(1)
 
-  const rateTier: RateTier = memberContext?.isActiveMember ? 'member' : 'non_member'
-
   const [resourceTypeId, setResourceTypeId] = useState('')
   const [resourceId, setResourceId] = useState('')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [startTimeLocal, setStartTimeLocal] = useState('')
   const [durationMinutes, setDurationMinutes] = useState('')
+
+  const coveringMembership = useMemo(
+    () => findCoveringMembership(memberContext, selectedDate, startTimeLocal),
+    [memberContext, selectedDate, startTimeLocal],
+  )
+  const rateTier: RateTier = coveringMembership ? 'member' : 'non_member'
+  const creditBalanceCentavos = coveringMembership?.creditBalanceCentavos ?? 0
+  // The tier discount follows the term covering the slot, like every other member benefit.
+  const discountPercent = coveringMembership?.bookingDiscountPercent ?? 0
+  // Shown on the date step when a member has picked a day their membership won't cover.
+  const membershipCoverageNotice =
+    memberContext && memberContext.coverage.length > 0 && selectedDate && !coveringMembership
+      ? `Your membership ends on ${memberContext.coverage[memberContext.coverage.length - 1].expiryDateLabel}. Dates after that are priced at non-member rates and can't use your booking credit — renew from your account to keep member pricing.`
+      : null
+
+  // Advance-booking window (docs/business.md): today + N days, where N comes from the term
+  // covering that date and falls back to the non-member window. Mirrors POST /api/bookings.
+  const todayKey = useMemo(() => toPhDateString(new Date()), [])
+  const isDateDisabled = useCallback(
+    (dateKey: string) => {
+      const term = findTermForDate(memberContext, dateKey)
+      const windowDays = term?.advanceBookingDays ?? NON_MEMBER_ADVANCE_BOOKING_DAYS
+      return calendarDaysBetweenKeys(todayKey, dateKey) > windowDays
+    },
+    [memberContext, todayKey],
+  )
+  const advanceWindowNote = useMemo(() => {
+    const term = memberContext?.coverage[0]
+    if (!term) return `Bookings open up to ${NON_MEMBER_ADVANCE_BOOKING_DAYS} days ahead.`
+    return `Your ${term.tierName} membership lets you book up to ${term.advanceBookingDays} days ahead. Dates your membership doesn't cover follow the ${NON_MEMBER_ADVANCE_BOOKING_DAYS}-day non-member window.`
+  }, [memberContext])
   const [guestCount, setGuestCount] = useState(0)
   const [busy, setBusy] = useState<BusyRange[]>([])
   const [availabilityLoading, setAvailabilityLoading] = useState(false)
@@ -157,9 +217,11 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [ballBoy, setBallBoy] = useState(false)
   const [coaching, setCoaching] = useState(false)
   const [coachingPaxCount, setCoachingPaxCount] = useState<number | null>(null)
+  // Per-term perks apply by default; the member can untick either to keep it for later.
+  const [useGuestPasses, setUseGuestPasses] = useState(true)
+  const [useBirthdayPerk, setUseBirthdayPerk] = useState(true)
 
   const [showPayment, setShowPayment] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -186,13 +248,13 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
 
   const durationOptions = useMemo(() => {
     if (!selectedResourceType) return []
-    return getDurationOptions(selectedResourceType, rateTier)
-  }, [selectedResourceType, rateTier])
+    return getDurationOptions(selectedResourceType)
+  }, [selectedResourceType])
 
-  const ballBoyPricing = useMemo(
-    () => getBallBoyPricing(selectedResourceType, rateTier),
-    [selectedResourceType, rateTier],
-  )
+  // The guest cap follows the rate tier, which follows the chosen date (docs/business.md →
+  // Guest Fee); handleDateSelect clamps the count when a date change lowers the cap.
+  const maxGuests = maxNonMemberGuestsForRateTier(rateTier)
+
   const coachingPricing = useMemo(
     () => getCoachingPricing(selectedResourceType, rateTier),
     [selectedResourceType, rateTier],
@@ -218,11 +280,8 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setStartTimeLocal('')
     setAvailabilityLoading(false)
     setAvailabilityError(null)
-    const durations = nextResourceType ? getDurationOptions(nextResourceType, rateTier) : []
+    const durations = nextResourceType ? getDurationOptions(nextResourceType) : []
     setDurationMinutes(durations[0] !== undefined ? String(durations[0]) : '')
-    if (nextResourceType?.category !== 'court') {
-      setBallBoy(false)
-    }
     setCoachingPaxCount(null)
     if (!getCoachingPricing(nextResourceType ?? null, rateTier).available) {
       setCoaching(false)
@@ -246,6 +305,23 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setStartTimeLocal('')
     setAvailabilityLoading(!!resourceId && !!nextSelectedDate)
     setAvailabilityError(null)
+
+    // The rate tier follows the chosen date (a day past the membership's end is priced
+    // non-member), which can remove member-only coaching.
+    const nextRateTier: RateTier = findCoveringMembership(memberContext, nextSelectedDate, '')
+      ? 'member'
+      : 'non_member'
+    if (nextRateTier !== rateTier && selectedResourceType) {
+      if (coaching && !getCoachingPricing(selectedResourceType, nextRateTier).available) {
+        setCoaching(false)
+        setCoachingPaxCount(null)
+      }
+    }
+    // A date outside every term drops the guest cap from the member to the non-member limit.
+    const nextMaxGuests = maxNonMemberGuestsForRateTier(nextRateTier)
+    if (guestCount > nextMaxGuests) {
+      setGuestCount(nextMaxGuests)
+    }
   }
 
   function handleCoachingChange(value: boolean) {
@@ -282,29 +358,59 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     }
   }, [resourceId, selectedDate])
 
-  const estimateCentavos = useMemo(() => {
-    if (!selectedResourceType || !durationMinutes || !data) return null
+  // Base court/simulator amount before any discount, from the base-rate rows.
+  const baseEstimateCentavos = useMemo(() => {
+    if (!selectedResourceType || !durationMinutes) return null
     const duration = Number(durationMinutes)
-    const guestFee = guestCount * data.guestFeeCentavos
     if (isCourt) {
-      const hourlyRate = selectedResourceType.pricing.find(
-        (p) => p.rateTier === rateTier && p.durationMinutes === 60,
-      )
-      if (!hourlyRate) return null
-      const base = hourlyRate.priceCentavos * (duration / 60)
-      return base + guestFee
+      const hourlyRate = selectedResourceType.pricing.find((p) => p.durationMinutes === 60)
+      return hourlyRate ? hourlyRate.priceCentavos * (duration / 60) : null
     }
-    const tierRate = selectedResourceType.pricing.find(
-      (p) => p.rateTier === rateTier && p.durationMinutes === duration,
+    const tierRate = selectedResourceType.pricing.find((p) => p.durationMinutes === duration)
+    return tierRate ? tierRate.priceCentavos : null
+  }, [selectedResourceType, durationMinutes, isCourt])
+
+  // Guest passes: waive the fee for up to the term's remaining passes (docs/business.md).
+  const guestPassesRemaining = coveringMembership?.guestPassesRemaining ?? 0
+  const guestPassesApplied = useGuestPasses ? Math.min(guestCount, guestPassesRemaining) : 0
+
+  // Birthday-month court hour: any 60-minute slot in the birthday month, once per term.
+  const birthdayPerk = coveringMembership?.birthdayPerk ?? null
+  const birthdayPerkEligible =
+    !!birthdayPerk &&
+    birthdayPerk.month !== null &&
+    !birthdayPerk.used &&
+    Number(durationMinutes) === 60 &&
+    !!selectedDate &&
+    Number(selectedDate.slice(5, 7)) === birthdayPerk.month
+  const birthdayPerkApplied = birthdayPerkEligible && useBirthdayPerk
+
+  // Same arithmetic as priceBooking: the birthday hour replaces the tier discount; passes
+  // reduce the guest fee; neither touches coaching.
+  const discountEstimateCentavos =
+    baseEstimateCentavos === null
+      ? 0
+      : birthdayPerkApplied
+        ? birthdayPerk!.kind === 'free'
+          ? baseEstimateCentavos
+          : Math.round(baseEstimateCentavos / 2)
+        : tierDiscountCentavos(baseEstimateCentavos, discountPercent)
+  const discountLabel = birthdayPerkApplied
+    ? birthdayPerk!.kind === 'free'
+      ? 'Birthday court hour — free'
+      : 'Birthday court hour — 50% off'
+    : `Member discount — ${discountPercent}%`
+  const estimateCentavos = useMemo(() => {
+    if (baseEstimateCentavos === null || !data) return null
+    return (
+      baseEstimateCentavos -
+      discountEstimateCentavos +
+      (guestCount - guestPassesApplied) * data.guestFeeCentavos
     )
-    return tierRate ? tierRate.priceCentavos + guestFee : null
-  }, [selectedResourceType, durationMinutes, guestCount, isCourt, data, rateTier])
+  }, [baseEstimateCentavos, discountEstimateCentavos, guestCount, guestPassesApplied, data])
 
   const addOnsEstimateCentavos = useMemo(() => {
     let total = 0
-    if (ballBoy && ballBoyPricing.priceCentavos !== null) {
-      total += ballBoyPricing.priceCentavos
-    }
     if (coaching) {
       if (isCourt) {
         const paxPrice =
@@ -319,7 +425,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
       }
     }
     return total
-  }, [ballBoy, coaching, coachingPaxCount, isCourt, ballBoyPricing, coachingPricing])
+  }, [coaching, coachingPaxCount, isCourt, coachingPricing])
 
   const canContinue = useMemo(() => {
     switch (step) {
@@ -387,9 +493,10 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           startTime: new Date(startTimeLocal).toISOString(),
           durationMinutes: Number(durationMinutes),
           guestCount,
-          ballBoy,
           coaching,
           ...(coaching && isCourt && coachingPaxCount !== null ? { coachingPaxCount } : {}),
+          useGuestPasses,
+          useBirthdayPerk,
         }),
       })
 
@@ -413,8 +520,13 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           setCustomerAttached(true)
         }
       } else if (res.status === 409) {
-        setSubmitError('That slot was just booked by someone else — please pick a different time.')
-      } else if (res.status === 400) {
+        const json = await res.json().catch(() => null)
+        setSubmitError(
+          typeof json?.error === 'string' && json.error.includes('guest passes')
+            ? json.error
+            : 'That slot was just booked by someone else — please pick a different time.',
+        )
+      } else if (res.status === 400 || res.status === 429) {
         const json = await res.json().catch(() => null)
         setSubmitError(json?.error ?? 'There was a problem with your booking details.')
       } else {
@@ -430,7 +542,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   function handleConfirmBookingClick() {
     if (rateTier === 'member' && memberContext && estimateCentavos !== null) {
       const totalCentavos = estimateCentavos + addOnsEstimateCentavos
-      if (memberContext.creditBalanceCentavos < totalCentavos) {
+      if (creditBalanceCentavos < totalCentavos) {
         setShowInsufficientCreditModal(true)
         return
       }
@@ -507,9 +619,10 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     setName('')
     setEmail('')
     setPhone('')
-    setBallBoy(false)
     setCoaching(false)
     setCoachingPaxCount(null)
+    setUseGuestPasses(true)
+    setUseBirthdayPerk(true)
   }
 
   if (loadError) {
@@ -517,11 +630,11 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   }
 
   if (loading || !data) {
-    return <p className="text-brand-dark/60">Loading booking form…</p>
+    return <p className="text-gray-500">Loading booking form…</p>
   }
 
   return (
-    <div className="flex w-full max-w-2xl flex-col items-center gap-8">
+    <div className="flex w-full max-w-2xl flex-col items-center gap-6">
       {!showPayment && <StepIndicator currentStep={step} />}
 
       {step === 1 && (
@@ -530,6 +643,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           resourceTypeId={resourceTypeId}
           onSelect={handleResourceTypeSelect}
           rateTier={rateTier}
+          discountPercent={discountPercent}
         />
       )}
 
@@ -556,17 +670,25 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           availabilityError={resourceId && selectedDate ? availabilityError : null}
           selectedSlot={startTimeLocal}
           onSelectSlot={setStartTimeLocal}
+          membershipCoverageNotice={membershipCoverageNotice}
+          isDateDisabled={isDateDisabled}
+          advanceWindowNote={advanceWindowNote}
         />
       )}
 
       {step === 4 && (
         <AddOnsStep
-          isCourt={!!isCourt}
           guestCount={guestCount}
+          maxGuests={maxGuests}
           onGuestCountChange={setGuestCount}
-          ballBoy={ballBoy}
-          onBallBoyChange={setBallBoy}
-          ballBoyPricing={ballBoyPricing}
+          guestPassesRemaining={guestPassesRemaining}
+          guestPassesApplied={guestPassesApplied}
+          useGuestPasses={useGuestPasses}
+          onUseGuestPassesChange={setUseGuestPasses}
+          birthdayPerkEligible={birthdayPerkEligible}
+          birthdayPerkKind={birthdayPerk?.kind ?? null}
+          useBirthdayPerk={useBirthdayPerk}
+          onUseBirthdayPerkChange={setUseBirthdayPerk}
           coaching={coaching}
           onCoachingChange={handleCoachingChange}
           coachingPricing={coachingPricing}
@@ -587,12 +709,13 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           durationMinutes={durationMinutes}
           isCourt={!!isCourt}
           guestCount={guestCount}
-          ballBoy={ballBoy}
-          ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}
           coachingPriceCentavos={coachingPriceCentavos}
           estimateCentavos={estimateCentavos}
+          discountEstimateCentavos={discountEstimateCentavos}
+          discountLabel={discountLabel}
+          guestPassesApplied={guestPassesApplied}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           guestFeeCentavos={data.guestFeeCentavos}
           submitting={submitting}
@@ -611,10 +734,10 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           title="Your F&B Credit Won't Cover This"
         >
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-brand-dark/80">
-              {memberContext && memberContext.creditBalanceCentavos === 0
+            <p className="text-sm text-gray-600">
+              {creditBalanceCentavos === 0
                 ? "You don't currently have any F&B credit available."
-                : `Your F&B credit balance is ${formatCentavos(memberContext?.creditBalanceCentavos ?? 0)}, which isn't enough to cover this booking.`}
+                : `Your F&B credit balance is ${formatCentavos(creditBalanceCentavos)}, which isn't enough to cover this booking.`}
               {' '}This booking totals {formatCentavos((estimateCentavos ?? 0) + addOnsEstimateCentavos)}.
               {"Since your credit doesn't fully cover it, none of it will be applied — you'll pay the"}
               full amount via PayMongo, and your credit balance will stay untouched.
@@ -623,7 +746,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
               <button
                 type="button"
                 onClick={() => setShowInsufficientCreditModal(false)}
-                className="flex-1 rounded-none border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark"
+                className="flex-1 rounded-md border border-gray-300 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
               >
                 Go Back
               </button>
@@ -633,7 +756,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
                   setShowInsufficientCreditModal(false)
                   handleConfirmBooking()
                 }}
-                className="flex-1 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+                className="flex-1 rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700"
               >
                 Continue Booking
               </button>
@@ -652,12 +775,13 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           durationMinutes={durationMinutes}
           isCourt={!!isCourt}
           guestCount={guestCount}
-          ballBoy={ballBoy}
-          ballBoyPriceCentavos={ballBoyPricing.priceCentavos}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}
           coachingPriceCentavos={coachingPriceCentavos}
           estimateCentavos={estimateCentavos}
+          discountEstimateCentavos={discountEstimateCentavos}
+          discountLabel={discountLabel}
+          guestPassesApplied={guestPassesApplied}
           addOnsEstimateCentavos={addOnsEstimateCentavos}
           guestFeeCentavos={data.guestFeeCentavos}
           name={name}
@@ -687,7 +811,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
             <button
               type="button"
               onClick={() => setStep((s) => s - 1)}
-              className="flex-1 rounded-none border border-brand-dark/20 px-5 py-3 text-sm font-medium uppercase tracking-wide text-brand-dark/70 transition-colors hover:bg-brand-dark/5 hover:text-brand-dark"
+              className="flex-1 rounded-md border border-gray-300 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
             >
               Back
             </button>
@@ -696,7 +820,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
             type="button"
             onClick={() => setStep((s) => Math.min(TOTAL_STEPS, s + 1))}
             disabled={!canContinue}
-            className="flex-1 rounded-none bg-accent-primary px-9 py-3.5 text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-light disabled:opacity-50"
+            className="flex-1 rounded-md bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:opacity-50"
           >
             Continue
           </button>

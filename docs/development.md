@@ -32,13 +32,16 @@ Routine, reversible implementation decisions outside those gates do not need sep
 
 ## Git and Branch Promotion
 
-Coding agents must never run `git add`, `git commit`, or `git push` in this repository. Work that is ready to commit ends with an explicit Git command block for Arjay to review and run. This applies to merges as well as ordinary changes.
+For every git action — commit, push, or merge/branch-promotion — ask Arjay first, explaining what the action is and why it's happening now, then perform it directly once he agrees. Do not make him run git commands himself.
 
-Promotion is manual, with no automated merge gates:
+- **Commit:** after a task modifies or touches files, ask ("Commit this? — because...") and on agreement run `git add` (scoped to the touched files) + `git commit` on the current branch.
+- **Push:** ask before pushing, explaining what's being pushed and to which remote branch.
+- **Merge / branch promotion** (`dev` → `staging`, `staging` → `main`): ask before merging, explaining what's being promoted and confirming local (or, for `staging` → `main`, deployed staging) verification has passed. Before any payment-touching promotion to `main`, also explicitly confirm the PayMongo key swap described in [roadmap.md](roadmap.md).
 
-- `dev` → `staging` after local verification passes.
+Each of these is a separate confirmation — agreement to commit is not agreement to push or merge. There are no automated merge gates:
+
+- `dev` → `staging` only after local verification passes.
 - `staging` → `main` only after verifying the deployed staging environment, not just the local build. `main` auto-deploys to production.
-- Before any payment-touching promotion to `main`, explicitly confirm the PayMongo key swap described in [roadmap.md](roadmap.md).
 
 ## Verification
 
@@ -60,6 +63,24 @@ npm run db:reset-dev-data -- --confirm
 
 It must not be run against production or shared data. The deletion order is transaction-protected and follows the schema's foreign-key dependencies.
 
+### Membership expiry fixtures
+
+Use the ID-scoped membership lifecycle fixtures for near-expiry, expired, and renewed-member testing. The command prints the configured database host, refuses to run without the same development-data safeguard, and records exact created IDs in the git-ignored `scripts/.membership-fixtures.json` manifest:
+
+```powershell
+$env:ALLOW_DEV_DATA_RESET = "true"
+npm run db:membership-fixtures -- create
+```
+
+Run the walkthrough against those rows, then remove only fixture-owned customers and their dependent test records:
+
+```powershell
+$env:ALLOW_DEV_DATA_RESET = "true"
+npm run db:membership-fixtures -- cleanup
+```
+
+The fixtures must not be created in production or a shared database. All six accounts use the development-only password printed by `create`; their private verification documents are a harmless placeholder object that cleanup also removes.
+
 ## Coding Conventions
 
 ### Prisma and migrations
@@ -78,11 +99,16 @@ Follow [database.md](database.md) for naming, mappings, money, timestamps, relat
 - Use folder-per-feature organization under `src/components/`, with PascalCase filenames matching exported components.
 - Add `'use client'` only when a component uses state, effects, or browser APIs. Leave server components without it.
 - Put shared non-component helpers in `src/lib/`.
+- Format every user-facing date through `src/lib/format.ts` (`formatManilaDate`, `formatManilaTime`, `formatManilaTimeRange`, `formatBookingDateTime`, plus the existing use-case helpers) rather than calling `toLocaleString` inline, so Manila timezone and the no-seconds style stay consistent across pages and emails.
+- Admin tab strips use `AdminTabs` + `AdminTabPanel` (`src/components/admin/AdminTabs.tsx`) rather than hand-rolled `role="tab"` buttons, so keyboard movement and `aria-controls` wiring come for free.
+- Admin detail pages open with `AdminPageHeader` (back link, human title, subtitle, copyable record id, status/actions aside). Don't headline a page with a raw database id.
 - For multi-step wizards, place steps in a `steps/` subfolder, one component per step plus a step indicator. Lift all state, including the current step, to the top-level orchestrator so back/forward navigation does not reset values.
 
 ### Client-side API errors
 
 Branch on `res.status`, not only `res.ok`, so expected outcomes such as 409 conflicts remain distinguishable from generic failures. Surface a 400 response's `error` in the UI. Use a generic inline message for network or unexpected errors; do not navigate away or throw uncaught exceptions that discard in-progress form state.
+
+In the admin panel, confirm successful mutations with `useToast().success(...)` from `src/components/admin/ToastProvider.tsx` (mounted in `AdminShell`). Toasts are for success confirmation and for failures that have no form to attach to (e.g. a one-click enable button); errors inside a modal or form stay inline as above. Never use `window.alert`.
 
 ### Authentication and the Edge Runtime
 

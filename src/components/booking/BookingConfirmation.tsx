@@ -13,7 +13,10 @@ export interface BookingDetail {
   startTime: string
   endTime: string
   totalAmountCentavos: number
+  memberDiscountCentavos: number
+  birthdayPerkApplied: boolean
   guestFeeAmountCentavos: number
+  guestPassesUsed: number
   addOns: BookingAddOn[]
   addOnsTotalCentavos: number
   resource: { typeName: string; label: string }
@@ -30,129 +33,132 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
   const start = new Date(booking.startTime)
   const end = new Date(booking.endTime)
   const durationMinutes = Math.round((end.getTime() - start.getTime()) / 60000)
-  const ballBoyAddOn = booking.addOns.find((a) => a.service === 'ball_boy')
   const coachingAddOn = booking.addOns.find((a) => a.service === 'coaching_fee')
-  const baseAmountCentavos = booking.totalAmountCentavos - booking.guestFeeAmountCentavos
+  // totalAmountCentavos already has the member discount taken off; show the rate before it.
+  const baseAmountCentavos =
+    booking.totalAmountCentavos - booking.guestFeeAmountCentavos + booking.memberDiscountCentavos
   const hasAddOnsBreakdown = booking.guestCount > 0 || booking.addOns.length > 0
+  // The Price row alone is the total only when nothing else moved it.
+  const showTotal = hasAddOnsBreakdown || booking.memberDiscountCentavos > 0
 
   return (
     <div className="flex w-full max-w-md flex-col gap-4">
       <div className="flex flex-col gap-1 text-center">
-        <h2 className="font-serif text-2xl text-brand-dark">Booking confirmed</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Booking confirmed</h2>
       </div>
 
-      <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
-        <h3 className="mb-4 border-b border-brand-dark/10 pb-3 font-serif text-lg text-brand-dark">
+      <div className="rounded-lg border border-gray-200 bg-white px-6 py-6 shadow-sm">
+        <h3 className="mb-4 border-b border-gray-200 pb-3 text-lg font-semibold text-gray-900">
           Booking Details
         </h3>
         <dl className="flex flex-col">
           <div className="flex justify-between gap-4 py-3">
-            <dt className="text-brand-dark/70">Booking Reference</dt>
-            <dd className="text-right font-mono text-sm font-medium text-brand-dark">
+            <dt className="text-gray-500">Booking Reference</dt>
+            <dd className="text-right text-sm font-medium text-gray-900">
               {booking.id}
             </dd>
           </div>
-          <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-            <dt className="text-brand-dark/70">Resource</dt>
-            <dd className="text-right font-medium text-brand-dark">
+          <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
+            <dt className="text-gray-500">Resource</dt>
+            <dd className="text-right font-medium text-gray-900">
               {booking.resource.typeName} — {booking.resource.label}
             </dd>
           </div>
-          <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-            <dt className="text-brand-dark/70">Date &amp; time</dt>
-            <dd className="text-right font-medium text-brand-dark">
+          <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
+            <dt className="text-gray-500">Date &amp; time</dt>
+            <dd className="text-right font-medium text-gray-900">
               {start.toLocaleString('en-PH')}
             </dd>
           </div>
-          <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-            <dt className="text-brand-dark/70">Duration</dt>
-            <dd className="text-right font-medium text-brand-dark">{durationMinutes} minutes</dd>
+          <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
+            <dt className="text-gray-500">Duration</dt>
+            <dd className="text-right font-medium text-gray-900">{durationMinutes} minutes</dd>
           </div>
           {booking.guestCount > 0 && (
-            <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-              <dt className="text-brand-dark/70">Guests</dt>
-              <dd className="text-right font-medium text-brand-dark">{booking.guestCount}</dd>
-            </div>
-          )}
-          {ballBoyAddOn && (
-            <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-              <dt className="text-brand-dark/70">Ball Boy</dt>
-              <dd className="text-right font-medium text-brand-dark">Yes</dd>
+            <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
+              <dt className="text-gray-500">Non-member guests</dt>
+              <dd className="text-right font-medium text-gray-900">{booking.guestCount}</dd>
             </div>
           )}
           {coachingAddOn && (
-            <div className="flex justify-between gap-4 border-t border-brand-dark/10 py-3">
-              <dt className="text-brand-dark/70">
+            <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
+              <dt className="text-gray-500">
                 Coaching{coachingAddOn.paxCount !== null && ` — ${coachingAddOn.paxCount} Pax`}
               </dt>
-              <dd className="text-right font-medium text-brand-dark">Yes</dd>
+              <dd className="text-right font-medium text-gray-900">Yes</dd>
             </div>
           )}
         </dl>
       </div>
 
-      <div className="rounded-card border border-brand-dark/10 bg-brand-light px-6 py-8 shadow-xl shadow-brand-dark/10">
-        <h3 className="mb-4 border-b border-brand-dark/10 pb-3 font-serif text-lg text-brand-dark">
+      <div className="rounded-lg border border-gray-200 bg-white px-6 py-6 shadow-sm">
+        <h3 className="mb-4 border-b border-gray-200 pb-3 text-lg font-semibold text-gray-900">
           Payment Summary
         </h3>
         <dl className="flex flex-col">
           <div className="flex justify-between gap-4 py-3">
-            <dt className="text-brand-dark/70">Price</dt>
-            <dd className="text-right font-medium text-brand-dark">
+            <dt className="text-gray-500">Price</dt>
+            <dd className="text-right font-medium text-gray-900">
               {formatCentavos(baseAmountCentavos)}
             </dd>
           </div>
+          {booking.memberDiscountCentavos > 0 && (
+            <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
+              <dt className="text-gray-500">{booking.birthdayPerkApplied ? 'Birthday court hour' : 'Member discount'}</dt>
+              <dd className="text-right font-medium text-gray-900">
+                &minus;{formatCentavos(booking.memberDiscountCentavos)}
+              </dd>
+            </div>
+          )}
           {hasAddOnsBreakdown && (
             <>
-              <div className="border-t border-brand-dark/10 py-3">
-                <dt className="text-brand-dark/70">Add-ons total</dt>
+              <div className="border-t border-gray-200 py-3">
+                <dt className="text-gray-500">Add-ons total</dt>
               </div>
-              <div className="flex flex-col gap-2 border-t border-brand-dark/10 py-3 pl-4">
+              <div className="flex flex-col gap-2 border-t border-gray-200 py-3 pl-4">
                 {booking.guestCount > 0 && (
                   <div className="flex justify-between gap-4 text-sm">
-                    <dt className="text-brand-dark/70">Guests — {booking.guestCount} Pax</dt>
-                    <dd className="text-right font-medium text-brand-dark">
+                    <dt className="text-gray-500">
+                      Non-member guests — {booking.guestCount} Pax
+                      {booking.guestPassesUsed > 0 &&
+                        ` (${booking.guestPassesUsed} guest pass${booking.guestPassesUsed === 1 ? '' : 'es'})`}
+                    </dt>
+                    <dd className="text-right font-medium text-gray-900">
                       {formatCentavos(booking.guestFeeAmountCentavos)}
-                    </dd>
-                  </div>
-                )}
-                {ballBoyAddOn && (
-                  <div className="flex justify-between gap-4 text-sm">
-                    <dt className="text-brand-dark/70">Ball Boy</dt>
-                    <dd className="text-right font-medium text-brand-dark">
-                      {formatCentavos(ballBoyAddOn.amountCentavos)}
                     </dd>
                   </div>
                 )}
                 {coachingAddOn && (
                   <div className="flex justify-between gap-4 text-sm">
-                    <dt className="text-brand-dark/70">
+                    <dt className="text-gray-500">
                       Coaching{coachingAddOn.paxCount !== null && ` — ${coachingAddOn.paxCount} Pax`}
                     </dt>
-                    <dd className="text-right font-medium text-brand-dark">
+                    <dd className="text-right font-medium text-gray-900">
                       {formatCentavos(coachingAddOn.amountCentavos)}
                     </dd>
                   </div>
                 )}
               </div>
-              <div className="flex items-baseline justify-between gap-4 border-t border-brand-dark/10 pt-4 mt-1">
-                <dt className="font-serif text-brand-dark">Total</dt>
-                <dd className="text-2xl font-medium text-accent-primary">
-                  {formatCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)}
-                </dd>
-              </div>
             </>
+          )}
+          {showTotal && (
+            <div className="flex items-baseline justify-between gap-4 border-t border-gray-200 pt-4 mt-1">
+              <dt className="text-gray-900">Total</dt>
+              <dd className="text-2xl font-semibold text-gray-900">
+                {formatCentavos(booking.totalAmountCentavos + booking.addOnsTotalCentavos)}
+              </dd>
+            </div>
           )}
         </dl>
       </div>
 
-      <p className="rounded-card-inline border border-brand-dark/10 bg-brand-dark/[0.03] px-4 py-3 text-sm text-brand-dark/70">
+      <p className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
         Thanks, {booking.customer.name}! Your payment is confirmed and your slot is booked.
       </p>
 
       <Link
         href="/"
-        className="rounded-none bg-accent-primary px-9 py-3.5 text-center text-sm font-medium uppercase tracking-wide text-brand-light transition-colors hover:bg-accent-dark"
+        className="rounded-md bg-gray-900 px-6 py-3 text-center text-sm font-medium text-white transition-colors hover:bg-gray-700"
       >
         Back to Home
       </Link>

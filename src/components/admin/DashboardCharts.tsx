@@ -5,9 +5,6 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
-  PieChart,
-  Pie,
-  Cell,
   CartesianGrid,
   XAxis,
   YAxis,
@@ -16,35 +13,31 @@ import {
 } from 'recharts'
 import { formatCentavos } from '@/lib/format'
 import { useIsDarkMode } from '@/hooks/useIsDarkMode'
-import type { RevenueTrendPoint, MembershipRevenueTrendPoint, ResourceBreakdownEntry } from '@/lib/dashboard-data'
+import DashboardBookingCalendar from '@/components/admin/DashboardBookingCalendar'
+import type { BookingCalendarData, RevenueTrendPoint, MembershipRevenueTrendPoint } from '@/lib/dashboard-data'
 
-const LIGHT_PALETTE = {
-  grid: '#e5e7eb',
-  axisTick: '#6b7280',
-  axisLine: '#e5e7eb',
-  tooltipBg: '#ffffff',
-  tooltipBorder: '#e5e7eb',
-  legendText: '#6b7280',
-  revenueLine: '#111827',
-  resourceColors: ['#111827', '#374151', '#6b7280', '#9ca3af', '#d1d5db'],
-  sportColors: { tennis: '#111827', pickleball: '#6b7280', golf: '#cd1818' },
-  membershipTierColors: { threeMonth: '#2563eb', sixMonth: '#d97706', twelveMonth: '#7c3aed' },
-  topUpColor: '#059669',
+// Recharts takes colour strings, so the palette references the chart tokens declared in
+// globals.css (`@theme static`); browsers resolve `var()` in SVG presentation attributes and
+// inline styles alike, so the chart follows the token sheet instead of restating hex values.
+const token = (name: string, dark: boolean) => `var(--color-chart-${name}${dark ? '-dark' : ''})`
+
+function buildPalette(dark: boolean) {
+  return {
+    grid: token('grid', dark),
+    axisTick: token('axis', dark),
+    axisLine: token('grid', dark),
+    tooltipBg: token('surface', dark),
+    tooltipBorder: token('grid', dark),
+    legendText: token('axis', dark),
+    revenueLine: token('primary', dark),
+    sportColors: { tennis: token('primary', dark), pickleball: token('secondary', dark), golf: token('accent', dark) },
+    membershipTierColors: { player: token('tier-player', dark), premier: token('tier-premier', dark), elite: token('tier-elite', dark) },
+    topUpColor: token('topup', dark),
+  }
 }
 
-const DARK_PALETTE = {
-  grid: '#374151',
-  axisTick: '#9ca3af',
-  axisLine: '#374151',
-  tooltipBg: '#1f2937',
-  tooltipBorder: '#374151',
-  legendText: '#9ca3af',
-  revenueLine: '#f3f4f6',
-  resourceColors: ['#f3f4f6', '#d1d5db', '#9ca3af', '#6b7280', '#4b5563'],
-  sportColors: { tennis: '#f3f4f6', pickleball: '#9ca3af', golf: '#f87171' },
-  membershipTierColors: { threeMonth: '#60a5fa', sixMonth: '#fbbf24', twelveMonth: '#a78bfa' },
-  topUpColor: '#34d399',
-}
+const LIGHT_PALETTE = buildPalette(false)
+const DARK_PALETTE = buildPalette(true)
 
 type RangeOption = '3mo' | '6mo' | '12mo' | 'ytd'
 type RevenueView = 'booking' | 'membership'
@@ -98,10 +91,10 @@ function filterByRange<T extends { month: string }>(data: T[], range: RangeOptio
 interface DashboardChartsProps {
   revenueTrend: RevenueTrendPoint[]
   membershipRevenueTrend: MembershipRevenueTrendPoint[]
-  resourceBreakdown: ResourceBreakdownEntry[]
+  bookingCalendar: BookingCalendarData
 }
 
-export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, resourceBreakdown }: DashboardChartsProps) {
+export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, bookingCalendar }: DashboardChartsProps) {
   const isDark = useIsDarkMode()
   const palette = isDark ? DARK_PALETTE : LIGHT_PALETTE
   const [range, setRange] = useState<RangeOption>('6mo')
@@ -132,7 +125,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{chartTitle}</h2>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
@@ -142,7 +135,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                   key={opt.value}
                   type="button"
                   onClick={() => handleViewChange(opt.value)}
-                  className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     view === opt.value
                       ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
                       : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
@@ -158,7 +151,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                   key={opt.value}
                   type="button"
                   onClick={() => setRange(opt.value)}
-                  className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     range === opt.value
                       ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
                       : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
@@ -174,7 +167,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                   key={opt.value}
                   type="button"
                   onClick={() => setBreakdown(opt.value)}
-                  className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                     breakdown === opt.value
                       ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
                       : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
@@ -211,30 +204,30 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                 <Legend wrapperStyle={{ fontSize: '0.75rem', color: palette.legendText }} />
                 <Area
                   type="monotone"
-                  dataKey="threeMonthCentavos"
+                  dataKey="playerCentavos"
                   stackId="tier"
-                  stroke={palette.membershipTierColors.threeMonth}
-                  fill={palette.membershipTierColors.threeMonth}
+                  stroke={palette.membershipTierColors.player}
+                  fill={palette.membershipTierColors.player}
                   fillOpacity={0.7}
-                  name="3-Month"
+                  name="Winston Player"
                 />
                 <Area
                   type="monotone"
-                  dataKey="sixMonthCentavos"
+                  dataKey="premierCentavos"
                   stackId="tier"
-                  stroke={palette.membershipTierColors.sixMonth}
-                  fill={palette.membershipTierColors.sixMonth}
+                  stroke={palette.membershipTierColors.premier}
+                  fill={palette.membershipTierColors.premier}
                   fillOpacity={0.7}
-                  name="6-Month"
+                  name="Winston Premier"
                 />
                 <Area
                   type="monotone"
-                  dataKey="twelveMonthCentavos"
+                  dataKey="eliteCentavos"
                   stackId="tier"
-                  stroke={palette.membershipTierColors.twelveMonth}
-                  fill={palette.membershipTierColors.twelveMonth}
+                  stroke={palette.membershipTierColors.elite}
+                  fill={palette.membershipTierColors.elite}
                   fillOpacity={0.7}
-                  name="12-Month"
+                  name="Winston Elite"
                 />
               </AreaChart>
             ) : view === 'membership' && breakdown === 'top-ups' ? (
@@ -361,45 +354,7 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Bookings by Resource Type</h2>
-        <div className="flex h-64 items-center gap-4">
-          <div className="h-full flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={resourceBreakdown}
-                  dataKey="count"
-                  nameKey="resourceType"
-                  innerRadius="55%"
-                  outerRadius="80%"
-                  paddingAngle={2}
-                >
-                  {resourceBreakdown.map((entry, index) => (
-                    <Cell
-                      key={entry.resourceType}
-                      fill={palette.resourceColors[index % palette.resourceColors.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={tooltipStyle} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <ul className="flex shrink-0 flex-col gap-1.5">
-            {resourceBreakdown.map((entry, index) => (
-              <li key={entry.resourceType} className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: palette.resourceColors[index % palette.resourceColors.length] }}
-                />
-                <span className="text-gray-900 dark:text-gray-100">{entry.resourceType}</span>
-                <span className="text-gray-500 dark:text-gray-400">({entry.count})</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      <DashboardBookingCalendar initialCalendar={bookingCalendar} />
     </div>
   )
 }

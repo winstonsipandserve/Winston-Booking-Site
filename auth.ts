@@ -2,7 +2,7 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword } from '@/lib/admin-auth'
-import { consumeAuthRateLimitAttempt } from '@/lib/auth-rate-limit'
+import { getLoginRateLimitKeys, isRateLimited, recordRateLimitFailure } from '@/lib/auth-rate-limit'
 import { authConfig } from './auth.config'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -20,17 +20,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
-        if (!(await consumeAuthRateLimitAttempt('admin_login', request, email))) {
+        // Failures-only limiter: check first, record only on a failed sign-in, so a
+        // successful login never spends budget (src/lib/auth-rate-limit.ts).
+        const rateLimitKeys = getLoginRateLimitKeys(request, email)
+        if (await isRateLimited('admin_login', rateLimitKeys)) {
           return null
         }
 
         const adminUser = await prisma.adminUser.findUnique({ where: { email } })
         if (!adminUser || !adminUser.isActive) {
+          await recordRateLimitFailure('admin_login', rateLimitKeys)
           return null
         }
 
         const isValid = await verifyPassword(password, adminUser.passwordHash)
         if (!isValid) {
+          await recordRateLimitFailure('admin_login', rateLimitKeys)
           return null
         }
 
@@ -56,17 +61,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
-        if (!(await consumeAuthRateLimitAttempt('member_login', request, email))) {
+        const rateLimitKeys = getLoginRateLimitKeys(request, email)
+        if (await isRateLimited('member_login', rateLimitKeys)) {
           return null
         }
 
         const customer = await prisma.customer.findUnique({ where: { email } })
         if (!customer || !customer.passwordHash) {
+          await recordRateLimitFailure('member_login', rateLimitKeys)
           return null
         }
 
         const isValid = await verifyPassword(password, customer.passwordHash)
         if (!isValid) {
+          await recordRateLimitFailure('member_login', rateLimitKeys)
           return null
         }
 

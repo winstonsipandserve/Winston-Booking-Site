@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/admin/ToastProvider'
 import Modal from '@/components/ui/Modal'
 import { formatCentavos, parseCentavos } from '@/lib/format'
 import { adminTopUpConfirmationText, ADMIN_TOPUP_MIN_CENTAVOS } from '@/lib/membership-topup'
@@ -55,6 +56,7 @@ function AddCreditModal({
   onClose: () => void
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [mode, setMode] = useState<TopUpMode>('cash')
   const [amountInput, setAmountInput] = useState('')
   const [note, setNote] = useState('')
@@ -137,6 +139,7 @@ function AddCreditModal({
         return
       }
       router.refresh()
+      toast.success('Credit added.')
       handleClose()
     } catch {
       setError('Something went wrong. Please try again.')

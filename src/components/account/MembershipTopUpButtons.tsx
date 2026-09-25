@@ -53,7 +53,7 @@ export default function MembershipTopUpButtons() {
             type="button"
             onClick={() => handleClick(amount)}
             disabled={submittingAmount !== null}
-            className="rounded-none border border-brand-dark/15 px-4 py-2.5 text-sm font-medium text-brand-dark transition-colors hover:bg-brand-dark/5 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {formatCentavos(amount)}
           </button>

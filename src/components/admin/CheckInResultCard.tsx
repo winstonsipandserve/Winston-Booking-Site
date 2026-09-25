@@ -13,7 +13,6 @@ export type CheckInResult =
       tierName: string
       expiryDateLabel: string
       remainingCreditCentavos: number
-      creditCentavos: number
     }
 
 export default function CheckInResultCard({
@@ -78,10 +77,8 @@ export default function CheckInResultCard({
           <span className="font-medium">{result.expiryDateLabel}</span>
         </div>
         <div className="flex justify-between">
-          <span>Remaining credit</span>
-          <span className="font-medium">
-            {formatCentavos(result.remainingCreditCentavos)} of {formatCentavos(result.creditCentavos)}
-          </span>
+          <span>Booking credit</span>
+          <span className="font-medium">{formatCentavos(result.remainingCreditCentavos)}</span>
         </div>
       </div>
       <ActionButton label={actionLabel} onClick={onAction} />

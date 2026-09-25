@@ -8,6 +8,7 @@ out/
 
 # testing
 /coverage
+/scripts/.membership-fixtures.json
 
 # production
 build/

@@ -4,6 +4,8 @@ What the application currently does. This is an inventory of built, working func
 
 > **Verification status:** nothing in this project is currently treated as independently verified. QA passes run under an earlier workflow were discarded along with their findings, so any prior claim that a feature was "click-through verified" no longer stands. Re-verify before relying on anything here.
 
+> **Business rules changed on 21 September 2026.** Every item of the client update is now built; this document describes the application as it stands. [business.md](business.md) holds the rules.
+
 **See also:** [workflows.md](workflows.md) (how these flows run) · [business.md](business.md) (the rules behind them) · [roadmap.md](roadmap.md) (what is *not* built)
 
 ---
@@ -17,29 +19,33 @@ Six pages, all mobile-responsive.
 | **Home** (`/`) | Hero, stats bar, how-it-works, two-sides section, facilities, call-to-action banner |
 | **About** (`/about`) | Hero, our story, values, call to action |
 | **Café & Bar** (`/cafe-bar`) | Café/Bar mode toggle, menu highlights, gallery, speakeasy feature |
-| **News** (`/news`) | Published, non-expired bulletins with a 7-pill category filter (All + 6 categories), driven by a URL query parameter |
-| **Membership** (`/membership`) | Hero, tier cards, application process, apply call to action |
+| **News** (`/news`) | Published and scheduled-by-date editorial posts with four category filters. Featured posts sort first and the newest featured post receives the large-card treatment; cards link to full articles at `/news/[slug]` |
+| **Membership** (`/membership`) | Hero, tier cards (Winston Player / Premier / Elite with their perks; Premier shows the Founding Member offer and live seats-left count while seats remain), application process, apply call to action |
 | **Book Now** (`/book`) | The booking wizard |
 
-The navbar is fixed, transparent over a hero and solid on scroll for Home, About, Membership, and Café & Bar. `/book` and `/news` have no hero and force it permanently solid.
+The navbar is fixed, transparent over a hero and solid on scroll for Home, About, Membership, Café & Bar, and News. `/book` has no hero and forces it permanently solid.
 
 The public-site corner-radius system is applied sitewide with no exceptions remaining.
 
-**Placeholder content pending client input:** Home hero copy, About's Our Story, footer contact details, and News social links.
+**Placeholder content pending client input:** Home hero copy, About's Our Story, and footer contact details.
 
 ---
 
 ## Booking
 
-- **Announcement gate** before the wizard, showing current published notices (Promotions excluded).
+- **Announcement gate** before the wizard, showing only active operational announcements from their advance-notice date (or their start when none is set) until their end. Notices whose start is still ahead are tagged **Upcoming** so customers can see that the affected courts remain bookable until then. Urgent, warning, and information notices sort in that order, then newest start date; three notices appear per page with an empty state when none are live.
 - **Five-step wizard** — Sport, Court, Date & Time, Add-Ons, Summary — with a step indicator and full back/forward state preservation.
 - **Live availability**: the time-slot grid greys out occupied slots before submit.
-- **Member-aware**: a logged-in member with an active membership gets member pricing and a pre-filled contact step, in a single pricing phase. Anonymous bookers are priced at the non-member rate throughout.
-- **Guest count** control with the universal ₱150-per-guest fee, on every booking.
-- **Add-ons**: ball boy (courts only) and coaching (with pax selection on courts).
+- **Member-aware**: a logged-in member whose term covers the slot gets their tier's discount off the base court/simulator rate (5 / 10 / 15%), member coaching rates, and a pre-filled contact step, in a single pricing phase. The Sport step's pricing modal shows the base rate struck through beside the member price, and the summary and confirmation show a "Member discount" line. Anonymous bookers are priced at the base rate throughout.
+- **Guest passes**: on the Add-Ons step a member whose term covers the slot sees "Use my complimentary guest passes (N left this term)", ticked by default; passes waive the ₱100 fee for up to that many non-member guests and the summary shows "(n guest passes)" on the Non-member guests row.
+- **Birthday court hour**: on an exactly-60-minute slot in the member's birthday month, with the perk unused this term, the Add-Ons step offers "Use my birthday court hour", ticked by default; it replaces the tier discount (50% off the base rate for Player, free for the other tiers) and the summary, confirmation, and emails label the line "Birthday court hour". A booking that comes to ₱0 (free hour, every guest on a pass) confirms immediately with no checkout.
+- **Advance-booking window**: the calendar disables dates beyond today + 3 days for non-members and today + 5 / 7 / 10 days for Player / Premier / Elite terms (a date a term does not cover falls back to the non-member window), with a note stating the window; `POST /api/bookings` rejects anything beyond it. Admin reschedules are not bound by the window.
+- **Non-member guest count** control with the ₱100-per-guest fee, on every booking, capped at 7 non-member guests when a membership term covers the slot and 3 otherwise (the **+** control disables at the cap and the API rejects anything above it). A guest who is themself a Winston member is free entry and is not entered here at all — the system has no way to know about them; staff verify their membership in person at check-in.
+- **Add-ons**: coaching only (with pax selection on courts).
 - **Full-coverage credit redemption** for members whose balance covers the whole total — confirms instantly with no payment redirect.
 - **PayMongo Checkout** for everything else, with automatic redirect.
-- **Confirmation page** showing a booking-details card (reference, resource, date and time, duration, guests, ball boy, coaching) and a separate pricing card (base price, itemized add-ons, total). Anonymous booking follow-up is bound to a short-lived HttpOnly browser capability; member booking follow-up is bound to the member session.
+- **Booking hold limits** — hold creation is throttled per client (member id, or IP for anonymous bookers) and each client may keep at most 3 unpaid holds live at once; the wizard surfaces the API's 429 message inline. Rules in [workflows.md](workflows.md) → Hold and expiry.
+- **Confirmation page** showing a booking-details card (reference, resource, date and time, duration, guests, coaching) and a separate pricing card (base price, itemized add-ons, total). Anonymous booking follow-up is bound to a short-lived HttpOnly browser capability; member booking follow-up is bound to the member session.
 
 ---
 
@@ -48,11 +54,12 @@ The public-site corner-radius system is applied sitewide with no exceptions rema
 Gated on a member session; anything else redirects to login.
 
 - **Profile** — name, email, phone.
-- **Membership status card** — tier, expiry, and current credit balance.
+- **Membership status card** — plan (with a Founding Member note where applicable), the tier's advance window / guest passes / discount, expiry, guest passes left this term, the birthday court hour's status (available in {month} / used this term / add your birthday), and current booking-credit balance.
 - **Check-in credentials** — QR code plus a 6-digit fallback code, with a regenerate action.
-- **Top Up F&B Credit** — four preset amounts in a modal, shown only for an active membership.
-- **Renew Membership** — shown only for an expired membership.
-- **Recent bookings** — the 50 most recent, with real booking data.
+- **Top Up Booking Credit** — four preset amounts in a modal, shown only for an active membership. Re-clicking resumes an unfinished top-up for the same amount instead of opening another PayMongo session.
+- **Renew Membership** — shown for an expired membership; **Renew Early** appears for an active one within 14 days of its end. A paid, queued renewal is shown as a note with its end date instead.
+- **Credit activity** — the current term's credit ledger (top-ups and booking redemptions with the booking each one paid for), newest first, paginated five per page. Shown only when a membership exists; its entries sum to the balance in the status card because both read the same term.
+- **Recent bookings** — the 50 most recent, with real booking data. Cancelled rows that were never paid (abandoned holds, including any a stranger created under the member's email) are hidden.
 - **Renewal and top-up confirmation pages** that poll for payment completion.
 
 ---
@@ -61,11 +68,11 @@ Gated on a member session; anything else redirects to login.
 
 | Surface | Status |
 |---|---|
-| Member login (`/login`) | Live — client-side sign-in so the navbar updates immediately, with a password show/hide toggle |
-| Member activation (`/activate`) | Live — sets the first password from an emailed token |
-| Member forgot/reset password | Live end-to-end, enumeration-safe and rate-limited |
-| Admin login (`/admin/login`) | Live, rate-limited, with an error modal |
-| Admin forgot/reset password | Live end-to-end and rate-limited |
+| Member login (`/login`) | Live — client-side sign-in so the navbar updates immediately, with a password show/hide toggle; rate-limited on failed attempts only (see [architecture.md](architecture.md) → Authentication) |
+| Member activation (`/activate`) | Live — sets the first password from an emailed token; the page checks the token before showing the form, so an invalid/used/expired link shows an error instead of a doomed form. An admin can resend a fresh link (see Membership) |
+| Member forgot/reset password | Live end-to-end, enumeration-safe and rate-limited; `/reset-password` checks the token before showing the form, same as `/activate` |
+| Admin login (`/admin/login`) | Live, rate-limited on failed attempts only (see [architecture.md](architecture.md) → Authentication), with an error modal |
+| Admin forgot/reset password | Live end-to-end and rate-limited; same pre-check as the member reset page |
 | Sign out | Confirmation modal required on the public navbar |
 
 Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surface re-checks the admin's active flag against the database on each request.
@@ -74,10 +81,12 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 ## Membership
 
-- **Application** (`/membership/apply`) — multipart form with three government ID uploads to private storage. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal.
+- **Application** (`/membership/apply`) — the applicant picks a plan (Premier shows the Founding price and seats left while any remain) and enters a required date of birth (a real past date; validated server-side); three government ID images upload directly to private storage through server-issued, single-use URLs, then are decoded, stripped of metadata, and re-encoded on the server before an application is created. Duplicate applications are blocked with a distinct message per case, surfaced in a dismissible modal. Upload sessions are throttled per IP (3 per 15 minutes; see [workflows.md](workflows.md)).
 - **Admin review** — approve or reject, with a mandatory rejection reason.
-- **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller.
-- **Self-service renewal** (`/account/renew`) and **admin-initiated renewal links** (`/membership/renew/[id]`).
+- **Tier-activation payment** (`/membership/pay/[id]`) plus a confirmation poller. The page shows the price checkout will charge — the pending payment row's snapshot, else a live Founding-aware quote — and the checkout route prices the row under the Founding seat lock (`src/lib/membership-founding.ts`). The link's `?token=` is checked before showing the checkout summary, so an invalid/superseded/expired link shows an error instead of a payment form — same pre-check pattern as `/activate`.
+- **Self-service renewal** (`/account/renew`, session-gated) and **admin-initiated renewal links** (`/membership/renew/[id]`, gated the same `?token=` way as the approval payment link — clicking "Send Renewal Link" again re-sends a fresh token for an already-queued pending payment, doubling as the resend action for an expired link).
+- **Admin-initiated activation resend** — on a member's detail page, if they've never set a password (e.g. their original activation link expired unused), an admin can issue a fresh 48-hour activation link, which retires any earlier unused one.
+- **Admin-initiated payment-link resend** — on an application's detail page, while it's awaiting payment, an admin can issue a fresh 48-hour payment link, which supersedes any earlier unused one.
 - **Credit top-up** — self-service via PayMongo, and admin-logged cash or manual-online at the front desk.
 - **Membership certificate PDF** attached to first-time activation emails only.
 
@@ -85,52 +94,61 @@ Both member and admin auth run on Auth.js v5 with JWT sessions. Every admin surf
 
 ## Admin Panel
 
-Seven sections, all gated by the shared admin session check and all supporting Light / Dark / System theming stored per-browser.
+Eight sections, all gated by the shared admin session check and all supporting Light / Dark / System theming stored per-browser.
+
+Every paginated admin list (bookings, memberships, announcements, news, activity log, and the two history tables on a member's page) ends with a result count — "12 bookings" on its own when everything fits on one page, or "1–25 of 132 bookings · Page 1 of 6" with Previous / Next when it doesn't. Below `lg` the bookings and memberships tables hide their secondary columns (Submitted, Net; Email, Submitted, Reviewed By) and pin the **View** column to the right edge so the row action is always reachable without horizontal scrolling. Empty lists show only their table's empty state; on the bookings and memberships lists that state distinguishes "nothing yet" from "nothing matches these filters" and, in the filtered case, offers a **Clear filters** link back to the unfiltered list.
 
 > The admin panel is **tablet-and-up only** by decision — no mobile-width support is planned. See [decisions.md](decisions.md).
 
+The sidebar can be folded to an icon rail from the Menu row (or the topbar when folded). Below `lg` (1024px) it starts folded; crossing that breakpoint re-applies the default, and a manual toggle holds until the next crossing.
+
 ### Dashboard
 
-- **Six stat cards**: Bookings Today, Booking Revenue This Month, Membership Revenue This Month, Pending Applications, Active Memberships, Resource Utilization.
+- **Six stat cards**, each linking to the list that explains it: Bookings Today (→ confirmed bookings; note shows confirmed bookings this week), Booking Revenue This Month and Membership Revenue This Month (note shows the month-over-month change against last month's figure, or words when last month was zero), Pending Applications (→ pending filter; note shows how long the oldest has waited, amber from 3 days), Active Members (→ active filter; note shows how many terms end within 30 days), Utilization This Week (→ Resources; note shows booked hours). "Active members" counts distinct customers with a live term, so an early renewal is one member, not two.
 - **Revenue Trend chart** with a Booking/Membership view toggle, a range selector (3mo / 6mo / 12mo / YTD), and per-view breakdowns — Booking: Total or By Resource Type; Membership: Total, By Tier, or Top-Ups.
-- **Resource-type pie chart**.
+- **Booking-activity calendar** showing confirmed-booking volume per day through a five-step blue intensity scale, with previous/next month navigation.
 - **Recent Bookings** and **Pending Applications** lists.
 
-Booking revenue and membership revenue are counted separately and cannot overlap: booking revenue counts only payments attached to a booking, while membership revenue counts activation/renewal payments plus top-ups.
+Booking revenue and membership revenue are counted separately and cannot overlap: booking revenue counts only payments attached to a booking, while membership revenue counts activation/renewal payments (by tier: Player / Premier / Elite) plus top-ups.
 
 ### Bookings
 
-List with a working search bar and a filter modal, both server-side and composable. Both list and detail show the true grand total (including add-ons), the PayMongo payment id, and the net settled amount; the detail page additionally shows the PayMongo fee. Reschedule is a collapsed-by-default foldable section. CSV export honours the current filters and exports every matching row, not just the current page.
+List with a working search bar and a filter modal, both server-side and composable. Both list and detail show the true grand total (including add-ons), the PayMongo payment id, and the net settled amount; the detail page additionally shows the PayMongo fee. Reschedule is a collapsed-by-default foldable section with a date calendar and live available-time grid for the booking's resource and duration; the database remains the final conflict authority at confirmation. CSV export honours the current filters and exports every matching row, not just the current page.
 
 ### Resources & Pricing
 
-Tabbed as Courts / Simulators / Guest Fee.
+Tabbed as Courts / Simulators / Guest Fee. Each resource type is a collapsible card; the first card in a tab opens by default, and collapsed cards summarise the base rate and any disabled resources in the header. Court and simulator rates have a single **Base rate** column with a caption stating the fixed tier discounts; coaching keeps Member / Non-Member columns.
 
-- Resources are **edit and disable/enable only** — no create or delete. A resource disabled by a bulletin is labelled as such.
+- Resources are **edit and disable/enable only** — no create or delete. A resource disabled by an announcement is labelled as such.
 - Pricing and add-on rows have full create/edit/delete, gated by the valid-combination allow-list, so an unoffered combination has no "+ Add" control at all.
 - The guest fee is **edit-only**, permanently.
 
 ### Memberships
 
-List and detail with approve/reject. The status filter splits on derived display status. CSV export is functional.
+List and detail with approve/reject. The list has a server-side search bar (applicant name, email, phone) and a status filter that splits on derived display status; CSV export honours both.
 
 - A **pending** application's detail page shows an identity-verification lightbox gallery and a sticky Approve/Reject bottom bar.
-- An **active or expired** member's page shows a header with name and "Member since", a four-cell quick-stats row, member information and membership detail cards, a collapsible verification-documents section, and credit-transaction and booking histories (capped at 10 rows each, no pagination).
-- Actions: Send Renewal Link (expired only) and Add Credit (active only).
+- An **awaiting-payment** application's detail page shows a Resend Payment Link action.
+- An **active or expired** member's page shows a header with name and "Member since", a four-cell quick-stats row, member information (including date of birth) and membership detail cards (including guest passes used and whether the birthday court hour has been redeemed this term), a collapsible verification-documents section, and credit-transaction and booking histories (10 rows per page).
+- Actions: Send Renewal Link (expired, or active and within the 14-day renewal window with nothing queued) and Add Credit (active only). "Days remaining" counts Manila calendar days.
 
-### Bulletin
+### Announcements
 
-Full create/read/update/delete with optional image upload, all seven categories with their own required-field rules, and optional resource linking for auto-disable. The list shows a bulletin's linked resource names inline when auto-disable is on.
+Paginated create/read/update/delete for short booking notices, with urgency, an operational window (Affects from / Affects until), an optional earlier Show-notice-from date, optional resource links, and a separate auto-disable toggle. Rows show inactive, scheduled (not yet visible), announced (visible as advance notice, not yet in effect), live, or expired state plus affected resources and whether they are taken offline. Edit and Delete sit behind each row's ⋯ menu; Delete still confirms.
+
+### News
+
+Paginated create/read/update/delete for rich-text stories. The editor supports headings, lists, blockquotes, emphasis, and safe links. The add/edit modal shows fields on the left and a live preview on the right (`lg` and up) that updates as you type, switchable between the `/news` card (featured horizontal card when "Feature this post" is checked, otherwise the standard grid card) and the full `/news/[slug]` article view. Publish date is a date picker plus a 12-hour time dropdown in 15-minute steps (with Now/Clear shortcuts), and the cover is chosen via a drag-and-drop zone with a Browse fallback. The modal does not close on backdrop click; closing via X, Cancel, or Escape with unsaved changes asks for confirmation first. Rows show cover, category, draft/scheduled/published state, featured state, and publication date, with Edit and Delete behind the row's ⋯ menu (Delete confirms). Published posts require a JPEG/PNG cover of at most 5 MB; migrated legacy posts may retain a null cover.
 
 ### Check-In
 
-Camera QR scanning plus a rate-limited manual code fallback, sharing one result card across four states.
+Manual 6-digit code entry is the default view (input auto-focused, submits automatically on the sixth digit); camera QR scanning is the alternate tab. Both share one result card across four states, and code lookups are rate-limited.
 
 ### Settings
 
 Three tabs:
 
-- **My Account** — change password, theme toggle.
+- **My Account** — profile card and change password. Appearance (Light / Dark / System) and Sign Out live in the topbar avatar menu, which also links here via **My account**.
 - **Admin Users** — list with Deactivate/Reactivate. **No create-new-admin UI.**
 - **Activity Log** — paginated (20 per page, newest first), read-only. **No filter UI.**
 
@@ -142,9 +160,9 @@ All email shares one branded layout. **Fifteen senders** are live, sending from 
 
 | Group | Emails |
 |---|---|
-| Member lifecycle | Activation (with certificate PDF), membership payment link, renewal, renewal payment link, expiry reminder, expired notice, rejection |
+| Member lifecycle | Activation (with certificate PDF), activation reminder (admin-triggered resend, no certificate), membership payment link, renewal, renewal payment link, expiry reminder, expired notice, rejection |
 | Auth | Member password reset, admin password reset |
-| Booking | Booking confirmation |
+| Booking | Booking confirmation, reschedule notice |
 | Credit | Top-up confirmation |
 | Staff notifications | New booking, new application, membership activation, membership renewal |
 
@@ -156,7 +174,7 @@ Booking confirmation and staff booking notification emails show a base-rate pric
 
 Two daily cron jobs, both secret-authenticated:
 
-- **Expire bookings** — cancels stale holds, expires their PayMongo sessions, and releases or applies bulletin-driven resource disables.
+- **Expire bookings** — cancels stale holds, expires their PayMongo sessions, and releases or applies announcement-driven resource disables.
 - **Membership reminders** — 14-day and 3-day expiry reminders plus expired notices, each stamped per-row so they can never double-send.
 
 ---
@@ -165,7 +183,8 @@ Two daily cron jobs, both secret-authenticated:
 
 - **Loading overlay** — a shared full-screen spinner is the standard in-flight state for all customer-facing submit and redirect buttons. Buttons keep a permanent static label and are disabled while loading, rather than swapping their own text. **The admin panel is not yet wired to this.**
 - **Modal** — one shared component with a brand variant (public site) and a neutral variant (admin). A shared confirm modal backs every admin confirmation; no native browser `confirm`/`alert` remains.
-- **Admin activity log** — approve/reject, reschedule, renewal-link sends, and admin credit top-ups each write an audit row.
+- **Admin keyboard and screen-reader support** — a "Skip to content" link is the first focusable element in the admin shell; the Settings, Resources, and Check-In tab strips are real WAI-ARIA tabs (`AdminTabs`: roving tabindex, ←/→/Home/End, `aria-controls` → `tabpanel`); check-in results render inside a polite live region so the auto-submitted lookup is announced.
+- **Admin activity log** — approve/reject, reschedule, renewal-link sends, admin credit top-ups, and every news post / announcement create, update, and delete each write an audit row (written in the same transaction as the content change).
 
 ---
 

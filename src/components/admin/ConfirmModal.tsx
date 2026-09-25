@@ -13,6 +13,7 @@ interface ConfirmModalProps {
   confirmVariant?: 'default' | 'danger'
   hideCancel?: boolean
   isLoading?: boolean
+  error?: string | null
 }
 
 export default function ConfirmModal({
@@ -26,10 +27,12 @@ export default function ConfirmModal({
   confirmVariant = 'default',
   hideCancel = false,
   isLoading = false,
+  error = null,
 }: ConfirmModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} variant="neutral">
       <p className="text-sm text-gray-600 dark:text-gray-300">{message}</p>
+      {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="mt-6 flex items-center justify-end gap-3">
         {!hideCancel && (
           <button

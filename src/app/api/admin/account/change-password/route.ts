@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   const passwordHash = await hashPassword(newPassword)
   await prisma.adminUser.update({
     where: { id: adminUser.id },
-    data: { passwordHash },
+    data: { passwordHash, passwordChangedAt: new Date() },
   })
 
   return Response.json({ success: true }, { status: 200 })

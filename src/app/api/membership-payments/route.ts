@@ -1,10 +1,12 @@
 import { prisma } from '@/lib/prisma'
-import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
-import { formatMembershipTier } from '@/lib/format'
+import { formatMembershipPlanLabel } from '@/lib/membership-pricing'
+import { quoteMembershipPrice, withFoundingSeatLock } from '@/lib/membership-founding'
 import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '@/lib/paymongo'
+import { lookupApplicationPaymentLinkToken } from '@/lib/membership-payment-link'
 
 interface MembershipPaymentRequestBody {
   applicationId?: unknown
+  token?: unknown
 }
 
 function isNonEmptyString(value: unknown): value is string {
@@ -19,9 +21,12 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Malformed JSON body' }, { status: 400 })
   }
 
-  const { applicationId } = body
+  const { applicationId, token } = body
   if (!isNonEmptyString(applicationId)) {
     return Response.json({ error: 'applicationId is required' }, { status: 400 })
+  }
+  if (!isNonEmptyString(token)) {
+    return Response.json({ error: 'A token is required' }, { status: 400 })
   }
 
   const application = await prisma.membershipApplication.findUnique({
@@ -45,6 +50,11 @@ export async function POST(request: Request) {
     return Response.json({ error: 'This application is not approved' }, { status: 409 })
   }
 
+  const tokenResult = await lookupApplicationPaymentLinkToken(application.id, token)
+  if (!tokenResult.ok) {
+    return Response.json({ error: tokenResult.error }, { status: tokenResult.status })
+  }
+
   const existingPending = await prisma.membershipPayment.findFirst({
     where: { applicationId: application.id, status: 'pending' },
     orderBy: { createdAt: 'desc' },
@@ -64,19 +74,24 @@ export async function POST(request: Request) {
     }
   }
 
-  const plan = MEMBERSHIP_TIER_PLANS[application.requestedTier]
-  const tierName = formatMembershipTier(application.requestedTier)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL
 
-  const membershipPayment = await prisma.membershipPayment.create({
-    data: {
-      applicationId: application.id,
-      customerId: application.customerId,
-      tier: application.requestedTier,
-      amountCentavos: plan.totalCentavos,
-      status: 'pending',
-    },
+  // Priced under the Founding seat lock so the amount PayMongo charges is the amount the
+  // seat count justified at this instant (src/lib/membership-founding.ts).
+  const membershipPayment = await withFoundingSeatLock(async (tx) => {
+    const quote = await quoteMembershipPrice(tx, application.customerId, application.requestedTier)
+    return tx.membershipPayment.create({
+      data: {
+        applicationId: application.id,
+        customerId: application.customerId,
+        tier: application.requestedTier,
+        amountCentavos: quote.amountCentavos,
+        isFounding: quote.isFounding,
+        status: 'pending',
+      },
+    })
   })
+  const tierName = formatMembershipPlanLabel(membershipPayment.tier, membershipPayment.isFounding)
 
   let session
   try {
@@ -84,7 +99,7 @@ export async function POST(request: Request) {
       lineItems: [
         {
           name: `${tierName} Membership`,
-          amount: plan.totalCentavos,
+          amount: membershipPayment.amountCentavos,
           currency: 'PHP',
           quantity: 1,
         },

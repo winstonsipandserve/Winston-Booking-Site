@@ -21,8 +21,6 @@ Font.register({
 export interface MembershipCertificateData {
   customerName: string
   tierName: string
-  activationFeeCentavos: number
-  creditBalanceCentavos: number
   amountPaidCentavos: number
   expiryDateLabel?: string
   paymongoPaymentIntentId?: string | null
@@ -160,8 +158,6 @@ const styles = StyleSheet.create({
 function MembershipCertificateDocument({
   customerName,
   tierName,
-  activationFeeCentavos,
-  creditBalanceCentavos,
   amountPaidCentavos,
   expiryDateLabel,
   paymongoPaymentIntentId,
@@ -179,12 +175,12 @@ function MembershipCertificateDocument({
 
           <View style={styles.ledger}>
             <View style={styles.ledgerRow}>
-              <Text style={styles.ledgerLabel}>Activation Fee</Text>
-              <Text style={styles.ledgerValue}>{formatCentavos(activationFeeCentavos)}</Text>
+              <Text style={styles.ledgerLabel}>Plan</Text>
+              <Text style={styles.ledgerValue}>{tierName}</Text>
             </View>
             <View style={styles.ledgerRow}>
-              <Text style={styles.ledgerLabel}>F&amp;B Credit</Text>
-              <Text style={styles.ledgerValue}>{formatCentavos(creditBalanceCentavos)}</Text>
+              <Text style={styles.ledgerLabel}>Term</Text>
+              <Text style={styles.ledgerValue}>12 months</Text>
             </View>
             <View style={styles.ledgerTotalRow}>
               <Text style={styles.ledgerTotalLabel}>Total Paid</Text>
