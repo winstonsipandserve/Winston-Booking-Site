@@ -234,13 +234,14 @@ interface SendMembershipPaymentEmailInput {
   paymentUrl: string
 }
 
+/** Resolves true only when Resend accepted the message; failures are logged, never thrown. */
 export async function sendMembershipPaymentEmail({
   to,
   name,
   tierName,
   amountCentavos,
   paymentUrl,
-}: SendMembershipPaymentEmailInput): Promise<void> {
+}: SendMembershipPaymentEmailInput): Promise<boolean> {
   const bodyHtml = `
     <p>Hi ${escapeHtml(name)},</p>
     <p>Great news — your ${tierName} membership application has been approved! There's just one step left before your membership is active.</p>
@@ -281,9 +282,12 @@ export async function sendMembershipPaymentEmail({
     if (!res.ok) {
       const errorBody = await res.text()
       console.error('Resend sendMembershipPaymentEmail failed', res.status, errorBody)
+      return false
     }
+    return true
   } catch (err) {
     console.error('Resend sendMembershipPaymentEmail threw', err)
+    return false
   }
 }
 
@@ -504,11 +508,12 @@ interface SendRejectionEmailInput {
   reason: string
 }
 
+/** Resolves true only when Resend accepted the message; failures are logged, never thrown. */
 export async function sendRejectionEmail({
   to,
   name,
   reason,
-}: SendRejectionEmailInput): Promise<void> {
+}: SendRejectionEmailInput): Promise<boolean> {
   const bodyHtml = `
     <p>Thank you for taking the time to apply for membership at Winston Sip &amp; Serve. We've completed our review of your application.</p>
     <p>After careful review, we're unable to offer you membership at this time.</p>
@@ -546,9 +551,12 @@ export async function sendRejectionEmail({
     if (!res.ok) {
       const errorBody = await res.text()
       console.error('Resend sendRejectionEmail failed', res.status, errorBody)
+      return false
     }
+    return true
   } catch (err) {
     console.error('Resend sendRejectionEmail threw', err)
+    return false
   }
 }
 

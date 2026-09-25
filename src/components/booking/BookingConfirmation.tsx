@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { formatCentavos } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos, formatResourceName } from '@/lib/format'
 
 export interface BookingAddOn {
   service: string
@@ -61,13 +61,13 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
           <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
             <dt className="text-gray-500">Resource</dt>
             <dd className="text-right font-medium text-gray-900">
-              {booking.resource.typeName} — {booking.resource.label}
+              {formatResourceName(booking.resource.typeName, booking.resource.label)}
             </dd>
           </div>
           <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
             <dt className="text-gray-500">Date &amp; time</dt>
             <dd className="text-right font-medium text-gray-900">
-              {start.toLocaleString('en-PH')}
+              {formatBookingDateTime(start)}
             </dd>
           </div>
           <div className="flex justify-between gap-4 border-t border-gray-200 py-3">

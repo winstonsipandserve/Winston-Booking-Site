@@ -1,5 +1,5 @@
 import { RateTier } from '@prisma/client'
-import { formatCentavos } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos } from '@/lib/format'
 import { LocationIcon, CalendarIcon, ClockIcon, GuestsIcon, CoachingIcon } from '@/components/ui/Icons'
 
 interface BookingSummaryProps {
@@ -60,7 +60,7 @@ export default function BookingSummary({
   showIcons = false,
   bookingReference,
 }: BookingSummaryProps) {
-  const startDisplay = startTimeLocal ? new Date(startTimeLocal).toLocaleString('en-PH') : ''
+  const startDisplay = startTimeLocal ? formatBookingDateTime(new Date(startTimeLocal)) : ''
   // Undiscounted court/simulator amount: the estimate minus the guest fee, plus the discount back.
   const chargedGuests = Math.max(0, guestCount - guestPassesApplied)
   const baseEstimateCentavos =

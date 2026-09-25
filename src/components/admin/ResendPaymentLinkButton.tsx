@@ -70,7 +70,12 @@ function ResendPaymentLinkModal({
         return
       }
       router.refresh()
-      setConfirmation('Payment link sent.')
+      if (json?.paymentEmailSent === false) {
+        // A new link was issued but the email did not go out; let the admin retry from here.
+        setError('The payment link email failed to send. Please try again.')
+      } else {
+        setConfirmation('Payment link sent.')
+      }
       setIsSubmitting(false)
     } catch {
       setError('Something went wrong. Please try again.')

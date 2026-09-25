@@ -32,15 +32,6 @@ Also shipped: guest passes and the birthday-month court hour (derived per-term a
 
 - **Memberships created before September 2026 lapse at the exact PayMongo payment instant**, not at end of day Manila. No backfill has been run; a one-off `UPDATE` setting `end_date` to 23:59:59.999 Asia/Manila of its current date would align them, and must be reviewed before running.
 
-### Display and reporting
-
-- The membership approve/reject route reports its email as sent unconditionally. The underlying senders swallow send failures internally and the route never checks their result, so a real delivery failure is invisible to the admin. No fix scoped yet.
-- Several date-formatting calls in the email, webhook, and membership-lookup modules use a Philippine locale with no explicit time zone, and so fall back to the server runtime's zone. Flagged as likely correctness bugs, not yet confirmed.
-
-### Dead code
-
-- `src/components/admin/ComingSoonSection.tsx` is referenced nowhere.
-
 ---
 
 ## Deferred By Decision

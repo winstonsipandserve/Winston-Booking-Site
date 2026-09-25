@@ -76,12 +76,11 @@ export async function PATCH(
       )
       return updated
     })
-    await sendRejectionEmail({
+    const rejectionEmailSent = await sendRejectionEmail({
       to: application.customer.email,
       name: application.customer.name,
       reason: updated.rejectionReason as string,
     })
-    const rejectionEmailSent = true
     return Response.json({ ...updated, rejectionEmailSent }, { status: 200 })
   }
 
@@ -118,14 +117,13 @@ export async function PATCH(
   const tierName = formatMembershipPlanLabel(application.requestedTier, quote.isFounding)
   const amountCentavos = quote.amountCentavos
   const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/pay/${application.id}?token=${rawToken}`
-  await sendMembershipPaymentEmail({
+  const paymentEmailSent = await sendMembershipPaymentEmail({
     to: application.customer.email,
     name: application.customer.name,
     tierName,
     amountCentavos,
     paymentUrl,
   })
-  const paymentEmailSent = true
 
   return Response.json({ application: updatedApplication, paymentEmailSent }, { status: 200 })
 }

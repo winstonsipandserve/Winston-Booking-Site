@@ -34,8 +34,15 @@ export default function MembershipReviewActions({
         setIsApproving(false)
         return
       }
+      const json = await res.json().catch(() => null)
       router.refresh()
-      toast.success('Application approved. Payment link sent to the applicant.')
+      if (json?.paymentEmailSent === false) {
+        toast.error(
+          'Application approved, but the payment link email failed to send. Use Resend Payment Link to try again.',
+        )
+      } else {
+        toast.success('Application approved. Payment link sent to the applicant.')
+      }
     } catch {
       setError('Something went wrong. Please try again.')
       setIsApproving(false)
@@ -202,8 +209,13 @@ function RejectModal({
         setIsSubmitting(false)
         return
       }
+      const json = await res.json().catch(() => null)
       router.refresh()
-      toast.success('Application rejected.')
+      if (json?.rejectionEmailSent === false) {
+        toast.error('Application rejected, but the rejection email failed to send. Contact the applicant directly.')
+      } else {
+        toast.success('Application rejected.')
+      }
       onClose()
     } catch {
       setError('Something went wrong. Please try again.')

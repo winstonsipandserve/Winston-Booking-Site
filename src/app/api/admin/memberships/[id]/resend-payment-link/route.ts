@@ -64,7 +64,7 @@ export async function POST(
   const tierName = formatMembershipPlanLabel(application.requestedTier, quote.isFounding)
   const amountCentavos = quote.amountCentavos
   const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL}/membership/pay/${application.id}?token=${rawToken}`
-  await sendMembershipPaymentEmail({
+  const paymentEmailSent = await sendMembershipPaymentEmail({
     to: application.customer.email,
     name: application.customer.name,
     tierName,
@@ -72,5 +72,5 @@ export async function POST(
     paymentUrl,
   })
 
-  return Response.json({ success: true }, { status: 200 })
+  return Response.json({ success: true, paymentEmailSent }, { status: 200 })
 }
