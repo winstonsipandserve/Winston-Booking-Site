@@ -225,7 +225,7 @@ All row selection goes through `src/lib/membership-current.ts`:
 
 Ties are broken by `MEMBERSHIP_RELEVANCE_ORDER` (`endDate desc, startDate desc, id asc`), so a customer with two rows always resolves the same way. `getMembershipDisplayStatus()` layers application status on top: `pending`/`rejected` win, an approved application with no row is `awaiting_payment`, otherwise `endDate >= now`.
 
-`endDate` for rows created after September 2026 is 23:59:59.999 Asia/Manila on the last day of the term (`computeMembershipEndDate`); older rows carry the exact PayMongo `paid_at` instant.
+`endDate` is 23:59:59.999 Asia/Manila on the last day of the term (`computeMembershipEndDate`). The database was recreated in September 2026 with no membership rows, so no row carries the older payment-instant end date.
 
 ---
 

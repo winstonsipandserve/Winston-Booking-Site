@@ -28,9 +28,7 @@ Also shipped: guest passes and the birthday-month court hour (derived per-term a
 
 ## Known Bugs
 
-### Correctness
-
-- **Memberships created before September 2026 lapse at the exact PayMongo payment instant**, not at end of day Manila. No backfill has been run; a one-off `UPDATE` setting `end_date` to 23:59:59.999 Asia/Manila of its current date would align them, and must be reviewed before running.
+None currently known. Nothing here has been verified under real conditions, though — see Verification Status above.
 
 ---
 
