@@ -542,7 +542,7 @@ export default async function AdminMembershipApplicationDetailPage({
                       Resource
                     </th>
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                      Guests
+                      Non-member guests
                     </th>
                     <th className="border-b border-gray-200 px-4 py-2.5 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                       Status

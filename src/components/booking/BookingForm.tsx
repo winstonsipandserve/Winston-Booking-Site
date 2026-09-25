@@ -13,7 +13,7 @@ import { formatCentavos } from '@/lib/format'
 import {
   MAX_COURT_DURATION_MINUTES,
   NON_MEMBER_ADVANCE_BOOKING_DAYS,
-  maxGuestsForRateTier,
+  maxNonMemberGuestsForRateTier,
 } from '@/lib/booking-limits'
 import { tierDiscountCentavos } from '@/lib/membership-pricing'
 import { toPhDateString } from '@/lib/business-hours'
@@ -253,7 +253,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
 
   // The guest cap follows the rate tier, which follows the chosen date (docs/business.md →
   // Guest Fee); handleDateSelect clamps the count when a date change lowers the cap.
-  const maxGuests = maxGuestsForRateTier(rateTier)
+  const maxGuests = maxNonMemberGuestsForRateTier(rateTier)
 
   const coachingPricing = useMemo(
     () => getCoachingPricing(selectedResourceType, rateTier),
@@ -318,7 +318,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
       }
     }
     // A date outside every term drops the guest cap from the member to the non-member limit.
-    const nextMaxGuests = maxGuestsForRateTier(nextRateTier)
+    const nextMaxGuests = maxNonMemberGuestsForRateTier(nextRateTier)
     if (guestCount > nextMaxGuests) {
       setGuestCount(nextMaxGuests)
     }

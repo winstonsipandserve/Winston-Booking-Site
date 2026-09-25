@@ -7,7 +7,7 @@ import { COURT_DURATION_CAP_ERROR, priceBooking } from '@/lib/booking-pricing'
 import {
   MAX_COURT_DURATION_MINUTES,
   NON_MEMBER_ADVANCE_BOOKING_DAYS,
-  maxGuestsForRateTier,
+  maxNonMemberGuestsForRateTier,
 } from '@/lib/booking-limits'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { manilaCalendarDaysBetween } from '@/lib/manila-date'
@@ -133,10 +133,10 @@ export async function POST(request: Request) {
   const tierPlan = activeMembership ? MEMBERSHIP_TIER_PLANS[activeMembership.tier] : null
   const bookingDiscountPercent = tierPlan?.bookingDiscountPercent ?? 0
 
-  const maxGuests = maxGuestsForRateTier(isMember ? 'member' : 'non_member')
+  const maxGuests = maxNonMemberGuestsForRateTier(isMember ? 'member' : 'non_member')
   if (guestCount > maxGuests) {
     return Response.json(
-      { error: `Up to ${maxGuests} guests can be added to this booking` },
+      { error: `Up to ${maxGuests} non-member guests can be added to this booking` },
       { status: 400 },
     )
   }

@@ -76,7 +76,7 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
           </div>
           {booking.guestCount > 0 && (
             <div className="flex justify-between gap-4 border-t border-gray-200 py-3">
-              <dt className="text-gray-500">Guests</dt>
+              <dt className="text-gray-500">Non-member guests</dt>
               <dd className="text-right font-medium text-gray-900">{booking.guestCount}</dd>
             </div>
           )}
@@ -119,7 +119,7 @@ export default function BookingConfirmation({ booking }: BookingConfirmationProp
                 {booking.guestCount > 0 && (
                   <div className="flex justify-between gap-4 text-sm">
                     <dt className="text-gray-500">
-                      Guests — {booking.guestCount} Pax
+                      Non-member guests — {booking.guestCount} Pax
                       {booking.guestPassesUsed > 0 &&
                         ` (${booking.guestPassesUsed} guest pass${booking.guestPassesUsed === 1 ? '' : 'es'})`}
                     </dt>

@@ -531,7 +531,7 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
   const TAB_ITEMS: { key: Tab; label: string }[] = [
     { key: 'courts', label: 'Courts' },
     { key: 'simulators', label: 'Simulators' },
-    { key: 'guestFee', label: 'Guest Fee' },
+    { key: 'guestFee', label: 'Non-Member Guest Fee' },
   ]
 
   return (
@@ -565,31 +565,33 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
         {activeTab === 'guestFee' && guestFeeRule && (
           <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Guest Fee</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Non-Member Guest Fee</h2>
               <ActionIconButton
-                label="Edit Guest Fee"
+                label="Edit Non-Member Guest Fee"
                 onClick={() => setEditingGuestFee(true)}
               />
             </div>
             <div className="flex items-center justify-between gap-4 py-2 text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Fee per additional guest</span>
+              <span className="text-gray-500 dark:text-gray-400">Fee per additional non-member guest</span>
               <span className="text-right font-medium text-gray-900 dark:text-gray-100">
-                {formatCentavos(guestFeeRule.amountCentavos)}/guest
+                {formatCentavos(guestFeeRule.amountCentavos)}/non-member guest
               </span>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Applies to every booking, member or non-member, on courts and simulators, regardless of
-              duration; the booker is exempt from their own guest fee. Members may add up to 7 guests,
-              non-members up to 3.
+              Applies only to non-member guests, on every booking (courts and simulators, member or
+              non-member booker), regardless of duration; the booker is exempt from their own guest
+              fee. A member may add up to 7 non-member guests, a non-member up to 3. A guest who is
+              themself a Winston member is free, uncapped, and never logged on the booking — staff
+              verify their membership in person at check-in.
             </p>
             <PriceEditModal
               isOpen={editingGuestFee}
               onClose={() => setEditingGuestFee(false)}
-              title="Edit Guest Fee"
+              title="Edit Non-Member Guest Fee"
               fields={[
                 {
                   key: 'amount',
-                  label: 'Guest fee (per guest)',
+                  label: 'Guest fee (per non-member guest)',
                   endpoint: `/api/admin/guest-fee-rule/${guestFeeRule.id}`,
                   bodyKey: 'amountCentavos',
                   currentCentavos: guestFeeRule.amountCentavos,

@@ -10,6 +10,7 @@ export interface PriceBookingInput {
   resourceTypeId: string
   category: ResourceCategory
   durationMinutes: number
+  /** Non-member guests only — a guest who is themself a member is free and never counted here. */
   guestCount: number
   coaching: boolean
   coachingPaxCount: number | null

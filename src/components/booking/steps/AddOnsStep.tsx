@@ -62,7 +62,7 @@ export default function AddOnsStep({
 
       <div className="flex flex-col gap-2">
         <label htmlFor="guestCount" className="text-sm font-medium text-gray-900">
-          Number of guests
+          Number of non-member guests
         </label>
         <div
           id="guestCount"
@@ -70,7 +70,7 @@ export default function AddOnsStep({
         >
           <button
             type="button"
-            aria-label="Decrease guest count"
+            aria-label="Decrease non-member guest count"
             onClick={() => onGuestCountChange(Math.max(0, guestCount - 1))}
             disabled={guestCount <= 0}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-900 text-lg font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -80,7 +80,7 @@ export default function AddOnsStep({
           <span className="text-base font-medium text-gray-900">{guestCount}</span>
           <button
             type="button"
-            aria-label="Increase guest count"
+            aria-label="Increase non-member guest count"
             onClick={() => onGuestCountChange(Math.min(maxGuests, guestCount + 1))}
             disabled={guestCount >= maxGuests}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-900 text-lg font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
@@ -89,8 +89,9 @@ export default function AddOnsStep({
           </button>
         </div>
         <p className="text-sm text-gray-500">
-          {formatCentavos(guestFeeCentavos)} fee applies per additional guest · up to {maxGuests}{' '}
-          guests.
+          {formatCentavos(guestFeeCentavos)} fee applies per additional non-member guest · up to{' '}
+          {maxGuests} non-member guests. A guest who is themself a Winston member enters free and
+          doesn&apos;t need to be added here.
         </p>
         {guestPassesRemaining > 0 && guestCount > 0 && (
           <label className="flex cursor-pointer items-start gap-3 rounded-md border border-gray-200 px-4 py-3 text-sm text-gray-900">
@@ -105,7 +106,7 @@ export default function AddOnsStep({
               <span className="block text-xs text-gray-500">
                 {guestPassesRemaining} left this term
                 {useGuestPasses && guestPassesApplied > 0
-                  ? ` · waives the fee for ${guestPassesApplied} guest${guestPassesApplied === 1 ? '' : 's'}`
+                  ? ` · waives the fee for ${guestPassesApplied} non-member guest${guestPassesApplied === 1 ? '' : 's'}`
                   : ''}
               </span>
             </span>

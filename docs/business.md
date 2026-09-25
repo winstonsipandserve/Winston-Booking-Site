@@ -116,20 +116,22 @@ Base court and simulator rates, coaching rates, and the guest fee are **admin-ed
 
 ## Guest Fee
 
-A flat **₱100 per additional guest**.
+A flat **₱100 per additional non-member guest**.
 
-- Applies to **all bookings** — every resource type (courts and simulators), members and non-members alike. It is not reduced by the member discount.
-- **Independent of booking duration.** A 30-minute simulator session and a 3-hour court booking incur the same per-guest fee.
-- **The booker is exempt from their own guest fee** — only additional guests are charged.
-- **Guest cap depends on who is booking:** a **member** may add up to **7** guests per booking; a **non-member** (or a member on a date no term covers) may add up to **3**. The cap follows the term covering the slot, like every other member benefit.
-- **Members may waive the fee with complimentary guest passes** — see Membership → Guest passes.
-- Charged as a **single lump sum to the booker** covering base rate + (guest fee × unwaived guest count). One payment for the whole booking, never split per guest.
+- **Applies to non-member guests only.** The guest count field, the fee, and the guest cap all exist solely to account for guests who are not Winston members — on every resource type (courts and simulators), regardless of whether the booker is a member. It is not reduced by the member discount.
+- **A guest who is themself a Winston member is free — no fee, no cap, no record.** They are not entered anywhere on the booking (public or member wizard); the booking system has no field for them at all. Their membership is verified in person by front-desk staff at check-in, entirely outside the booking flow. Confirmed by the client.
+- **Independent of booking duration.** A 30-minute simulator session and a 3-hour court booking incur the same per-non-member-guest fee.
+- **The booker is exempt from their own guest fee** — only additional non-member guests are charged.
+- **Guest cap depends on who is booking, and counts non-member guests only:** a **member of any tier** (Player, Premier, or Elite) may add up to **7** non-member guests per booking; a **non-member** (or a member on a date no term covers) may add up to **3**. The cap follows the term covering the slot, like every other member benefit. A member may still bring any number of guests who are themselves members — that's untracked and uncapped, since it costs nothing and isn't the thing being rationed.
+- **Members may waive the fee with complimentary guest passes** — see Membership → Guest passes. Passes only ever apply to non-member guests, since a member guest is already free.
+- Charged as a **single lump sum to the booker** covering base rate + (guest fee × unwaived non-member guest count). One payment for the whole booking, never split per guest.
 - **Admin-editable**, not hardcoded.
 
 Worked examples:
 
-- **Court**: 4-person pickleball court booking (1 booker + 3 guests, the non-member maximum), non-member — ₱750 court + (3 × ₱100) = **₱1,050**, charged to the booker.
-- **Simulator**: Premier member golf-sim booking (60 min) with 2 additional guests and no passes left — (₱1,200 − 10%) + (2 × ₱100) = **₱1,280**, charged to the booker.
+- **Court**: 4-person pickleball court booking (1 booker + 3 non-member guests, the non-member-booker maximum), non-member — ₱750 court + (3 × ₱100) = **₱1,050**, charged to the booker.
+- **Simulator**: Premier member golf-sim booking (60 min) with 2 additional non-member guests and no passes left — (₱1,200 − 10%) + (2 × ₱100) = **₱1,280**, charged to the booker.
+- A member's booking with 2 non-member guests and 3 guests who are themselves Winston members pays and is capped for the 2 non-member guests only; the 3 member guests are free and never appear on the booking.
 
 ---
 
@@ -192,9 +194,9 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 ### Guest passes
 
 - Each tier grants a fixed number of complimentary guest passes **per membership term** (2 / 4 / 6).
-- **One pass waives the ₱100 guest fee for one guest on one booking.** A booking with three guests and two passes remaining pays one guest fee.
+- **One pass waives the ₱100 fee for one non-member guest on one booking.** A booking with three non-member guests and two passes remaining pays one guest fee. Passes have nothing to waive on a guest who is themself a member, since that guest is never charged or logged in the first place.
 - A pass is reserved the moment a booking hold is created and stays used once the booking is confirmed; an abandoned hold releases it. Because customers cannot cancel, a confirmed booking's passes are never returned; an admin reschedule keeps the passes on the moved booking.
-- Passes apply automatically (up to the number of guests) and the member may untick them on the Add-Ons step to keep them for another booking.
+- Passes apply automatically (up to the number of non-member guests) and the member may untick them on the Add-Ons step to keep them for another booking.
 - **Unused passes expire with the term** and do not carry into a queued renewal, which starts with its own full allowance.
 
 ### Birthday-month court hour

@@ -658,7 +658,7 @@ export async function sendBookingConfirmationEmail({
           ...(guestCount > 0
             ? [
                 ledgerRow(
-                  `Guests — ${guestCount} Pax${guestPassesUsed > 0 ? ` (${guestPassesUsed} guest pass${guestPassesUsed === 1 ? '' : 'es'})` : ''}`,
+                  `Non-member guests — ${guestCount} Pax${guestPassesUsed > 0 ? ` (${guestPassesUsed} guest pass${guestPassesUsed === 1 ? '' : 'es'})` : ''}`,
                   formatCentavos(guestFeeCentavos),
                   false,
                   true,
@@ -989,7 +989,7 @@ export async function sendStaffBookingNotificationEmail({
           ...(guestCount > 0
             ? [
                 ledgerRow(
-                  `Guests — ${guestCount} Pax${guestPassesUsed > 0 ? ` (${guestPassesUsed} guest pass${guestPassesUsed === 1 ? '' : 'es'})` : ''}`,
+                  `Non-member guests — ${guestCount} Pax${guestPassesUsed > 0 ? ` (${guestPassesUsed} guest pass${guestPassesUsed === 1 ? '' : 'es'})` : ''}`,
                   formatCentavos(guestFeeCentavos),
                   false,
                   true,

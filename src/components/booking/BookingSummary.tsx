@@ -121,7 +121,7 @@ export default function BookingSummary({
         <div className="flex items-center justify-between gap-4 border-t border-gray-200 py-3">
           <dt className="flex items-center gap-2 text-gray-500">
             <RowIcon icon={GuestsIcon} show={showIcons} />
-            Guests
+            Non-member guests
             {guestCount > 0 && ` — ${guestCount}`}
             {guestPassesApplied > 0 &&
               ` (${guestPassesApplied} guest pass${guestPassesApplied === 1 ? '' : 'es'})`}
