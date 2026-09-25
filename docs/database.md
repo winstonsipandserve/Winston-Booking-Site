@@ -52,8 +52,8 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 | Enum | Values |
 |---|---|
-| `ResourceTypeSlug` | `pickleball_court`, `tennis_sim`, `pickleball_sim`, `golf_sim` |
-| `ResourceCategory` | `court`, `simulator` |
+| `ResourceTypeSlug` | `pickleball_court`, `tennis_sim`, `pickleball_sim`, `golf_sim`, `lounge`, `conference_room` |
+| `ResourceCategory` | `court`, `simulator`, `space` |
 | `RateTier` | `member`, `non_member` |
 | `BookingStatus` | `pending_payment`, `confirmed`, `cancelled` |
 | `ApplicationStatus` | `pending`, `approved`, `rejected` |
@@ -80,7 +80,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 ## Resources & Pricing
 
-**`ResourceType`** — the four bookable kinds, keyed by `slug` (unique). Carries `category` (court or simulator). Parent of resources, pricing rules, and add-on pricing rules.
+**`ResourceType`** — the six bookable kinds, keyed by `slug` (unique). Carries `category` (court, simulator, or space). Courts and spaces are priced hourly from a single 60-minute rule; simulators by duration tier. Spaces take no member discount and no birthday perk (`categoryHasMemberPricing`, `src/lib/booking-limits.ts`). Parent of resources, pricing rules, and add-on pricing rules.
 
 **`Resource`** — a specific physical unit (Court 1, Bay 2), belonging to a `ResourceType`. Bookings reference a `Resource`, never a `ResourceType`.
 
@@ -284,6 +284,6 @@ Master SQL: `prisma/manual-sql/enable-rls-deny-all.sql`.
 
 ## Seed Data
 
-`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds only reference configuration: the 4 resource types, 6 resources, 6 base pricing rules, the ₱100 guest fee rule, 1 add-on service, and 8 add-on pricing rules. It creates no announcements or news posts. Exact reference-data values are in [business.md](business.md).
+`prisma/seed.ts` (`npm run db:seed`) is idempotent and seeds only reference configuration: the 6 resource types, 8 resources, 8 base pricing rules, the ₱100 guest fee rule, 1 add-on service, and 8 add-on pricing rules. It creates no announcements or news posts. Exact reference-data values are in [business.md](business.md).
 
 **The seed creates no admin user.** There is no reproducible admin bootstrap — admin accounts exist only in the live database. See [roadmap.md](roadmap.md).

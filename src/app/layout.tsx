@@ -11,7 +11,7 @@ const manrope = Manrope({ variable: "--font-manrope", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Winston Sip & Serve",
   description:
-    "Tennis, pickleball, and golf simulator bays — paired with craft coffee and a members-only bar.",
+    "Tennis, pickleball, and golf simulator bays, a bookable lounge and conference room — paired with craft coffee and a members-only bar.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

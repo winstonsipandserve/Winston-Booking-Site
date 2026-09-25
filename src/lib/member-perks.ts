@@ -1,8 +1,9 @@
-import type { Membership, Prisma } from '@prisma/client'
+import type { Membership, Prisma, ResourceCategory } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { occupyingSlotCondition } from '@/lib/booking-hold'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
 import { manilaDateKey } from '@/lib/manila-date'
+import { categoryHasMemberPricing } from '@/lib/booking-limits'
 
 // Per-term member perks (docs/business.md → Membership): complimentary guest passes and the
 // birthday-month court hour. Neither is a counter on the membership. A perk is "used" by a
@@ -90,15 +91,17 @@ export async function getBirthdayPerkStatus(
 
 /**
  * Whether the birthday hour may be redeemed on a slot: the member has a birthday on file,
- * the slot's Manila month is that month, the booking is exactly one hour, and the term has
- * not used it yet.
+ * the slot's Manila month is that month, the booking is exactly one hour on a court or
+ * simulator (never a space), and the term has not used it yet.
  */
 export function birthdayPerkEligible(
   status: BirthdayPerkStatus,
   slotStart: Date,
   durationMinutes: number,
+  category: ResourceCategory,
 ): boolean {
   return (
+    categoryHasMemberPricing(category) &&
     status.birthdayMonth !== null &&
     !status.used &&
     durationMinutes === 60 &&

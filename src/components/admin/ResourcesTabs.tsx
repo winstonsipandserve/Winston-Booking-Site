@@ -26,7 +26,7 @@ type ResourceTypeWithRelations = Prisma.ResourceTypeGetPayload<{
 
 type ResourceRow = ResourceTypeWithRelations['resources'][number]
 
-type Tab = 'courts' | 'simulators' | 'guestFee'
+type Tab = 'courts' | 'simulators' | 'spaces' | 'guestFee'
 
 function pluralize(count: number, singular: string): string {
   return `${count} ${singular}${count === 1 ? '' : 's'}`
@@ -122,6 +122,11 @@ function ResourceTypeCard({
     onConfirm: () => void
   } | null>(null)
   const isCourt: boolean = rt.category === ('court' as ResourceCategory)
+  // Courts and spaces are priced per hour; simulators by duration tier.
+  const isHourly: boolean = rt.category !== ('simulator' as ResourceCategory)
+  // Spaces are a flat rate for everyone and offer no coaching (docs/business.md → Pricing).
+  const isSpace: boolean = rt.category === ('space' as ResourceCategory)
+  const hasAddOns = !isSpace
 
 
   function openCreateRate(durationMinutes: number, rowLabel: string) {
@@ -179,7 +184,7 @@ function ResourceTypeCard({
       },
     })
   }
-  const durations = isCourt
+  const durations = isHourly
     ? [60]
     : Array.from(new Set(rt.pricingRules.map((r) => r.durationMinutes))).sort((a, b) => a - b)
 
@@ -242,7 +247,7 @@ function ResourceTypeCard({
   const disabledCount = rt.resources.filter((r) => !r.isActive).length
   const summaryParts: string[] = []
   if (baseRate !== undefined) {
-    const per = isCourt ? '/hr' : `/${baseDuration}m`
+    const per = isHourly ? '/hr' : `/${baseDuration}m`
     summaryParts.push(`${formatCentavos(baseRate)}${per} base rate`)
   }
   if (disabledCount > 0) summaryParts.push(`${disabledCount} disabled`)
@@ -319,7 +324,7 @@ function ResourceTypeCard({
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                    {isCourt ? 'Rate' : 'Duration'}
+                    {isHourly ? 'Rate' : 'Duration'}
                   </th>
                   <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
                     Base rate
@@ -331,7 +336,7 @@ function ResourceTypeCard({
               </thead>
               <tbody>
                 {durations.map((duration) => {
-                  const rowLabel = isCourt ? 'Hourly rate' : durationLabel(duration)
+                  const rowLabel = isHourly ? 'Hourly rate' : durationLabel(duration)
                   const rule = findRateRule(duration)
                   return (
                     <tr key={duration} className="border-b border-gray-100 last:border-b-0 dark:border-gray-800">
@@ -362,127 +367,130 @@ function ResourceTypeCard({
             </table>
           </div>
           <p className="-mt-3 mb-5 text-xs text-gray-500 dark:text-gray-400">
-            Members pay these base rates less their tier discount ({tierDiscountSummary}). The
-            discount is fixed in code, not editable here.
+            {isSpace
+              ? 'Flat hourly rate for everyone. Member tier discounts and the birthday hour do not apply to spaces, and no coaching is offered.'
+              : `Members pay these base rates less their tier discount (${tierDiscountSummary}). The discount is fixed in code, not editable here.`}
           </p>
 
-          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
-            <table className="w-full min-w-[500px] border-collapse text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                    Add-on
-                  </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                    Member
-                  </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                    Non-Member
-                  </th>
-                  <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {isCourt ? (
-                  <>
-                    <tr className="border-b border-gray-100 dark:border-gray-800">
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching (1 pax)</td>
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                        <PriceCell
-                          price={findCoaching('member', 1)}
-                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 1)}
-                          addLabel="Add Coaching (1 pax) member rate"
-                          onAdd={() => openCreateCoaching('member', 1, 'Coaching (1 pax)')}
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                        <PriceCell
-                          price={findCoaching('non_member', 1)}
-                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 1)}
-                          addLabel="Add Coaching (1 pax) non-member rate"
-                          onAdd={() => openCreateCoaching('non_member', 1, 'Coaching (1 pax)')}
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        {(() => {
-                          const fields = buildCoachingFields(1)
-                          return fields.length > 0 ? (
-                            <ActionIconButton
-                              label="Edit Coaching (1 pax)"
-                              onClick={() => setEditingRow({ title: 'Edit Coaching (1 pax)', fields })}
-                            />
-                          ) : null
-                        })()}
-                      </td>
-                    </tr>
-                    <tr className="border-b border-gray-100 dark:border-gray-800">
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching (2 pax)</td>
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                        <PriceCell
-                          price={findCoaching('member', 2)}
-                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 2)}
-                          addLabel="Add Coaching (2 pax) member rate"
-                          onAdd={() => openCreateCoaching('member', 2, 'Coaching (2 pax)')}
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                        <PriceCell
-                          price={findCoaching('non_member', 2)}
-                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 2)}
-                          addLabel="Add Coaching (2 pax) non-member rate"
-                          onAdd={() => openCreateCoaching('non_member', 2, 'Coaching (2 pax)')}
-                        />
-                      </td>
-                      <td className="px-3 py-2">
-                        {(() => {
-                          const fields = buildCoachingFields(2)
-                          return fields.length > 0 ? (
-                            <ActionIconButton
-                              label="Edit Coaching (2 pax)"
-                              onClick={() => setEditingRow({ title: 'Edit Coaching (2 pax)', fields })}
-                            />
-                          ) : null
-                        })()}
-                      </td>
-                    </tr>
-                  </>
-                ) : (
-                  <tr className="last:border-b-0">
-                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching</td>
-                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                      <PriceCell
-                        price={findCoaching('member', null)}
-                        allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', null)}
-                        addLabel="Add Coaching member rate"
-                        onAdd={() => openCreateCoaching('member', null, 'Coaching')}
-                      />
-                    </td>
-                    <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
-                      <PriceCell
-                        price={findCoaching('non_member', null)}
-                        allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', null)}
-                        addLabel="Add Coaching non-member rate"
-                        onAdd={() => openCreateCoaching('non_member', null, 'Coaching')}
-                      />
-                    </td>
-                    <td className="px-3 py-2">
-                      {(() => {
-                        const fields = buildCoachingFields(null)
-                        return fields.length > 0 ? (
-                          <ActionIconButton
-                            label="Edit Coaching"
-                            onClick={() => setEditingRow({ title: 'Edit Coaching', fields })}
-                          />
-                        ) : null
-                      })()}
-                    </td>
+          {hasAddOns && (
+            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+              <table className="w-full min-w-[500px] border-collapse text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Add-on
+                    </th>
+                    <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Member
+                    </th>
+                    <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Non-Member
+                    </th>
+                    <th className="border-b border-gray-200 px-3 py-2 text-left font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-300">
+                      Actions
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {isCourt ? (
+                    <>
+                      <tr className="border-b border-gray-100 dark:border-gray-800">
+                        <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching (1 pax)</td>
+                        <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
+                          <PriceCell
+                            price={findCoaching('member', 1)}
+                            allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 1)}
+                            addLabel="Add Coaching (1 pax) member rate"
+                            onAdd={() => openCreateCoaching('member', 1, 'Coaching (1 pax)')}
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
+                          <PriceCell
+                            price={findCoaching('non_member', 1)}
+                            allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 1)}
+                            addLabel="Add Coaching (1 pax) non-member rate"
+                            onAdd={() => openCreateCoaching('non_member', 1, 'Coaching (1 pax)')}
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          {(() => {
+                            const fields = buildCoachingFields(1)
+                            return fields.length > 0 ? (
+                              <ActionIconButton
+                                label="Edit Coaching (1 pax)"
+                                onClick={() => setEditingRow({ title: 'Edit Coaching (1 pax)', fields })}
+                              />
+                            ) : null
+                          })()}
+                        </td>
+                      </tr>
+                      <tr className="border-b border-gray-100 dark:border-gray-800">
+                        <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching (2 pax)</td>
+                        <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
+                          <PriceCell
+                            price={findCoaching('member', 2)}
+                            allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', 2)}
+                            addLabel="Add Coaching (2 pax) member rate"
+                            onAdd={() => openCreateCoaching('member', 2, 'Coaching (2 pax)')}
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
+                          <PriceCell
+                            price={findCoaching('non_member', 2)}
+                            allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', 2)}
+                            addLabel="Add Coaching (2 pax) non-member rate"
+                            onAdd={() => openCreateCoaching('non_member', 2, 'Coaching (2 pax)')}
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          {(() => {
+                            const fields = buildCoachingFields(2)
+                            return fields.length > 0 ? (
+                              <ActionIconButton
+                                label="Edit Coaching (2 pax)"
+                                onClick={() => setEditingRow({ title: 'Edit Coaching (2 pax)', fields })}
+                              />
+                            ) : null
+                          })()}
+                        </td>
+                      </tr>
+                    </>
+                  ) : (
+                    <tr className="last:border-b-0">
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">Coaching</td>
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
+                        <PriceCell
+                          price={findCoaching('member', null)}
+                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'member', null)}
+                          addLabel="Add Coaching member rate"
+                          onAdd={() => openCreateCoaching('member', null, 'Coaching')}
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-gray-900 dark:text-gray-100">
+                        <PriceCell
+                          price={findCoaching('non_member', null)}
+                          allowed={isValidAddOnPricingRuleCombo('coaching_fee', rt.slug, 'non_member', null)}
+                          addLabel="Add Coaching non-member rate"
+                          onAdd={() => openCreateCoaching('non_member', null, 'Coaching')}
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        {(() => {
+                          const fields = buildCoachingFields(null)
+                          return fields.length > 0 ? (
+                            <ActionIconButton
+                              label="Edit Coaching"
+                              onClick={() => setEditingRow({ title: 'Edit Coaching', fields })}
+                            />
+                          ) : null
+                        })()}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
 
@@ -519,11 +527,18 @@ function ResourceTypeCard({
 interface ResourcesTabsProps {
   courts: ResourceTypeWithRelations[]
   simulators: ResourceTypeWithRelations[]
+  spaces: ResourceTypeWithRelations[]
   guestFeeRule: GuestFeeRule | null
   addOnServices: AddOnService[]
 }
 
-export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnServices }: ResourcesTabsProps) {
+export default function ResourcesTabs({
+  courts,
+  simulators,
+  spaces,
+  guestFeeRule,
+  addOnServices,
+}: ResourcesTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('courts')
   const idPrefix = useId()
   const [editingGuestFee, setEditingGuestFee] = useState(false)
@@ -531,6 +546,7 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
   const TAB_ITEMS: { key: Tab; label: string }[] = [
     { key: 'courts', label: 'Courts' },
     { key: 'simulators', label: 'Simulators' },
+    { key: 'spaces', label: 'Spaces' },
     { key: 'guestFee', label: 'Non-Member Guest Fee' },
   ]
 
@@ -562,6 +578,14 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
           </div>
         )}
 
+        {activeTab === 'spaces' && (
+          <div className="space-y-6">
+            {spaces.map((rt, index) => (
+              <ResourceTypeCard key={rt.id} rt={rt} addOnServices={addOnServices} defaultOpen={index === 0} />
+            ))}
+          </div>
+        )}
+
         {activeTab === 'guestFee' && guestFeeRule && (
           <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between gap-3">
@@ -578,8 +602,8 @@ export default function ResourcesTabs({ courts, simulators, guestFeeRule, addOnS
               </span>
             </div>
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Applies only to non-member guests, on every booking (courts and simulators, member or
-              non-member booker), regardless of duration; the booker is exempt from their own guest
+              Applies only to non-member guests, on every booking (courts, simulators, and spaces,
+              member or non-member booker), regardless of duration; the booker is exempt from their own guest
               fee. A member may add up to 7 non-member guests, a non-member up to 3. A guest who is
               themself a Winston member is free, uncapped, and never logged on the booking — staff
               verify their membership in person at check-in.

@@ -60,7 +60,7 @@ export default function AnnouncementGate({ notices, onContinue }: AnnouncementGa
       <div>
         <h2 className="text-xl font-semibold text-gray-900">Before you book</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Check these current court and bay notices, then continue to choose your slot.
+          Check these current court, bay, and space notices, then continue to choose your slot.
         </p>
       </div>
 

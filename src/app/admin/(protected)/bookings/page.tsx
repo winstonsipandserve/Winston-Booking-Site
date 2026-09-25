@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { prisma } from '@/lib/prisma'
-import { formatCentavos, formatManilaDate, formatManilaTime } from '@/lib/format'
+import { formatCentavos, formatManilaDate, formatManilaTime, formatResourceName } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import { isBookingStatus, buildBookingsWhere } from '@/lib/bookings-query'
 import BookingsFilterModal from '@/components/admin/BookingsFilterModal'
@@ -125,7 +125,7 @@ export default async function AdminBookingsPage({
                     <span title={booking.id}>…{booking.id.slice(-8)}</span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                    {booking.resource.resourceType.name} — {booking.resource.label}
+                    {formatResourceName(booking.resource.resourceType.name, booking.resource.label)}
                   </td>
                   <td className="px-4 py-2.5 text-gray-900 dark:text-gray-100">
                     <div className="max-w-[180px] truncate" title={booking.customerNameSnapshot ?? undefined}>

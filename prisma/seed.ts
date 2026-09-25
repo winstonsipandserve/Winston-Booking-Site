@@ -14,6 +14,8 @@ async function main() {
     { slug: ResourceTypeSlug.tennis_sim, name: 'Tennis Simulator', category: ResourceCategory.simulator },
     { slug: ResourceTypeSlug.pickleball_sim, name: 'Pickleball Simulator', category: ResourceCategory.simulator },
     { slug: ResourceTypeSlug.golf_sim, name: 'Golf Simulator', category: ResourceCategory.simulator },
+    { slug: ResourceTypeSlug.lounge, name: 'Lounge', category: ResourceCategory.space },
+    { slug: ResourceTypeSlug.conference_room, name: 'Conference Room', category: ResourceCategory.space },
   ]
 
   for (const rt of resourceTypes) {
@@ -29,6 +31,8 @@ async function main() {
     { slug: ResourceTypeSlug.tennis_sim, labels: ['Bay 1', 'Bay 2'] },
     { slug: ResourceTypeSlug.pickleball_sim, labels: ['Bay 1'] },
     { slug: ResourceTypeSlug.golf_sim, labels: ['Bay 1'] },
+    { slug: ResourceTypeSlug.lounge, labels: ['Lounge'] },
+    { slug: ResourceTypeSlug.conference_room, labels: ['Conference Room'] },
   ]
 
   for (const group of inventory) {
@@ -45,7 +49,7 @@ async function main() {
     }
   }
 
-  // Court rates are flat hourly — stored as a single durationMinutes=60 row per
+  // Court and space rates are flat hourly — stored as a single durationMinutes=60 row per
   // type/tier that the booking API multiplies by (durationMinutes / 60).
   // Simulator rates are tiered by duration; only the tiers on the client's rate card
   // (docs/business.md → Pricing) have a row. These are BASE rates — a member's tier takes a
@@ -62,6 +66,9 @@ async function main() {
     { slug: ResourceTypeSlug.pickleball_sim, durationMinutes: 60, priceCentavos: 75000 },
     // Golf simulator — 60 minutes only
     { slug: ResourceTypeSlug.golf_sim, durationMinutes: 60, priceCentavos: 120000 },
+    // Spaces (flat hourly). No member discount applies to these — see src/lib/booking-limits.ts.
+    { slug: ResourceTypeSlug.lounge, durationMinutes: 60, priceCentavos: 40000 },
+    { slug: ResourceTypeSlug.conference_room, durationMinutes: 60, priceCentavos: 50000 },
   ]
 
   for (const rule of pricingRules) {
@@ -99,8 +106,8 @@ async function main() {
     })
   }
 
-  // "No row = not offered" — e.g. non-member tennis-sim/pickleball-sim coaching
-  // intentionally has no row (docs/business.md → Add-On Services).
+  // "No row = not offered" — e.g. non-member tennis-sim/pickleball-sim coaching and every
+  // space (lounge, conference room) intentionally have no row (docs/business.md → Add-On Services).
   const addOnPricingRules: {
     serviceSlug: AddOnServiceSlug
     resourceSlug: ResourceTypeSlug

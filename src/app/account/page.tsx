@@ -5,7 +5,7 @@ import AccountProfile from '@/components/account/AccountProfile'
 import MembershipStatusCard from '@/components/account/MembershipStatusCard'
 import RecentBookingsList, { type BookingListItem } from '@/components/account/RecentBookingsList'
 import CreditActivityLog, { type CreditActivityItem } from '@/components/account/CreditActivityLog'
-import { formatBookingDateTime, formatCentavos, formatMembershipExpiryDate } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos, formatMembershipExpiryDate, formatResourceName } from '@/lib/format'
 import { prisma } from '@/lib/prisma'
 import { getOrCreateCheckInToken, generateQrCodeDataUrl } from '@/lib/check-in-token'
 import { buildMembershipDisplayFields } from '@/lib/membership-latest'
@@ -122,7 +122,7 @@ export default async function AccountPage() {
     amountLabel: formatCentavos(Math.abs(tx.amountCentavos)),
     dateLabel: formatBookingDateTime(tx.createdAt),
     bookingLabel: tx.booking
-      ? `${tx.booking.resource.resourceType.name} — ${tx.booking.resource.label} · ${formatBookingDateTime(tx.booking.startTime)}`
+      ? `${formatResourceName(tx.booking.resource.resourceType.name, tx.booking.resource.label)} · ${formatBookingDateTime(tx.booking.startTime)}`
       : null,
   }))
 

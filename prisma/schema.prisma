@@ -16,11 +16,14 @@ enum ResourceTypeSlug {
   tennis_sim
   pickleball_sim
   golf_sim
+  lounge
+  conference_room
 }
 
 enum ResourceCategory {
   court
   simulator
+  space
 }
 
 enum RateTier {

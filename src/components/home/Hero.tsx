@@ -5,7 +5,7 @@ export default function Hero() {
     <section className="flex min-h-[80vh] flex-col items-center justify-center gap-6 bg-white px-6 text-center">
       <h1 className="text-5xl font-bold text-gray-900 md:text-7xl">Winston</h1>
       <p className="max-w-xl text-sm uppercase tracking-[0.2em] text-gray-500">
-        Tennis · Pickleball · Golf Simulator · Café & Bar
+        Tennis · Pickleball · Golf Simulator · Lounge & Conference Room · Café & Bar
       </p>
       <Link
         href="/book"

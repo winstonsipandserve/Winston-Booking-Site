@@ -11,8 +11,10 @@ import PaymentStep from './steps/PaymentStep'
 import Modal from '@/components/ui/Modal'
 import { formatCentavos } from '@/lib/format'
 import {
-  MAX_COURT_DURATION_MINUTES,
+  MAX_HOURLY_DURATION_MINUTES,
   NON_MEMBER_ADVANCE_BOOKING_DAYS,
+  categoryHasMemberPricing,
+  isHourlyCategory,
   maxNonMemberGuestsForRateTier,
 } from '@/lib/booking-limits'
 import { tierDiscountCentavos } from '@/lib/membership-pricing'
@@ -20,7 +22,7 @@ import { toPhDateString } from '@/lib/business-hours'
 import type { MemberContext, MembershipCoverage } from '@/components/booking/BookingPageClient'
 
 type RateTier = 'member' | 'non_member'
-type ResourceCategory = 'court' | 'simulator'
+type ResourceCategory = 'court' | 'simulator' | 'space'
 
 interface PricingTier {
   durationMinutes: number
@@ -103,15 +105,15 @@ interface BusyRange {
   end: string
 }
 
-// Whole hours up to the server-enforced cap (src/lib/booking-limits.ts).
-const COURT_DURATIONS_MINUTES = Array.from(
-  { length: MAX_COURT_DURATION_MINUTES / 60 },
+// Whole hours up to the server-enforced cap (src/lib/booking-limits.ts), for courts and spaces.
+const HOURLY_DURATIONS_MINUTES = Array.from(
+  { length: MAX_HOURLY_DURATION_MINUTES / 60 },
   (_, i) => (i + 1) * 60,
 )
 const TOTAL_STEPS = 5
 
 function getDurationOptions(resourceType: ResourceTypeOption): number[] {
-  if (resourceType.category === 'court') return COURT_DURATIONS_MINUTES
+  if (isHourlyCategory(resourceType.category)) return HOURLY_DURATIONS_MINUTES
   return Array.from(new Set(resourceType.pricing.map((p) => p.durationMinutes))).sort((a, b) => a - b)
 }
 
@@ -245,6 +247,9 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   )
 
   const isCourt = selectedResourceType?.category === 'court'
+  const isHourly = !!selectedResourceType && isHourlyCategory(selectedResourceType.category)
+  // Spaces are a flat rate for everyone: no tier discount and no birthday hour.
+  const hasMemberPricing = !!selectedResourceType && categoryHasMemberPricing(selectedResourceType.category)
 
   const durationOptions = useMemo(() => {
     if (!selectedResourceType) return []
@@ -275,7 +280,9 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
   function handleResourceTypeSelect(nextResourceTypeId: string) {
     const nextResourceType = data?.resourceTypes.find((resourceType) => resourceType.id === nextResourceTypeId)
     setResourceTypeId(nextResourceTypeId)
-    setResourceId('')
+    // A type with a single bookable unit (e.g. the Lounge) needs no choice on the next step.
+    const onlyResource = nextResourceType?.resources.length === 1 ? nextResourceType.resources[0] : null
+    setResourceId(onlyResource?.id ?? '')
     setGuestCount(0)
     setStartTimeLocal('')
     setAvailabilityLoading(false)
@@ -358,25 +365,27 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
     }
   }, [resourceId, selectedDate])
 
-  // Base court/simulator amount before any discount, from the base-rate rows.
+  // Base amount before any discount, from the base-rate rows.
   const baseEstimateCentavos = useMemo(() => {
     if (!selectedResourceType || !durationMinutes) return null
     const duration = Number(durationMinutes)
-    if (isCourt) {
+    if (isHourly) {
       const hourlyRate = selectedResourceType.pricing.find((p) => p.durationMinutes === 60)
       return hourlyRate ? hourlyRate.priceCentavos * (duration / 60) : null
     }
     const tierRate = selectedResourceType.pricing.find((p) => p.durationMinutes === duration)
     return tierRate ? tierRate.priceCentavos : null
-  }, [selectedResourceType, durationMinutes, isCourt])
+  }, [selectedResourceType, durationMinutes, isHourly])
 
   // Guest passes: waive the fee for up to the term's remaining passes (docs/business.md).
   const guestPassesRemaining = coveringMembership?.guestPassesRemaining ?? 0
   const guestPassesApplied = useGuestPasses ? Math.min(guestCount, guestPassesRemaining) : 0
 
-  // Birthday-month court hour: any 60-minute slot in the birthday month, once per term.
+  // Birthday-month court hour: any 60-minute court or simulator slot in the birthday month,
+  // once per term. Never on a space.
   const birthdayPerk = coveringMembership?.birthdayPerk ?? null
   const birthdayPerkEligible =
+    hasMemberPricing &&
     !!birthdayPerk &&
     birthdayPerk.month !== null &&
     !birthdayPerk.used &&
@@ -394,7 +403,9 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
         ? birthdayPerk!.kind === 'free'
           ? baseEstimateCentavos
           : Math.round(baseEstimateCentavos / 2)
-        : tierDiscountCentavos(baseEstimateCentavos, discountPercent)
+        : hasMemberPricing
+          ? tierDiscountCentavos(baseEstimateCentavos, discountPercent)
+          : 0
   const discountLabel = birthdayPerkApplied
     ? birthdayPerk!.kind === 'free'
       ? 'Birthday court hour — free'
@@ -650,6 +661,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
       {step === 2 && selectedResourceType && (
         <CourtStep
           resourceTypeName={selectedResourceType.name}
+          category={selectedResourceType.category}
           resources={selectedResourceType.resources}
           resourceId={resourceId}
           onSelect={handleResourceSelect}
@@ -708,6 +720,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           startTimeLocal={startTimeLocal}
           durationMinutes={durationMinutes}
           isCourt={!!isCourt}
+          coachingAvailable={coachingPricing.available}
           guestCount={guestCount}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}
@@ -774,6 +787,7 @@ export default function BookingForm({ data, loading, loadError, memberContext }:
           startTimeLocal={startTimeLocal}
           durationMinutes={durationMinutes}
           isCourt={!!isCourt}
+          coachingAvailable={coachingPricing.available}
           guestCount={guestCount}
           coaching={coaching}
           coachingPaxCount={coachingPaxCount}

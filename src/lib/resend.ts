@@ -2,6 +2,7 @@ import type { MembershipTier } from '@prisma/client'
 import { MEMBER_ACTIVATION_TOKEN_HOURS } from './member-activation'
 import { MEMBERSHIP_PAYMENT_LINK_TOKEN_HOURS } from './membership-payment-link'
 import { ADMIN_PASSWORD_RESET_TOKEN_HOURS } from './admin-password-reset'
+import { formatResourceName } from './format'
 import { buildBrandedEmail, escapeHtml } from './email-templates'
 import { formatCentavos, formatMembershipTier } from './format'
 import { renderMembershipCertificatePdf } from './membership-certificate-pdf'
@@ -75,7 +76,7 @@ export async function sendActivationEmail({
     : `
     <div style="margin: 24px 0; padding: 20px 24px; background-color: ${ACCENT_LIGHT}; border-radius: 12px;">
       <p style="margin: 0 0 12px; font-family: ${BODY_FONT}; font-size: 15px; font-weight: 600; color: ${BRAND_DARK};">As a member, you get:</p>
-      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Advance booking priority on courts &amp; simulators</p>
+      <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Advance booking priority on courts, simulators &amp; spaces</p>
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Member discounts on every session</p>
       <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};"><span style="color: ${ACCENT_PRIMARY}; font-weight: 700;">&#10003;</span>&nbsp; Complimentary guest passes every year</p>
     </div>`
@@ -515,7 +516,7 @@ export async function sendRejectionEmail({
       <p style="margin: 0 0 8px; font-family: ${BODY_FONT}; font-size: 15px; font-weight: 600; color: ${BRAND_DARK};">Here's a bit more context from our team:</p>
       <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">${escapeHtml(reason)}</p>
     </div>
-    <p>You're always welcome at Winston as our guest — feel free to <a href="${process.env.NEXT_PUBLIC_APP_URL}/book" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">book a court</a>, simulator bay, or table at the café any time. And if your circumstances change, we'd be glad to have you apply again in the future.</p>
+    <p>You're always welcome at Winston as our guest — feel free to <a href="${process.env.NEXT_PUBLIC_APP_URL}/book" style="color: ${ACCENT_PRIMARY}; text-decoration: underline;">book a court</a>, simulator bay, the lounge or conference room, or a table at the café any time. And if your circumstances change, we'd be glad to have you apply again in the future.</p>
     <p style="margin: 24px 0 0; font-size: 14px; color: ${BRAND_MID};">Warmly,<br />The Winston Sip &amp; Serve Team</p>
   `
 
@@ -644,7 +645,7 @@ export async function sendBookingConfirmationEmail({
   const hasAddOnsBreakdown = guestCount > 0 || addOns.length > 0
 
   const ledgerRows = [
-    ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`),
+    ledgerRow('Booking', escapeHtml(formatResourceName(resourceTypeName, resourceLabel))),
     ledgerRow('Date', formatManilaDate(startTime)),
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
@@ -777,7 +778,7 @@ export async function sendBookingRescheduleEmail({
       <tr>
         <td style="padding: 20px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-            ${ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`)}
+            ${ledgerRow('Booking', escapeHtml(formatResourceName(resourceTypeName, resourceLabel)))}
             ${ledgerSectionHeader('Previous slot')}
             ${ledgerRow('Date', formatManilaDate(originalStartTime))}
             ${ledgerRow('Time', `${formatManilaTime(originalStartTime)} &ndash; ${formatManilaTime(originalEndTime)}`)}
@@ -872,7 +873,7 @@ export async function sendStaffBookingRescheduleNotificationEmail({
       <tr>
         <td style="padding: 20px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-            ${ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`)}
+            ${ledgerRow('Booking', escapeHtml(formatResourceName(resourceTypeName, resourceLabel)))}
             ${ledgerSectionHeader('Previous slot')}
             ${ledgerRow('Date', formatManilaDate(originalStartTime))}
             ${ledgerRow('Time', `${formatManilaTime(originalStartTime)} &ndash; ${formatManilaTime(originalEndTime)}`)}
@@ -975,7 +976,7 @@ export async function sendStaffBookingNotificationEmail({
   const hasAddOnsBreakdown = guestCount > 0 || addOns.length > 0
 
   const ledgerRows = [
-    ledgerRow('Sport &amp; Court', `${escapeHtml(resourceTypeName)} &mdash; ${escapeHtml(resourceLabel)}`),
+    ledgerRow('Booking', escapeHtml(formatResourceName(resourceTypeName, resourceLabel))),
     ledgerRow('Date', formatManilaDate(startTime)),
     ledgerRow('Time', `${formatManilaTime(startTime)} &ndash; ${formatManilaTime(endTime)}`),
     ledgerRow('Duration', durationLabel),
@@ -1525,7 +1526,7 @@ export async function sendMembershipExpiredEmail(
     <p>Hi ${escapeHtml(customer.name)},</p>
     <p>Your ${tierName} membership expired on ${endDateLabel}.${creditNote}</p>
     <div style="margin: 24px 0; padding: 20px 24px; background-color: rgba(140, 90, 60, 0.08); border-left: 4px solid ${ACCENT_PRIMARY}; border-radius: 8px;">
-      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">You're still always welcome at Winston as a guest &mdash; book a court, simulator bay, or table at the café any time. Log in and renew below whenever you're ready to pick your member rates and perks back up.</p>
+      <p style="margin: 0; font-family: ${BODY_FONT}; font-size: 15px; color: ${BRAND_DARK};">You're still always welcome at Winston as a guest &mdash; book a court, simulator bay, the lounge or conference room, or a table at the café any time. Log in and renew below whenever you're ready to pick your member rates and perks back up.</p>
     </div>
   `
 

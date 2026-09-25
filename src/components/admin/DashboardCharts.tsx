@@ -30,7 +30,12 @@ function buildPalette(dark: boolean) {
     tooltipBorder: token('grid', dark),
     legendText: token('axis', dark),
     revenueLine: token('primary', dark),
-    sportColors: { tennis: token('primary', dark), pickleball: token('secondary', dark), golf: token('accent', dark) },
+    sportColors: {
+      tennis: token('primary', dark),
+      pickleball: token('secondary', dark),
+      golf: token('accent', dark),
+      spaces: token('spaces', dark),
+    },
     membershipTierColors: { player: token('tier-player', dark), premier: token('tier-premier', dark), elite: token('tier-elite', dark) },
     topUpColor: token('topup', dark),
   }
@@ -312,6 +317,15 @@ export default function DashboardCharts({ revenueTrend, membershipRevenueTrend, 
                   fill={palette.sportColors.golf}
                   fillOpacity={0.7}
                   name="Golf"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="spacesCentavos"
+                  stackId="sport"
+                  stroke={palette.sportColors.spaces}
+                  fill={palette.sportColors.spaces}
+                  fillOpacity={0.7}
+                  name="Spaces"
                 />
               </AreaChart>
             ) : (

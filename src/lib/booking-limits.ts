@@ -1,8 +1,29 @@
 // Client-safe booking limits (no Prisma import). The server enforces these in
 // POST /api/bookings; the wizard reads them so its options never exceed what the API accepts.
 
-/** Longest single court booking. Simulators are already bounded by their pricing tiers. */
-export const MAX_COURT_DURATION_MINUTES = 240
+/**
+ * Longest single hourly booking (courts and spaces). Simulators are already bounded by their
+ * pricing tiers.
+ */
+export const MAX_HOURLY_DURATION_MINUTES = 240
+
+type Category = 'court' | 'simulator' | 'space'
+
+/**
+ * Courts and spaces are booked in whole hours at a flat hourly rate (one 60-minute PricingRule
+ * multiplied by the hours); simulators are booked in fixed duration tiers.
+ */
+export function isHourlyCategory(category: Category): boolean {
+  return category !== 'simulator'
+}
+
+/**
+ * Spaces (lounge, conference room) are a flat rate for everyone: no tier discount and no
+ * birthday-month hour — see docs/business.md → Pricing.
+ */
+export function categoryHasMemberPricing(category: Category): boolean {
+  return category !== 'space'
+}
 
 /** Hold creations allowed per client inside the shared 15-minute rate-limit window. */
 export const HOLD_CREATIONS_PER_WINDOW = 10

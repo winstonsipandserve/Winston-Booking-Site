@@ -40,7 +40,8 @@ function formatLabel(minutesOfDay: number): string {
 }
 
 function granularityFor(resourceCategory: string, resourceSlug: string): number {
-  if (resourceCategory === 'court') return 60
+  // Courts and spaces are booked in whole hours.
+  if (resourceCategory === 'court' || resourceCategory === 'space') return 60
   if (resourceSlug === 'golf_sim') return 30
   return 15
 }

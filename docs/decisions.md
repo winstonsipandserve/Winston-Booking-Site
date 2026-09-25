@@ -94,6 +94,8 @@ The allow-list of valid combinations is a **single source of truth in code**, en
 
 The discount actually applied is snapshotted on the booking (`memberDiscountCentavos`) — see "Snapshot what was actually charged".
 
+**Spaces are exempt by category, not by rate row.** The Lounge and Conference Room (`ResourceCategory.space`) take no tier discount and no birthday hour; `categoryHasMemberPricing` (`src/lib/booking-limits.ts`) is the single switch that `priceBooking`, `birthdayPerkEligible`, and the wizard all consult. Keying it on the category keeps a future space from needing its own exemption.
+
 ### Founding Member is a flag, not a tier
 
 A Founding Member is a Winston Premier membership with a permanent `isFounding`-style marker, set when one of the first 100 paid Premier activations is confirmed.

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { activeAnnouncementWhere, sortAnnouncementsByUrgency } from '@/lib/announcement'
-import { formatBookingDateTime } from '@/lib/format'
+import { formatBookingDateTime, formatResourceName } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +24,7 @@ export async function GET() {
     startAt: formatBookingDateTime(announcement.startAt),
     endAt: announcement.endAt ? formatBookingDateTime(announcement.endAt) : null,
     affectedResources: announcement.resourceLinks.map(
-      (link) => `${link.resource.resourceType.name} — ${link.resource.label}`,
+      (link) => formatResourceName(link.resource.resourceType.name, link.resource.label),
     ),
   }))
 

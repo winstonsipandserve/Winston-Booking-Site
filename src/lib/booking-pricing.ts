@@ -1,10 +1,15 @@
 import { RateTier, ResourceCategory } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { MAX_COURT_DURATION_MINUTES } from '@/lib/booking-limits'
+import {
+  MAX_HOURLY_DURATION_MINUTES,
+  categoryHasMemberPricing,
+  isHourlyCategory,
+} from '@/lib/booking-limits'
 import { tierDiscountCentavos } from '@/lib/membership-pricing'
 import type { BirthdayPerkKind } from '@/lib/member-perks'
 
-export const COURT_DURATION_CAP_ERROR = `Court bookings must be ${MAX_COURT_DURATION_MINUTES / 60} hours or shorter`
+export const HOURLY_DURATION_CAP_ERROR = `Bookings must be ${MAX_HOURLY_DURATION_MINUTES / 60} hours or shorter`
+export const HOURLY_DURATION_MULTIPLE_ERROR = 'Bookings must be a whole number of hours'
 
 export interface PriceBookingInput {
   resourceTypeId: string
@@ -16,7 +21,10 @@ export interface PriceBookingInput {
   coachingPaxCount: number | null
   /** A membership term covers the slot: member coaching rates apply. */
   isMember: boolean
-  /** Tier discount off the base court/simulator rate (MEMBERSHIP_TIER_PLANS); 0 for non-members. */
+  /**
+   * Tier discount off the base court/simulator rate (MEMBERSHIP_TIER_PLANS); 0 for non-members.
+   * Ignored for spaces, which have no member pricing.
+   */
   bookingDiscountPercent: number
   /** Guests whose fee is waived by complimentary guest passes (already validated ≤ guestCount). */
   guestPassesUsed?: number
@@ -66,21 +74,25 @@ export async function priceBooking(
     birthdayPerk = null,
   } = input
 
-  const isCourt = category === 'court'
+  const isHourly = isHourlyCategory(category)
+  const hasMemberPricing = categoryHasMemberPricing(category)
   const rateTier: RateTier = isMember ? 'member' : 'non_member'
 
-  if (isCourt && durationMinutes % 60 !== 0) {
-    return { error: 'Court bookings must be a positive multiple of 60 minutes', status: 400 }
+  if (isHourly && durationMinutes % 60 !== 0) {
+    return { error: HOURLY_DURATION_MULTIPLE_ERROR, status: 400 }
   }
-  if (isCourt && durationMinutes > MAX_COURT_DURATION_MINUTES) {
-    return { error: COURT_DURATION_CAP_ERROR, status: 400 }
+  if (isHourly && durationMinutes > MAX_HOURLY_DURATION_MINUTES) {
+    return { error: HOURLY_DURATION_CAP_ERROR, status: 400 }
+  }
+  if (!hasMemberPricing && birthdayPerk) {
+    return { error: 'The birthday hour is not available on this booking', status: 400 }
   }
 
   const pricingRule = await prisma.pricingRule.findUnique({
     where: {
       resourceTypeId_durationMinutes: {
         resourceTypeId,
-        durationMinutes: isCourt ? 60 : durationMinutes,
+        durationMinutes: isHourly ? 60 : durationMinutes,
       },
     },
   })
@@ -98,7 +110,7 @@ export async function priceBooking(
     guestFeeCentavos = Math.max(0, guestCount - guestPassesUsed) * guestFeeRule.amountCentavos
   }
 
-  const baseAmountCentavos = isCourt
+  const baseAmountCentavos = isHourly
     ? pricingRule.priceCentavos * (durationMinutes / 60)
     : pricingRule.priceCentavos
   // The birthday hour replaces the tier discount on that booking, never stacks on it.
@@ -106,7 +118,9 @@ export async function priceBooking(
     ? birthdayPerk === 'free'
       ? baseAmountCentavos
       : Math.round(baseAmountCentavos / 2)
-    : tierDiscountCentavos(baseAmountCentavos, bookingDiscountPercent)
+    : hasMemberPricing
+      ? tierDiscountCentavos(baseAmountCentavos, bookingDiscountPercent)
+      : 0
   const totalAmountCentavos = baseAmountCentavos - memberDiscountCentavos + guestFeeCentavos
 
   const selectedAddOns: SelectedAddOn[] = []

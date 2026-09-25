@@ -4,7 +4,7 @@ import { getLiveMemberships, membershipCoversInstant } from '@/lib/membership-cu
 import { manilaDateKey } from '@/lib/manila-date'
 import { prisma } from '@/lib/prisma'
 import { activeAnnouncementWhere, sortAnnouncementsByUrgency } from '@/lib/announcement'
-import { formatBookingDateTime, formatMembershipExpiryDate } from '@/lib/format'
+import { formatBookingDateTime, formatMembershipExpiryDate, formatResourceName } from '@/lib/format'
 import type { GateNotice } from '@/components/booking/AnnouncementGate'
 import type { MemberContext } from '@/components/booking/BookingPageClient'
 import { getActiveMemberSession } from '@/lib/member-session'
@@ -30,7 +30,7 @@ export default async function BookPage() {
     startAt: formatBookingDateTime(announcement.startAt),
     endAt: announcement.endAt ? formatBookingDateTime(announcement.endAt) : null,
     affectedResources: announcement.resourceLinks.map(
-      (link) => `${link.resource.resourceType.name} — ${link.resource.label}`,
+      (link) => formatResourceName(link.resource.resourceType.name, link.resource.label),
     ),
   }))
 

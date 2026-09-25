@@ -37,6 +37,7 @@ export interface RevenueTrendPoint {
   tennisCentavos: number
   pickleballCentavos: number
   golfCentavos: number
+  spacesCentavos: number
 }
 
 export interface MembershipRevenueTrendPoint {
@@ -48,7 +49,7 @@ export interface MembershipRevenueTrendPoint {
   totalCentavos: number
 }
 
-type Sport = 'tennis' | 'pickleball' | 'golf'
+type Sport = 'tennis' | 'pickleball' | 'golf' | 'spaces'
 
 function sportForResourceType(slug: string): Sport | null {
   switch (slug) {
@@ -59,6 +60,9 @@ function sportForResourceType(slug: string): Sport | null {
       return 'pickleball'
     case 'golf_sim':
       return 'golf'
+    case 'lounge':
+    case 'conference_room':
+      return 'spaces'
     default:
       return null
   }
@@ -298,7 +302,14 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const revenueBuckets = new Map<
     string,
-    { label: string; totalCentavos: number; tennisCentavos: number; pickleballCentavos: number; golfCentavos: number }
+    {
+      label: string
+      totalCentavos: number
+      tennisCentavos: number
+      pickleballCentavos: number
+      golfCentavos: number
+      spacesCentavos: number
+    }
   >()
   for (let i = 11; i >= 0; i--) {
     const monthStart = phMonthStartUtc(i)
@@ -309,6 +320,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       tennisCentavos: 0,
       pickleballCentavos: 0,
       golfCentavos: 0,
+      spacesCentavos: 0,
     })
   }
   for (const p of paymentsForRevenue) {
@@ -320,6 +332,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (sport === 'tennis') bucket.tennisCentavos += p.amountCentavos
     else if (sport === 'pickleball') bucket.pickleballCentavos += p.amountCentavos
     else if (sport === 'golf') bucket.golfCentavos += p.amountCentavos
+    else if (sport === 'spaces') bucket.spacesCentavos += p.amountCentavos
   }
   const revenueTrend: RevenueTrendPoint[] = Array.from(revenueBuckets.values()).map((b) => ({
     month: b.label,
@@ -327,6 +340,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     tennisCentavos: b.tennisCentavos,
     pickleballCentavos: b.pickleballCentavos,
     golfCentavos: b.golfCentavos,
+    spacesCentavos: b.spacesCentavos,
   }))
 
   const membershipRevenueBuckets = new Map<

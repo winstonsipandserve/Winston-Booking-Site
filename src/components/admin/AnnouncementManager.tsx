@@ -290,9 +290,9 @@ function AnnouncementFormModal({
           <div className="flex flex-col gap-1.5 text-sm text-gray-700 dark:text-gray-300"><span>Affects from *</span><DateTimeField value={startAt} onChange={setStartAt} disabled={submitting} /><span className="text-xs text-gray-500 dark:text-gray-400">When the closure or change actually begins.</span></div>
           <div className="flex flex-col gap-1.5 text-sm text-gray-700 dark:text-gray-300"><span>Affects until (optional)</span><DateTimeField value={endAt} onChange={setEndAt} disabled={submitting} /><span className="text-xs text-gray-500 dark:text-gray-400">The notice is removed from the booking page at this time.</span></div>
         </div>
-        <div className="flex flex-col gap-1.5 text-sm text-gray-700 dark:text-gray-300"><span>Show notice from (optional)</span><DateTimeField value={announceAt} onChange={setAnnounceAt} disabled={submitting} /><span className="text-xs text-gray-500 dark:text-gray-400">Set an earlier date to give customers advance warning. Leave blank to show the notice only once it takes effect. Courts and bays stay bookable until &ldquo;Affects from&rdquo; either way.</span></div>
+        <div className="flex flex-col gap-1.5 text-sm text-gray-700 dark:text-gray-300"><span>Show notice from (optional)</span><DateTimeField value={announceAt} onChange={setAnnounceAt} disabled={submitting} /><span className="text-xs text-gray-500 dark:text-gray-400">Set an earlier date to give customers advance warning. Leave blank to show the notice only once it takes effect. Courts, bays, and spaces stay bookable until &ldquo;Affects from&rdquo; either way.</span></div>
         <div className="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
-          <span>Affected courts &amp; bays</span>
+          <span>Affected courts, bays &amp; spaces</span>
           <div className="grid gap-3 rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200 md:grid-cols-2 dark:bg-gray-800 dark:ring-gray-700">
             {resources.map((resource) => <label key={resource.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={resourceIds.includes(resource.id)} onChange={() => toggleResource(resource.id)} />{resource.displayName}</label>)}
           </div>

@@ -202,7 +202,7 @@ function MembershipCertificateDocument({
 
           <Text style={styles.sectionHeading}>As a Member, You Get:</Text>
           <View style={styles.perksBox}>
-            <Text style={styles.perkLine}>✓  Priority booking on courts &amp; simulators</Text>
+            <Text style={styles.perkLine}>✓  Priority booking on courts, simulators &amp; spaces</Text>
             <Text style={styles.perkLine}>✓  Member rates on every session</Text>
             <Text style={[styles.perkLine, { marginBottom: 0 }]}>✓  Access to the Speakeasy Lounge</Text>
           </View>

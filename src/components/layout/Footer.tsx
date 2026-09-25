@@ -25,8 +25,8 @@ export default function Footer() {
           <div>
             <p className="text-lg font-semibold text-gray-900">Winston Sip & Serve</p>
             <p className="mt-3 max-w-xs text-sm text-gray-500">
-              Tennis, pickleball, and golf simulation — paired with craft coffee and a
-              members-only bar.
+              Tennis, pickleball, and golf simulation, plus a bookable lounge and conference
+              room — paired with craft coffee and a members-only bar.
             </p>
             <div className="mt-4">
               <SocialIcons />

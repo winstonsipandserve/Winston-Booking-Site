@@ -8,6 +8,8 @@ interface BookingSummaryProps {
   startTimeLocal: string
   durationMinutes: string
   isCourt: boolean
+  /** Hides the coaching row where coaching is not offered (spaces). */
+  coachingAvailable: boolean
   guestCount: number
   coaching: boolean
   coachingPaxCount: number | null
@@ -42,6 +44,7 @@ export default function BookingSummary({
   startTimeLocal,
   durationMinutes,
   isCourt,
+  coachingAvailable,
   guestCount,
   coaching,
   coachingPaxCount,
@@ -81,14 +84,14 @@ export default function BookingSummary({
         >
           <dt className="flex items-center gap-2 text-gray-500">
             <RowIcon icon={LocationIcon} show={showIcons} />
-            Sport
+            Booking
           </dt>
           <dd className="text-right font-medium text-gray-900">{resourceTypeName}</dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-gray-200 py-3">
           <dt className="flex items-center gap-2 text-gray-500">
             <RowIcon icon={LocationIcon} show={showIcons} />
-            Court / bay
+            Location
           </dt>
           <dd className="text-right font-medium text-gray-900">{resourceLabel}</dd>
         </div>
@@ -130,20 +133,22 @@ export default function BookingSummary({
             {guestCount > 0 ? formatCentavos(chargedGuests * guestFeeCentavos) : guestCount}
           </dd>
         </div>
-        <div className="flex items-center justify-between gap-4 border-t border-gray-200 py-3">
-          <dt className="flex items-center gap-2 text-gray-500">
-            <RowIcon icon={CoachingIcon} show={showIcons} />
-            Coaching
-            {isCourt && coachingPaxCount !== null && ` — ${coachingPaxCount} Pax`}
-          </dt>
-          <dd className="text-right font-medium text-gray-900">
-            {coaching
-              ? coachingPriceCentavos !== null
-                ? formatCentavos(coachingPriceCentavos)
-                : 'Selected'
-              : 'Not selected'}
-          </dd>
-        </div>
+        {coachingAvailable && (
+          <div className="flex items-center justify-between gap-4 border-t border-gray-200 py-3">
+            <dt className="flex items-center gap-2 text-gray-500">
+              <RowIcon icon={CoachingIcon} show={showIcons} />
+              Coaching
+              {isCourt && coachingPaxCount !== null && ` — ${coachingPaxCount} Pax`}
+            </dt>
+            <dd className="text-right font-medium text-gray-900">
+              {coaching
+                ? coachingPriceCentavos !== null
+                  ? formatCentavos(coachingPriceCentavos)
+                  : 'Selected'
+                : 'Not selected'}
+            </dd>
+          </div>
+        )}
       </dl>
 
       <div className="mt-2 border-t border-gray-200 pt-4">

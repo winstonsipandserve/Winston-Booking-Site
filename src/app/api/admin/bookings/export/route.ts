@@ -1,6 +1,6 @@
 import { getActiveAdminSession } from '@/lib/admin-session'
 import { prisma } from '@/lib/prisma'
-import { formatCentavos, formatBookingDateTime } from '@/lib/format'
+import { formatCentavos, formatBookingDateTime, formatResourceName } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import { isBookingStatus, buildBookingsWhere } from '@/lib/bookings-query'
 import { buildCsv } from '@/lib/csv'
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   const headers = ['Reference', 'Resource', 'Customer', 'Customer Email', 'Customer Phone', 'Submitted', 'Status', 'Total', 'Net', 'PayMongo Payment ID']
   const rows = bookings.map((b) => [
     b.id,
-    `${b.resource.resourceType.name} — ${b.resource.label}`,
+    formatResourceName(b.resource.resourceType.name, b.resource.label),
     b.customerNameSnapshot ?? '',
     b.customer?.email ?? '',
     b.customerPhoneSnapshot ?? '',

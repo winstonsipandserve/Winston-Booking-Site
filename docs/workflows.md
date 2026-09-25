@@ -13,7 +13,7 @@ How the important processes actually run, end to end.
 The default path. The customer is not logged in and may not exist in the system yet.
 
 1. **Announcement gate.** `/book` loads active announcements whose start has arrived and whose optional end is still in the future. Urgent notices appear first, then warnings and information; the customer continues past the interstitial into the wizard.
-2. **Five-step wizard** — Sport → Court → Date & Time → Add-Ons → Summary. All state, including the current step, lives in the top-level orchestrator, so navigating Back and forward again never loses an entered value.
+2. **Five-step wizard** — Activity → Location → Date & Time → Add-Ons → Summary. All state, including the current step, lives in the top-level orchestrator, so navigating Back and forward again never loses an entered value.
    - The Date & Time step calls `/api/availability` to grey out occupied slots before submit.
 3. **Hold created.** On Confirm, `POST /api/bookings` creates the booking with `status: pending_payment` and `customerId: null`. Pricing here is **provisional and always at the base (non-member) rate with no discount**, because no customer or email exists yet. The slot must also fall inside the non-member advance window (today + 3 days, Manila) or the API answers 400. The response also establishes a random 24-hour, HttpOnly, SameSite browser capability; only that browser can read the hold, attach contact details, start checkout, or poll its confirmation.
 4. **Payment page.** The booking reference is shown immediately. The customer enters name, phone, and email.
@@ -96,7 +96,7 @@ Holds are free and occupy their slot for the hold window, so without limits an a
 
 1. **Creation throttle.** Each validated hold request consumes one attempt in the shared 15-minute rate-limit window (`booking_hold` scope of `AuthRateLimitAttempt`). Members are keyed on their customer id (10 per window) plus their IP (20 per window); anonymous bookers on IP only (10 per window). Over budget → `429`, nothing written.
 2. **Live-hold cap.** Inside the booking transaction, after a per-client advisory lock, the client's `pending_payment` rows still inside the hold window are counted; a fourth is refused with `429` and the transaction rolls back (including any credit decrement). Credit-covered bookings confirm immediately and are exempt because they never hold a slot.
-3. **Court duration cap.** Court bookings are limited to 4 hours (see [business.md](business.md) → Pricing), so one hold cannot occupy a court's whole day.
+3. **Hourly duration cap.** Court and space bookings are limited to 4 hours (see [business.md](business.md) → Pricing), so one hold cannot occupy a court's or space's whole day.
 
 The client key is stored as `Booking.holdClientHash` (an HMAC, never a raw IP). Constants live in `src/lib/booking-limits.ts`; the checks in `src/lib/booking-hold-abuse.ts`. These limits bound one client; a distributed attacker with many IPs is out of scope — see [roadmap.md](roadmap.md).
 

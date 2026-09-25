@@ -5,6 +5,7 @@ interface ResourceOption {
 
 interface CourtStepProps {
   resourceTypeName: string
+  category: 'court' | 'simulator' | 'space'
   resources: ResourceOption[]
   resourceId: string
   onSelect: (resourceId: string) => void
@@ -12,15 +13,20 @@ interface CourtStepProps {
 
 export default function CourtStep({
   resourceTypeName,
+  category,
   resources,
   resourceId,
   onSelect,
 }: CourtStepProps) {
   return (
     <div className="flex w-full max-w-2xl flex-col gap-3 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-gray-900">Court</h2>
+      <h2 className="text-xl font-semibold text-gray-900">
+        {category === 'court' ? 'Court' : category === 'simulator' ? 'Bay' : 'Space'}
+      </h2>
       <p className="text-sm text-gray-500">
-        Choose a {resourceTypeName.toLowerCase()} to book.
+        {resources.length === 1
+          ? `The ${resourceTypeName.toLowerCase()} is selected. Continue to pick a date and time.`
+          : `Choose a ${resourceTypeName.toLowerCase()} to book.`}
       </p>
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3">
         {resources.map((r) => {

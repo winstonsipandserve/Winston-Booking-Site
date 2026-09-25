@@ -3,10 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { HOLD_MINUTES } from '@/lib/booking-hold'
 import { isWithinBusinessHours } from '@/lib/business-hours'
 import { expirePaymongoCheckoutSession } from '@/lib/paymongo'
-import { COURT_DURATION_CAP_ERROR, priceBooking } from '@/lib/booking-pricing'
 import {
-  MAX_COURT_DURATION_MINUTES,
+  HOURLY_DURATION_CAP_ERROR,
+  HOURLY_DURATION_MULTIPLE_ERROR,
+  priceBooking,
+} from '@/lib/booking-pricing'
+import {
+  MAX_HOURLY_DURATION_MINUTES,
   NON_MEMBER_ADVANCE_BOOKING_DAYS,
+  isHourlyCategory,
   maxNonMemberGuestsForRateTier,
 } from '@/lib/booking-limits'
 import { MEMBERSHIP_TIER_PLANS } from '@/lib/membership-pricing'
@@ -161,6 +166,7 @@ export async function POST(request: Request) {
   }
   const { resourceType } = resource
   const isCourt = resourceType.category === 'court'
+  const isHourly = isHourlyCategory(resourceType.category)
 
   let coachingPaxCount: number | null = null
   if (coaching && isCourt) {
@@ -174,14 +180,11 @@ export async function POST(request: Request) {
     coachingPaxCount = coachingPaxCountRaw
   }
 
-  if (isCourt && durationMinutes % 60 !== 0) {
-    return Response.json(
-      { error: 'Court bookings must be a positive multiple of 60 minutes' },
-      { status: 400 },
-    )
+  if (isHourly && durationMinutes % 60 !== 0) {
+    return Response.json({ error: HOURLY_DURATION_MULTIPLE_ERROR }, { status: 400 })
   }
-  if (isCourt && durationMinutes > MAX_COURT_DURATION_MINUTES) {
-    return Response.json({ error: COURT_DURATION_CAP_ERROR }, { status: 400 })
+  if (isHourly && durationMinutes > MAX_HOURLY_DURATION_MINUTES) {
+    return Response.json({ error: HOURLY_DURATION_CAP_ERROR }, { status: 400 })
   }
 
   const endTime = new Date(parsedStartTime.getTime() + durationMinutes * 60000)
@@ -219,7 +222,7 @@ export async function POST(request: Request) {
     }
     if (useBirthdayPerkRaw) {
       const birthday = await getBirthdayPerkStatus(prisma, activeMembership, memberSession.customer.dateOfBirth)
-      if (birthdayPerkEligible(birthday, parsedStartTime, durationMinutes)) {
+      if (birthdayPerkEligible(birthday, parsedStartTime, durationMinutes, resourceType.category)) {
         birthdayPerk = birthday.kind
       }
     }

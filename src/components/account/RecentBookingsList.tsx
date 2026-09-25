@@ -1,7 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { TennisIcon, PickleballIcon, GolfIcon, CalendarIcon } from '@/components/ui/Icons'
+import {
+  TennisIcon,
+  PickleballIcon,
+  GolfIcon,
+  LoungeIcon,
+  ConferenceRoomIcon,
+  CalendarIcon,
+} from '@/components/ui/Icons'
 
 export type BookingListItem = {
   id: string
@@ -23,6 +30,8 @@ function sportIconFor(resourceTypeName: string) {
   const label = resourceTypeName.toLowerCase()
   if (label.includes('golf')) return GolfIcon
   if (label.includes('pickleball')) return PickleballIcon
+  if (label.includes('lounge')) return LoungeIcon
+  if (label.includes('conference')) return ConferenceRoomIcon
   return TennisIcon
 }
 

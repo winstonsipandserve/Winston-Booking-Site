@@ -8,6 +8,8 @@ interface ReviewStepProps {
   startTimeLocal: string
   durationMinutes: string
   isCourt: boolean
+  /** Coaching is offered on this resource type (never on spaces). */
+  coachingAvailable: boolean
   guestCount: number
   coaching: boolean
   coachingPaxCount: number | null
@@ -32,6 +34,7 @@ export default function ReviewStep({
   startTimeLocal,
   durationMinutes,
   isCourt,
+  coachingAvailable,
   guestCount,
   coaching,
   coachingPaxCount,
@@ -59,6 +62,7 @@ export default function ReviewStep({
         startTimeLocal={startTimeLocal}
         durationMinutes={durationMinutes}
         isCourt={isCourt}
+        coachingAvailable={coachingAvailable}
         guestCount={guestCount}
         coaching={coaching}
         coachingPaxCount={coachingPaxCount}

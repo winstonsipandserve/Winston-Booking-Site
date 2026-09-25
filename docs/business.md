@@ -2,7 +2,7 @@
 
 The business rules, pricing, and domain concepts for Winston Sip and Serve, as finalized with the client. This is the *what the business does* document — it describes rules that would still be true if the software were rewritten from scratch.
 
-> **Updated 21 September 2026** to the client's revised membership product, rate card, inventory, and add-on catalogue. Every rule below is implemented; [features.md](features.md) describes the app as built.
+> **Updated 21 September 2026** to the client's revised membership product, rate card, inventory, and add-on catalogue, and **26 September 2026** to add the bookable Lounge and Conference Room. Every rule below is implemented; [features.md](features.md) describes the app as built.
 
 **See also:** [features.md](features.md) (what the app currently does) · [workflows.md](workflows.md) (how processes run) · [decisions.md](decisions.md) (why choices were made) · [roadmap.md](roadmap.md) (what is not built yet)
 
@@ -10,7 +10,7 @@ The business rules, pricing, and domain concepts for Winston Sip and Serve, as f
 
 ## Business Overview
 
-**Winston Sip and Serve** is a sports facility offering pickleball courts plus tennis, pickleball, and golf simulator bays, with an attached café and bar. The platform is a customer-facing booking site plus an admin panel for staff.
+**Winston Sip and Serve** is a sports facility offering pickleball courts plus tennis, pickleball, and golf simulator bays, a bookable lounge and conference room, with an attached café and bar. The platform is a customer-facing booking site plus an admin panel for staff.
 
 - **Single venue.** There is no multi-location concept and none is planned. Nothing in the domain differentiates by location.
 - **Current business scope**: taking and managing bookings, and selling/managing memberships.
@@ -36,7 +36,7 @@ Key rules:
 
 ## Sports, Resources & Facilities
 
-Three sports across two resource categories — **courts** (physical playing surfaces) and **simulators** (bays).
+Three sports across two sport categories — **courts** (physical playing surfaces) and **simulators** (bays) — plus a third category, **spaces**: private rooms booked by the hour.
 
 | Sport | Courts | Simulators |
 |---|---|---|
@@ -44,11 +44,16 @@ Three sports across two resource categories — **courts** (physical playing sur
 | Pickleball | 2 | 1 |
 | Golf | — (no physical court) | 1 |
 
-**Six bookable units in total**, across four resource types: pickleball court, tennis simulator, pickleball simulator, golf simulator. **There is no tennis court.** Tennis is played only in the simulator bays.
+| Space | Units |
+|---|---|
+| Lounge | 1 |
+| Conference Room | 1 |
+
+**Eight bookable units in total**, across six resource types: pickleball court, tennis simulator, pickleball simulator, golf simulator, lounge, conference room. **There is no tennis court.** Tennis is played only in the simulator bays.
 
 A booking is always made against a *specific* unit (Court 1, Bay 2), never against a sport in the abstract.
 
-> **If inventory ever changes, two places must be updated together.** The Home page stat banner is a **static hardcoded snapshot**, not a live query — it reads `TOTAL_RESOURCES` and `SPORT_COUNT` constants in `StatsBar.tsx`. Changing the resources in the database without updating those constants leaves the marketing page advertising the wrong numbers.
+> **If inventory ever changes, update the marketing copy too.** The site meta description, Home hero, and footer list the offering in static text; they are not driven by the resources in the database.
 
 ---
 
@@ -77,7 +82,7 @@ How far ahead a booking may be made depends on who is booking. The window is **t
 
 ## Pricing
 
-All prices are in Philippine pesos. Courts are charged at a flat hourly rate; simulators are charged in fixed duration tiers. The rate card lists **base rates**; members receive a percentage discount by tier (below).
+All prices are in Philippine pesos. Courts and spaces are charged at a flat hourly rate; simulators are charged in fixed duration tiers. The rate card lists **base rates**; members receive a percentage discount by tier on courts and simulators (below), but not on spaces.
 
 ### Base rates
 
@@ -89,14 +94,16 @@ All prices are in Philippine pesos. Courts are charged at a flat hourly rate; si
 | Pickleball simulator | 30 min | ₱350 |
 | | 60 min | ₱750 |
 | Golf simulator | 60 min | ₱1,200 |
+| Lounge | per hour | ₱400 |
+| Conference Room | per hour | ₱500 |
 
 Only the combinations above are offered. There is no 15-minute simulator tier, no 30-minute golf tier, and no 90-minute golf tier.
 
-Court bookings must be a whole number of hours, **up to 4 hours per booking**. Simulator bookings must match one of the tiers above exactly. The 4-hour court cap is enforced by the API and bounds how much of a court a single unpaid hold can occupy — see [workflows.md](workflows.md) → Hold and expiry.
+Court and space bookings must be a whole number of hours, **up to 4 hours per booking**. Simulator bookings must match one of the tiers above exactly. The 4-hour cap is enforced by the API and bounds how much of a court or space a single unpaid hold can occupy — see [workflows.md](workflows.md) → Hold and expiry.
 
 ### Member discount
 
-A member's tier takes a percentage off the **base court or simulator rate** of every booking whose slot their term covers:
+A member's tier takes a percentage off the **base court or simulator rate** of every court or simulator booking whose slot their term covers:
 
 | Tier | Discount |
 |---|---|
@@ -105,6 +112,7 @@ A member's tier takes a percentage off the **base court or simulator rate** of e
 | Winston Elite | 15% |
 
 - The discount applies to the court/simulator base rate only — **not** to the guest fee and **not** to coaching. Confirmed by the client.
+- **Spaces are a flat rate for everyone.** The Lounge and Conference Room carry no tier discount; a member pays the same ₱400 / ₱500 per hour as a non-member. Confirmed by the client. Every other member benefit that is not a price reduction still applies to spaces: the tier's advance window, the member guest cap, guest passes, and paying with booking credit.
 - Computed in centavos; every current rate divides exactly, and any future remainder rounds half-up to the nearest centavo.
 - Worked example: an Elite member booking a 60-minute golf simulator pays ₱1,200 − 15% = **₱1,020**; a Player booking two court hours pays (2 × ₱750) − 5% = **₱1,425**.
 
@@ -118,7 +126,7 @@ Base court and simulator rates, coaching rates, and the guest fee are **admin-ed
 
 A flat **₱100 per additional non-member guest**.
 
-- **Applies to non-member guests only.** The guest count field, the fee, and the guest cap all exist solely to account for guests who are not Winston members — on every resource type (courts and simulators), regardless of whether the booker is a member. It is not reduced by the member discount.
+- **Applies to non-member guests only.** The guest count field, the fee, and the guest cap all exist solely to account for guests who are not Winston members — on every resource type (courts, simulators, and spaces), regardless of whether the booker is a member. It is not reduced by the member discount.
 - **A guest who is themself a Winston member is free — no fee, no cap, no record.** They are not entered anywhere on the booking (public or member wizard); the booking system has no field for them at all. Their membership is verified in person by front-desk staff at check-in, entirely outside the booking flow. Confirmed by the client.
 - **Independent of booking duration.** A 30-minute simulator session and a 3-hour court booking incur the same per-non-member-guest fee.
 - **The booker is exempt from their own guest fee** — only additional non-member guests are charged.
@@ -137,7 +145,7 @@ Worked examples:
 
 ## Add-On Services
 
-Coaching is an **add-on attached to a booking**, not a separate booking type. It is a flat charge per booking — not multiplied by duration or guest count — and is not reduced by the member discount.
+Coaching is an **add-on attached to a booking**, not a separate booking type. **Spaces have no add-ons at all** — coaching is not offered on the Lounge or Conference Room. It is a flat charge per booking — not multiplied by duration or guest count — and is not reduced by the member discount.
 
 **Ball boy has been removed entirely.** It is not offered on the public booking wizard or on the member booking flow, on any resource.
 
@@ -202,7 +210,7 @@ Every tier also receives **10% off Winston Sip & Serve** (the café and bar).
 ### Birthday-month court hour
 
 - Redeemable **once per membership term**, on a booking whose slot falls within the member's birthday month on the Manila calendar.
-- **A "court hour" is any 60-minute booking** on any court or simulator bay — a pickleball court hour, a 60-minute tennis or pickleball simulator session, or a 60-minute golf simulator session. Confirmed by the client. A longer court booking is not eligible; a member wanting the perk books exactly one hour.
+- **A "court hour" is any 60-minute booking** on any court or simulator bay — a pickleball court hour, a 60-minute tennis or pickleball simulator session, or a 60-minute golf simulator session. Confirmed by the client. A longer court booking is not eligible; a member wanting the perk books exactly one hour. **Spaces are never eligible** — the Lounge and Conference Room have no member price reductions.
 - **Winston Player**: 50% off that booking's base rate. **Premier, Founding, and Elite**: the base rate is free. The birthday perk replaces the tier discount on that booking (it is not stacked on top); the guest fee and coaching are still charged.
 - Requires the member's **date of birth**, collected on the membership application and attached to the customer once the activation payment is confirmed.
 - Applies automatically to an eligible slot; the member may untick it on the Add-Ons step to keep it for another booking. Like a guest pass, it is reserved by a live hold and released if the hold is abandoned.
@@ -251,10 +259,10 @@ Credit (shown to members as **booking credit**) is a member's prepaid balance fo
 ## Admin Capabilities (confirmed scope)
 
 - Manage all bookings
-- Manage courts and simulators
+- Manage courts, simulators, and spaces
 - Manage membership accounts, including application approval and rejection
 - Manage booking announcements and public news independently
-- Manage pricing rules — base court and simulator rates, coaching rates (member and non-member), and the guest fee. Tier prices, tier discounts, and the Founding Member cap are fixed in code.
+- Manage pricing rules — base court, simulator, and space rates, coaching rates (member and non-member), and the guest fee. Tier prices, tier discounts, and the Founding Member cap are fixed in code.
 
 ---
 

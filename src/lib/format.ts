@@ -102,3 +102,11 @@ export function formatBookingDateTime(date: Date): string {
     timeZone: 'Asia/Manila',
   }).format(date)
 }
+
+/**
+ * "Pickleball Court — Court 1", or just "Lounge" when a single-unit space's label repeats its
+ * type name, so the name never reads "Lounge — Lounge".
+ */
+export function formatResourceName(resourceTypeName: string, resourceLabel: string): string {
+  return resourceTypeName === resourceLabel ? resourceTypeName : `${resourceTypeName} — ${resourceLabel}`
+}

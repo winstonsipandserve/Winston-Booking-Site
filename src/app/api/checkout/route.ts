@@ -4,6 +4,7 @@ import { createPaymongoCheckoutSession, retrievePaymongoCheckoutSession } from '
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import { hasValidBookingAccessToken } from '@/lib/booking-access'
 import { getActiveMemberSession } from '@/lib/member-session'
+import { formatResourceName } from '@/lib/format'
 
 interface CheckoutRequestBody {
   bookingId?: unknown
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
 
   const lineItems = [
     {
-      name: `${booking.resource.resourceType.name} — ${booking.resource.label} (${bookingDate})`,
+      name: `${formatResourceName(booking.resource.resourceType.name, booking.resource.label)} (${bookingDate})`,
       amount: totalCentavos,
       currency: 'PHP' as const,
       quantity: 1,

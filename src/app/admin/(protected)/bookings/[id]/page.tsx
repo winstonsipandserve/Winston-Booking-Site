@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { ReactNode } from 'react'
 import { prisma } from '@/lib/prisma'
-import { formatBookingDateTime, formatCentavos, formatManilaTimeRange } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos, formatManilaTimeRange, formatResourceName } from '@/lib/format'
 import { bookingGrandTotalCentavos } from '@/lib/booking-pricing'
 import RescheduleSection from '@/components/admin/RescheduleSection'
 import { BookingStatusPill } from '@/components/admin/StatusPill'
@@ -61,7 +61,7 @@ export default async function AdminBookingDetailPage({
       <AdminPageHeader
         backHref="/admin/bookings"
         backLabel="Back to bookings"
-        title={`${booking.resource.resourceType.name} — ${booking.resource.label}`}
+        title={formatResourceName(booking.resource.resourceType.name, booking.resource.label)}
         subtitle={formatManilaTimeRange(booking.startTime, booking.endTime)}
         recordId={booking.id}
         aside={<BookingStatusPill status={booking.status} />}

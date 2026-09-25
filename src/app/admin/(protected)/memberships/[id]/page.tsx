@@ -10,7 +10,7 @@ import ResendActivationButton from '@/components/admin/ResendActivationButton'
 import ResendPaymentLinkButton from '@/components/admin/ResendPaymentLinkButton'
 import AddCreditButton from '@/components/admin/AddCreditButton'
 import AdminPagination from '@/components/admin/AdminPagination'
-import { formatBookingDateTime, formatCentavos, formatDateOnly, formatManilaDate, formatMembershipTier } from '@/lib/format'
+import { formatBookingDateTime, formatCentavos, formatDateOnly, formatManilaDate, formatMembershipTier, formatResourceName } from '@/lib/format'
 import AdminPageHeader from '@/components/admin/AdminPageHeader'
 import { getRenewalEligibility, RENEWAL_WINDOW_DAYS } from '@/lib/membership-current'
 import { manilaCalendarDaysBetween } from '@/lib/manila-date'
@@ -566,7 +566,7 @@ export default async function AdminMembershipApplicationDetailPage({
                         {formatBookingDateTime(booking.startTime)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">
-                        {booking.resource.resourceType.name} — {booking.resource.label}
+                        {formatResourceName(booking.resource.resourceType.name, booking.resource.label)}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.guestCount}</td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-gray-900 dark:text-gray-100">{booking.status}</td>

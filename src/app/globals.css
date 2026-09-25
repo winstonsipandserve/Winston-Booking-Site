@@ -28,6 +28,8 @@
   --color-chart-secondary-dark: var(--color-gray-400);
   --color-chart-accent: var(--color-accent);
   --color-chart-accent-dark: var(--color-red-400);
+  --color-chart-spaces: var(--color-teal-600);
+  --color-chart-spaces-dark: var(--color-teal-400);
   --color-chart-tier-player: var(--color-blue-600);
   --color-chart-tier-player-dark: var(--color-blue-400);
   --color-chart-tier-premier: var(--color-amber-600);

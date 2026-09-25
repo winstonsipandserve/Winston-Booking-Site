@@ -7,6 +7,8 @@ const RESOURCE_TYPE_ORDER: ResourceTypeSlug[] = [
   ResourceTypeSlug.tennis_sim,
   ResourceTypeSlug.pickleball_sim,
   ResourceTypeSlug.golf_sim,
+  ResourceTypeSlug.lounge,
+  ResourceTypeSlug.conference_room,
 ]
 
 export default async function AdminResourcesPage() {
@@ -29,6 +31,7 @@ export default async function AdminResourcesPage() {
 
   const courts = orderedResourceTypes.filter((rt) => rt.category === 'court')
   const simulators = orderedResourceTypes.filter((rt) => rt.category === 'simulator')
+  const spaces = orderedResourceTypes.filter((rt) => rt.category === 'space')
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -36,6 +39,7 @@ export default async function AdminResourcesPage() {
         <ResourcesTabs
           courts={courts}
           simulators={simulators}
+          spaces={spaces}
           guestFeeRule={guestFeeRule}
           addOnServices={addOnServices}
         />
