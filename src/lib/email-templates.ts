@@ -16,7 +16,7 @@ const HEADING_FONT = "Georgia, 'Times New Roman', serif"
 const BODY_FONT = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
 
 export const EMAIL_LOGO_URL =
-  'https://vsmjybtidvmzvicdpkdo.supabase.co/storage/v1/object/public/email-assets/winston-logo-emblem-transparent.png'
+  'https://ksbjmpnonvmazfunvhpw.supabase.co/storage/v1/object/public/email-assets/winston-logo-emblem-transparent.png'
 
 const REPLY_TO_ADDRESS = 'winstonsipandserve@gmail.com'
 

@@ -9,9 +9,9 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' blob: data: https://vsmjybtidvmzvicdpkdo.supabase.co",
+  "img-src 'self' blob: data: https://ksbjmpnonvmazfunvhpw.supabase.co",
   "font-src 'self'",
-  "connect-src 'self' https://vsmjybtidvmzvicdpkdo.supabase.co",
+  "connect-src 'self' https://ksbjmpnonvmazfunvhpw.supabase.co",
   "media-src 'self'",
   "worker-src 'self' blob:",
 ].join("; ");
@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "vsmjybtidvmzvicdpkdo.supabase.co",
+        hostname: "ksbjmpnonvmazfunvhpw.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
     ],

@@ -22,7 +22,6 @@ How the software is built: the stack, the code layout, the external services, an
 | PDF | `@react-pdf/renderer` (membership certificate only) |
 | QR | `qrcode` (generation), `html5-qrcode` (camera scanning) |
 | Hosting | Vercel |
-| Error tracking | Sentry |
 
 ---
 
@@ -202,7 +201,7 @@ The first-time activation email carries a generated PDF membership certificate. 
 - **Framework Preset must be "Next.js"**, not "Other". On "Other" the build reports success but routing and serverless functions never wire up and every route 404s. `dev` and `staging` are corrected; Production runs on its own pinned Production Overrides and needs this confirmed at the eventual promotion.
 - `prisma generate` is part of the `build` script itself, so a cached `node_modules` can never leave the build type-checking against a stale Prisma Client.
 - **Deployment Protection**: Vercel Authentication ("Standard Protection") is on project-wide — the only tier available on the Hobby plan. The production custom domain is auto-exempted; only non-custom-domain preview/dev/staging URLs sit behind Vercel login. A Protection Bypass for Automation secret exists for tooling that cannot authenticate interactively — send it as the `x-vercel-protection-bypass` **header**, not a query parameter. For giving a person access to a protected preview, use Vercel's Shareable Links rather than hand-building a bypass URL.
-- Function region and the Supabase project are both `syd1`.
+- Function region and the Supabase project are both Singapore (Vercel `sin1`, Supabase `ap-southeast-1`). The project was previously Sydney (`syd1`) but was recreated in Singapore in September 2026 after the original Vercel and Supabase projects were deleted; both were moved together to keep them co-located.
 
 ---
 
@@ -220,7 +219,6 @@ Names and purpose only. Real values live in `.env.local` (never committed) and V
 | `PAYMONGO_WEBHOOK_SECRET` | Verifies `payment.paid` webhook signatures |
 | `RESEND_API_KEY` | Transactional email sending |
 | `NEXT_PUBLIC_APP_URL` | Base app URL (differs per environment) |
-| `SENTRY_DSN` | Error tracking |
 | `BOOKING_HOLD_MINUTES` | Minutes a pending booking is held before being treated as abandoned (default `10`) |
 | `CRON_SECRET` | Authenticates Vercel Cron invocations |
 | `SUPABASE_URL` | Supabase project API URL, for server-side Storage REST calls |
