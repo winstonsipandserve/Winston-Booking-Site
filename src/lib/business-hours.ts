@@ -12,6 +12,9 @@ export function toPhMinutesOfDay(date: Date): number {
 
 export function isWithinBusinessHours(start: Date, end: Date): boolean {
   if (end <= start) return false
+  // Minutes-of-day alone cannot see a range that wraps past midnight (23:00 → 01:00 passes
+  // both bounds), so the range must also sit on a single PH calendar date.
+  if (toPhDateString(start) !== toPhDateString(end)) return false
   const startMinutes = toPhMinutesOfDay(start)
   const endMinutes = toPhMinutesOfDay(end)
   return startMinutes >= BUSINESS_OPEN_HOUR * 60 && endMinutes <= BUSINESS_CLOSE_HOUR * 60

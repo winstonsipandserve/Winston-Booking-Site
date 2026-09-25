@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { ResourceTypeSlug } from '@prisma/client'
 import ResourcesTabs from '@/components/admin/ResourcesTabs'
+import { getGuestFeeRule } from '@/lib/guest-fee'
 
 const RESOURCE_TYPE_ORDER: ResourceTypeSlug[] = [
   ResourceTypeSlug.pickleball_court,
@@ -21,7 +22,7 @@ export default async function AdminResourcesPage() {
       },
       relationLoadStrategy: 'join',
     }),
-    prisma.guestFeeRule.findFirst(),
+    getGuestFeeRule(),
     prisma.addOnService.findMany(),
   ])
 

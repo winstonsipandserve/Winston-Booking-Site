@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { getGuestFeeRule } from '@/lib/guest-fee'
 
 export async function GET() {
   const [resourceTypes, pricingRules, addOnPricingRules, guestFeeRule] = await Promise.all([
@@ -12,7 +13,7 @@ export async function GET() {
       include: { addOnService: true },
       relationLoadStrategy: 'query',
     }),
-    prisma.guestFeeRule.findFirst(),
+    getGuestFeeRule(),
   ])
 
   const responseResourceTypes = resourceTypes.map((resourceType) => ({

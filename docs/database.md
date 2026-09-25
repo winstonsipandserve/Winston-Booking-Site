@@ -96,7 +96,7 @@ The payment method determines what a number means. Do not substitute a PayMongo 
 
 **`GuestFeeRule`** — its own table holding a single row with `amountCentavos`. Edit-only by design: no create, no delete.
 
-> `guestFeeRule.findFirst()` is called without an `orderBy`, so the single-row assumption is not enforced at the schema level. A second row would make pricing nondeterministic. See [roadmap.md](roadmap.md).
+> The single-row assumption is not enforced at the schema level. Every reader goes through `getGuestFeeRule()` (`src/lib/guest-fee.ts`), which orders by `createdAt`, then `id`, so a stray second row can never make pricing nondeterministic — the oldest row always wins.
 
 ---
 

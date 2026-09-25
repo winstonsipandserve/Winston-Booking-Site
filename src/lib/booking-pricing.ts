@@ -1,5 +1,6 @@
 import { RateTier, ResourceCategory } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { getGuestFeeRule } from '@/lib/guest-fee'
 import {
   MAX_HOURLY_DURATION_MINUTES,
   categoryHasMemberPricing,
@@ -102,7 +103,7 @@ export async function priceBooking(
 
   let guestFeeCentavos = 0
   if (guestCount > 0) {
-    const guestFeeRule = await prisma.guestFeeRule.findFirst()
+    const guestFeeRule = await getGuestFeeRule()
     if (!guestFeeRule) {
       console.error('GuestFeeRule table is empty — cannot price guest fee')
       return { error: 'Internal server error', status: 500 }
